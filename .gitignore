@@ -1,0 +1,10 @@
+.next/
+.next-dev/
+.next-build/
+.sienge-cache/
+.sienge-data/
+node_modules/
+.env
+.env.local
+*.log
+tsconfig.tsbuildinfo

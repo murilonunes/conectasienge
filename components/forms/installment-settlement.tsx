@@ -1,0 +1,154 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+
+type Installment = {
+  installmentNumber: number;
+  dueDate: string;
+  baseDate?: string;
+  billDate?: string;
+  amount: number;
+  indexId?: number;
+  paymentTypeId?: number;
+  situation?: string;
+  paymentType?: string;
+  sentToBank?: boolean;
+  batchNumber?: number;
+};
+
+type BillDetails = {
+  id?: number;
+  debtorId?: number;
+  creditorId?: number;
+  documentIdentificationId?: string;
+  documentNumber?: string;
+  issueDate?: string;
+  installmentsNumber?: number;
+  totalInvoiceAmount?: number;
+  discount?: number;
+  status?: string;
+  originId?: string;
+  notes?: string;
+  registeredBy?: string;
+  registeredDate?: string;
+};
+
+type NamedAllocation = { costCenterName?: string; financialCategoryName?: string; buildingName?: string; buildingUnitName?: string; name?: string; percentage?: number; rate?: number };
+
+export function InstallmentSettlement() {
+  const [billId, setBillId] = useState("");
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [bill, setBill] = useState<BillDetails>();
+  const [allocations, setAllocations] = useState<{ budgetCategories: NamedAllocation[]; buildingsCost: NamedAllocation[]; departmentsCost: NamedAllocation[]; attachments: unknown[] }>({ budgetCategories: [], buildingsCost: [], departmentsCost: [], attachments: [] });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState<number>();
+  const [pix, setPix] = useState({ paymentTypeId: "", keyPixType: "C", keyPix: "", isUsingCreditorData: "S", notes: "Pagamento via Pix" });
+  const [saving, setSaving] = useState(false);
+
+  async function search(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    setMessage("");
+    setInstallments([]);
+    setBill(undefined);
+    try {
+      const response = await fetch(`/api/sienge/bills/${billId}/installments`);
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.suggestion || body.apiMessage || body.message || body.title || "Consulta não concluída.");
+      setInstallments(body.installments || []);
+      setBill(body.bill);
+      setAllocations({ budgetCategories: body.budgetCategories || [], buildingsCost: body.buildingsCost || [], departmentsCost: body.departmentsCost || [], attachments: body.attachments || [] });
+      if (!body.installments?.length) setMessage("Nenhuma parcela foi encontrada para este título.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function savePix(event: FormEvent) {
+    event.preventDefault();
+    if (!selected) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/sienge/bills/${billId}/installments/${selected}/payment-information/pix`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(pix)
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.suggestion || body.apiMessage || body.message || body.title || "Não foi possível cadastrar a instrução.");
+      setMessage(body.message);
+      setSelected(undefined);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <section className="card settlement-search">
+        <form onSubmit={search}>
+          <label><span>Código do título no Sienge</span><input required type="number" min="1" value={billId} onChange={(e) => setBillId(e.target.value)} placeholder="Ex.: 1000" /></label>
+          <button className="button" disabled={loading}>{loading ? "Consultando..." : "Buscar parcelas"}</button>
+        </form>
+        <p>A consulta mostra vencimento, valor e situação atual da parcela.</p>
+      </section>
+      {message && <div className="card data-notice"><strong>Consulta de parcelas</strong><span>{message}</span></div>}
+      {bill && <section className="card bill-overview">
+        <div className="bill-overview-head"><div><p className="eyebrow">Título #{bill.id || billId}</p><h2>{bill.documentIdentificationId}-{bill.documentNumber}</h2><span>{bill.notes || "Sem observações cadastradas"}</span></div><div><strong>{formatCurrency(bill.totalInvoiceAmount || 0)}</strong><span>Valor bruto do título</span></div></div>
+        <div className="bill-overview-grid">
+          <div><span>Empresa devedora</span><strong>#{bill.debtorId || "—"}</strong></div>
+          <div><span>Credor</span><strong>#{bill.creditorId || "—"}</strong></div>
+          <div><span>Emissão</span><strong>{bill.issueDate ? formatDate(bill.issueDate) : "—"}</strong></div>
+          <div><span>Origem</span><strong>{bill.originId || "—"}</strong></div>
+          <div><span>Parcelas</span><strong>{bill.installmentsNumber || installments.length}</strong></div>
+          <div><span>Desconto</span><strong>{formatCurrency(bill.discount || 0)}</strong></div>
+          <div><span>Consistência</span><strong>{bill.status === "S" ? "Completo" : bill.status === "I" ? "Em inclusão" : "Incompleto"}</strong></div>
+          <div><span>Anexos</span><strong>{allocations.attachments.length}</strong></div>
+        </div>
+        {(allocations.budgetCategories.length > 0 || allocations.buildingsCost.length > 0 || allocations.departmentsCost.length > 0) && <div className="bill-allocations">
+          <span>Apropriações vinculadas</span>
+          <strong>{allocations.budgetCategories.length} financeiras</strong>
+          <strong>{allocations.buildingsCost.length} obras</strong>
+          <strong>{allocations.departmentsCost.length} departamentos</strong>
+        </div>}
+      </section>}
+      <section className="settlement-grid">
+        {installments.map((installment) => (
+          <article className="card settlement-card" key={installment.installmentNumber}>
+            <div className="settlement-top"><span>Parcela {installment.installmentNumber}</span><span className={`badge ${installment.situation === "Totalmente paga" ? "" : "pending"}`}>{installment.situation || "Situação não informada"}</span></div>
+            <strong>{formatCurrency(installment.amount || 0)}</strong>
+            <dl>
+              <div><dt>Vencimento</dt><dd>{formatDate(installment.dueDate)}</dd></div>
+              <div><dt>Competência</dt><dd>{installment.billDate ? formatDate(installment.billDate) : "Não informada"}</dd></div>
+              <div><dt>Data-base</dt><dd>{installment.baseDate ? formatDate(installment.baseDate) : "Não informada"}</dd></div>
+              <div><dt>Indexador</dt><dd>{installment.indexId ? `#${installment.indexId}` : "Não informado"}</dd></div>
+              <div><dt>Forma</dt><dd>{installment.paymentType || (installment.paymentTypeId ? `#${installment.paymentTypeId}` : "Não informada")}</dd></div>
+              <div><dt>Enviada ao banco</dt><dd>{installment.sentToBank ? "Sim" : "Não"}</dd></div>
+              <div><dt>Lote bancário</dt><dd>{installment.batchNumber || "Não gerado"}</dd></div>
+            </dl>
+            <button className="button secondary" type="button" onClick={() => setSelected(installment.installmentNumber)}>Cadastrar pagamento Pix</button>
+          </article>
+        ))}
+      </section>
+      {selected && <form className="card pix-form" onSubmit={savePix}>
+        <div className="form-section-head"><span>PIX</span><div><h2>Instrução de pagamento da parcela {selected}</h2><p>Este cadastro prepara os dados de pagamento no Sienge. Ele não efetiva a baixa.</p></div></div>
+        <div className="form-grid">
+          <label><span>Código do tipo de pagamento *</span><input required type="number" min="1" value={pix.paymentTypeId} onChange={(e) => setPix({ ...pix, paymentTypeId: e.target.value })} /></label>
+          <label><span>Usar dados Pix do credor</span><select value={pix.isUsingCreditorData} onChange={(e) => setPix({ ...pix, isUsingCreditorData: e.target.value })}><option value="S">Sim</option><option value="N">Não</option></select></label>
+          <label><span>Tipo da chave Pix *</span><select value={pix.keyPixType} onChange={(e) => setPix({ ...pix, keyPixType: e.target.value })}><option value="C">CPF/CNPJ</option><option value="E">E-mail</option><option value="T">Telefone</option><option value="A">Aleatória</option></select></label>
+          <label><span>Chave Pix</span><input value={pix.keyPix} onChange={(e) => setPix({ ...pix, keyPix: e.target.value })} placeholder="Opcional ao usar dados do credor" /></label>
+          <label className="full-field"><span>Observação</span><input value={pix.notes} onChange={(e) => setPix({ ...pix, notes: e.target.value })} /></label>
+        </div>
+        <div className="pix-actions"><button type="button" className="button secondary" onClick={() => setSelected(undefined)}>Cancelar</button><button className="button" disabled={saving}>{saving ? "Cadastrando..." : "Cadastrar instrução Pix"}</button></div>
+      </form>}
+      <div className="card settlement-notice"><strong>O que a API permite</strong><p>É possível cadastrar instruções de pagamento por Pix, transferência, boleto e tributos. A baixa financeira, que marca a parcela como paga e gera o movimento bancário, ainda precisa ser efetivada no Sienge. Os webhooks apenas avisam quando essa baixa ocorreu.</p></div>
+    </>
+  );
+}

@@ -1,0 +1,114 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+
+type FormData = {
+  debtorId: string;
+  creditorId: string;
+  documentIdentificationId: string;
+  documentNumber: string;
+  issueDate: string;
+  baseDate: string;
+  billDate: string;
+  dueDate: string;
+  indexId: string;
+  installmentsNumber: string;
+  totalInvoiceAmount: string;
+  discount: string;
+  notes: string;
+};
+
+const today = new Date().toISOString().slice(0, 10);
+const initialData: FormData = {
+  debtorId: "", creditorId: "", documentIdentificationId: "NF", documentNumber: "",
+  issueDate: today, baseDate: today, billDate: today, dueDate: today,
+  indexId: "1", installmentsNumber: "1", totalInvoiceAmount: "", discount: "0", notes: ""
+};
+
+export function BillEntryForm() {
+  const [data, setData] = useState(initialData);
+  const [reviewing, setReviewing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{ type: "success" | "error"; message: string }>();
+  const netAmount = useMemo(() => Number(data.totalInvoiceAmount || 0) - Number(data.discount || 0), [data]);
+
+  const update = (field: keyof FormData, value: string) => setData((current) => ({ ...current, [field]: value }));
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!reviewing) {
+      setReviewing(true);
+      setResult(undefined);
+      return;
+    }
+    setSubmitting(true);
+    setResult(undefined);
+    try {
+      const response = await fetch("/api/sienge/bills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.suggestion || body.apiMessage || body.message || body.title || "Não foi possível criar o título.");
+      setResult({ type: "success", message: body.message });
+      setData(initialData);
+      setReviewing(false);
+    } catch (error) {
+      setResult({ type: "error", message: error instanceof Error ? error.message : "Erro inesperado." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="operation-layout">
+      <section className="card operation-card">
+        <div className="form-section-head"><span>01</span><div><h2>Identificação do título</h2><p>Códigos conforme cadastrados no Sienge.</p></div></div>
+        <div className="form-grid">
+          <label><span>Empresa devedora *</span><input required type="number" min="1" value={data.debtorId} onChange={(e) => update("debtorId", e.target.value)} placeholder="Código da empresa" /></label>
+          <label><span>Credor *</span><input required type="number" min="1" value={data.creditorId} onChange={(e) => update("creditorId", e.target.value)} placeholder="Código do credor" /></label>
+          <label><span>Código do documento *</span><input required value={data.documentIdentificationId} onChange={(e) => update("documentIdentificationId", e.target.value.toUpperCase())} placeholder="NF" /></label>
+          <label><span>Número do documento *</span><input required value={data.documentNumber} onChange={(e) => update("documentNumber", e.target.value)} placeholder="Ex.: 2026-0042" /></label>
+        </div>
+      </section>
+
+      <section className="card operation-card">
+        <div className="form-section-head"><span>02</span><div><h2>Datas e parcelamento</h2><p>O Sienge gerará as parcelas com base nestas informações.</p></div></div>
+        <div className="form-grid three">
+          <label><span>Emissão *</span><input required type="date" value={data.issueDate} onChange={(e) => update("issueDate", e.target.value)} /></label>
+          <label><span>Competência *</span><input required type="date" value={data.billDate} onChange={(e) => update("billDate", e.target.value)} /></label>
+          <label><span>Data-base *</span><input required type="date" value={data.baseDate} onChange={(e) => update("baseDate", e.target.value)} /></label>
+          <label><span>Primeiro vencimento *</span><input required type="date" value={data.dueDate} onChange={(e) => update("dueDate", e.target.value)} /></label>
+          <label><span>Quantidade de parcelas *</span><input required type="number" min="1" value={data.installmentsNumber} onChange={(e) => update("installmentsNumber", e.target.value)} /></label>
+          <label><span>Indexador *</span><input required type="number" min="1" value={data.indexId} onChange={(e) => update("indexId", e.target.value)} /></label>
+        </div>
+      </section>
+
+      <section className="card operation-card">
+        <div className="form-section-head"><span>03</span><div><h2>Valores e observações</h2><p>Confira os valores antes de enviar.</p></div></div>
+        <div className="form-grid">
+          <label><span>Valor bruto *</span><input required type="number" min="0.01" step="0.01" value={data.totalInvoiceAmount} onChange={(e) => update("totalInvoiceAmount", e.target.value)} placeholder="0,00" /></label>
+          <label><span>Desconto</span><input type="number" min="0" step="0.01" value={data.discount} onChange={(e) => update("discount", e.target.value)} /></label>
+          <label className="full-field"><span>Observações</span><textarea maxLength={500} value={data.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Informações adicionais do título" /></label>
+        </div>
+      </section>
+
+      <aside className="card operation-summary">
+        <p className="eyebrow">{reviewing ? "Revisão final" : "Resumo"}</p>
+        <h2>{formatCurrency(netAmount)}</h2>
+        <dl>
+          <div><dt>Documento</dt><dd>{data.documentIdentificationId}-{data.documentNumber || "—"}</dd></div>
+          <div><dt>Credor</dt><dd>#{data.creditorId || "—"}</dd></div>
+          <div><dt>Vencimento</dt><dd>{data.dueDate ? formatDate(data.dueDate) : "—"}</dd></div>
+          <div><dt>Parcelas</dt><dd>{data.installmentsNumber}</dd></div>
+        </dl>
+        {reviewing && <div className="operation-warning"><strong>Ação real</strong><span>Ao confirmar, um título será criado no Sienge.</span></div>}
+        {result && <div className={`form-result ${result.type}`}>{result.message}</div>}
+        <button className="button operation-submit" disabled={submitting}>{submitting ? "Enviando..." : reviewing ? "Confirmar lançamento" : "Revisar lançamento"}</button>
+        {reviewing && <button type="button" className="button secondary operation-submit" onClick={() => setReviewing(false)}>Voltar e editar</button>}
+      </aside>
+    </form>
+  );
+}
