@@ -14,10 +14,12 @@ export type ScheduledPayable = {
   dueDate: string;
   authorizationStatus?: string;
   payments?: { netAmount?: number; paymentDate?: string }[];
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 export type ScheduleBucket = {
-  id: "today" | "week" | "month" | "nextMonth" | "secondMonth";
+  id: string;
   label: string;
   note: string;
   items: ScheduledPayable[];
@@ -30,5 +32,6 @@ export type PayablesScheduleResult = {
   totalAmount: number;
   totalCount: number;
   authorizedCount: number;
+  futureMonths: number;
   error?: SiengeErrorDetails;
 };

@@ -210,8 +210,15 @@ function createOutcomeTables(database: DatabaseSync) {
     );
 
     CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_dueDate ON bulk_outcome_installments(dueDate);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_issueDate ON bulk_outcome_installments(issueDate);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_billDate ON bulk_outcome_installments(billDate);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_baseDate ON bulk_outcome_installments(installmentBaseDate);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_companyId ON bulk_outcome_installments(companyId);
     CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_creditorId ON bulk_outcome_installments(creditorId);
     CREATE INDEX IF NOT EXISTS idx_bulk_outcome_installments_billId ON bulk_outcome_installments(billId);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_payments_paymentDate ON bulk_outcome_payments(paymentDate);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_payments_parent ON bulk_outcome_payments(tenant, billId, installmentId);
+    CREATE INDEX IF NOT EXISTS idx_bulk_outcome_buildings_filter ON bulk_outcome_buildings_costs(tenant, billId, installmentId, buildingId, buildingUnitId);
   `);
 }
 
@@ -248,7 +255,7 @@ function storeOutcome(database: DatabaseSync, context: SiengeStoreContext, respo
   const data = (response as { data?: unknown[] })?.data || [];
   onProgress?.({
     stage: "sqlite-bulk-write",
-    message: "Gravando parcelas e baixas do bulk no SQLite.",
+    message: "Organizando parcelas e baixas.",
     detail: "Tabela bulk_outcome_installments e tabelas filhas",
     current: 0,
     total: data.length
@@ -259,7 +266,7 @@ function storeOutcome(database: DatabaseSync, context: SiengeStoreContext, respo
       if (index === 0 || index % 250 === 0 || index === data.length - 1) {
         onProgress?.({
           stage: "sqlite-bulk-write",
-          message: "Gravando parcelas e baixas do bulk no SQLite.",
+          message: "Organizando parcelas e baixas.",
           detail: `Registro ${index + 1} de ${data.length}`,
           current: index + 1,
           total: data.length
@@ -531,7 +538,7 @@ function storeIncome(database: DatabaseSync, context: SiengeStoreContext, respon
   const data = (response as { data?: unknown[] })?.data || [];
   onProgress?.({
     stage: "sqlite-bulk-write",
-    message: "Gravando parcelas e baixas a receber no SQLite.",
+    message: "Organizando parcelas e recebimentos.",
     detail: "Tabela bulk_income_installments e tabelas filhas",
     current: 0,
     total: data.length
@@ -542,7 +549,7 @@ function storeIncome(database: DatabaseSync, context: SiengeStoreContext, respon
       if (index === 0 || index % 250 === 0 || index === data.length - 1) {
         onProgress?.({
           stage: "sqlite-bulk-write",
-          message: "Gravando parcelas e baixas a receber no SQLite.",
+          message: "Organizando parcelas e recebimentos.",
           detail: `Registro ${index + 1} de ${data.length}`,
           current: index + 1,
           total: data.length
@@ -714,7 +721,7 @@ export function storeGenericResponseRecords(database: DatabaseSync, context: Sie
   const items = responseItems(response);
   onProgress?.({
     stage: "sqlite-records-write",
-    message: "Gravando registros únicos no SQLite.",
+    message: "Organizando registros únicos.",
     detail: `Tipo ${type}`,
     current: 0,
     total: items.length
@@ -723,7 +730,7 @@ export function storeGenericResponseRecords(database: DatabaseSync, context: Sie
     if (index === 0 || index % 250 === 0 || index === items.length - 1) {
       onProgress?.({
         stage: "sqlite-records-write",
-        message: "Gravando registros únicos no SQLite.",
+        message: "Organizando registros únicos.",
         detail: `Registro ${index + 1} de ${items.length}`,
         current: index + 1,
         total: items.length

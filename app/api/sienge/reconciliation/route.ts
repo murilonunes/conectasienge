@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   });
 
   const summary = analyzeReconciliation(result.movements);
-  completeReconciliationProgress(id, result.error ? "Carga finalizada com erro." : "Carga de conciliação concluída.");
+  completeReconciliationProgress(id, result.error ? "Leitura finalizada com aviso." : "Leitura de conciliação concluída.");
 
   return NextResponse.json({
     id,

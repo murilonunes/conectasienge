@@ -1,7 +1,11 @@
 import "server-only";
+import { existsSync } from "fs";
+import { DatabaseSync } from "node:sqlite";
+import path from "path";
 import { contasReceberApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails } from "@/lib/api/sienge";
 import type { ChartItem } from "@/features/financeiro/sienge-data";
+import type { SiengeIntegrationRange } from "@/lib/settings";
 
 export type ReceivableReceipt = {
   grossAmount?: number;
@@ -37,10 +41,18 @@ export type ReceivableInstallment = {
   installmentNumber?: string;
   bearerId?: number;
   receipts?: ReceivableReceipt[];
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 type IncomeResponse = {
   data?: ReceivableInstallment[];
+};
+
+type SqlRow = {
+  raw_json: string;
+  source_day?: string;
+  saved_at?: string;
 };
 
 export type ReceivablesForecastResult = {
@@ -83,12 +95,22 @@ const ORIGIN_LABELS: Record<string, string> = {
   NF: "Solicitação de nota fiscal"
 };
 
+const dataDir = path.join(process.cwd(), ".sienge-data");
+const receivablesDatabasePath = path.join(dataDir, "finance-receivables.sqlite");
+
 function iso(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function forecastRange() {
+function forecastRange(range?: SiengeIntegrationRange) {
   const today = new Date();
+  if (range) {
+    return {
+      startDate: range.startDate,
+      endDate: range.endDate,
+      correctionDate: iso(today)
+    };
+  }
   const end = new Date(today.getFullYear() + 5, 11, 31);
   return {
     startDate: "2000-01-01",
@@ -99,12 +121,68 @@ function forecastRange() {
 
 function parseDate(value?: string) {
   if (!value) return undefined;
-  const date = new Date(`${value}T00:00:00`);
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 function numberValue(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function localDataError(title: string, explanation: string): SiengeErrorDetails {
+  return {
+    method: "GET",
+    endpoint: "/bulk-data/v1/income",
+    title,
+    explanation,
+    suggestion: "Atualize Contas a receber em Configurações para preencher os dados.",
+    occurredAt: new Date().toISOString()
+  };
+}
+
+function openDatabase() {
+  const database = new DatabaseSync(receivablesDatabasePath);
+  database.exec("PRAGMA busy_timeout = 8000;");
+  return database;
+}
+
+function tableExists(database: DatabaseSync, table: string) {
+  return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+function ensureIndexes(database: DatabaseSync) {
+  try {
+    database.exec(`
+      CREATE INDEX IF NOT EXISTS idx_bulk_income_installments_dueDate ON bulk_income_installments(dueDate);
+      CREATE INDEX IF NOT EXISTS idx_bulk_income_installments_clientId ON bulk_income_installments(clientId);
+      CREATE INDEX IF NOT EXISTS idx_bulk_income_installments_projectId ON bulk_income_installments(projectId);
+    `);
+  } catch {
+    // Reading still works without new indexes; it can only be slower on large local bases.
+  }
+}
+
+function annotate(row: SqlRow): ReceivableInstallment | undefined {
+  try {
+    return {
+      ...(JSON.parse(row.raw_json) as ReceivableInstallment),
+      __siengeIntegrationDay: row.source_day,
+      __siengeIntegratedAt: row.saved_at
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function emptyResult(range: ReturnType<typeof forecastRange>, error: SiengeErrorDetails): ReceivablesForecastResult {
+  return {
+    entries: [],
+    forecastEntries: [],
+    totalCount: 0,
+    loadedFrom: "/bulk-data/v1/income",
+    range,
+    error
+  };
 }
 
 export function receivableOpenAmount(entry: ReceivableInstallment) {
@@ -124,7 +202,7 @@ export function receivablePaidAmount(entry: ReceivableInstallment) {
 
 export function receivableDocument(entry: ReceivableInstallment) {
   const title = entry.billId || entry.receivableBillId;
-  const document = [entry.documentIdentificationId, entry.documentNumber].filter(Boolean).join("-");
+  const document = [entry.documentIdentificationId, entry.documentNumber].filter(Boolean).join(" - ");
   return document || (title ? `Título #${title}` : "Título sem número");
 }
 
@@ -139,40 +217,81 @@ export function receivableStatus(entry: ReceivableInstallment, today = new Date(
   return "A receber";
 }
 
-export async function loadReceivablesForecast(forceRefresh = false): Promise<ReceivablesForecastResult> {
-  const range = forecastRange();
+function buildResult(entries: ReceivableInstallment[], range: ReturnType<typeof forecastRange>): ReceivablesForecastResult {
+  const forecastEntries = entries
+    .filter((entry) => receivableOpenAmount(entry) > 0)
+    .sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || "") || (a.billId || 0) - (b.billId || 0));
+
+  return {
+    entries,
+    forecastEntries,
+    totalCount: entries.length,
+    loadedFrom: "/bulk-data/v1/income",
+    range
+  };
+}
+
+function readLocalForecast(range: ReturnType<typeof forecastRange>): ReceivablesForecastResult {
+  if (!existsSync(receivablesDatabasePath)) {
+    return emptyResult(
+      range,
+      localDataError("Contas a receber sem dados carregados", "Os dados de contas a receber ainda não foram atualizados.")
+    );
+  }
+
+  const database = openDatabase();
   try {
-    const response = await contasReceberApi.incomeForecast<IncomeResponse>({
-      startDate: range.startDate,
-      endDate: range.endDate,
-      selectionType: "D",
-      correctionIndexerId: 1,
-      correctionDate: range.correctionDate
-    }, forceRefresh);
-    const entries = response.data || [];
-    const forecastEntries = entries
-      .filter((entry) => receivableOpenAmount(entry) > 0)
-      .sort((a, b) => (a.dueDate || "").localeCompare(b.dueDate || ""));
-    return {
-      entries,
-      forecastEntries,
-      totalCount: entries.length,
-      loadedFrom: "/bulk-data/v1/income",
-      range
-    };
+    if (!tableExists(database, "bulk_income_installments")) {
+      return emptyResult(
+        range,
+        localDataError("Parcelas a receber ainda não disponíveis", "Os dados salvos ainda não possuem parcelas para exibição.")
+      );
+    }
+
+    ensureIndexes(database);
+    const amountExpression = "COALESCE(correctedBalanceAmount, balanceAmount, originalAmount, 0)";
+    const rows = database.prepare(`
+      SELECT raw_json, source_day, saved_at
+      FROM bulk_income_installments
+      WHERE dueDate BETWEEN ? AND ?
+        AND ${amountExpression} > 0
+      ORDER BY dueDate ASC, billId ASC, installmentId ASC
+    `).all(range.startDate, range.endDate) as SqlRow[];
+
+    return buildResult(rows.map(annotate).filter((entry): entry is ReceivableInstallment => Boolean(entry)), range);
+  } finally {
+    database.close();
+  }
+}
+
+async function refreshFromSienge(forceReplaceFinalized: boolean, range: ReturnType<typeof forecastRange>): Promise<ReceivablesForecastResult> {
+  const response = await contasReceberApi.incomeForecast<IncomeResponse>({
+    startDate: range.startDate,
+    endDate: range.endDate,
+    selectionType: "D",
+    correctionIndexerId: 1,
+    correctionDate: range.correctionDate
+  }, true, forceReplaceFinalized);
+
+  return buildResult(response.data || [], range);
+}
+
+export async function loadReceivablesForecast(forceRefresh = false, forceReplaceFinalized = false, integrationRange?: SiengeIntegrationRange): Promise<ReceivablesForecastResult> {
+  const range = forecastRange(integrationRange);
+
+  if (!forceRefresh) return readLocalForecast(range);
+
+  try {
+    return await refreshFromSienge(forceReplaceFinalized, range);
   } catch (error) {
     return {
-      entries: [],
-      forecastEntries: [],
-      totalCount: 0,
-      loadedFrom: "/bulk-data/v1/income",
-      range,
+      ...readLocalForecast(range),
       error: error instanceof SiengeApiError ? error.details : {
         method: "GET",
         endpoint: "/bulk-data/v1/income",
-        title: "Não foi possível consultar a previsão de recebimentos",
+        title: "Não foi possível atualizar a previsão de recebimentos",
         explanation: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        suggestion: "Tente novamente e verifique os registros do servidor caso o erro continue.",
+        suggestion: "Confira o acesso a Contas a receber e tente atualizar novamente em Configurações.",
         occurredAt: new Date().toISOString()
       }
     };
@@ -206,7 +325,7 @@ export function analyzeReceivablesForecast(result: ReceivablesForecastResult): R
     const dueDate = parseDate(entry.dueDate);
     if (!dueDate) return;
     const order = dueDate.getFullYear() * 12 + dueDate.getMonth();
-    const label = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit" }).format(dueDate);
+    const label = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit" }).format(dueDate).replace(".", "");
     const current = monthlyMap.get(label) || { label, value: 0, count: 0, order };
     current.value += receivableOpenAmount(entry);
     current.count += 1;

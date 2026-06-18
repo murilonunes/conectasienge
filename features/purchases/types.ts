@@ -1,6 +1,11 @@
+export type SiengeIntegratedRecord = {
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
+};
+
 export type PurchaseOrderStatus = "PENDING" | "PARTIALLY_DELIVERED" | "FULLY_DELIVERED" | "CANCELED" | string;
 
-export type PurchaseOrder = {
+export type PurchaseOrder = SiengeIntegratedRecord & {
   id: number;
   formattedPurchaseOrderId?: string;
   status?: PurchaseOrderStatus;
@@ -29,7 +34,7 @@ export type PurchaseOrder = {
   paymentCondition?: string;
 };
 
-export type PurchaseInvoice = {
+export type PurchaseInvoice = SiengeIntegratedRecord & {
   sequentialNumber: number;
   documentId?: string;
   number?: string;
@@ -44,7 +49,7 @@ export type PurchaseInvoice = {
   createdAt?: string;
 };
 
-export type PurchaseRequestItem = {
+export type PurchaseRequestItem = SiengeIntegratedRecord & {
   purchaseRequestId: number;
   itemNumber: number;
   productId?: number;
@@ -97,7 +102,7 @@ export type PurchaseQuotationSupplier = {
   negotiations?: PurchaseQuotationNegotiation[];
 };
 
-export type PurchaseQuotation = {
+export type PurchaseQuotation = SiengeIntegratedRecord & {
   purchaseQuotationId: number;
   registeredDate?: string;
   lastModification?: string;

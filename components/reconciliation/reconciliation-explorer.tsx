@@ -1,11 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { IntegrationStamp } from "@/components/ui/integration-stamp";
+import { LocalDataList } from "@/components/ui/local-data-list";
 import type { BankMovement } from "@/features/reconciliation/types";
 import { isReconciled, movementAmount, movementDocument, movementParty, reconciliationStatus } from "@/features/reconciliation/utils";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
-export function ReconciliationExplorer({ movements }: { movements: BankMovement[] }) {
+function movementKey(movement: BankMovement, index: number) {
+  return `${movement.bankMovementId || index}-${movement.billId || "sem-titulo"}-${movement.installmentId || "sem-parcela"}`;
+}
+
+export function ReconciliationExplorer({ movements, periodLabel }: { movements: BankMovement[]; periodLabel: string }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [account, setAccount] = useState("");
@@ -44,32 +50,40 @@ export function ReconciliationExplorer({ movements }: { movements: BankMovement[
           <option value="">Todas as contas</option>
           {accounts.map((item) => <option value={item} key={item}>{item}</option>)}
         </select>
-        <div><strong>{filtered.length}</strong><span>movimentos</span></div>
+        <div><strong>{filtered.length}</strong><span>movimentos em {periodLabel}</span></div>
       </div>
 
-      <div className="card table-card">
-        <table>
-          <thead><tr><th>Movimento</th><th>Data</th><th>Valor</th><th>Conta</th><th>Status</th><th>Vínculo</th><th>Histórico</th></tr></thead>
-          <tbody>
-            {filtered.map((movement, index) => {
-              const currentStatus = reconciliationStatus(movement);
-              const warning = !isReconciled(movement);
-              return (
-                <tr key={`${movement.bankMovementId || index}-${movement.billId || "sem-titulo"}`}>
-                  <td><strong>{movementDocument(movement)}</strong><br /><span className="table-muted">Movimento #{movement.bankMovementId || "sem código"}</span></td>
-                  <td>{movement.bankMovementDate ? formatDate(movement.bankMovementDate) : "Não informada"}</td>
-                  <td><strong>{formatCurrency(movementAmount(movement))}</strong><br /><span className="table-muted">{movement.bankMovementOperationType || "Tipo não informado"}</span></td>
-                  <td>{movement.accountNumber || "Não informada"}<br /><span className="table-muted">{movement.companyName || ""}</span></td>
-                  <td><span className={`badge ${warning ? "pending" : ""}`}>{currentStatus}</span></td>
-                  <td>{movement.billId ? `Título #${movement.billId}` : "Sem título"}<br /><span className="table-muted">{movement.installmentId ? `Parcela #${movement.installmentId}` : movementParty(movement)}</span></td>
-                  <td>{movement.bankMovementHistoricName || movement.bankMovementOperationName || "Não informado"}<br /><span className="table-muted">{movement.bankMovementOriginId || ""}</span></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {!filtered.length && <div className="empty-state">Nenhum movimento encontrado para os filtros atuais.</div>}
-      </div>
+      <LocalDataList
+        items={filtered}
+        itemLabel="movimentos"
+        resetKey={`${search}|${status}|${account}|${periodLabel}`}
+        emptyMessage="Nenhum movimento encontrado para os filtros atuais."
+        renderItems={(pageItems) => (
+          <div className="card table-card">
+            <table>
+              <thead><tr><th>Movimento</th><th>Data</th><th>Valor</th><th>Conta</th><th>Status</th><th>Vínculo</th><th>Histórico</th><th>Integração</th></tr></thead>
+              <tbody>
+                {pageItems.map((movement, index) => {
+                  const currentStatus = reconciliationStatus(movement);
+                  const warning = !isReconciled(movement);
+                  return (
+                    <tr key={movementKey(movement, index)}>
+                      <td><strong>{movementDocument(movement)}</strong><br /><span className="table-muted">Movimento #{movement.bankMovementId || "sem código"}</span></td>
+                      <td>{movement.bankMovementDate ? formatDate(movement.bankMovementDate) : "Não informada"}</td>
+                      <td><strong>{formatCurrency(movementAmount(movement))}</strong><br /><span className="table-muted">{movement.bankMovementOperationType || "Tipo não informado"}</span></td>
+                      <td>{movement.accountNumber || "Não informada"}<br /><span className="table-muted">{movement.companyName || ""}</span></td>
+                      <td><span className={`badge ${warning ? "pending" : ""}`}>{currentStatus}</span></td>
+                      <td>{movement.billId ? `Título #${movement.billId}` : "Sem título"}<br /><span className="table-muted">{movement.installmentId ? `Parcela #${movement.installmentId}` : movementParty(movement)}</span></td>
+                      <td>{movement.bankMovementHistoricName || movement.bankMovementOperationName || "Não informado"}<br /><span className="table-muted">{movement.bankMovementOriginId || ""}</span></td>
+                      <td><IntegrationStamp record={movement} /></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      />
     </section>
   );
 }

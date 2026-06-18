@@ -1,17 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { IntegrationStamp } from "@/components/ui/integration-stamp";
+import { LocalDataList } from "@/components/ui/local-data-list";
 import type { PurchaseFlowItem } from "@/features/purchases/types";
-import { formatCompactCurrency, formatCurrency, formatDate } from "@/lib/formatters";
-
-function safeDate(value?: string) {
-  if (!value) return "Sem data";
-  try {
-    return formatDate(value);
-  } catch {
-    return value;
-  }
-}
+import { formatCompactCurrency, formatCurrency, formatOptionalDate } from "@/lib/formatters";
 
 function badgeClass(item: PurchaseFlowItem) {
   if (item.late) return "badge late";
@@ -61,50 +54,58 @@ export function PurchasesExplorer({ items }: { items: PurchaseFlowItem[] }) {
         <div><strong>{filtered.length}</strong><span>registros</span><strong>{formatCompactCurrency(total)}</strong></div>
       </div>
 
-      <div className="card table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Origem</th>
-              <th>Descrição</th>
-              <th>Data</th>
-              <th>Valor / quantidade</th>
-              <th>Responsável</th>
-              <th>Situação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.slice(0, 300).map((item) => (
-              <tr key={item.id}>
-                <td>
-                  <strong>{item.kindLabel}</strong>
-                  <br />
-                  <span className="table-muted">#{item.code}</span>
-                </td>
-                <td>
-                  <strong>{item.title}</strong>
-                  <br />
-                  <span className="table-muted">{item.subtitle}</span>
-                </td>
-                <td>{safeDate(item.date)}</td>
-                <td>
-                  <strong>{item.amount ? formatCurrency(item.amount) : "Sem valor"}</strong>
-                  <br />
-                  <span className="table-muted">{item.quantity ? `${item.quantity} unidade(s)` : item.kindLabel}</span>
-                </td>
-                <td>
-                  {item.buyer || item.supplier || item.building || "Não informado"}
-                  <br />
-                  <span className="table-muted">{[item.supplier, item.building].filter(Boolean).join(" · ")}</span>
-                </td>
-                <td><span className={badgeClass(item)}>{item.late ? "Entrega atrasada" : item.status}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length > 300 && <div className="data-notice purchases-limit"><strong>Lista resumida</strong><span>Exibindo os 300 primeiros registros filtrados para manter a tela rápida. Use a busca para afinar o resultado.</span></div>}
-        {!filtered.length && <div className="empty-state">Nenhum registro de compra encontrado.</div>}
-      </div>
+      <LocalDataList
+        items={filtered}
+        itemLabel="registros de compra"
+        resetKey={`${search}|${kind}|${status}`}
+        emptyMessage="Nenhum registro de compra encontrado."
+        renderItems={(pageItems) => (
+          <div className="card table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Origem</th>
+                  <th>Descrição</th>
+                  <th>Data</th>
+                  <th>Valor / quantidade</th>
+                  <th>Responsável</th>
+                  <th>Situação</th>
+                  <th>Integração</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageItems.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <strong>{item.kindLabel}</strong>
+                      <br />
+                      <span className="table-muted">#{item.code}</span>
+                    </td>
+                    <td>
+                      <strong>{item.title}</strong>
+                      <br />
+                      <span className="table-muted">{item.subtitle}</span>
+                    </td>
+                    <td>{formatOptionalDate(item.date, "Sem data")}</td>
+                    <td>
+                      <strong>{item.amount ? formatCurrency(item.amount) : "Sem valor"}</strong>
+                      <br />
+                      <span className="table-muted">{item.quantity ? `${item.quantity} unidade(s)` : item.kindLabel}</span>
+                    </td>
+                    <td>
+                      {item.buyer || item.supplier || item.building || "Não informado"}
+                      <br />
+                      <span className="table-muted">{[item.supplier, item.building].filter(Boolean).join(" - ")}</span>
+                    </td>
+                    <td><span className={badgeClass(item)}>{item.late ? "Entrega atrasada" : item.status}</span></td>
+                    <td><IntegrationStamp record={item.raw} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      />
     </section>
   );
 }

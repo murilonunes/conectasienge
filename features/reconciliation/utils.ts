@@ -4,6 +4,10 @@ export function movementAmount(item: BankMovement) {
   return item.bankMovementAmount || 0;
 }
 
+export function movementVolume(item: BankMovement) {
+  return Math.abs(movementAmount(item));
+}
+
 export function isReconciled(item: BankMovement) {
   const value = String(item.bankMovementReconcile || "").toLowerCase();
   return value === "s" || value === "sim" || value.includes("concili");
@@ -21,7 +25,7 @@ export function movementDocument(item: BankMovement) {
   return [
     item.documentIdentificationId,
     item.documentIdentificationNumber
-  ].filter(Boolean).join("-") || (item.billId ? `Título #${item.billId}` : `Movimento #${item.bankMovementId || "sem código"}`);
+  ].filter(Boolean).join(" - ") || (item.billId ? `Título #${item.billId}` : `Movimento #${item.bankMovementId || "sem código"}`);
 }
 
 export function reconciliationStatus(item: BankMovement) {

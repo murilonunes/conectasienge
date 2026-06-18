@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { IntegrationStamp } from "@/components/ui/integration-stamp";
+import { LocalDataList } from "@/components/ui/local-data-list";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 type BankMovement = {
@@ -41,6 +43,8 @@ type PayableInstallment = {
   issueDate?: string;
   authorizationStatus?: string;
   payments?: Payment[];
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 const today = new Date().toISOString().slice(0, 10);
@@ -99,8 +103,10 @@ export function AdvancedPayablesSearch() {
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== "") query.set(key, String(value));
     });
+    query.set("paymentStatus", paymentStatus);
     if (forceRefresh) query.set("forceRefresh", "true");
     try {
+      const startedAt = performance.now();
       const response = await fetch(`/api/sienge/payables/search?${query}`);
       const body = await response.json();
       if (!response.ok) {
@@ -108,11 +114,8 @@ export function AdvancedPayablesSearch() {
         throw new Error(details || body.message || "Busca não concluída.");
       }
       setResults(body.data || []);
-      if (body.cacheInfo?.source === "cache") {
-        setCacheStatus(`Resultado carregado do cache de ${new Date(body.cacheInfo.savedAt).toLocaleString("pt-BR")}.`);
-      } else {
-        setCacheStatus(`Resultado atualizado no Sienge em ${new Date(body.cacheInfo?.savedAt || Date.now()).toLocaleString("pt-BR")}.`);
-      }
+      const elapsed = Math.max(0.1, (performance.now() - startedAt) / 1000).toFixed(1);
+      setCacheStatus(`${body.data?.length || 0} parcela(s) encontrada(s) em ${elapsed}s. Dados integrados em ${new Date(body.cacheInfo?.savedAt || Date.now()).toLocaleString("pt-BR")}.`);
       if (body.creditorWarning) setMessage(body.creditorWarning);
       else if (!body.data?.length) setMessage("Nenhuma parcela foi encontrada para os filtros informados.");
     } catch (error) {
@@ -165,7 +168,7 @@ export function AdvancedPayablesSearch() {
         </div>
         <div className="advanced-search-actions">
           <button className="button advanced-search-button" disabled={loading}>{loading ? "Buscando..." : "Buscar contas a pagar"}</button>
-          <button type="button" className="button secondary advanced-search-button" disabled={loading} onClick={() => runSearch(true)}>Pesquisar sem cache</button>
+          <a className="button secondary advanced-search-button" href="/configuracoes">Atualizar dados</a>
         </div>
       </form>
 
@@ -173,45 +176,54 @@ export function AdvancedPayablesSearch() {
       {message && <div className="card data-notice"><strong>Busca avançada</strong><span>{message}</span></div>}
       {results.length > 0 && <>
         <div className="stats advanced-stats">
-          <article className="card stat"><div className="stat-top"><span>Parcelas encontradas</span></div><div className="stat-value">{filtered.length}</div><span className="panel-note">Após filtro local</span></article>
+          <article className="card stat"><div className="stat-top"><span>Parcelas encontradas</span></div><div className="stat-value">{filtered.length}</div><span className="panel-note">Após filtro na tela</span></article>
           <article className="card stat"><div className="stat-top"><span>Valor original</span></div><div className="stat-value">{formatCurrency(totals.original)}</div><span className="panel-note">Total das parcelas</span></article>
           <article className="card stat"><div className="stat-top"><span>Valor pago</span></div><div className="stat-value">{formatCurrency(totals.paid)}</div><span className="panel-note">Baixas retornadas</span></article>
           <article className="card stat"><div className="stat-top"><span>Saldo em aberto</span></div><div className="stat-value">{formatCurrency(totals.balance)}</div><span className="panel-note">Saldo atual</span></article>
         </div>
         <div className="card filters"><input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código" /></div>
-        <div className="advanced-results">
-          {filtered.map((item) => {
-            const key = `${item.billId}-${item.installmentId}`;
-            const payments = item.payments || [];
-            return <article className="card advanced-result" key={key}>
-              <button className="advanced-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
-                <span>
-                  <span className="advanced-title-id">Título #{item.billId}</span>
-                  <strong>{item.documentIdentificationId}-{item.documentNumber}</strong>
-                  <small>Parcela {item.installmentId}</small>
-                  <span className="copy-title-button" role="button" tabIndex={0} onClick={(event) => copyBillId(event, item.billId)} onKeyDown={(event) => { if (event.key === "Enter") copyBillId(event, item.billId); }}>
-                    {copiedBillId === item.billId ? "Copiado" : "Copiar número"}
-                  </span>
-                </span>
-                <span>
-                  <strong>{item.creditorName || `Credor #${item.creditorId}`}</strong>
-                  <small className="advanced-creditor-document">
-                    {item.creditorCnpj ? `CNPJ ${formatTaxId(item.creditorCnpj)}` : item.creditorCpf ? `CPF ${formatTaxId(item.creditorCpf)}` : "CNPJ não informado"}
-                  </small>
-                  <small>{item.companyName || `Empresa #${item.companyId}`}</small>
-                </span>
-                <span><strong>{formatCurrency(item.originalAmount || 0)}</strong><small>Original</small></span>
-                <span><strong>{formatCurrency(item.balanceAmount || 0)}</strong><small>Saldo</small></span>
-                <span className={`badge ${payments.length ? "" : "pending"}`}>{payments.length ? `${payments.length} baixa(s)` : "Sem baixa"}</span>
-                <span className="sales-expand">{expanded === key ? "−" : "+"}</span>
-              </button>
-              {expanded === key && <div className="advanced-result-details">
-                <div className="sales-detail-grid"><div><span>Vencimento</span><strong>{item.dueDate ? formatDate(item.dueDate) : "—"}</strong></div><div><span>Emissão</span><strong>{item.issueDate ? formatDate(item.issueDate) : "—"}</strong></div><div><span>Autorizada</span><strong>{item.authorizationStatus === "S" ? "Sim" : "Não"}</strong></div></div>
-                <div className="payments-list"><h3>Baixas e pagamentos</h3>{payments.length ? payments.map((payment, index) => <div key={`${payment.sequencialNumber}-${index}`}><span>{payment.paymentDate ? formatDate(payment.paymentDate) : "Sem data"}</span><strong>{formatCurrency(payment.netAmount || 0)}</strong><span>{payment.operationTypeName || "Operação não informada"}</span><small>{payment.bankMovements?.length || 0} movimento(s) bancário(s)</small></div>) : <p>Nenhuma baixa retornada para esta parcela.</p>}</div>
-              </div>}
-            </article>;
-          })}
-        </div>
+        <LocalDataList
+          items={filtered}
+          itemLabel="parcelas"
+          resetKey={`${textFilter}|${paymentStatus}|${results.length}`}
+          emptyMessage="Nenhuma parcela encontrada após o filtro."
+          renderItems={(pageItems) => (
+            <div className="advanced-results">
+              {pageItems.map((item) => {
+                const key = `${item.billId}-${item.installmentId}`;
+                const payments = item.payments || [];
+                return <article className="card advanced-result" key={key}>
+                  <button className="advanced-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
+                    <span>
+                      <span className="advanced-title-id">Título #{item.billId}</span>
+                      <strong>{item.documentIdentificationId}-{item.documentNumber}</strong>
+                      <small>Parcela {item.installmentId}</small>
+                      <IntegrationStamp record={item} />
+                      <span className="copy-title-button" role="button" tabIndex={0} onClick={(event) => copyBillId(event, item.billId)} onKeyDown={(event) => { if (event.key === "Enter") copyBillId(event, item.billId); }}>
+                        {copiedBillId === item.billId ? "Copiado" : "Copiar número"}
+                      </span>
+                    </span>
+                    <span>
+                      <strong>{item.creditorName || `Credor #${item.creditorId}`}</strong>
+                      <small className="advanced-creditor-document">
+                        {item.creditorCnpj ? `CNPJ ${formatTaxId(item.creditorCnpj)}` : item.creditorCpf ? `CPF ${formatTaxId(item.creditorCpf)}` : "CNPJ não informado"}
+                      </small>
+                      <small>{item.companyName || `Empresa #${item.companyId}`}</small>
+                    </span>
+                    <span><strong>{formatCurrency(item.originalAmount || 0)}</strong><small>Original</small></span>
+                    <span><strong>{formatCurrency(item.balanceAmount || 0)}</strong><small>Saldo</small></span>
+                    <span className={`badge ${payments.length ? "" : "pending"}`}>{payments.length ? `${payments.length} baixa(s)` : "Sem baixa"}</span>
+                    <span className="sales-expand">{expanded === key ? "-" : "+"}</span>
+                  </button>
+                  {expanded === key && <div className="advanced-result-details">
+                    <div className="sales-detail-grid"><div><span>Vencimento</span><strong>{item.dueDate ? formatDate(item.dueDate) : "-"}</strong></div><div><span>Emissão</span><strong>{item.issueDate ? formatDate(item.issueDate) : "-"}</strong></div><div><span>Autorizada</span><strong>{item.authorizationStatus === "S" ? "Sim" : "Não"}</strong></div></div>
+                    <div className="payments-list"><h3>Baixas e pagamentos</h3>{payments.length ? payments.map((payment, index) => <div key={`${payment.sequencialNumber}-${index}`}><span>{payment.paymentDate ? formatDate(payment.paymentDate) : "Sem data"}</span><strong>{formatCurrency(payment.netAmount || 0)}</strong><span>{payment.operationTypeName || "Operação não informada"}</span><small>{payment.bankMovements?.length || 0} movimento(s) bancário(s)</small></div>) : <p>Nenhuma baixa retornada para esta parcela.</p>}</div>
+                  </div>}
+                </article>;
+              })}
+            </div>
+          )}
+        />
       </>}
     </section>
   );

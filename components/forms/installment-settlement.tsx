@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 type Installment = {
@@ -15,6 +16,8 @@ type Installment = {
   paymentType?: string;
   sentToBank?: boolean;
   batchNumber?: number;
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 type BillDetails = {
@@ -32,6 +35,8 @@ type BillDetails = {
   notes?: string;
   registeredBy?: string;
   registeredDate?: string;
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 type NamedAllocation = { costCenterName?: string; financialCategoryName?: string; buildingName?: string; buildingUnitName?: string; name?: string; percentage?: number; rate?: number };
@@ -97,20 +102,21 @@ export function InstallmentSettlement() {
           <label><span>Código do título no Sienge</span><input required type="number" min="1" value={billId} onChange={(e) => setBillId(e.target.value)} placeholder="Ex.: 1000" /></label>
           <button className="button" disabled={loading}>{loading ? "Consultando..." : "Buscar parcelas"}</button>
         </form>
-        <p>A consulta mostra vencimento, valor e situação atual da parcela.</p>
+        <p>A consulta mostra vencimento, valor, situação atual da parcela e dia da integração.</p>
       </section>
       {message && <div className="card data-notice"><strong>Consulta de parcelas</strong><span>{message}</span></div>}
       {bill && <section className="card bill-overview">
         <div className="bill-overview-head"><div><p className="eyebrow">Título #{bill.id || billId}</p><h2>{bill.documentIdentificationId}-{bill.documentNumber}</h2><span>{bill.notes || "Sem observações cadastradas"}</span></div><div><strong>{formatCurrency(bill.totalInvoiceAmount || 0)}</strong><span>Valor bruto do título</span></div></div>
         <div className="bill-overview-grid">
-          <div><span>Empresa devedora</span><strong>#{bill.debtorId || "—"}</strong></div>
-          <div><span>Credor</span><strong>#{bill.creditorId || "—"}</strong></div>
-          <div><span>Emissão</span><strong>{bill.issueDate ? formatDate(bill.issueDate) : "—"}</strong></div>
-          <div><span>Origem</span><strong>{bill.originId || "—"}</strong></div>
+          <div><span>Empresa devedora</span><strong>#{bill.debtorId || "-"}</strong></div>
+          <div><span>Credor</span><strong>#{bill.creditorId || "-"}</strong></div>
+          <div><span>Emissão</span><strong>{bill.issueDate ? formatDate(bill.issueDate) : "-"}</strong></div>
+          <div><span>Origem</span><strong>{bill.originId || "-"}</strong></div>
           <div><span>Parcelas</span><strong>{bill.installmentsNumber || installments.length}</strong></div>
           <div><span>Desconto</span><strong>{formatCurrency(bill.discount || 0)}</strong></div>
           <div><span>Consistência</span><strong>{bill.status === "S" ? "Completo" : bill.status === "I" ? "Em inclusão" : "Incompleto"}</strong></div>
           <div><span>Anexos</span><strong>{allocations.attachments.length}</strong></div>
+          <div><span>Integração</span><strong><IntegrationStamp record={bill} /></strong></div>
         </div>
         {(allocations.budgetCategories.length > 0 || allocations.buildingsCost.length > 0 || allocations.departmentsCost.length > 0) && <div className="bill-allocations">
           <span>Apropriações vinculadas</span>
@@ -132,6 +138,7 @@ export function InstallmentSettlement() {
               <div><dt>Forma</dt><dd>{installment.paymentType || (installment.paymentTypeId ? `#${installment.paymentTypeId}` : "Não informada")}</dd></div>
               <div><dt>Enviada ao banco</dt><dd>{installment.sentToBank ? "Sim" : "Não"}</dd></div>
               <div><dt>Lote bancário</dt><dd>{installment.batchNumber || "Não gerado"}</dd></div>
+              <div><dt>Integração</dt><dd><IntegrationStamp record={installment} /></dd></div>
             </dl>
             <button className="button secondary" type="button" onClick={() => setSelected(installment.installmentNumber)}>Cadastrar pagamento Pix</button>
           </article>
@@ -148,7 +155,7 @@ export function InstallmentSettlement() {
         </div>
         <div className="pix-actions"><button type="button" className="button secondary" onClick={() => setSelected(undefined)}>Cancelar</button><button className="button" disabled={saving}>{saving ? "Cadastrando..." : "Cadastrar instrução Pix"}</button></div>
       </form>}
-      <div className="card settlement-notice"><strong>O que a API permite</strong><p>É possível cadastrar instruções de pagamento por Pix, transferência, boleto e tributos. A baixa financeira, que marca a parcela como paga e gera o movimento bancário, ainda precisa ser efetivada no Sienge. Os webhooks apenas avisam quando essa baixa ocorreu.</p></div>
+      <div className="card settlement-notice"><strong>Baixa financeira</strong><p>É possível cadastrar instruções de pagamento por Pix, transferência, boleto e tributos. A baixa financeira, que marca a parcela como paga, ainda precisa ser efetivada no Sienge.</p></div>
     </>
   );
 }

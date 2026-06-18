@@ -1,7 +1,11 @@
 import "server-only";
+import { existsSync } from "fs";
+import { DatabaseSync } from "node:sqlite";
+import path from "path";
 import { comprasApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails, type SiengePage } from "@/lib/api/sienge";
 import type { ChartItem } from "@/features/financeiro/sienge-data";
+import type { SiengeIntegrationRange } from "@/lib/settings";
 import type {
   PurchaseFlowItem,
   PurchaseInvoice,
@@ -12,6 +16,33 @@ import type {
 } from "./types";
 
 const LIMIT = 200;
+const dataDir = path.join(process.cwd(), ".sienge-data");
+const purchasesDatabasePath = path.join(dataDir, "purchases.sqlite");
+
+const ENDPOINTS = {
+  orders: "/v1/purchase-orders",
+  invoices: "/v1/purchase-invoices",
+  requests: "/v1/purchase-requests/all/items",
+  quotations: "/bulk-data/v1/purchase-quotations"
+} as const;
+
+const SOURCE_LABELS = {
+  orders: "Pedidos",
+  invoices: "Notas fiscais",
+  requests: "Solicitacoes",
+  quotations: "Cotacoes"
+} as const;
+
+type SourceKey = keyof typeof ENDPOINTS;
+type LocalRows<T> = {
+  totalCount: number;
+  results: T[];
+};
+type SqlRow = {
+  raw_json: string;
+  source_day?: string;
+  saved_at?: string;
+};
 
 export type PurchaseResult = {
   orders: PurchaseOrder[];
@@ -83,6 +114,154 @@ function parseDate(value?: string) {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
+function openDatabase() {
+  const database = new DatabaseSync(purchasesDatabasePath);
+  database.exec("PRAGMA busy_timeout = 8000;");
+  return database;
+}
+
+function tableExists(database: DatabaseSync, table: string) {
+  return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+function ensureIndexes(database: DatabaseSync) {
+  try {
+    database.exec(`
+      CREATE INDEX IF NOT EXISTS idx_sienge_records_endpoint ON sienge_records(endpoint);
+      CREATE INDEX IF NOT EXISTS idx_sienge_records_saved_at ON sienge_records(saved_at);
+    `);
+  } catch {
+    // Reading still works without indexes; it can only be slower on large local bases.
+  }
+}
+
+function localDataError(title: string, explanation: string): SiengeErrorDetails {
+  return {
+    method: "GET",
+    endpoint: "purchases.sqlite",
+    title,
+    explanation,
+    suggestion: "Atualize Compras em Configurações para preencher os dados.",
+    occurredAt: new Date().toISOString()
+  };
+}
+
+function annotate<T>(row: SqlRow): T | undefined {
+  try {
+    return {
+      ...(JSON.parse(row.raw_json) as T & object),
+      __siengeIntegrationDay: row.source_day,
+      __siengeIntegratedAt: row.saved_at
+    } as T;
+  } catch {
+    return undefined;
+  }
+}
+
+function emptySourceStat(key: SourceKey, status: PurchaseSourceStat["status"]): PurchaseSourceStat {
+  return {
+    key,
+    label: SOURCE_LABELS[key],
+    endpoint: ENDPOINTS[key],
+    apiCount: 0,
+    loadedCount: 0,
+    status
+  };
+}
+
+function readEndpoint<T>(database: DatabaseSync, key: SourceKey): LocalRows<T> {
+  const rows = database.prepare(`
+    SELECT raw_json, source_day, saved_at
+    FROM sienge_records
+    WHERE endpoint = ?
+    ORDER BY saved_at DESC
+  `).all(ENDPOINTS[key]) as SqlRow[];
+
+  return {
+    totalCount: rows.length,
+    results: rows.map(annotate<T>).filter((item): item is T => Boolean(item))
+  };
+}
+
+function sourceStat<T>(
+  source: PromiseSettledResult<LocalRows<T>> | LocalRows<T>,
+  key: SourceKey
+): PurchaseSourceStat {
+  if ("status" in source && source.status === "rejected") {
+    return emptySourceStat(key, "error");
+  }
+  const value = "status" in source ? source.value : source;
+  const loadedCount = value.results.length;
+  return {
+    key,
+    label: SOURCE_LABELS[key],
+    endpoint: ENDPOINTS[key],
+    apiCount: value.totalCount,
+    loadedCount,
+    status: value.totalCount === 0 ? "empty" : loadedCount === value.totalCount ? "ok" : "partial"
+  };
+}
+
+function readLocalPurchases(): PurchaseResult {
+  const emptyStats = [
+    emptySourceStat("orders", "error"),
+    emptySourceStat("invoices", "error"),
+    emptySourceStat("requests", "error"),
+    emptySourceStat("quotations", "error")
+  ];
+
+  if (!existsSync(purchasesDatabasePath)) {
+    return {
+      orders: [],
+      invoices: [],
+      requestItems: [],
+      quotations: [],
+      sourceStats: emptyStats,
+      error: localDataError("Compras sem dados carregados", "Os dados de compras ainda não foram atualizados.")
+    };
+  }
+
+  const database = openDatabase();
+  try {
+    if (!tableExists(database, "sienge_records")) {
+      return {
+        orders: [],
+        invoices: [],
+        requestItems: [],
+        quotations: [],
+        sourceStats: emptyStats,
+        error: localDataError("Compras sem registros", "A base de compras ainda não possui dados para exibir.")
+      };
+    }
+
+    ensureIndexes(database);
+
+    const orders = readEndpoint<PurchaseOrder>(database, "orders");
+    const invoices = readEndpoint<PurchaseInvoice>(database, "invoices");
+    const requestItems = readEndpoint<PurchaseRequestItem>(database, "requests");
+    const quotations = readEndpoint<PurchaseQuotation>(database, "quotations");
+    const total = orders.results.length + invoices.results.length + requestItems.results.length + quotations.results.length;
+
+    return {
+      orders: orders.results,
+      invoices: invoices.results,
+      requestItems: requestItems.results,
+      quotations: quotations.results,
+      sourceStats: [
+        sourceStat(orders, "orders"),
+        sourceStat(invoices, "invoices"),
+        sourceStat(requestItems, "requests"),
+        sourceStat(quotations, "quotations")
+      ],
+      ...(total === 0 ? {
+        error: localDataError("Compras sem dados", "Nenhum pedido, nota, solicitação ou cotação foi encontrado.")
+      } : {})
+    };
+  } finally {
+    database.close();
+  }
+}
+
 async function loadAllPages<T>(loadPage: (offset: number) => Promise<SiengePage<T>>) {
   const firstPage = await loadPage(0);
   const totalCount = firstPage.resultSetMetadata?.count ?? firstPage.results.length;
@@ -115,80 +294,57 @@ function purchaseError(error: unknown, endpoint: string, label: string): SiengeE
   return {
     method: "GET",
     endpoint,
-    title: "Não foi possível consultar compras",
+    title: "Não foi possível atualizar compras",
     explanation: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
     suggestion: "Verifique a permissão da área de compras no Sienge.",
     occurredAt: new Date().toISOString()
   };
 }
 
-async function loadOrders(forceRefresh = false) {
+async function loadOrders(forceRefresh = false, forceReplaceFinalized = false) {
   const page = await loadAllPages<PurchaseOrder>((offset) =>
-    comprasApi.purchaseOrders<PurchaseOrder>({ limit: LIMIT, offset }, forceRefresh)
+    comprasApi.purchaseOrders<PurchaseOrder>({ limit: LIMIT, offset }, forceRefresh, forceReplaceFinalized)
   );
   return { totalCount: page.totalCount, results: page.results };
 }
 
-async function loadInvoices(forceRefresh = false) {
+async function loadInvoices(forceRefresh = false, forceReplaceFinalized = false) {
   const page = await loadAllPages<PurchaseInvoice>((offset) =>
-    comprasApi.purchaseInvoices<PurchaseInvoice>({ limit: LIMIT, offset }, forceRefresh)
+    comprasApi.purchaseInvoices<PurchaseInvoice>({ limit: LIMIT, offset }, forceRefresh, forceReplaceFinalized)
   );
   return { totalCount: page.totalCount, results: page.results };
 }
 
-async function loadRequestItems(forceRefresh = false) {
+async function loadRequestItems(forceRefresh = false, forceReplaceFinalized = false) {
   const page = await loadAllPages<PurchaseRequestItem>((offset) =>
-    comprasApi.purchaseRequestItems<PurchaseRequestItem>({ limit: LIMIT, offset }, forceRefresh)
+    comprasApi.purchaseRequestItems<PurchaseRequestItem>({ limit: LIMIT, offset }, forceRefresh, forceReplaceFinalized)
   );
   return { totalCount: page.totalCount, results: page.results };
 }
 
-async function loadQuotations(forceRefresh = false) {
+async function loadQuotations(forceRefresh = false, forceReplaceFinalized = false, range?: SiengeIntegrationRange) {
   const response = await comprasApi.purchaseQuotations<{ data?: PurchaseQuotation[] }>({
-    startDate: "2000-01-01",
-    endDate: todayIso()
-  }, forceRefresh);
+    startDate: range?.startDate || "2000-01-01",
+    endDate: range?.endDate || todayIso()
+  }, forceRefresh, forceReplaceFinalized);
   const results = response.data || [];
   return { totalCount: results.length, results };
 }
 
-function sourceStat<T>(
-  source: PromiseSettledResult<{ totalCount: number; results: T[] }>,
-  key: PurchaseSourceStat["key"],
-  label: string,
-  endpoint: string
-): PurchaseSourceStat {
-  if (source.status === "rejected") {
-    return { key, label, endpoint, apiCount: 0, loadedCount: 0, status: "error" };
-  }
-  const loadedCount = source.value.results.length;
-  return {
-    key,
-    label,
-    endpoint,
-    apiCount: source.value.totalCount,
-    loadedCount,
-    status: source.value.totalCount === 0 ? "empty" : loadedCount === source.value.totalCount ? "ok" : "partial"
-  };
-}
-
-export async function loadPurchases(forceRefresh = false): Promise<PurchaseResult> {
+async function refreshFromSienge(forceReplaceFinalized = false, range?: SiengeIntegrationRange): Promise<PurchaseResult> {
   const sources = await Promise.allSettled([
-    loadOrders(forceRefresh),
-    loadInvoices(forceRefresh),
-    loadRequestItems(forceRefresh),
-    loadQuotations(forceRefresh)
+    loadOrders(true, forceReplaceFinalized),
+    loadInvoices(true, forceReplaceFinalized),
+    loadRequestItems(true, forceReplaceFinalized),
+    loadQuotations(true, forceReplaceFinalized, range)
   ]);
 
-  const endpoints = [
-    "/v1/purchase-orders",
-    "/v1/purchase-invoices",
-    "/v1/purchase-requests/all/items",
-    "/bulk-data/v1/purchase-quotations"
-  ];
-  const labels = ["pedidos de compra", "notas fiscais de compra", "itens de solicitação", "cotações de compra"];
   const failures = sources
-    .map((source, index) => source.status === "rejected" ? purchaseError(source.reason, endpoints[index], labels[index]) : undefined)
+    .map((source, index) => {
+      if (source.status !== "rejected") return undefined;
+      const key = (Object.keys(ENDPOINTS) as SourceKey[])[index];
+      return purchaseError(source.reason, ENDPOINTS[key], SOURCE_LABELS[key].toLowerCase());
+    })
     .filter((item): item is SiengeErrorDetails => Boolean(item));
 
   const orders = sources[0].status === "fulfilled" ? sources[0].value.results as PurchaseOrder[] : [];
@@ -196,10 +352,10 @@ export async function loadPurchases(forceRefresh = false): Promise<PurchaseResul
   const requestItems = sources[2].status === "fulfilled" ? sources[2].value.results as PurchaseRequestItem[] : [];
   const quotations = sources[3].status === "fulfilled" ? sources[3].value.results as PurchaseQuotation[] : [];
   const sourceStats = [
-    sourceStat(sources[0], "orders", "Pedidos", endpoints[0]),
-    sourceStat(sources[1], "invoices", "Notas fiscais", endpoints[1]),
-    sourceStat(sources[2], "requests", "Solicitações", endpoints[2]),
-    sourceStat(sources[3], "quotations", "Cotações", endpoints[3])
+    sourceStat(sources[0], "orders"),
+    sourceStat(sources[1], "invoices"),
+    sourceStat(sources[2], "requests"),
+    sourceStat(sources[3], "quotations")
   ];
 
   if (!orders.length && !invoices.length && !requestItems.length && !quotations.length && failures.length) {
@@ -212,8 +368,13 @@ export async function loadPurchases(forceRefresh = false): Promise<PurchaseResul
     requestItems,
     quotations,
     sourceStats,
-    warning: failures.length ? "Algumas informações não carregaram. A visão abaixo considera apenas o que foi retornado." : undefined
+    warning: failures.length ? "Algumas informações não foram atualizadas. A visão considera apenas o que foi carregado." : undefined
   };
+}
+
+export async function loadPurchases(forceRefresh = false, forceReplaceFinalized = false, range?: SiengeIntegrationRange): Promise<PurchaseResult> {
+  if (!forceRefresh) return readLocalPurchases();
+  return refreshFromSienge(forceReplaceFinalized, range);
 }
 
 function orderStatusLabel(status?: string) {
@@ -229,7 +390,7 @@ function orderStatusLabel(status?: string) {
 function requestStatus(item: PurchaseRequestItem) {
   if (item.disapproved) return "Reprovada";
   if (item.authorized) return "Autorizada";
-  return "Pendente de autorização";
+  return "Pendente de autorizacao";
 }
 
 function quotationAmount(quotation: PurchaseQuotation) {
@@ -267,7 +428,7 @@ function orderToFlow(order: PurchaseOrder): PurchaseFlowItem {
     kindLabel: "Pedido",
     code: order.formattedPurchaseOrderId || String(order.id),
     title: order.notes || order.internalNotes || `Pedido de compra #${order.formattedPurchaseOrderId || order.id}`,
-    subtitle: `Fornecedor ${order.supplierId || "não informado"} · Obra ${order.buildingId || "não informada"}`,
+    subtitle: `Fornecedor ${order.supplierId || "não informado"} - Obra ${order.buildingId || "não informada"}`,
     date: order.date,
     amount: order.totalAmount || 0,
     status: orderStatusLabel(order.status),
@@ -287,10 +448,10 @@ function invoiceToFlow(invoice: PurchaseInvoice): PurchaseFlowItem {
     kindLabel: "Nota fiscal",
     code: String(invoice.sequentialNumber),
     title: [invoice.documentId, invoice.number, invoice.series].filter(Boolean).join(" ") || `Nota fiscal #${invoice.sequentialNumber}`,
-    subtitle: `Fornecedor ${invoice.supplierId || "não informado"} · Empresa ${invoice.companyId || "não informada"}`,
+    subtitle: `Fornecedor ${invoice.supplierId || "não informado"} - Empresa ${invoice.companyId || "não informada"}`,
     date: invoice.issueDate || invoice.movementDate,
     amount: 0,
-    status: invoice.consistency === "S" ? "Consistente" : invoice.consistency === "I" ? "Em inclusão" : invoice.consistency || "Registrada",
+    status: invoice.consistency === "S" ? "Consistente" : invoice.consistency === "I" ? "Em inclusao" : invoice.consistency || "Registrada",
     pending: invoice.consistency !== "S",
     supplier: invoice.supplierId ? `Fornecedor #${invoice.supplierId}` : undefined,
     raw: invoice
@@ -302,14 +463,14 @@ function requestToFlow(item: PurchaseRequestItem): PurchaseFlowItem {
   return {
     id: `request-${item.purchaseRequestId}-${item.itemNumber}`,
     kind: "request",
-    kindLabel: "Solicitação",
+    kindLabel: "Solicitacao",
     code: `${item.purchaseRequestId}.${item.itemNumber}`,
     title: item.productDescription || `Item ${item.productId || item.itemNumber}`,
     subtitle: item.detailDescription || item.notes || "Sem detalhe informado",
     quantity: item.quantity,
     amount: 0,
     status,
-    pending: status === "Pendente de autorização",
+    pending: status === "Pendente de autorizacao",
     raw: item
   };
 }
@@ -324,14 +485,14 @@ function quotationToFlow(quotation: PurchaseQuotation): PurchaseFlowItem {
   return {
     id: `quotation-${quotation.purchaseQuotationId}`,
     kind: "quotation",
-    kindLabel: "Cotação",
+    kindLabel: "Cotacao",
     code: String(quotation.purchaseQuotationId),
-    title: quotation.notes || `Cotação #${quotation.purchaseQuotationId}`,
-    subtitle: `${itemCount} item(ns) · ${supplierCount} fornecedor(es)`,
+    title: quotation.notes || `Cotacao #${quotation.purchaseQuotationId}`,
+    subtitle: `${itemCount} item(ns) - ${supplierCount} fornecedor(es)`,
     date: quotation.purchaseQuotationDate || quotation.registeredDate,
     futureDate: quotation.responseDeadline,
     amount,
-    status: selected ? "Opção selecionada" : "Em cotação",
+    status: selected ? "Opcao selecionada" : "Em cotacao",
     pending: !selected,
     buyer: quotation.buyerId,
     raw: quotation
@@ -366,10 +527,10 @@ function buildPeriods(flow: PurchaseFlowItem[]): PurchasePeriodSummary[] {
   const previous = previousMonthRange(today);
 
   return [
-    periodSummary("last12", "Últimos 12 meses", "Movimento geral do período", flow.filter((item) => inRange(parseDate(item.date), last12Start, today))),
-    periodSummary("last6", "Últimos 6 meses", "Recorte mais recente", flow.filter((item) => inRange(parseDate(item.date), last6Start, today))),
-    periodSummary("previousMonth", "Mês anterior", "Movimento fechado do mês passado", flow.filter((item) => inRange(parseDate(item.date), previous.start, previous.end))),
-    periodSummary("future", "Futuro", "Prazos e registros à frente", flow.filter((item) => {
+    periodSummary("last12", "Ultimos 12 meses", "Movimento geral", flow.filter((item) => inRange(parseDate(item.date), last12Start, today))),
+    periodSummary("last6", "Ultimos 6 meses", "Recorte recente", flow.filter((item) => inRange(parseDate(item.date), last6Start, today))),
+    periodSummary("previousMonth", "Mês anterior", "Mês fechado", flow.filter((item) => inRange(parseDate(item.date), previous.start, previous.end))),
+    periodSummary("future", "Futuro", "Prazos futuros", flow.filter((item) => {
       const mainDate = parseDate(item.date);
       const futureDate = parseDate(item.futureDate);
       return Boolean((mainDate && mainDate > today) || (futureDate && futureDate > today));
@@ -388,8 +549,8 @@ function stageSummary(label: string, items: PurchaseFlowItem[]): PurchaseStageSu
 
 function buildStages(flow: PurchaseFlowItem[]): PurchaseStageSummary[] {
   return [
-    stageSummary("Solicitações", flow.filter((item) => item.kind === "request")),
-    stageSummary("Cotações", flow.filter((item) => item.kind === "quotation")),
+    stageSummary("Solicitacoes", flow.filter((item) => item.kind === "request")),
+    stageSummary("Cotacoes", flow.filter((item) => item.kind === "quotation")),
     stageSummary("Pedidos", flow.filter((item) => item.kind === "order")),
     stageSummary("Notas fiscais", flow.filter((item) => item.kind === "invoice"))
   ];
@@ -404,13 +565,12 @@ export function analyzePurchases(result: PurchaseResult): PurchaseSummary {
   ].sort((left, right) => dateOrder(right.date) - dateOrder(left.date));
 
   const pendingItems = flow.filter((item) => item.pending);
-  const purchasedAmount = result.orders
-    .filter((order) => order.status !== "CANCELED")
-    .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const validOrders = result.orders.filter((order) => order.status !== "CANCELED");
+  const purchasedAmount = validOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
   const monthlyMap = new Map<string, ChartItem & { order: number }>();
-  result.orders.forEach((order) => {
-    if (!order.date || order.status === "CANCELED") return;
+  validOrders.forEach((order) => {
+    if (!order.date) return;
     const date = parseDate(order.date);
     if (!date) return;
     const label = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit" }).format(date);
@@ -424,7 +584,7 @@ export function analyzePurchases(result: PurchaseResult): PurchaseSummary {
     pendingCount: pendingItems.length,
     pendingAmount: pendingItems.reduce((sum, item) => sum + item.amount, 0),
     purchasedAmount,
-    purchasedCount: result.orders.filter((order) => order.status !== "CANCELED").length,
+    purchasedCount: validOrders.length,
     requestCount: result.requestItems.length,
     orderCount: result.orders.length,
     invoiceCount: result.invoices.length,

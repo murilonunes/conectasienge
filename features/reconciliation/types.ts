@@ -31,6 +31,8 @@ export type BankMovement = {
   financialCategories?: unknown[];
   departamentCosts?: unknown[];
   buldingCosts?: unknown[];
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 export type ReconciliationSummary = {
@@ -42,4 +44,24 @@ export type ReconciliationSummary = {
   detachedCount: number;
   linkedCount: number;
   byAccount: { label: string; value: number; count: number }[];
+  monthly: ReconciliationMonthlySummary[];
+};
+
+export type ReconciliationMonthlySummary = {
+  key: string;
+  label: string;
+  totalAmount: number;
+  totalCount: number;
+  reconciledAmount: number;
+  reconciledCount: number;
+  unreconciledAmount: number;
+  unreconciledCount: number;
+  linkedCount: number;
+  detachedCount: number;
+};
+
+export type ReconciliationAccountOption = {
+  accountNumber: string;
+  label: string;
+  count: number;
 };

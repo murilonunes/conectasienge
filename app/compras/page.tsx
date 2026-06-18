@@ -14,7 +14,7 @@ export default async function PurchasesPage() {
       <PageHeading
         eyebrow="Portal de compras"
         title="Compras"
-        subtitle="Acompanhe o que está pendente, o que já foi feito e o comportamento das compras por período."
+        subtitle="Acompanhe pendências, compras realizadas, solicitações e pedidos a partir dos dados integrados."
       />
 
       {result.error ? (

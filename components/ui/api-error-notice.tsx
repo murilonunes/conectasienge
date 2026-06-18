@@ -15,12 +15,12 @@ export function ApiErrorNotice({ error }: { error: SiengeErrorDetails }) {
         <span>{error.suggestion}</span>
       </div>
       <details>
-        <summary>Ver detalhes técnicos</summary>
+        <summary>Ver detalhes do erro</summary>
         <dl className="api-error-details">
-          <div><dt>Requisição</dt><dd>{error.method} {error.endpoint}</dd></div>
+          <div><dt>Consulta técnica</dt><dd>{error.method} {error.endpoint}</dd></div>
           <div><dt>Status</dt><dd>{error.status ? `${error.status} ${error.statusText || ""}` : "Sem resposta HTTP"}</dd></div>
-          {error.apiMessage && <div><dt>Resposta da API</dt><dd>{error.apiMessage}</dd></div>}
-          {error.requestId && <div><dt>ID da requisição</dt><dd>{error.requestId}</dd></div>}
+          {error.apiMessage && <div><dt>Resposta do Sienge</dt><dd>{error.apiMessage}</dd></div>}
+          {error.requestId && <div><dt>ID da consulta</dt><dd>{error.requestId}</dd></div>}
           <div><dt>Horário</dt><dd>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" }).format(new Date(error.occurredAt))}</dd></div>
         </dl>
       </details>

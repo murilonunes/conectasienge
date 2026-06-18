@@ -4,11 +4,13 @@ import type { ChartItem } from "@/features/financeiro/sienge-data";
 export function MonthlyVolumeChart({
   data,
   title = "Volume emitido por mês",
-  note = "Valor bruto dos títulos retornados pela API"
+  note = "Valor bruto dos títulos carregados",
+  countLabel = "título"
 }: {
   data: ChartItem[];
   title?: string;
   note?: string;
+  countLabel?: string;
 }) {
   const max = Math.max(...data.map((item) => item.value), 1);
   return (
@@ -18,13 +20,17 @@ export function MonthlyVolumeChart({
       </div>
       {data.length ? (
         <div className="monthly-chart">
-          {data.map((item) => (
-            <div className="monthly-column" key={item.label} title={`${item.label}: ${formatCompactCurrency(item.value)} em ${item.count} títulos`}>
-              <span>{formatCompactCurrency(item.value)}</span>
-              <div className="monthly-track"><i style={{ height: `${Math.max(4, (item.value / max) * 100)}%` }} /></div>
-              <strong>{item.label}</strong>
-            </div>
-          ))}
+          {data.map((item) => {
+            const countText = `${item.count} ${countLabel}${item.count === 1 ? "" : "s"}`;
+            return (
+              <div className="monthly-column" key={item.label} title={`${item.label}: ${formatCompactCurrency(item.value)} em ${countText}`}>
+                <span>{formatCompactCurrency(item.value)}</span>
+                <small>{countText}</small>
+                <div className="monthly-track"><i style={{ height: `${Math.max(4, (item.value / max) * 100)}%` }} /></div>
+                <strong>{item.label}</strong>
+              </div>
+            );
+          })}
         </div>
       ) : <div className="chart-empty">Sem dados para montar o gráfico.</div>}
     </section>

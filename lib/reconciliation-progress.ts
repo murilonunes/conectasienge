@@ -24,7 +24,7 @@ function idleProgress(id = "default"): ReconciliationProgress {
     id,
     active: false,
     stage: "idle",
-    message: "Nenhuma carga de conciliação em andamento."
+    message: "Nenhuma leitura de conciliação em andamento."
   };
 }
 
@@ -41,7 +41,7 @@ export function startReconciliationProgress(id: string = randomUUID()) {
     startedAt: now,
     updatedAt: now,
     stage: "start",
-    message: "Iniciando carga de conciliação."
+    message: "Iniciando leitura de conciliação."
   };
   save(progress);
   return id;
@@ -58,7 +58,7 @@ export function updateReconciliationProgress(id: string, update: Omit<Partial<Re
   });
 }
 
-export function completeReconciliationProgress(id: string, message = "Carga de conciliação concluída.") {
+export function completeReconciliationProgress(id: string, message = "Leitura de conciliação concluída.") {
   const now = new Date().toISOString();
   const previous = getReconciliationProgress(id);
   save({

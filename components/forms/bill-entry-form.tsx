@@ -99,9 +99,9 @@ export function BillEntryForm() {
         <p className="eyebrow">{reviewing ? "Revisão final" : "Resumo"}</p>
         <h2>{formatCurrency(netAmount)}</h2>
         <dl>
-          <div><dt>Documento</dt><dd>{data.documentIdentificationId}-{data.documentNumber || "—"}</dd></div>
-          <div><dt>Credor</dt><dd>#{data.creditorId || "—"}</dd></div>
-          <div><dt>Vencimento</dt><dd>{data.dueDate ? formatDate(data.dueDate) : "—"}</dd></div>
+          <div><dt>Documento</dt><dd>{data.documentIdentificationId}-{data.documentNumber || "-"}</dd></div>
+          <div><dt>Credor</dt><dd>#{data.creditorId || "-"}</dd></div>
+          <div><dt>Vencimento</dt><dd>{data.dueDate ? formatDate(data.dueDate) : "-"}</dd></div>
           <div><dt>Parcelas</dt><dd>{data.installmentsNumber}</dd></div>
         </dl>
         {reviewing && <div className="operation-warning"><strong>Ação real</strong><span>Ao confirmar, um título será criado no Sienge.</span></div>}

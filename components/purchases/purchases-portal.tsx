@@ -33,8 +33,8 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
 
           <div className="stats">
             <StatCard label="Pendente" value={String(summary.pendingCount)} delta={formatCompactCurrency(summary.pendingAmount)} warn={summary.pendingCount > 0} icon="!" />
-            <StatCard label="Feito" value={`${donePercent}%`} delta={`${doneCount} registros concluídos`} icon="✓" />
-            <StatCard label="Comprado" value={formatCompactCurrency(summary.purchasedAmount)} delta={`${summary.purchasedCount} pedidos não cancelados`} icon="R$" />
+            <StatCard label="Feito" value={`${donePercent}%`} delta={`${doneCount} registros concluídos`} icon="OK" />
+            <StatCard label="Comprado" value={formatCompactCurrency(summary.purchasedAmount)} delta={`${summary.purchasedCount} pedidos válidos`} icon="R$" />
             <StatCard label="Futuro" value={String(future?.count || 0)} delta={formatCompactCurrency(future?.amount || 0)} warn={(future?.pendingCount || 0) > 0} icon=">" />
           </div>
 
@@ -47,9 +47,9 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
                 </div>
                 <strong>{formatCompactCurrency(period.amount)}</strong>
                 <div className="purchase-period-meta">
-                  <span>{period.count} registro(s)</span>
-                  <span>{period.pendingCount} pendente(s)</span>
-                  <span>{period.doneCount} feito(s)</span>
+                  <span>{period.count} registros</span>
+                  <span>{period.pendingCount} pendentes</span>
+                  <span>{period.doneCount} feitos</span>
                 </div>
               </article>
             ))}
@@ -59,7 +59,7 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
             <div className="panel-head">
               <div>
                 <h2 className="panel-title">Andamento das compras</h2>
-                <span className="panel-note">O que ainda está pendente e o que já foi feito em cada etapa</span>
+                <span className="panel-note">O que está pendente e o que já foi concluído em cada etapa</span>
               </div>
             </div>
             <div className="purchase-stage-grid">
@@ -69,7 +69,7 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
                   <div key={stage.label}>
                     <div><strong>{stage.label}</strong><span>{stage.total} total</span></div>
                     <div className="ranking-track"><i style={{ width: `${Math.max(4, percent)}%` }} /></div>
-                    <small>{stage.done} feito(s) · {stage.pending} pendente(s)</small>
+                    <small>{stage.done} feitos - {stage.pending} pendentes</small>
                   </div>
                 );
               })}
@@ -80,9 +80,9 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
             <MonthlyVolumeChart
               data={summary.monthlyPurchased}
               title="Comprado por mês"
-              note="Valor dos pedidos de compra por mês"
+              note="Valor e quantidade dos pedidos de compra por mês"
             />
-            <RankingChart title="Onde está pendente" note="Quantidade por situação" data={summary.byStatus} />
+            <RankingChart title="Onde está pendente" note="Quantidade por situação" data={summary.byStatus} countLabel="registro" />
           </div>
 
           <div className="grid-main equal-grid">
@@ -90,8 +90,7 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
             <section className="card methodology">
               <strong>Leitura rápida</strong>
               <p>
-                Use esta aba para entender o que está em aberto, o que já andou e como o volume de compras se comportou nos períodos principais.
-                A lista completa ficou separada na aba Registros.
+                Esta visão separa pendências, pedidos realizados e próximos compromissos. A lista completa fica na aba Registros, com a data da integração de cada item.
               </p>
             </section>
           </div>

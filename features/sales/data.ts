@@ -9,14 +9,14 @@ export type SalesResult = {
   error?: SiengeErrorDetails;
 };
 
-export async function loadSalesContracts(): Promise<SalesResult> {
+export async function loadSalesContracts(forceRefresh = false, forceReplaceFinalized = false): Promise<SalesResult> {
   try {
     const limit = 200;
-    const response = await contratosApi.sales<SalesContract>({ limit, offset: 0 });
+    const response = await contratosApi.sales<SalesContract>({ limit, offset: 0 }, forceRefresh, forceReplaceFinalized);
     const totalCount = response.resultSetMetadata?.count ?? response.results.length;
     const remainingPages = Math.max(0, Math.ceil(totalCount / limit) - 1);
     const additionalResponses = await Promise.all(Array.from({ length: remainingPages }, (_, index) =>
-      contratosApi.sales<SalesContract>({ limit, offset: (index + 1) * limit })
+      contratosApi.sales<SalesContract>({ limit, offset: (index + 1) * limit }, forceRefresh, forceReplaceFinalized)
     ));
     const contracts = [
       ...(response.results || []),
@@ -37,14 +37,14 @@ export async function loadSalesContracts(): Promise<SalesResult> {
           ? "O Sienge reconheceu a autenticação, mas bloqueou o acesso aos contratos de vendas."
           : details.explanation,
         suggestion: details.status === 403
-          ? "No Painel de Integrações do Sienge, libere a API de Contratos de Vendas para esta credencial."
+          ? "No Painel de Integrações do Sienge, libere Contratos de Vendas para esta credencial."
           : details.suggestion
       } : {
         method: "GET",
         endpoint: "/v1/sales-contracts",
         title: "Não foi possível consultar contratos de vendas",
         explanation: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-        suggestion: "Verifique a permissão da API de Contratos de Vendas no Sienge.",
+        suggestion: "Verifique a permissão de Contratos de Vendas no Sienge.",
         occurredAt: new Date().toISOString()
       }
     };

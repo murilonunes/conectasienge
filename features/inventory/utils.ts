@@ -84,7 +84,7 @@ export function assetTitle(asset: InventoryAsset) {
 
 export function assetSubtitle(asset: InventoryAsset) {
   if (asset.kind === "unit") {
-    return `${asset.propertyType || "Tipo não informado"} · Empreendimento #${asset.enterpriseId || "—"}`;
+    return `${asset.propertyType || "Tipo não informado"} - Empreendimento #${asset.enterpriseId || "-"}`;
   }
 
   const pieces = [
@@ -92,7 +92,7 @@ export function assetSubtitle(asset: InventoryAsset) {
     asset.costCenter ? `Centro ${asset.costCenter}` : undefined,
     asset.preservation
   ].filter(Boolean);
-  return pieces.join(" · ") || "Detalhes não informados";
+  return pieces.join(" - ") || "Detalhes não informados";
 }
 
 export function assetLocation(asset: InventoryAsset) {

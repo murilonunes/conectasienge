@@ -57,7 +57,7 @@ function inventoryError(error: unknown, endpoint: string, label: string): Sienge
         ? `O Sienge reconheceu a autenticação, mas bloqueou o acesso a ${label}.`
         : error.details.explanation,
       suggestion: isPermissionError
-        ? `No Painel de Integrações do Sienge, libere o endpoint ${endpoint} para esta credencial.`
+        ? `No Painel de Integrações do Sienge, libere ${label} para esta credencial.`
         : error.details.suggestion
     };
   }
@@ -67,14 +67,14 @@ function inventoryError(error: unknown, endpoint: string, label: string): Sienge
     endpoint,
     title: "Não foi possível consultar bens em estoque",
     explanation: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
-    suggestion: `Verifique a permissão do endpoint ${endpoint} no Sienge.`,
+    suggestion: `Verifique a permissão de ${label} no Sienge.`,
     occurredAt: new Date().toISOString()
   };
 }
 
-async function loadUnits(forceRefresh = false) {
+async function loadUnits(forceRefresh = false, forceReplaceFinalized = false) {
   const page = await loadAllPages<RawInventoryUnit>((offset) =>
-    estoqueApi.units<RawInventoryUnit>({ limit: LIMIT, offset, additionalData: "ALL" }, forceRefresh)
+    estoqueApi.units<RawInventoryUnit>({ limit: LIMIT, offset, additionalData: "ALL" }, forceRefresh, forceReplaceFinalized)
   );
   return {
     totalCount: page.totalCount,
@@ -82,9 +82,9 @@ async function loadUnits(forceRefresh = false) {
   };
 }
 
-async function loadMovable(forceRefresh = false) {
+async function loadMovable(forceRefresh = false, forceReplaceFinalized = false) {
   const page = await loadAllPages<RawPatrimonyAsset>((offset) =>
-    estoqueApi.movable<RawPatrimonyAsset>({ limit: LIMIT, offset }, forceRefresh)
+    estoqueApi.movable<RawPatrimonyAsset>({ limit: LIMIT, offset }, forceRefresh, forceReplaceFinalized)
   );
   return {
     totalCount: page.totalCount,
@@ -92,9 +92,9 @@ async function loadMovable(forceRefresh = false) {
   };
 }
 
-async function loadFixed(forceRefresh = false) {
+async function loadFixed(forceRefresh = false, forceReplaceFinalized = false) {
   const page = await loadAllPages<RawPatrimonyAsset>((offset) =>
-    estoqueApi.fixed<RawPatrimonyAsset>({ limit: LIMIT, offset }, forceRefresh)
+    estoqueApi.fixed<RawPatrimonyAsset>({ limit: LIMIT, offset }, forceRefresh, forceReplaceFinalized)
   );
   return {
     totalCount: page.totalCount,
@@ -118,11 +118,11 @@ function sourceStat(source: PromiseSettledResult<{ totalCount: number; assets: I
   };
 }
 
-export async function loadInventoryAssets(forceRefresh = false): Promise<InventoryResult> {
+export async function loadInventoryAssets(forceRefresh = false, forceReplaceFinalized = false): Promise<InventoryResult> {
   const sources = await Promise.allSettled([
-    loadUnits(forceRefresh),
-    loadMovable(forceRefresh),
-    loadFixed(forceRefresh)
+    loadUnits(forceRefresh, forceReplaceFinalized),
+    loadMovable(forceRefresh, forceReplaceFinalized),
+    loadFixed(forceRefresh, forceReplaceFinalized)
   ]);
 
   const labels = ["unidades imobiliárias", "bens móveis", "bens imóveis"];
@@ -143,7 +143,7 @@ export async function loadInventoryAssets(forceRefresh = false): Promise<Invento
   }
 
   const warning = failures.length
-    ? `Algumas consultas não carregaram: ${failures.map((failure) => `${failure.endpoint} (${failure.status || "erro"})`).join(", ")}.`
+    ? `Algumas consultas de estoque não carregaram. Verifique as permissões e tente atualizar novamente.`
     : undefined;
 
   const assets = loaded.sort((left, right) => {

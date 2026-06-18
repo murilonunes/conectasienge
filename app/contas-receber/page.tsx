@@ -18,7 +18,7 @@ export default async function ContasReceberPage() {
       <PageHeading
         eyebrow="Previsão financeira"
         title="Contas a receber"
-        subtitle="Previsão do que a empresa tem para receber, usando parcelas abertas do Sienge por data de vencimento."
+        subtitle="Previsão do que a empresa tem para receber, usando parcelas abertas por data de vencimento."
       />
 
       <div className="stats">
@@ -33,10 +33,10 @@ export default async function ContasReceberPage() {
       {!forecast.error && (
         <>
           <section className="card data-notice">
-            <strong>Consulta usada</strong>
+            <strong>Dados carregados</strong>
             <span>
-              Leitura diária em cache de {forecast.loadedFrom}, de {forecast.range.startDate} até {forecast.range.endDate}, por vencimento da parcela.
-              Os dados também são gravados no SQLite para formar a base paralela local.
+              Leitura de {forecast.range.startDate} até {forecast.range.endDate}, por vencimento da parcela.
+              Para trazer dados novos, use a atualização em Configurações.
             </span>
           </section>
 
@@ -45,24 +45,27 @@ export default async function ContasReceberPage() {
               data={analytics.monthly}
               title="Previsão por mês"
               note="Valor em aberto das parcelas a receber agrupado pelo vencimento"
+              countLabel="parcela"
             />
             <RankingChart
               title="Maiores clientes a receber"
               note="Clientes com maior saldo aberto no período carregado"
               data={analytics.clients}
+              countLabel="parcela"
             />
           </div>
 
           <div className="grid-main equal-grid">
             <RankingChart
               title="Origem dos recebimentos"
-              note="Módulos que geraram as parcelas abertas"
+              note="Áreas que geraram as parcelas abertas"
               data={analytics.origins}
+              countLabel="parcela"
             />
             <section className="card methodology">
               <strong>Como a previsão é calculada</strong>
               <p>
-                A tela busca parcelas pelo vencimento no bulk de recebimentos. O valor previsto usa o saldo corrigido quando o Sienge retorna esse campo;
+                A tela considera parcelas abertas por vencimento. O valor previsto usa o saldo corrigido quando disponível;
                 se ele não vier, usa o saldo em aberto e, por último, o valor original. Parcelas com saldo zero ficam fora da previsão.
               </p>
             </section>

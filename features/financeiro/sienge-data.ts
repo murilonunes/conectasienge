@@ -1,6 +1,7 @@
 import "server-only";
 import { contasPagarApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails } from "@/lib/api/sienge";
+import type { SiengeIntegrationRange } from "@/lib/settings";
 import type { FinancialEntry, EntryStatus } from "./types";
 
 type SiengeBill = {
@@ -13,6 +14,8 @@ type SiengeBill = {
   notes?: string;
   originId?: string;
   status?: "S" | "N" | "I";
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
 };
 
 export type PayablesResult = {
@@ -45,7 +48,8 @@ const statusLabels: Record<NonNullable<SiengeBill["status"]>, EntryStatus> = {
   I: "Em inclusão"
 };
 
-function dateRange() {
+function dateRange(range?: SiengeIntegrationRange) {
+  if (range) return range;
   const end = new Date();
   const start = new Date(end);
   start.setFullYear(start.getFullYear() - 1);
@@ -53,9 +57,9 @@ function dateRange() {
   return { startDate: iso(start), endDate: iso(end) };
 }
 
-export async function loadPayables(): Promise<PayablesResult> {
+export async function loadPayables(forceRefresh = false, forceReplaceFinalized = false, range?: SiengeIntegrationRange): Promise<PayablesResult> {
   try {
-    const response = await contasPagarApi.list<SiengeBill>({ ...dateRange(), limit: 200, offset: 0 });
+    const response = await contasPagarApi.list<SiengeBill>({ ...dateRange(range), limit: 200, offset: 0 }, forceRefresh, forceReplaceFinalized);
     return {
       totalCount: response.resultSetMetadata?.count ?? response.results.length,
       entries: response.results.map((bill) => ({
@@ -67,7 +71,9 @@ export async function loadPayables(): Promise<PayablesResult> {
         amount: bill.totalInvoiceAmount || 0,
         status: bill.status ? statusLabels[bill.status] : "Incompleto",
         kind: "payable",
-        originId: bill.originId
+        originId: bill.originId,
+        __siengeIntegrationDay: bill.__siengeIntegrationDay,
+        __siengeIntegratedAt: bill.__siengeIntegratedAt
       }))
     };
   } catch (error) {

@@ -20,7 +20,7 @@ export default async function SalesPage() {
         <StatCard label="Valor da carteira" value={formatCompactCurrency(summary.totalValue)} delta="Valor total de venda da amostra" icon="R$" />
         <StatCard label="Saldo em aberto" value={formatCompactCurrency(summary.outstandingBalance)} delta="Somado das condições de pagamento" warn icon="↗" />
         <StatCard label="Valor pago" value={formatCompactCurrency(summary.amountPaid)} delta="Informado nas condições de pagamento" icon="✓" />
-        <StatCard label="Ticket médio" value={formatCurrency(summary.averageValue)} delta={`${summary.activeCount} contratos não cancelados`} icon="Ø" />
+        <StatCard label="Ticket médio" value={formatCurrency(summary.averageValue)} delta={`${summary.activeCount} contratos não cancelados`} icon="TM" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
         <MonthlySalesChart data={summary.monthlySales} />
