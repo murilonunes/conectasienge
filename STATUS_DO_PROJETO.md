@@ -26,6 +26,24 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Existe um commit principal ja feito: `3d1a69e feat: build Sienge finance portals`.
 - Depois desse commit, o dashboard inicial geral foi melhorado e ainda esta como alteracao local pendente de commit.
 
+## Padrao atual do projeto
+
+- Telas comuns nao devem consultar o Sienge ao abrir.
+- Toda tela operacional deve ler os dados salvos no SQLite local.
+- A consulta ao Sienge deve ficar concentrada em `/configuracoes`, nos botoes de atualizacao.
+- Quando uma tela nao encontrar dado local, deve orientar o usuario a atualizar a area em Configuracoes.
+- Atualizacao normal deve preservar dados pagos, baixados, recebidos, cancelados ou finalizados quando forem identificados.
+- Atualizacao com forca pode substituir tambem dados finalizados.
+- Toda lista exibida ao usuario deve mostrar a data de integracao com o Sienge quando o registro tiver essa informacao.
+- Listas grandes devem usar o componente padrao de listagem local com paginacao inicial de 100 registros e opcao de troca.
+- Textos visiveis fora de Configuracoes devem ser comerciais e claros, evitando termos tecnicos como endpoint, bulk, SQLite e detalhes internos.
+- Configuracoes pode concentrar linguagem mais administrativa, historico de integracao, periodo de atualizacao, tamanho dos bancos e acoes de carga.
+- Dashboard abre por padrao em 7 dias e permite trocar periodo e passado/futuro na propria tela.
+- Graficos de periodo devem agrupar por dia em recortes curtos, por semana em 60/90 dias e por mes em recortes maiores.
+- `.env`, bancos SQLite, cache, builds, `node_modules` e arquivos temporarios nao devem entrar no Git.
+- Ao terminar uma etapa completa e validada, deve ser feito um commit pequeno e descritivo.
+- Antes de fechar etapa com codigo relevante, validar com `npm run build` e/ou `npx tsc --noEmit --incremental false`.
+
 ## Banco local e espelho do Sienge
 
 - Foi criado um modelo de armazenamento local em SQLite para reduzir chamadas repetidas na API do Sienge.
