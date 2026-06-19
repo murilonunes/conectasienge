@@ -48,8 +48,10 @@ function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+type RunnableArea = Exclude<UpdateArea, "all" | "reports">;
+
 function stepsFor(area: UpdateArea): SiengeUpdateJobStep[] {
-  const keys: Array<{ key: Exclude<UpdateArea, "all">; label: string }> = [
+  const keys: Array<{ key: RunnableArea; label: string }> = [
     { key: "payables", label: "Contas a pagar" },
     { key: "receivables", label: "Contas a receber" },
     { key: "sales", label: "Vendas" },
@@ -59,7 +61,7 @@ function stepsFor(area: UpdateArea): SiengeUpdateJobStep[] {
     { key: "reconciliation", label: "Conciliação" }
   ];
   return keys
-    .filter((item) => area === "all" || item.key === area)
+    .filter((item) => area === "all" || (area === "reports" && item.key !== "reconciliation") || item.key === area)
     .map((item) => ({
       key: item.key,
       label: item.label,
@@ -81,7 +83,7 @@ function updateStep(job: SiengeUpdateJob, key: string, status: SiengeUpdateJobSt
   if (status === "completed" || status === "failed") step.finishedAt = now();
 }
 
-async function runStep(job: SiengeUpdateJob, key: Exclude<UpdateArea, "all">, task: () => Promise<unknown>) {
+async function runStep(job: SiengeUpdateJob, key: RunnableArea, task: () => Promise<unknown>) {
   updateStep(job, key, "running", "Consultando o Sienge e gravando os dados salvos.");
   job.message = `Atualizando ${updateAreaLabel(key)}.`;
   try {
@@ -98,25 +100,25 @@ async function runSiengeUpdateJob(job: SiengeUpdateJob) {
   const integrationRange = getSiengeIntegrationRange();
   const force = job.force;
   try {
-    if (job.area === "payables" || job.area === "all") {
+    if (job.area === "payables" || job.area === "all" || job.area === "reports") {
       await runStep(job, "payables", () => Promise.allSettled([
         loadPayables(true, force, integrationRange),
         loadPayablesSchedule(true, force, integrationRange)
       ]));
     }
-    if (job.area === "receivables" || job.area === "all") {
+    if (job.area === "receivables" || job.area === "all" || job.area === "reports") {
       await runStep(job, "receivables", () => loadReceivablesForecast(true, force, integrationRange));
     }
-    if (job.area === "sales" || job.area === "all") {
+    if (job.area === "sales" || job.area === "all" || job.area === "reports") {
       await runStep(job, "sales", () => loadSalesContracts(true, force));
     }
-    if (job.area === "contracts" || job.area === "all") {
+    if (job.area === "contracts" || job.area === "all" || job.area === "reports") {
       await runStep(job, "contracts", () => loadSupplyContracts(true, force));
     }
-    if (job.area === "inventory" || job.area === "all") {
+    if (job.area === "inventory" || job.area === "all" || job.area === "reports") {
       await runStep(job, "inventory", () => loadInventoryAssets(true, force));
     }
-    if (job.area === "purchases" || job.area === "all") {
+    if (job.area === "purchases" || job.area === "all" || job.area === "reports") {
       await runStep(job, "purchases", () => loadPurchases(true, force, integrationRange));
     }
     if (job.area === "reconciliation" || job.area === "all") {

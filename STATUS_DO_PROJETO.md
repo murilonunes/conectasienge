@@ -10,6 +10,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Foi criada uma rota local de jobs para iniciar a atualização em segundo plano e consultar o andamento.
 - A tela de Configurações agora mostra a atualização ativa por etapas, com status pendente, em andamento, concluído ou erro.
 - Apenas uma atualização roda por vez para evitar disputa no SQLite e excesso de chamadas simultâneas ao Sienge.
+- A rota `/relatorios` também pode iniciar a atualização dos dados usados nos relatórios em segundo plano, sem travar a tela.
 - A rota `/relatorios` foi transformada em uma central de relatórios geráveis, separando seu propósito do Dashboard.
 - A Central de relatórios agora apresenta cartões para financeiro por período, contas a pagar, contas a receber, compras, vendas, contratos e estoque.
 - Cada relatório mostra escopo, métricas rápidas, botão para abrir a tela detalhada e indicação de exportação PDF/Excel como próxima etapa.
@@ -192,6 +193,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A tela funciona como catálogo de relatórios gerenciais: financeiro por período, contas a pagar, contas a receber, compras, vendas, contratos e estoque.
 - Cada relatório mostra escopo, métricas rápidas e botão para abrir o portal detalhado correspondente.
 - A exportação PDF/Excel ficou sinalizada como próxima etapa, sem prometer geração antes de implementar a rotina.
+- A Central de relatórios possui um painel para atualizar em segundo plano os dados que alimentam os relatórios.
+- A atualização "Todos os relatórios" carrega financeiro, contas a receber, vendas, contratos, estoque e compras sem puxar conciliação junto.
 
 ## Estoque, patrimonio e unidades imobiliarias
 

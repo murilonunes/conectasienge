@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiengeUpdateControls } from "@/components/settings/sienge-update-controls";
 import { PageHeading } from "@/components/ui/page-heading";
 import { analyzeContracts, loadSupplyContracts } from "@/features/contracts/data";
 import {
@@ -7,7 +8,10 @@ import {
   normalizeDashboardDays,
   normalizeDashboardDirection
 } from "@/features/dashboard/data";
+import { getSiengeScreenUpdateHistory } from "@/lib/api/sienge-history";
 import { formatCompactCurrency } from "@/lib/formatters";
+import { reportUpdateAreas } from "@/lib/sienge-update-areas";
+import { buildUpdateAreaStatuses } from "@/lib/sienge-update-status";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +57,8 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
   const direction = selectedDirection(searchParams?.periodo);
   const overview = await loadDashboardOverview(days, direction, "period");
   const contracts = await loadSupplyContracts();
+  const history = getSiengeScreenUpdateHistory();
+  const updateStatuses = buildUpdateAreaStatuses(history, reportUpdateAreas);
   const contractSummary = analyzeContracts(contracts.contracts);
   const isPast = direction === "past";
   const unavailable = [
@@ -152,7 +158,7 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
         title="Central de relatórios"
         subtitle="Escolha um relatório gerencial para abrir com os dados já integrados. O dashboard fica reservado para visão executiva rápida."
         action="Atualizar dados"
-        actionHref="/configuracoes"
+        actionHref="#atualizar-relatorios"
       />
 
       <section className="reports-filter card">
@@ -210,6 +216,17 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
             <span>sem consulta ao Sienge na abertura</span>
           </div>
         </div>
+      </section>
+
+      <section className="card panel reports-update-panel" id="atualizar-relatorios">
+        <div className="panel-head">
+          <div>
+            <h2 className="panel-title">Atualizar dados dos relatórios</h2>
+            <span className="panel-note">Inicie a carga em segundo plano e continue usando o sistema enquanto os dados são salvos.</span>
+          </div>
+          <Link className="button secondary" href="/configuracoes">Configurações</Link>
+        </div>
+        <SiengeUpdateControls areas={reportUpdateAreas} statuses={updateStatuses} showForce={false} />
       </section>
 
       <section className="report-catalog">

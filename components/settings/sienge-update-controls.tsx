@@ -2,21 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { updateAreas } from "@/lib/sienge-update-areas";
-import type { ScreenUpdateHistory } from "@/lib/api/sienge-history";
+import type { UpdateAreaStatus } from "@/lib/sienge-update-status";
 
 type Area = (typeof updateAreas)[number];
 
-type AreaStatus = {
-  status: ScreenUpdateHistory["status"];
-  lastUpdatedAt?: string;
-  description: string;
-  successCount: number;
-  errorCount: number;
-};
-
 type SiengeUpdateControlsProps = {
   areas: Area[];
-  statuses: Record<string, AreaStatus>;
+  statuses: Record<string, UpdateAreaStatus>;
+  showForce?: boolean;
 };
 
 type JobsResponse = {
@@ -51,7 +44,7 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
-function statusLabel(status: ScreenUpdateHistory["status"]) {
+function statusLabel(status: UpdateAreaStatus["status"]) {
   if (status === "updated") return "Pronto";
   if (status === "warning") return "Com aviso";
   return "Sem dados";
@@ -70,7 +63,7 @@ function stepStatusLabel(status: SiengeUpdateJob["steps"][number]["status"]) {
   return "Pendente";
 }
 
-export function SiengeUpdateControls({ areas, statuses }: SiengeUpdateControlsProps) {
+export function SiengeUpdateControls({ areas, statuses, showForce = true }: SiengeUpdateControlsProps) {
   const [jobs, setJobs] = useState<JobsResponse>({ jobs: [] });
   const [startingKey, setStartingKey] = useState<string>();
   const [message, setMessage] = useState<string>();
@@ -176,14 +169,16 @@ export function SiengeUpdateControls({ areas, statuses }: SiengeUpdateControlsPr
                 >
                   {startingKey === `${area.key}-false` ? "Iniciando..." : "Atualizar"}
                 </button>
-                <button
-                  className="button secondary"
-                  type="button"
-                  disabled={isBusy || startingKey === `${area.key}-true`}
-                  onClick={() => start(area.key, true)}
-                >
-                  {startingKey === `${area.key}-true` ? "Iniciando..." : "Atualizar com força"}
-                </button>
+                {showForce && (
+                  <button
+                    className="button secondary"
+                    type="button"
+                    disabled={isBusy || startingKey === `${area.key}-true`}
+                    onClick={() => start(area.key, true)}
+                  >
+                    {startingKey === `${area.key}-true` ? "Iniciando..." : "Atualizar com força"}
+                  </button>
+                )}
               </div>
             </article>
           );

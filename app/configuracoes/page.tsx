@@ -8,6 +8,7 @@ import { loadReconciliationAccounts } from "@/features/reconciliation/data";
 import { getLocalDatabaseFiles, getSiengeScreenUpdateHistory, type ScreenUpdateHistory } from "@/lib/api/sienge-history";
 import { getAppSettings, saveAppSettings, type AppSettings } from "@/lib/settings";
 import { updateAreas } from "@/lib/sienge-update-areas";
+import { buildUpdateAreaStatuses } from "@/lib/sienge-update-status";
 
 export const dynamic = "force-dynamic";
 
@@ -66,28 +67,6 @@ function statusLabel(status: ScreenUpdateHistory["status"]) {
   return "Sem dados";
 }
 
-function areaStatus(history: ScreenUpdateHistory[], area: (typeof updateAreas)[number]) {
-  if (area.key === "all") {
-    const updated = history.filter((item) => item.status === "updated").length;
-    const warning = history.filter((item) => item.status === "warning").length;
-    return {
-      status: warning ? "warning" as const : updated ? "updated" as const : "empty" as const,
-      lastUpdatedAt: history.map((item) => item.lastUpdatedAt).filter(Boolean).sort().at(-1),
-      description: `${updated} de ${history.length} áreas com dados salvos`,
-      successCount: history.reduce((sum, item) => sum + item.successCount, 0),
-      errorCount: history.reduce((sum, item) => sum + item.errorCount, 0)
-    };
-  }
-  const item = history.find((entry) => entry.key === area.historyKey);
-  return {
-    status: item?.status || "empty" as const,
-    lastUpdatedAt: item?.lastUpdatedAt,
-    description: item?.description || area.note,
-    successCount: item?.successCount || 0,
-    errorCount: item?.errorCount || 0
-  };
-}
-
 export default function ConfiguracoesPage({ searchParams }: { searchParams?: { salvo?: string } }) {
   const settings = getAppSettings();
   const history = getSiengeScreenUpdateHistory();
@@ -106,9 +85,7 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
     ? `${(totalDatabaseSize / 1024 / 1024).toFixed(1)} MB`
     : `${(totalDatabaseSize / 1024).toFixed(1)} KB`;
   const lastUpdatedAt = history.map((item) => item.lastUpdatedAt).filter(Boolean).sort().at(-1);
-  const updateStatuses = Object.fromEntries(
-    updateAreas.map((area) => [area.key, areaStatus(history, area)])
-  );
+  const updateStatuses = buildUpdateAreaStatuses(history, updateAreas);
 
   return (
     <>
