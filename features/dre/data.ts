@@ -63,7 +63,18 @@ type PocProgress = {
   label: string;
   plannedCost: number;
   measuredCost: number;
+  contractCount: number;
   percent: number;
+};
+
+type PocProgressResult = {
+  progress: Map<string, PocProgress>;
+  ranking: ChartItem[];
+  unavailable: boolean;
+  contractCount: number;
+  plannedCost: number;
+  measuredCost: number;
+  averagePercent: number;
 };
 
 const dataDir = path.join(process.cwd(), ".sienge-data");
@@ -286,9 +297,13 @@ function progressLabels(contract: SupplyContract) {
     .filter(Boolean)));
 }
 
-function loadPocProgress() {
+function loadPocProgress(): PocProgressResult {
   const database = openDatabase(dbFiles.contracts);
   const progress = new Map<string, PocProgress>();
+  const ranking = new Map<string, PocProgress>();
+  let contractCount = 0;
+  let plannedCostTotal = 0;
+  let measuredCostTotal = 0;
   let unavailable = false;
   if (!database) unavailable = true;
   try {
@@ -303,11 +318,24 @@ function loadPocProgress() {
       const plannedCost = contractValue(contract);
       const measuredCost = measuredValue(contract);
       if (plannedCost <= 0 || measuredCost <= 0) return;
+      contractCount += 1;
+      plannedCostTotal += plannedCost;
+      measuredCostTotal += measuredCost;
+
+      const label = contract.projectName || contract.buildingName || contract.companyName || "Obra não informada";
+      const primaryKey = normalizeKey(label) || `contrato-${contractCount}`;
+      const primary = ranking.get(primaryKey) || { label, plannedCost: 0, measuredCost: 0, contractCount: 0, percent: 0 };
+      primary.plannedCost += plannedCost;
+      primary.measuredCost += measuredCost;
+      primary.contractCount += 1;
+      primary.percent = ratio(primary.measuredCost / primary.plannedCost);
+      ranking.set(primaryKey, primary);
+
       progressLabels(contract).forEach((key) => {
-        const label = contract.projectName || contract.buildingName || contract.companyName || "Obra não informada";
-        const current = progress.get(key) || { label, plannedCost: 0, measuredCost: 0, percent: 0 };
+        const current = progress.get(key) || { label, plannedCost: 0, measuredCost: 0, contractCount: 0, percent: 0 };
         current.plannedCost += plannedCost;
         current.measuredCost += measuredCost;
+        current.contractCount += 1;
         current.percent = ratio(current.measuredCost / current.plannedCost);
         progress.set(key, current);
       });
@@ -316,16 +344,33 @@ function loadPocProgress() {
     database?.close();
   }
 
-  return { progress, unavailable };
+  return {
+    progress,
+    ranking: Array.from(ranking.values())
+      .map((item) => ({ label: item.label, value: item.percent * 100, count: item.contractCount }))
+      .sort((left, right) => right.value - left.value)
+      .slice(0, 10),
+    unavailable,
+    contractCount,
+    plannedCost: plannedCostTotal,
+    measuredCost: measuredCostTotal,
+    averagePercent: plannedCostTotal ? ratio(measuredCostTotal / plannedCostTotal) : 0
+  };
 }
 
 function progressForSale(contract: SalesContract, progress: Map<string, PocProgress>) {
   const candidates = [contract.enterpriseName, contract.companyName]
     .map((item) => normalizeKey(item))
-    .filter(Boolean);
+    .filter((item) => item.length >= 4);
   for (const key of candidates) {
     const item = progress.get(key);
     if (item) return item;
+  }
+  for (const key of candidates) {
+    const fuzzy = Array.from(progress.entries()).find(([progressKey]) =>
+      progressKey.length >= 4 && (progressKey.includes(key) || key.includes(progressKey))
+    );
+    if (fuzzy) return fuzzy[1];
   }
   return undefined;
 }
@@ -692,10 +737,15 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
     pocMatchedCount: sales.pocMatchedCount,
     pocUnmatchedCount: sales.pocUnmatchedCount,
     averagePoc: sales.averagePoc,
+    pocSourceContractCount: poc.contractCount,
+    pocSourcePlannedCost: poc.plannedCost,
+    pocSourceMeasuredCost: poc.measuredCost,
+    pocSourceAveragePercent: poc.averagePercent,
     monthly,
     competenceFlow: monthly.map((item) => ({ label: item.label, income: Math.max(0, item.netRevenue), outcome: Math.max(0, item.costs) })),
     cashFlow: monthly.map((item) => ({ label: item.label, income: Math.max(0, item.received), outcome: Math.max(0, item.paid) })),
     salesByEnterprise: sales.enterprises,
+    pocProgressRanking: poc.ranking,
     expenseByCreditor: payables.creditors,
     integrations: [
       sourceStatus(dbFiles.sales, "sienge_records", "Vendas", "/v1/sales-contracts"),

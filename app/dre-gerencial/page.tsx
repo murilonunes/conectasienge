@@ -161,6 +161,16 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         </section>
       )}
 
+      {dre.pocSourceContractCount === 0 && (
+        <section className="card data-notice">
+          <strong>POC sem base de medição</strong>
+          <span>
+            A tela precisa dos contratos de fornecimento com valor contratado e valor medido para reconhecer receita por avanço da obra.
+            Atualize Contratos em Configurações; até lá, a Receita POC fica zerada para não transformar venda contratada em receita.
+          </span>
+        </section>
+      )}
+
       <section className={`card dashboard-executive dre-executive ${hasProfit ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
           <span>{hasProfit ? "Lucro POC" : "Prejuízo POC"}</span>
@@ -193,6 +203,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         <StatCard label="Receita POC" value={formatCompactCurrency(dre.pocRevenue)} delta={`${dre.pocMatchedCount} contratos vinculados ao avanço`} icon="R$" />
         <StatCard label="Vendas contratadas" value={formatCompactCurrency(dre.contractedRevenue)} delta={`${dre.contractCount} contratos no ano`} icon="V" />
         <StatCard label="POC médio" value={formatPercent(dre.averagePoc * 100)} delta={`${dre.pocUnmatchedCount} contratos sem vínculo de obra`} warn={dre.pocUnmatchedCount > 0} icon="%" />
+        <StatCard label="Base de avanço" value={formatPercent(dre.pocSourceAveragePercent * 100)} delta={`${dre.pocSourceContractCount} contratos medidos`} warn={dre.pocSourceContractCount === 0} icon="B" />
         <StatCard label="Cancelamentos POC" value={formatCompactCurrency(dre.cancellations)} delta={`${dre.cancelledContractCount} contratos cancelados/distratados`} warn={dre.cancellations > 0} icon="-" />
         <StatCard label="Custos e despesas" value={formatCompactCurrency(dre.costAmount)} delta={`${dre.costCount} parcelas lançadas`} warn={dre.costAmount > dre.netRevenue} icon="C" />
         <StatCard label="Recebido" value={formatCompactCurrency(dre.receivedAmount)} delta={`${dre.receivedCount} recebimentos no ano`} icon="R" />
@@ -221,6 +232,35 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         <RankingChart title="Receita POC por empreendimento" note="Maiores receitas reconhecidas no ano" data={dre.salesByEnterprise} countLabel="contrato" />
       </div>
 
+      <div className="grid-main equal-grid">
+        <RankingChart title="Avanço POC por obra" note="Percentual medido sobre contratado nos contratos de fornecimento" data={dre.pocProgressRanking} valueKind="percent" countLabel="contrato" />
+        <section className="card panel">
+          <div className="panel-head">
+            <div>
+              <h2 className="panel-title">Base usada no POC</h2>
+              <span className="panel-note">Valores de contratos de fornecimento salvos localmente</span>
+            </div>
+          </div>
+          <div className="dashboard-period-list">
+            <div>
+              <span>Valor contratado</span>
+              <strong>{formatCompactCurrency(dre.pocSourcePlannedCost)}</strong>
+              <small><span>Base de custo</span><span>{dre.pocSourceContractCount} contratos com medição</span></small>
+            </div>
+            <div>
+              <span>Valor medido</span>
+              <strong>{formatCompactCurrency(dre.pocSourceMeasuredCost)}</strong>
+              <small><span>Avanço reconhecido</span><span>{formatPercent(dre.pocSourceAveragePercent * 100)} medido sobre contratado</span></small>
+            </div>
+            <div>
+              <span>Vendas sem vínculo</span>
+              <strong>{dre.pocUnmatchedCount}</strong>
+              <small><span>A revisar</span><span>Essas vendas não entraram na Receita POC.</span></small>
+            </div>
+          </div>
+        </section>
+      </div>
+
       <MonthlyTable monthly={dre.monthly} />
 
       <section className="card methodology dre-methodology">
@@ -229,6 +269,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
           Resultado POC considera vendas contratadas multiplicadas pelo percentual de avanço encontrado nos contratos de fornecimento da obra,
           menos cancelamentos, custos e despesas lançados. Caixa realizado continua separado: recebimentos efetivos menos pagamentos efetivos.
           Quando uma venda não encontra vínculo com obra/contrato, ela fica fora da receita POC e aparece no card de contratos sem vínculo.
+          Sem histórico mensal de medições, a receita POC é uma estimativa anual baseada na última medição salva.
         </p>
       </section>
     </>

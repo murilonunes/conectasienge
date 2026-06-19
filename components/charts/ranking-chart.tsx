@@ -5,13 +5,17 @@ type RankingChartProps = {
   title: string;
   note: string;
   data: ChartItem[];
-  valueKind?: "currency" | "count";
+  valueKind?: "currency" | "count" | "percent";
   countLabel?: string;
 };
 
 export function RankingChart({ title, note, data, valueKind = "currency", countLabel }: RankingChartProps) {
   const max = Math.max(...data.map((item) => item.value), 1);
-  const formatValue = (value: number) => valueKind === "count" ? String(value) : formatCompactCurrency(value);
+  const formatValue = (value: number) => {
+    if (valueKind === "count") return String(value);
+    if (valueKind === "percent") return `${value.toFixed(1).replace(".", ",")}%`;
+    return formatCompactCurrency(value);
+  };
   const noun = countLabel || (valueKind === "count" ? "registro" : "título");
 
   return (

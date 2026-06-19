@@ -218,6 +218,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
   - caixa: recebimentos efetivos menos pagamentos efetivos
 - O avanço da obra é estimado pelos contratos de fornecimento salvos, usando valor medido sobre valor contratado quando esses campos existem.
 - A tela mostra se o resultado POC foi lucro ou prejuízo no ano escolhido.
+- A DRE POC agora avisa quando não há contratos de fornecimento medidos suficientes para reconhecer receita por avanço de obra.
+- Vendas sem vínculo com obra/contrato ficam fora da Receita POC e aparecem como item a revisar, evitando transformar venda contratada em receita indevida.
+- A tela passou a mostrar a base usada no POC: valor contratado, valor medido, contratos com medição e ranking de avanço por obra.
 - A tela possui seletor anual, usando os anos encontrados nos dados salvos localmente.
 - A tela apresenta cards executivos, gráficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mês a mês.
 - A tela exibe resumo de integração por área usada na DRE, indicando registros salvos e data de integração quando disponível.
