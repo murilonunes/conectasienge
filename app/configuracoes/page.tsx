@@ -1,33 +1,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ReconciliationAccountPicker } from "@/components/settings/reconciliation-account-picker";
+import { SiengeUpdateControls } from "@/components/settings/sienge-update-controls";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
-import { loadPayables } from "@/features/financeiro/sienge-data";
-import { loadInventoryAssets } from "@/features/inventory/data";
-import { loadPayablesSchedule } from "@/features/payables-schedule/data";
-import { loadPurchases } from "@/features/purchases/data";
-import { loadReceivablesForecast } from "@/features/receivables-forecast/sienge-data";
-import { loadReconciliationAccounts, loadReconciliationMovements } from "@/features/reconciliation/data";
-import { loadSalesContracts } from "@/features/sales/data";
-import { loadSupplyContracts } from "@/features/contracts/data";
+import { loadReconciliationAccounts } from "@/features/reconciliation/data";
 import { getLocalDatabaseFiles, getSiengeScreenUpdateHistory, type ScreenUpdateHistory } from "@/lib/api/sienge-history";
-import { getAppSettings, getSiengeIntegrationRange, saveAppSettings, type AppSettings } from "@/lib/settings";
+import { getAppSettings, saveAppSettings, type AppSettings } from "@/lib/settings";
+import { updateAreas } from "@/lib/sienge-update-areas";
 
 export const dynamic = "force-dynamic";
-
-type UpdateArea = "all" | "payables" | "receivables" | "sales" | "inventory" | "purchases" | "reconciliation" | "contracts";
-
-const updateAreas: Array<{ key: UpdateArea; label: string; note: string; historyKey?: string }> = [
-  { key: "all", label: "Todas as áreas", note: "Atualiza todos os dados usados pelos portais." },
-  { key: "payables", label: "Contas a pagar", note: "Títulos, parcelas, agenda e busca avançada.", historyKey: "payables" },
-  { key: "receivables", label: "Contas a receber", note: "Previsão de recebimentos e parcelas em aberto.", historyKey: "receivables" },
-  { key: "sales", label: "Vendas", note: "Contratos de vendas e gráficos comerciais.", historyKey: "sales" },
-  { key: "contracts", label: "Contratos", note: "Contratos de fornecimento, saldos e medições.", historyKey: "contracts" },
-  { key: "inventory", label: "Estoque e patrimônio", note: "Unidades imobiliárias, bens móveis e bens imóveis.", historyKey: "inventory" },
-  { key: "purchases", label: "Compras", note: "Solicitações, cotações, pedidos e notas.", historyKey: "purchases" },
-  { key: "reconciliation", label: "Conciliação", note: "Movimentos bancários e itens a conciliar.", historyKey: "reconciliation" }
-];
 
 function asText(value: FormDataEntryValue | null, fallback: string) {
   const text = String(value || "").trim();
@@ -70,35 +52,6 @@ async function saveSettingsAction(formData: FormData) {
   redirect("/configuracoes?salvo=1");
 }
 
-async function updateSiengeAreaAction(formData: FormData) {
-  "use server";
-  const area = String(formData.get("area") || "all") as UpdateArea;
-  const force = formData.get("force") === "true";
-  const integrationRange = getSiengeIntegrationRange();
-
-  if (area === "payables" || area === "all") {
-    await Promise.allSettled([loadPayables(true, force, integrationRange), loadPayablesSchedule(true, force, integrationRange)]);
-  }
-  if (area === "receivables" || area === "all") await loadReceivablesForecast(true, force, integrationRange);
-  if (area === "sales" || area === "all") await loadSalesContracts(true, force);
-  if (area === "contracts" || area === "all") await loadSupplyContracts(true, force);
-  if (area === "inventory" || area === "all") await loadInventoryAssets(true, force);
-  if (area === "purchases" || area === "all") await loadPurchases(true, force, integrationRange);
-  if (area === "reconciliation" || area === "all") await loadReconciliationMovements(undefined, true, force, integrationRange);
-
-  revalidatePath("/", "layout");
-  revalidatePath("/dashboard");
-  revalidatePath("/contas-pagar");
-  revalidatePath("/contas-receber");
-  revalidatePath("/sales");
-  revalidatePath("/contratos");
-  revalidatePath("/estoque");
-  revalidatePath("/compras");
-  revalidatePath("/conciliacao");
-  revalidatePath("/configuracoes");
-  redirect(`/configuracoes?atualizado=${encodeURIComponent(area)}&modo=${force ? "forca" : "normal"}`);
-}
-
 function formatDate(value?: string) {
   if (!value) return "Nunca atualizado";
   return new Intl.DateTimeFormat("pt-BR", {
@@ -135,7 +88,7 @@ function areaStatus(history: ScreenUpdateHistory[], area: (typeof updateAreas)[n
   };
 }
 
-export default function ConfiguracoesPage({ searchParams }: { searchParams?: { salvo?: string; atualizado?: string; modo?: string } }) {
+export default function ConfiguracoesPage({ searchParams }: { searchParams?: { salvo?: string } }) {
   const settings = getAppSettings();
   const history = getSiengeScreenUpdateHistory();
   const databaseFiles = getLocalDatabaseFiles();
@@ -153,6 +106,9 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
     ? `${(totalDatabaseSize / 1024 / 1024).toFixed(1)} MB`
     : `${(totalDatabaseSize / 1024).toFixed(1)} KB`;
   const lastUpdatedAt = history.map((item) => item.lastUpdatedAt).filter(Boolean).sort().at(-1);
+  const updateStatuses = Object.fromEntries(
+    updateAreas.map((area) => [area.key, areaStatus(history, area)])
+  );
 
   return (
     <>
@@ -166,17 +122,6 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
         <section className="card data-notice">
           <strong>Preferências salvas</strong>
           <span>As próximas aberturas das telas já usam os parâmetros atualizados.</span>
-        </section>
-      )}
-
-      {searchParams?.atualizado && (
-        <section className="card data-notice">
-          <strong>Atualização concluída</strong>
-          <span>
-            Os dados foram atualizados e salvos para uso nas telas. {searchParams.modo === "forca"
-              ? "A atualização com força também pode substituir registros finalizados."
-              : "Registros pagos, baixados ou finalizados foram preservados quando identificados."}
-          </span>
         </section>
       )}
 
@@ -212,37 +157,10 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
           <div className="panel-head">
             <div>
               <h2 className="panel-title">Atualizar dados</h2>
-              <span className="panel-note">Escolha uma área. A atualização pode levar alguns minutos quando o período for grande.</span>
+              <span className="panel-note">Escolha uma área. A atualização roda em segundo plano e mostra o andamento abaixo.</span>
             </div>
           </div>
-          <div className="settings-area-grid">
-            {updateAreas.map((area) => {
-              const current = areaStatus(history, area);
-              return (
-                <article key={area.key} className={`settings-area-card ${current.status}`}>
-                  <div className="settings-area-main">
-                    <span>{statusLabel(current.status)}</span>
-                    <strong>{area.label}</strong>
-                    <p>{area.note}</p>
-                    <small>Última integração: {formatDate(current.lastUpdatedAt)}</small>
-                    <em>{current.successCount} atualizações - {current.errorCount} avisos</em>
-                  </div>
-                  <div className="settings-area-actions">
-                    <form action={updateSiengeAreaAction}>
-                      <input type="hidden" name="area" value={area.key} />
-                      <input type="hidden" name="force" value="false" />
-                      <button className="button" type="submit">Atualizar</button>
-                    </form>
-                    <form action={updateSiengeAreaAction}>
-                      <input type="hidden" name="area" value={area.key} />
-                      <input type="hidden" name="force" value="true" />
-                      <button className="button secondary" type="submit">Atualizar com força</button>
-                    </form>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          <SiengeUpdateControls areas={updateAreas} statuses={updateStatuses} />
         </section>
 
         <section className="card panel settings-form-card">

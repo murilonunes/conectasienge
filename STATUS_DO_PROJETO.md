@@ -6,6 +6,10 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A atualização dos dados do Sienge em `/configuracoes` deixou de bloquear a tela até o fim da carga.
+- Foi criada uma rota local de jobs para iniciar a atualização em segundo plano e consultar o andamento.
+- A tela de Configurações agora mostra a atualização ativa por etapas, com status pendente, em andamento, concluído ou erro.
+- Apenas uma atualização roda por vez para evitar disputa no SQLite e excesso de chamadas simultâneas ao Sienge.
 - A rota `/relatorios` foi transformada em uma central de relatórios geráveis, separando seu propósito do Dashboard.
 - A Central de relatórios agora apresenta cartões para financeiro por período, contas a pagar, contas a receber, compras, vendas, contratos e estoque.
 - Cada relatório mostra escopo, métricas rápidas, botão para abrir a tela detalhada e indicação de exportação PDF/Excel como próxima etapa.
@@ -293,6 +297,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
   - exibicao de avisos de atualizacao
 - As configuracoes ficam salvas em SQLite local, no arquivo `app-settings.sqlite`.
 - A tela de Configuracoes possui botoes para atualizar dados do Sienge por area ou todas as areas.
+- Os botoes de atualizacao iniciam um job em segundo plano, liberando a tela imediatamente.
+- O andamento da carga fica visivel na propria tela, separado por area atualizada.
+- O sistema permite apenas uma carga do Sienge por vez para reduzir risco de limite de API e travas no banco local.
 - As atualizacoes de contas a pagar, contas a receber, conciliacao e cotacoes de compras usam o periodo de integracao escolhido quando o endpoint aceita data.
 - Cada chamada real ao Sienge passa a gravar um historico resumido em SQLite com endpoint, area responsavel, dia, status e horario.
 - A tela de Configuracoes mostra a ultima atualizacao por portal e tambem o tamanho dos bancos SQLite locais.

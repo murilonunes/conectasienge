@@ -304,6 +304,27 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .settings-flow strong { font-size: 12px; color: var(--ink); }
 .settings-flow span { color: var(--muted); font-size: 11px; line-height: 1.45; }
 .settings-area-grid { display: grid; gap: 12px; }
+.settings-update-control { display: grid; gap: 12px; }
+.settings-job-card { display: grid; gap: 13px; padding: 15px; border: 1px solid #d7e6dd; border-radius: 14px; background: #f8fbf9; }
+.settings-job-card.failed { border-color: #e8c6c2; background: #fffafa; }
+.settings-job-card.completed { border-color: #cfe1d7; background: #f8fbf9; }
+.settings-job-head { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+.settings-job-head > div { display: grid; gap: 5px; }
+.settings-job-head span { width: fit-content; border-radius: 999px; padding: 4px 8px; background: var(--green-soft); color: var(--green); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .07em; }
+.settings-job-card.failed .settings-job-head span { background: #f9e3e1; color: var(--red); }
+.settings-job-head strong { font-size: 13px; }
+.settings-job-head small { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.settings-job-head > div:last-child { text-align: right; }
+.settings-job-head > div:last-child strong { font-family: Georgia, serif; font-size: 25px; font-weight: 500; }
+.settings-job-steps { display: grid; gap: 8px; }
+.settings-job-steps div { display: grid; grid-template-columns: 90px minmax(120px, .45fr) 1fr; gap: 9px; align-items: center; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.settings-job-steps b { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+.settings-job-steps div.running b { color: var(--green); }
+.settings-job-steps div.completed b { color: var(--green); }
+.settings-job-steps div.failed b { color: var(--red); }
+.settings-job-steps span { font-size: 11px; font-weight: 800; }
+.settings-job-steps small { color: var(--muted); font-size: 9px; line-height: 1.35; }
+.settings-inline-message { padding: 12px 13px; border: 1px solid #d7e6dd; border-radius: 12px; background: #f8fbf9; color: var(--green); font-size: 11px; font-weight: 800; }
 .settings-area-card { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 15px; border: 1px solid var(--line); border-radius: 14px; background: #fbfcfb; }
 .settings-area-card.updated { border-color: #cfe1d7; background: #f8fbf9; }
 .settings-area-card.warning { border-color: #ead3ad; background: #fffaf1; }
@@ -318,6 +339,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .settings-area-actions { display: grid; grid-template-columns: auto auto; gap: 8px; }
 .settings-area-actions form { margin: 0; }
 .settings-area-actions .button { white-space: nowrap; }
+.settings-area-actions .button:disabled { cursor: wait; opacity: .55; }
 .settings-history-list { display: grid; gap: 10px; }
 .settings-history-item { display: grid; grid-template-columns: 1fr 165px; gap: 15px; align-items: center; padding: 13px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
 .settings-history-item > div:first-child { display: grid; gap: 4px; min-width: 0; }
@@ -662,6 +684,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .settings-update-form { grid-template-columns: 1fr; align-items: stretch; }
   .settings-database-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .welcome-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-job-steps div { grid-template-columns: 90px 1fr; }
+  .settings-job-steps small { grid-column: 2; }
 }
 @media (max-width: 760px) {
   .shell { display: block; }
@@ -705,6 +729,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .settings-area-card { grid-template-columns: 1fr; }
   .settings-area-actions { grid-template-columns: 1fr; }
   .settings-area-actions .button { width: 100%; }
+  .settings-job-head { grid-template-columns: 1fr; }
+  .settings-job-head > div:last-child { text-align: left; }
+  .settings-job-steps div { grid-template-columns: 1fr; }
+  .settings-job-steps small { grid-column: auto; }
   .settings-history-item { grid-template-columns: 1fr; }
   .settings-history-item > div:last-child { text-align: left; }
   .settings-database-grid { grid-template-columns: 1fr; }
