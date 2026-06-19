@@ -71,6 +71,7 @@ export function AdvancedPayablesSearch() {
     withBankMovements: true, withAuthorizations: false
   });
   const [paymentStatus, setPaymentStatus] = useState<"all" | "unpaid" | "paid">("all");
+  const [onlyAbusiveCharges, setOnlyAbusiveCharges] = useState(false);
   const [textFilter, setTextFilter] = useState("");
   const [results, setResults] = useState<PayableInstallment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -85,10 +86,12 @@ export function AdvancedPayablesSearch() {
     const digitSearch = textFilter.replace(/\D/g, "");
     const documentDigits = `${item.creditorCnpj || ""}${item.creditorCpf || ""}`.replace(/\D/g, "");
     const hasPayment = (item.payments || []).length > 0;
+    const hasAbusiveCharge = analyzePayableCharge(item, filters.correctionDate).hasRisk;
     const matchesStatus = paymentStatus === "all" || (paymentStatus === "paid" ? hasPayment : !hasPayment);
     const matchesText = text.includes(search) || (digitSearch.length > 0 && documentDigits.includes(digitSearch));
-    return matchesText && matchesStatus;
-  }), [results, textFilter, paymentStatus]);
+    const matchesAbuse = !onlyAbusiveCharges || hasAbusiveCharge;
+    return matchesText && matchesStatus && matchesAbuse;
+  }), [results, textFilter, paymentStatus, onlyAbusiveCharges, filters.correctionDate]);
 
   const totals = useMemo(() => ({
     original: filtered.reduce((sum, item) => sum + (item.originalAmount || 0), 0),
@@ -170,6 +173,7 @@ export function AdvancedPayablesSearch() {
           <label><span>Data de correção *</span><input required type="date" value={filters.correctionDate} onChange={(e) => set("correctionDate", e.target.value)} /></label>
           <label className="check-field"><input type="checkbox" checked={filters.withBankMovements} onChange={(e) => set("withBankMovements", e.target.checked)} /><span>Incluir movimentos bancários</span></label>
           <label className="check-field"><input type="checkbox" checked={filters.withAuthorizations} onChange={(e) => set("withAuthorizations", e.target.checked)} /><span>Incluir autorizações</span></label>
+          <label className="check-field"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /><span>Somente possíveis cobranças abusivas</span></label>
         </div>
         <div className={`advanced-search-hint ${filters.selectionType === "P" ? "warn" : ""}`}>
           {filters.selectionType === "P"
@@ -194,12 +198,15 @@ export function AdvancedPayablesSearch() {
           <article className="card stat"><div className="stat-top"><span>Saldo em aberto</span></div><div className="stat-value">{formatCurrency(totals.balance)}</div><span className="panel-note">Saldo atual</span></article>
           <article className="card stat"><div className="stat-top"><span>Possíveis abusos</span></div><div className="stat-value">{totals.riskCount}</div><span className="panel-note">Acima de 2% + 1% ao mês</span></article>
         </div>
-        <div className="card filters"><input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código" /></div>
+        <div className="card filters">
+          <input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código" />
+          <label className="advanced-inline-check"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /> Somente possíveis abusos</label>
+        </div>
         <LocalDataList
           items={filtered}
           itemLabel="parcelas"
-          resetKey={`${textFilter}|${paymentStatus}|${results.length}`}
-          emptyMessage="Nenhuma parcela encontrada após o filtro."
+          resetKey={`${textFilter}|${paymentStatus}|${onlyAbusiveCharges}|${results.length}`}
+          emptyMessage={onlyAbusiveCharges ? "Nenhuma possível cobrança abusiva encontrada após o filtro." : "Nenhuma parcela encontrada após o filtro."}
           renderItems={(pageItems) => (
             <div className="advanced-results">
               {pageItems.map((item) => {
