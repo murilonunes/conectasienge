@@ -8,7 +8,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 - Foi criada a tela `/dre-gerencial` para mostrar uma DRE gerencial baseada nos dados já salvos localmente.
 - A DRE gerencial separa resultado por competência de caixa realizado, para indicar lucro/prejuízo operacional sem confundir com entrada e saída de dinheiro.
-- A tela mostra receita bruta, cancelamentos, receita líquida, custos/despesas, resultado gerencial, margem, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar.
+- A tela mostra receita bruta, cancelamentos, receita líquida, custos/despesas, resultado gerencial, margem, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar por exercício anual.
 - Foram adicionados gráficos de receita x custos, recebido x pago, evolução mensal do resultado, rankings por fornecedor e por empreendimento, além de tabela mensal.
 - A DRE gerencial foi incluída no menu de Análise, na tela inicial e na Central de relatórios.
 - Contas a pagar passou a exibir valor corrigido e multa/juros pagos a mais nas visões de agenda, busca avançada e consulta de parcelas por título.
@@ -216,8 +216,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A visão separa resultado por competência e caixa realizado:
   - competência: contratos de venda, cancelamentos, custos e despesas lançados
   - caixa: recebimentos efetivos menos pagamentos efetivos
-- A tela mostra se o resultado gerencial foi lucro ou prejuízo no recorte escolhido.
-- A tela possui filtros de período para histórico completo, 24 meses, 12 meses, 6 meses e ano atual.
+- A tela mostra se o resultado gerencial foi lucro ou prejuízo no ano escolhido.
+- A tela possui seletor anual, usando os anos encontrados nos dados salvos localmente.
 - A tela apresenta cards executivos, gráficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mês a mês.
 - A tela exibe resumo de integração por área usada na DRE, indicando registros salvos e data de integração quando disponível.
 

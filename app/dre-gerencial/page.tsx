@@ -3,23 +3,19 @@ import { CashFlowChart } from "@/components/charts/cash-flow-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
-import { DRE_PERIOD_OPTIONS, loadDreGerencial, normalizeDrePeriod, type DreMonthlyItem } from "@/features/dre/data";
+import { loadDreGerencial, loadDreYearOptions, normalizeDreYear, type DreMonthlyItem } from "@/features/dre/data";
 import { formatCompactCurrency, formatCurrency } from "@/lib/formatters";
 
 export const dynamic = "force-dynamic";
 
 type DreGerencialPageProps = {
   searchParams?: {
-    periodo?: string | string[];
+    ano?: string | string[];
   };
 };
 
 function formatPercent(value: number) {
   return `${value.toFixed(1).replace(".", ",")}%`;
-}
-
-function periodTitle(period: string) {
-  return DRE_PERIOD_OPTIONS.find((option) => option.key === period)?.label || "Histórico completo";
 }
 
 function IntegrationSummary({ integrations }: { integrations: Awaited<ReturnType<typeof loadDreGerencial>>["integrations"] }) {
@@ -113,14 +109,15 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
             ))}
           </tbody>
         </table>
-      ) : <div className="empty-state">Nenhum mês com dados salvos para este recorte.</div>}
+      ) : <div className="empty-state">Nenhum mês com dados salvos para este ano.</div>}
     </section>
   );
 }
 
 export default async function DreGerencialPage({ searchParams }: DreGerencialPageProps) {
-  const period = normalizeDrePeriod(searchParams?.periodo);
-  const dre = await loadDreGerencial(period);
+  const availableYears = loadDreYearOptions();
+  const selectedYear = normalizeDreYear(searchParams?.ano, availableYears);
+  const dre = await loadDreGerencial(selectedYear);
   const hasProfit = dre.netResult >= 0;
   const cashPositive = dre.cashResult >= 0;
 
@@ -129,26 +126,26 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       <PageHeading
         eyebrow="Resultado histórico"
         title="DRE gerencial"
-        subtitle="Entenda se a empresa gerou lucro ou prejuízo na operação e se isso virou caixa."
+        subtitle="Análise anual de lucro, prejuízo e caixa realizado da operação."
         action="Atualizar dados"
         actionHref="/configuracoes"
       />
 
       <section className="reports-filter card">
         <div>
-          <span>Recorte</span>
-          <strong>{periodTitle(period)}</strong>
+          <span>Exercício</span>
+          <strong>{selectedYear}</strong>
           <small>{dre.range.start} até {dre.range.end}</small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-view-options compact" aria-label="Período da DRE">
-            {DRE_PERIOD_OPTIONS.map((option) => (
+          <div className="dashboard-view-options compact" aria-label="Ano da DRE">
+            {availableYears.map((year) => (
               <Link
-                key={option.key}
-                href={`/dre-gerencial?periodo=${option.key}`}
-                className={option.key === period ? "active" : ""}
+                key={year}
+                href={`/dre-gerencial?ano=${year}`}
+                className={year === selectedYear ? "active" : ""}
               >
-                {option.label}
+                {year}
               </Link>
             ))}
           </div>
@@ -191,12 +188,12 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       </section>
 
       <div className="stats dre-stats">
-        <StatCard label="Receita bruta" value={formatCompactCurrency(dre.grossRevenue)} delta={`${dre.contractCount} contratos no recorte`} icon="R$" />
+        <StatCard label="Receita bruta" value={formatCompactCurrency(dre.grossRevenue)} delta={`${dre.contractCount} contratos no ano`} icon="R$" />
         <StatCard label="Cancelamentos" value={formatCompactCurrency(dre.cancellations)} delta={`${dre.cancelledContractCount} contratos cancelados/distratados`} warn={dre.cancellations > 0} icon="-" />
         <StatCard label="Custos e despesas" value={formatCompactCurrency(dre.costAmount)} delta={`${dre.costCount} parcelas lançadas`} warn={dre.costAmount > dre.netRevenue} icon="C" />
         <StatCard label="Compras contratadas" value={formatCompactCurrency(dre.purchasedAmount)} delta={`${dre.purchaseOrderCount} pedidos, ${dre.pendingPurchaseCount} pendentes`} icon="P" />
-        <StatCard label="Recebido" value={formatCompactCurrency(dre.receivedAmount)} delta={`${dre.receivedCount} recebimentos no recorte`} icon="R" />
-        <StatCard label="Pago" value={formatCompactCurrency(dre.paidAmount)} delta={`${dre.paidCount} pagamentos no recorte`} warn={dre.paidAmount > dre.receivedAmount} icon="S" />
+        <StatCard label="Recebido" value={formatCompactCurrency(dre.receivedAmount)} delta={`${dre.receivedCount} recebimentos no ano`} icon="R" />
+        <StatCard label="Pago" value={formatCompactCurrency(dre.paidAmount)} delta={`${dre.paidCount} pagamentos no ano`} warn={dre.paidAmount > dre.receivedAmount} icon="S" />
       </div>
 
       <IntegrationSummary integrations={dre.integrations} />
@@ -218,7 +215,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
 
       <div className="grid-main equal-grid">
         <RankingChart title="Custos por fornecedor" note="Maiores custos e despesas lançados" data={dre.expenseByCreditor} countLabel="parcela" />
-        <RankingChart title="Vendas por empreendimento" note="Maiores receitas vendidas no recorte" data={dre.salesByEnterprise} countLabel="contrato" />
+        <RankingChart title="Vendas por empreendimento" note="Maiores receitas vendidas no ano" data={dre.salesByEnterprise} countLabel="contrato" />
       </div>
 
       <MonthlyTable monthly={dre.monthly} />

@@ -8,7 +8,7 @@ import {
   normalizeDashboardDays,
   normalizeDashboardDirection
 } from "@/features/dashboard/data";
-import { loadDreGerencial, type DrePeriodKey } from "@/features/dre/data";
+import { loadDreGerencial, loadDreYearOptions, normalizeDreYear } from "@/features/dre/data";
 import { getSiengeScreenUpdateHistory } from "@/lib/api/sienge-history";
 import { formatCompactCurrency } from "@/lib/formatters";
 import { reportUpdateAreas } from "@/lib/sienge-update-areas";
@@ -53,20 +53,13 @@ function countLabel(value: number, singular: string, plural: string) {
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
-function drePeriodFromDays(days: number): DrePeriodKey {
-  if (days >= 730) return "24";
-  if (days >= 365) return "12";
-  if (days >= 180) return "6";
-  return "year";
-}
-
 export default async function RelatoriosPage({ searchParams }: RelatoriosPageProps) {
   const days = selectedDays(searchParams?.dias);
   const direction = selectedDirection(searchParams?.periodo);
   const overview = await loadDashboardOverview(days, direction, "period");
   const contracts = await loadSupplyContracts();
-  const drePeriod = drePeriodFromDays(days);
-  const dre = await loadDreGerencial(drePeriod);
+  const dreYear = normalizeDreYear(undefined, loadDreYearOptions());
+  const dre = await loadDreGerencial(dreYear);
   const history = getSiengeScreenUpdateHistory();
   const updateStatuses = buildUpdateAreaStatuses(history, reportUpdateAreas);
   const contractSummary = analyzeContracts(contracts.contracts);
@@ -94,11 +87,11 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
       secondaryLabel: isPast ? "recebido / pago" : "a receber / a pagar"
     },
     {
-      icon: "DRE",
+      icon: "=",
       title: "DRE gerencial",
-      description: "Mostra lucro ou prejuízo por competência, caixa realizado e evolução mensal do resultado.",
-      href: `/dre-gerencial?periodo=${drePeriod}`,
-      scope: "Resultado",
+      description: "Mostra lucro ou prejuízo por competência, caixa realizado e evolução mensal do exercício.",
+      href: `/dre-gerencial?ano=${dreYear}`,
+      scope: `Resultado ${dreYear}`,
       primaryMetric: formatCompactCurrency(dre.netResult),
       primaryLabel: dre.netResult >= 0 ? "lucro gerencial" : "prejuízo gerencial",
       secondaryMetric: formatCompactCurrency(dre.cashResult),

@@ -12,8 +12,6 @@ type ChartItem = {
   count: number;
 };
 
-export type DrePeriodKey = "all" | "24" | "12" | "6" | "year";
-
 export type DreMonthlyItem = {
   key: string;
   label: string;
@@ -47,14 +45,6 @@ type PurchaseOrder = {
   supplierId?: number;
 };
 
-export const DRE_PERIOD_OPTIONS: Array<{ key: DrePeriodKey; label: string }> = [
-  { key: "all", label: "Histórico completo" },
-  { key: "24", label: "24 meses" },
-  { key: "12", label: "12 meses" },
-  { key: "6", label: "6 meses" },
-  { key: "year", label: "Ano atual" }
-];
-
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const dbFiles = {
   payables: path.join(dataDir, "finance-payables.sqlite"),
@@ -71,12 +61,6 @@ function todayIso() {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
   return iso(today);
-}
-
-function addMonths(date: Date, months: number) {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
 }
 
 function normalizeDate(value?: string) {
@@ -97,17 +81,12 @@ function monthLabel(key: string) {
   return new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit" }).format(date).replace(".", "");
 }
 
-function periodStart(period: DrePeriodKey, end: string) {
-  if (period === "all") return "0001-01-01";
-  const endDate = new Date(`${end}T12:00:00`);
-  if (period === "year") return `${end.slice(0, 4)}-01-01`;
-  const months = Number(period);
-  return iso(addMonths(endDate, -(months - 1)));
-}
-
-export function normalizeDrePeriod(value: unknown): DrePeriodKey {
+export function normalizeDreYear(value: unknown, availableYears: number[] = []) {
   const rawValue = Array.isArray(value) ? value[0] : value;
-  return DRE_PERIOD_OPTIONS.some((option) => option.key === rawValue) ? rawValue as DrePeriodKey : "all";
+  const year = Number(rawValue);
+  const fallback = availableYears[0] || Number(todayIso().slice(0, 4));
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) return fallback;
+  return availableYears.length && !availableYears.includes(year) ? fallback : year;
 }
 
 function openDatabase(databasePath: string) {
@@ -175,6 +154,70 @@ function sourceStatus(databasePath: string, table: string, label: string, endpoi
   } finally {
     database.close();
   }
+}
+
+function addYearFromDate(years: Set<number>, value?: string) {
+  const year = Number(value?.slice(0, 4));
+  if (Number.isInteger(year) && year >= 2000 && year <= 2100) years.add(year);
+}
+
+function addYearsFromSql(databasePath: string, table: string, expression: string, years: Set<number>) {
+  const database = openDatabase(databasePath);
+  if (!database) return;
+  try {
+    if (!tableExists(database, table)) return;
+    const rows = database.prepare(`
+      SELECT DISTINCT substr(${expression}, 1, 4) AS year
+      FROM ${table}
+      WHERE ${expression} IS NOT NULL
+    `).all() as Row[];
+    rows.forEach((row) => addYearFromDate(years, String(row.year || "")));
+  } finally {
+    database.close();
+  }
+}
+
+function addSalesYears(years: Set<number>) {
+  const database = openDatabase(dbFiles.sales);
+  if (!database) return;
+  try {
+    if (!tableExists(database, "sienge_records")) return;
+    const rows = database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/sales-contracts'").all() as JsonRow[];
+    rows.forEach((row) => {
+      const contract = safeJson<SalesContract>(row.raw_json);
+      if (!contract) return;
+      addYearFromDate(years, contract.issueDate || contract.contractDate);
+      addYearFromDate(years, contract.cancellationDate);
+    });
+  } finally {
+    database.close();
+  }
+}
+
+function addPurchaseYears(years: Set<number>) {
+  const database = openDatabase(dbFiles.purchases);
+  if (!database) return;
+  try {
+    if (!tableExists(database, "sienge_records")) return;
+    const rows = database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/purchase-orders'").all() as JsonRow[];
+    rows.forEach((row) => {
+      const order = safeJson<PurchaseOrder>(row.raw_json);
+      addYearFromDate(years, order?.date);
+    });
+  } finally {
+    database.close();
+  }
+}
+
+export function loadDreYearOptions() {
+  const years = new Set<number>([Number(todayIso().slice(0, 4))]);
+  addSalesYears(years);
+  addPurchaseYears(years);
+  addYearsFromSql(dbFiles.payables, "bulk_outcome_installments", "COALESCE(issueDate, billDate, dueDate)", years);
+  addYearsFromSql(dbFiles.payables, "bulk_outcome_payments", "paymentDate", years);
+  addYearsFromSql(dbFiles.receivables, "bulk_income_installments", "dueDate", years);
+  addYearsFromSql(dbFiles.receivables, "bulk_income_receipts", "paymentDate", years);
+  return Array.from(years).sort((left, right) => right - left);
 }
 
 function loadSales(start: string, end: string) {
@@ -464,9 +507,9 @@ function buildMonthly({
     });
 }
 
-export async function loadDreGerencial(period: DrePeriodKey = "all") {
-  const end = todayIso();
-  const start = periodStart(period, end);
+export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
+  const start = `${year}-01-01`;
+  const end = `${year}-12-31`;
   const sales = loadSales(start, end);
   const payables = loadPayables(start, end);
   const receivables = loadReceivables(start, end);
@@ -477,7 +520,7 @@ export async function loadDreGerencial(period: DrePeriodKey = "all") {
   const margin = sales.netRevenue ? (netResult / sales.netRevenue) * 100 : 0;
 
   return {
-    period,
+    year,
     range: { start, end },
     unavailable: [
       sales.unavailable ? "vendas" : undefined,
