@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { PayablesAbuseDashboardModal } from "@/components/payables/payables-abuse-dashboard-modal";
 import { PayableChargeReviewButton } from "@/components/payables/payable-charge-review-button";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
@@ -201,6 +202,7 @@ export function AdvancedPayablesSearch() {
         <div className="card filters">
           <input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código" />
           <label className="advanced-inline-check"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /> Somente possíveis abusos</label>
+          <PayablesAbuseDashboardModal items={filtered} referenceDate={filters.correctionDate} />
         </div>
         <LocalDataList
           items={filtered}

@@ -10,6 +10,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Foi criado um botão de análise de cobrança que abre um modal para detectar possíveis cobranças acima do critério de 2% no ato mais 1% ao mês.
 - A análise de cobrança usa os dados salvos no banco local e serve como triagem operacional para revisão.
 - A busca avançada de contas a pagar ganhou filtro para exibir somente possíveis cobranças abusivas, usando a mesma regra do modal.
+- Foi adicionado um dashboard em modal para cobranças abusivas, agrupado por credor, com ranking dos 10 maiores por percentual/valor e lista completa paginada ordenada pela soma do possível excesso.
 - A atualização dos dados do Sienge em `/configuracoes` deixou de bloquear a tela até o fim da carga.
 - Foi criada uma rota local de jobs para iniciar a atualização em segundo plano e consultar o andamento.
 - A tela de Configurações agora mostra a atualização ativa por etapas, com status pendente, em andamento, concluído ou erro.

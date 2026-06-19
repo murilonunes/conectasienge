@@ -624,6 +624,23 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .payable-review-grid strong { font-family: Georgia, serif; font-size: 20px; font-weight: 500; }
 .payable-review-grid strong.negative { color: var(--red); }
 .payable-review-note { margin: 0; }
+.payable-abuse-dashboard-modal { width: min(1120px, 100%); grid-template-rows: auto auto auto 1fr; }
+.payable-abuse-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.payable-abuse-summary div { display: grid; gap: 5px; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.payable-abuse-summary span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.payable-abuse-summary strong { font-family: Georgia, serif; font-size: 23px; font-weight: 500; }
+.payable-abuse-chart, .payable-abuse-list { min-width: 0; }
+.payable-abuse-chart-row { display: grid; grid-template-columns: minmax(180px, .9fr) minmax(160px, 1fr) 65px 120px; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.payable-abuse-chart-row > div:first-child { display: grid; gap: 4px; min-width: 0; }
+.payable-abuse-chart-row strong, .payable-abuse-creditor-list strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.payable-abuse-chart-row span, .payable-abuse-creditor-list span { color: var(--muted); font-size: 9px; }
+.payable-abuse-chart-row > strong { color: var(--green); text-align: right; }
+.payable-abuse-chart-row b { font-size: 11px; text-align: right; }
+.payable-abuse-track { height: 8px; border-radius: 999px; background: #edf1ee; overflow: hidden; }
+.payable-abuse-track i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--amber), var(--red)); }
+.payable-abuse-creditor-list { display: grid; gap: 8px; }
+.payable-abuse-creditor-list article { display: grid; grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(100px, .7fr)); gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.payable-abuse-creditor-list article > div { display: grid; gap: 4px; min-width: 0; }
 .payments-list { margin-top: 15px; }
 .payments-list h3 { margin: 0 0 8px; font-size: 11px; }
 .payments-list > div { display: grid; grid-template-columns: 100px 120px 1fr auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
@@ -770,6 +787,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .advanced-result-main { grid-template-columns: 1fr auto; }
   .advanced-result-main > span:nth-child(2), .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4), .advanced-result-main > span:nth-child(5), .advanced-result-main > span:nth-child(6) { display: none; }
   .payable-review-grid { grid-template-columns: 1fr; }
+  .payable-abuse-summary { grid-template-columns: 1fr; }
+  .payable-abuse-chart-row, .payable-abuse-creditor-list article { grid-template-columns: 1fr; }
+  .payable-abuse-chart-row > strong, .payable-abuse-chart-row b { text-align: left; }
   .payments-list > div { grid-template-columns: 1fr; gap: 4px; }
   .bill-overview-head { flex-direction: column; }
   .bill-overview-head > div:last-child { text-align: left; }
