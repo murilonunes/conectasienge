@@ -8,6 +8,7 @@ export default function Home() {
     { title: "Contas a pagar", href: "/contas-pagar", note: "Agenda de pagamentos e vencimentos" },
     { title: "Contas a receber", href: "/contas-receber", note: "Previsão de recebimentos" },
     { title: "Vendas", href: "/sales", note: "Contratos e vendas por mês" },
+    { title: "DRE gerencial", href: "/dre-gerencial", note: "Lucro, prejuízo e caixa no histórico" },
     { title: "Configurações", href: "/configuracoes", note: "Parâmetros e histórico de atualização" }
   ];
 

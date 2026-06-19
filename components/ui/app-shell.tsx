@@ -19,7 +19,10 @@ const operationNavigation = [
   ["Baixa de parcela", "/lancamentos/baixa", "B"]
 ] as const;
 
-const analysisNavigation = [["Relatórios", "/relatorios", "G"]] as const;
+const analysisNavigation = [
+  ["Relatórios", "/relatorios", "G"],
+  ["DRE gerencial", "/dre-gerencial", "DRE"]
+] as const;
 const settingsNavigation = [["Configurações", "/configuracoes", "CF"]] as const;
 
 function NavigationGroup({ label, items }: { label: string; items: readonly (readonly [string, string, string])[] }) {
