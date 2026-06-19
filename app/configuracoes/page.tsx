@@ -10,18 +10,20 @@ import { loadPurchases } from "@/features/purchases/data";
 import { loadReceivablesForecast } from "@/features/receivables-forecast/sienge-data";
 import { loadReconciliationAccounts, loadReconciliationMovements } from "@/features/reconciliation/data";
 import { loadSalesContracts } from "@/features/sales/data";
+import { loadSupplyContracts } from "@/features/contracts/data";
 import { getLocalDatabaseFiles, getSiengeScreenUpdateHistory, type ScreenUpdateHistory } from "@/lib/api/sienge-history";
 import { getAppSettings, getSiengeIntegrationRange, saveAppSettings, type AppSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-type UpdateArea = "all" | "payables" | "receivables" | "sales" | "inventory" | "purchases" | "reconciliation";
+type UpdateArea = "all" | "payables" | "receivables" | "sales" | "inventory" | "purchases" | "reconciliation" | "contracts";
 
 const updateAreas: Array<{ key: UpdateArea; label: string; note: string; historyKey?: string }> = [
   { key: "all", label: "Todas as áreas", note: "Atualiza todos os dados usados pelos portais." },
   { key: "payables", label: "Contas a pagar", note: "Títulos, parcelas, agenda e busca avançada.", historyKey: "payables" },
   { key: "receivables", label: "Contas a receber", note: "Previsão de recebimentos e parcelas em aberto.", historyKey: "receivables" },
   { key: "sales", label: "Vendas", note: "Contratos de vendas e gráficos comerciais.", historyKey: "sales" },
+  { key: "contracts", label: "Contratos", note: "Contratos de fornecimento, saldos e medições.", historyKey: "contracts" },
   { key: "inventory", label: "Estoque e patrimônio", note: "Unidades imobiliárias, bens móveis e bens imóveis.", historyKey: "inventory" },
   { key: "purchases", label: "Compras", note: "Solicitações, cotações, pedidos e notas.", historyKey: "purchases" },
   { key: "reconciliation", label: "Conciliação", note: "Movimentos bancários e itens a conciliar.", historyKey: "reconciliation" }
@@ -79,6 +81,7 @@ async function updateSiengeAreaAction(formData: FormData) {
   }
   if (area === "receivables" || area === "all") await loadReceivablesForecast(true, force, integrationRange);
   if (area === "sales" || area === "all") await loadSalesContracts(true, force);
+  if (area === "contracts" || area === "all") await loadSupplyContracts(true, force);
   if (area === "inventory" || area === "all") await loadInventoryAssets(true, force);
   if (area === "purchases" || area === "all") await loadPurchases(true, force, integrationRange);
   if (area === "reconciliation" || area === "all") await loadReconciliationMovements(undefined, true, force, integrationRange);
@@ -88,6 +91,7 @@ async function updateSiengeAreaAction(formData: FormData) {
   revalidatePath("/contas-pagar");
   revalidatePath("/contas-receber");
   revalidatePath("/sales");
+  revalidatePath("/contratos");
   revalidatePath("/estoque");
   revalidatePath("/compras");
   revalidatePath("/conciliacao");

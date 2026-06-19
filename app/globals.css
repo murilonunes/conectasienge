@@ -163,6 +163,23 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .charts-dashboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .charts-dashboard > .chart-wide { grid-column: 1 / -1; }
 .charts-dashboard .panel { margin: 0; min-height: 330px; }
+.dashboard-view-switch.reports-view-switch { grid-template-columns: minmax(185px, .4fr) 1fr; }
+.report-hero { display: grid; grid-template-columns: minmax(280px, .8fr) 1.4fr; gap: 18px; align-items: stretch; padding: 22px; margin-bottom: 18px; background: linear-gradient(135deg, #fff, #edf6f1); }
+.report-hero.warning { border-color: #ead3ad; background: linear-gradient(135deg, #fffaf1, #fff); }
+.report-hero > div:first-child { display: grid; align-content: center; gap: 8px; padding-right: 10px; }
+.report-hero span, .report-hero-grid span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.report-hero h2 { margin: 0; font-family: Georgia, serif; font-size: 42px; font-weight: 500; letter-spacing: -.03em; }
+.report-hero p { max-width: 520px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.report-hero-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.report-hero-grid div { display: grid; align-content: center; gap: 8px; padding: 16px; border: 1px solid #d7e6dd; border-radius: 14px; background: rgba(255,255,255,.74); }
+.report-hero-grid strong { font-family: Georgia, serif; font-size: 25px; font-weight: 500; }
+.report-hero-grid small { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.report-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.reports-dashboard { margin-bottom: 20px; }
+.report-links { margin-top: 20px; }
+.report-links > div:last-child { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.report-links a { display: flex; justify-content: space-between; align-items: center; padding: 12px 13px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfb; color: var(--ink); font-size: 12px; font-weight: 800; }
+.report-links a::after { content: "Abrir"; color: var(--green); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
 .dashboard-view-switch { display: grid; grid-template-columns: minmax(175px, .38fr) minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; margin: -6px 0 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow); }
 .dashboard-view-summary { display: grid; gap: 3px; min-width: 0; padding: 0 4px; }
 .dashboard-view-summary span { width: fit-content; border-radius: 999px; padding: 4px 8px; background: var(--green-soft); color: var(--green); font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
@@ -446,6 +463,14 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .inventory-filters input, .inventory-filters select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 12px; color: var(--muted); outline: none; }
 .inventory-filters > div { display: flex; gap: 7px; align-items: baseline; white-space: nowrap; color: var(--muted); font-size: 10px; }
 .inventory-filters > div strong { color: var(--ink); font-size: 12px; }
+.contracts-filters { padding: 14px; display: grid; grid-template-columns: 1fr 220px auto; gap: 10px; align-items: center; margin-bottom: 16px; }
+.contracts-filters input, .contracts-filters select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 12px; color: var(--muted); outline: none; }
+.contracts-filters > div { display: flex; gap: 7px; align-items: baseline; white-space: nowrap; color: var(--muted); font-size: 10px; }
+.contracts-filters > div strong { color: var(--ink); font-size: 12px; }
+.contract-summary-list { display: grid; gap: 10px; }
+.contract-summary-list div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfb; }
+.contract-summary-list span { color: var(--muted); font-size: 10px; }
+.contract-summary-list strong { font-size: 12px; text-align: right; }
 .purchases-source-panel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 18px; background: var(--line); }
 .purchases-source-panel div { display: grid; gap: 5px; padding: 15px 17px; background: #fff; }
 .purchases-source-panel strong { font-size: 12px; }
@@ -596,6 +621,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .equal-grid { grid-template-columns: 1fr; }
   .charts-dashboard { grid-template-columns: 1fr; }
   .charts-dashboard > .chart-wide { grid-column: auto; }
+  .reports-view-switch, .report-hero { grid-template-columns: 1fr; }
+  .report-hero-grid, .report-links > div:last-child { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-view-switch { grid-template-columns: 1fr; }
   .dashboard-view-controls { grid-template-columns: 1fr auto; }
   .dashboard-executive { grid-template-columns: 1fr; }
@@ -640,6 +667,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .dashboard-view-controls { grid-template-columns: 1fr; }
   .dashboard-direction-options { width: fit-content; }
   .dashboard-executive-grid { grid-template-columns: 1fr; }
+  .report-hero-grid, .report-links > div:last-child { grid-template-columns: 1fr; }
   .dashboard-group-stats, .dashboard-metric-group.compact .dashboard-group-stats { grid-template-columns: 1fr; }
   .dashboard-executive-main h2 { font-size: 34px; }
   .page-heading { align-items: start; flex-direction: column; }
@@ -652,6 +680,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .settlement-search form { align-items: stretch; flex-direction: column; }
   .sales-filters { grid-template-columns: 1fr; }
   .inventory-filters { grid-template-columns: 1fr; }
+  .contracts-filters { grid-template-columns: 1fr; }
   .purchases-filters { grid-template-columns: 1fr; }
   .purchases-source-panel { grid-template-columns: 1fr; }
   .purchase-periods { grid-template-columns: 1fr; }

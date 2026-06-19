@@ -14,6 +14,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - O padrão de paginação foi aplicado em compras, conciliação, estoque, vendas, busca avançada de contas a pagar, contas a receber e tabela financeira genérica.
 - A rota `/financeiro` deixou de ser uma tela antiga de listagem financeira e passou a ser uma Central financeira leve, com atalhos para Dashboard, Contas a pagar, Contas a receber, Conciliação, Lançamento, Baixa e Configurações.
 - O componente financeiro legado que alimentava essa tela antiga foi removido para evitar duplicidade de propósito.
+- A rota `/contratos` foi atualizada para o novo padrão, lendo contratos de fornecimento dos dados salvos, com cards, ranking por situação, paginação e atualização pela tela de Configurações.
+- A rota `/relatorios` foi atualizada para funcionar como central de relatórios consolidados, lendo somente dados salvos e reunindo financeiro, vendas, compras, estoque, contratos e atalhos para os portais.
 
 ## Estado geral
 
@@ -149,6 +151,22 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A listagem foi ajustada para exibir por ordem de venda.
 - Foi criado grafico de vendas por mes.
 - Os contratos carregados entram no banco local para evitar consultas repetidas.
+
+## Contratos de fornecimento
+
+- A tela `/contratos` deixou de ser placeholder e passou a exibir contratos de fornecimento.
+- A abertura da tela lê os dados salvos de `/v1/supply-contracts`.
+- A atualização dos contratos foi incluída em Configurações, junto das demais áreas.
+- A tela mostra valor contratado, saldo estimado, contratos ativos, fornecedores, ranking por situação e listagem paginada.
+
+## Relatórios
+
+- A tela `/relatorios` deixou de ser um painel restrito a gráficos de contas a pagar.
+- A abertura da tela lê somente os dados salvos no banco local, sem consultar o Sienge.
+- A central de relatórios permite trocar período e visão de passado/futuro na própria tela.
+- A tela consolida resultado financeiro, recebíveis, pagamentos, vendas, compras, estoque e contratos.
+- Foram adicionados cards executivos, fluxo de entradas e saídas, vendas no período, rankings por cliente e fornecedor, pedidos de compra, andamento de compras, unidades por situação e contratos por situação.
+- A tela possui atalhos para abrir os portais detalhados quando o usuário precisar analisar registros.
 
 ## Estoque, patrimonio e unidades imobiliarias
 
