@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { PayableChargeReviewButton } from "@/components/payables/payable-charge-review-button";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
+import { analyzePayableCharge } from "@/lib/payables-abuse-analysis";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 type BankMovement = {
@@ -19,6 +21,7 @@ type Payment = {
   operationTypeName?: string;
   grossAmount?: number;
   netAmount?: number;
+  amount?: number;
   paymentDate?: string;
   sequencialNumber?: number;
   bankMovements?: BankMovement[];
@@ -57,6 +60,10 @@ function formatTaxId(value?: string) {
   return value || "";
 }
 
+function paymentValue(payment: Payment) {
+  return payment.netAmount || payment.grossAmount || payment.amount || 0;
+}
+
 export function AdvancedPayablesSearch() {
   const [filters, setFilters] = useState({
     startDate: initialStart, endDate: today, selectionType: "D", correctionIndexerId: "1",
@@ -85,9 +92,12 @@ export function AdvancedPayablesSearch() {
 
   const totals = useMemo(() => ({
     original: filtered.reduce((sum, item) => sum + (item.originalAmount || 0), 0),
+    corrected: filtered.reduce((sum, item) => sum + analyzePayableCharge(item, filters.correctionDate).correctedAmount, 0),
     balance: filtered.reduce((sum, item) => sum + (item.balanceAmount || 0), 0),
-    paid: filtered.reduce((sum, item) => sum + (item.payments || []).reduce((paymentSum, payment) => paymentSum + (payment.netAmount || 0), 0), 0)
-  }), [filtered]);
+    paid: filtered.reduce((sum, item) => sum + (item.payments || []).reduce((paymentSum, payment) => paymentSum + paymentValue(payment), 0), 0),
+    paidIncrease: filtered.reduce((sum, item) => sum + analyzePayableCharge(item, filters.correctionDate).paidIncrease, 0),
+    riskCount: filtered.filter((item) => analyzePayableCharge(item, filters.correctionDate).hasRisk).length
+  }), [filtered, filters.correctionDate]);
 
   async function search(event: FormEvent) {
     event.preventDefault();
@@ -178,8 +188,11 @@ export function AdvancedPayablesSearch() {
         <div className="stats advanced-stats">
           <article className="card stat"><div className="stat-top"><span>Parcelas encontradas</span></div><div className="stat-value">{filtered.length}</div><span className="panel-note">Após filtro na tela</span></article>
           <article className="card stat"><div className="stat-top"><span>Valor original</span></div><div className="stat-value">{formatCurrency(totals.original)}</div><span className="panel-note">Total das parcelas</span></article>
+          <article className="card stat"><div className="stat-top"><span>Valor corrigido</span></div><div className="stat-value">{formatCurrency(totals.corrected)}</div><span className="panel-note">Conforme dados salvos</span></article>
           <article className="card stat"><div className="stat-top"><span>Valor pago</span></div><div className="stat-value">{formatCurrency(totals.paid)}</div><span className="panel-note">Baixas retornadas</span></article>
+          <article className="card stat"><div className="stat-top"><span>Multa/juros pagos a mais</span></div><div className="stat-value">{formatCurrency(totals.paidIncrease)}</div><span className="panel-note">Pago acima do original</span></article>
           <article className="card stat"><div className="stat-top"><span>Saldo em aberto</span></div><div className="stat-value">{formatCurrency(totals.balance)}</div><span className="panel-note">Saldo atual</span></article>
+          <article className="card stat"><div className="stat-top"><span>Possíveis abusos</span></div><div className="stat-value">{totals.riskCount}</div><span className="panel-note">Acima de 2% + 1% ao mês</span></article>
         </div>
         <div className="card filters"><input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código" /></div>
         <LocalDataList
@@ -192,6 +205,7 @@ export function AdvancedPayablesSearch() {
               {pageItems.map((item) => {
                 const key = `${item.billId}-${item.installmentId}`;
                 const payments = item.payments || [];
+                const review = analyzePayableCharge(item, filters.correctionDate);
                 return <article className="card advanced-result" key={key}>
                   <button className="advanced-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
                     <span>
@@ -210,14 +224,33 @@ export function AdvancedPayablesSearch() {
                       </small>
                       <small>{item.companyName || `Empresa #${item.companyId}`}</small>
                     </span>
-                    <span><strong>{formatCurrency(item.originalAmount || 0)}</strong><small>Original</small></span>
-                    <span><strong>{formatCurrency(item.balanceAmount || 0)}</strong><small>Saldo</small></span>
+                    <span><strong>{formatCurrency(review.originalAmount)}</strong><small>Original</small></span>
+                    <span><strong>{formatCurrency(review.correctedAmount)}</strong><small>Corrigido</small></span>
+                    <span><strong>{formatCurrency(review.paidIncrease)}</strong><small>Multa/juros pagos a mais</small></span>
                     <span className={`badge ${payments.length ? "" : "pending"}`}>{payments.length ? `${payments.length} baixa(s)` : "Sem baixa"}</span>
                     <span className="sales-expand">{expanded === key ? "-" : "+"}</span>
                   </button>
                   {expanded === key && <div className="advanced-result-details">
-                    <div className="sales-detail-grid"><div><span>Vencimento</span><strong>{item.dueDate ? formatDate(item.dueDate) : "-"}</strong></div><div><span>Emissão</span><strong>{item.issueDate ? formatDate(item.issueDate) : "-"}</strong></div><div><span>Autorizada</span><strong>{item.authorizationStatus === "S" ? "Sim" : "Não"}</strong></div></div>
-                    <div className="payments-list"><h3>Baixas e pagamentos</h3>{payments.length ? payments.map((payment, index) => <div key={`${payment.sequencialNumber}-${index}`}><span>{payment.paymentDate ? formatDate(payment.paymentDate) : "Sem data"}</span><strong>{formatCurrency(payment.netAmount || 0)}</strong><span>{payment.operationTypeName || "Operação não informada"}</span><small>{payment.bankMovements?.length || 0} movimento(s) bancário(s)</small></div>) : <p>Nenhuma baixa retornada para esta parcela.</p>}</div>
+                    <div className="sales-detail-grid">
+                      <div><span>Vencimento</span><strong>{item.dueDate ? formatDate(item.dueDate) : "-"}</strong></div>
+                      <div><span>Emissão</span><strong>{item.issueDate ? formatDate(item.issueDate) : "-"}</strong></div>
+                      <div><span>Autorizada</span><strong>{item.authorizationStatus === "S" ? "Sim" : "Não"}</strong></div>
+                      <div><span>Saldo em aberto</span><strong>{formatCurrency(item.balanceAmount || 0)}</strong></div>
+                      <div><span>Acréscimo corrigido</span><strong>{formatCurrency(review.correctedIncrease)}</strong></div>
+                      <div><span>Limite 2% + 1% ao mês</span><strong>{formatCurrency(review.allowedIncrease)}</strong></div>
+                    </div>
+                    <PayableChargeReviewButton item={item} title={`Título #${item.billId} / Parcela ${item.installmentId}`} referenceDate={filters.correctionDate} />
+                    <div className="payments-list">
+                      <h3>Baixas e pagamentos</h3>
+                      {payments.length ? payments.map((payment, index) => (
+                        <div key={`${payment.sequencialNumber}-${index}`}>
+                          <span>{payment.paymentDate ? formatDate(payment.paymentDate) : "Sem data"}</span>
+                          <strong>{formatCurrency(paymentValue(payment))}</strong>
+                          <span>{payment.operationTypeName || "Operação não informada"}</span>
+                          <small>{payment.bankMovements?.length || 0} movimento(s) bancário(s)</small>
+                        </div>
+                      )) : <p>Nenhuma baixa retornada para esta parcela.</p>}
+                    </div>
                   </div>}
                 </article>;
               })}

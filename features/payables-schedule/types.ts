@@ -13,7 +13,7 @@ export type ScheduledPayable = {
   correctedBalanceAmount?: number;
   dueDate: string;
   authorizationStatus?: string;
-  payments?: { netAmount?: number; paymentDate?: string }[];
+  payments?: { amount?: number; grossAmount?: number; netAmount?: number; paymentDate?: string }[];
   __siengeIntegrationDay?: string;
   __siengeIntegratedAt?: string;
 };

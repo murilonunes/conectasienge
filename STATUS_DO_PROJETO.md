@@ -6,6 +6,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- Contas a pagar passou a exibir valor corrigido e multa/juros pagos a mais nas visões de agenda, busca avançada e consulta de parcelas por título.
+- Foi criado um botão de análise de cobrança que abre um modal para detectar possíveis cobranças acima do critério de 2% no ato mais 1% ao mês.
+- A análise de cobrança usa os dados salvos no banco local e serve como triagem operacional para revisão.
 - A atualização dos dados do Sienge em `/configuracoes` deixou de bloquear a tela até o fim da carga.
 - Foi criada uma rota local de jobs para iniciar a atualização em segundo plano e consultar o andamento.
 - A tela de Configurações agora mostra a atualização ativa por etapas, com status pendente, em andamento, concluído ou erro.
@@ -146,6 +149,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Foram adicionados indices locais para acelerar consultas por vencimento, emissao, competencia, pagamento, empresa e obra.
 - A consulta de parcelas de um titulo na tela de baixa tambem passou a ler o SQLite local, sem depender dos endpoints REST de detalhe do titulo.
 - A tela mostra mais informacoes da parcela, como vencimento, forma, envio ao banco e situacao.
+- A tela mostra valor original, valor corrigido, acréscimo corrigido e multa/juros pagos a mais quando esses dados existem no espelho local.
+- Foi adicionado um modal de análise de cobrança para comparar acréscimos contra o critério de 2% no ato mais 1% ao mês.
 - O numero do titulo foi aumentado visualmente no resultado.
 - Foi incluido botao para copiar o numero do titulo.
 - O CNPJ aparece no resultado quando disponivel.

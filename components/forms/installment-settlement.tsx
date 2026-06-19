@@ -1,8 +1,17 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { PayableChargeReviewButton } from "@/components/payables/payable-charge-review-button";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
+import { analyzePayableCharge } from "@/lib/payables-abuse-analysis";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+
+type Payment = {
+  amount?: number;
+  grossAmount?: number;
+  netAmount?: number;
+  paymentDate?: string;
+};
 
 type Installment = {
   installmentNumber: number;
@@ -10,10 +19,15 @@ type Installment = {
   baseDate?: string;
   billDate?: string;
   amount: number;
+  originalAmount?: number;
+  balanceAmount?: number;
+  correctedBalanceAmount?: number;
   indexId?: number;
   paymentTypeId?: number;
   situation?: string;
   paymentType?: string;
+  authorizationStatus?: string;
+  payments?: Payment[];
   sentToBank?: boolean;
   batchNumber?: number;
   __siengeIntegrationDay?: string;
@@ -102,7 +116,7 @@ export function InstallmentSettlement() {
           <label><span>Código do título no Sienge</span><input required type="number" min="1" value={billId} onChange={(e) => setBillId(e.target.value)} placeholder="Ex.: 1000" /></label>
           <button className="button" disabled={loading}>{loading ? "Consultando..." : "Buscar parcelas"}</button>
         </form>
-        <p>A consulta mostra vencimento, valor, situação atual da parcela e dia da integração.</p>
+        <p>A consulta mostra vencimento, valores original/corrigido, situação atual da parcela e dia da integração.</p>
       </section>
       {message && <div className="card data-notice"><strong>Consulta de parcelas</strong><span>{message}</span></div>}
       {bill && <section className="card bill-overview">
@@ -126,23 +140,31 @@ export function InstallmentSettlement() {
         </div>}
       </section>}
       <section className="settlement-grid">
-        {installments.map((installment) => (
-          <article className="card settlement-card" key={installment.installmentNumber}>
-            <div className="settlement-top"><span>Parcela {installment.installmentNumber}</span><span className={`badge ${installment.situation === "Totalmente paga" ? "" : "pending"}`}>{installment.situation || "Situação não informada"}</span></div>
-            <strong>{formatCurrency(installment.amount || 0)}</strong>
-            <dl>
-              <div><dt>Vencimento</dt><dd>{formatDate(installment.dueDate)}</dd></div>
-              <div><dt>Competência</dt><dd>{installment.billDate ? formatDate(installment.billDate) : "Não informada"}</dd></div>
-              <div><dt>Data-base</dt><dd>{installment.baseDate ? formatDate(installment.baseDate) : "Não informada"}</dd></div>
-              <div><dt>Indexador</dt><dd>{installment.indexId ? `#${installment.indexId}` : "Não informado"}</dd></div>
-              <div><dt>Forma</dt><dd>{installment.paymentType || (installment.paymentTypeId ? `#${installment.paymentTypeId}` : "Não informada")}</dd></div>
-              <div><dt>Enviada ao banco</dt><dd>{installment.sentToBank ? "Sim" : "Não"}</dd></div>
-              <div><dt>Lote bancário</dt><dd>{installment.batchNumber || "Não gerado"}</dd></div>
-              <div><dt>Integração</dt><dd><IntegrationStamp record={installment} /></dd></div>
-            </dl>
-            <button className="button secondary" type="button" onClick={() => setSelected(installment.installmentNumber)}>Cadastrar pagamento Pix</button>
-          </article>
-        ))}
+        {installments.map((installment) => {
+          const review = analyzePayableCharge(installment);
+          return (
+            <article className="card settlement-card" key={installment.installmentNumber}>
+              <div className="settlement-top"><span>Parcela {installment.installmentNumber}</span><span className={`badge ${installment.situation === "Totalmente paga" ? "" : "pending"}`}>{installment.situation || "Situação não informada"}</span></div>
+              <strong>{formatCurrency(review.correctedAmount)}</strong>
+              <dl>
+                <div><dt>Valor original</dt><dd>{formatCurrency(review.originalAmount)}</dd></div>
+                <div><dt>Valor corrigido</dt><dd>{formatCurrency(review.correctedAmount)}</dd></div>
+                <div><dt>Acréscimo corrigido</dt><dd>{formatCurrency(review.correctedIncrease)}</dd></div>
+                <div><dt>Multa/juros pagos a mais</dt><dd>{formatCurrency(review.paidIncrease)}</dd></div>
+                <div><dt>Vencimento</dt><dd>{formatDate(installment.dueDate)}</dd></div>
+                <div><dt>Competência</dt><dd>{installment.billDate ? formatDate(installment.billDate) : "Não informada"}</dd></div>
+                <div><dt>Data-base</dt><dd>{installment.baseDate ? formatDate(installment.baseDate) : "Não informada"}</dd></div>
+                <div><dt>Indexador</dt><dd>{installment.indexId ? `#${installment.indexId}` : "Não informado"}</dd></div>
+                <div><dt>Forma</dt><dd>{installment.paymentType || (installment.paymentTypeId ? `#${installment.paymentTypeId}` : "Não informada")}</dd></div>
+                <div><dt>Enviada ao banco</dt><dd>{installment.sentToBank ? "Sim" : "Não"}</dd></div>
+                <div><dt>Lote bancário</dt><dd>{installment.batchNumber || "Não gerado"}</dd></div>
+                <div><dt>Integração</dt><dd><IntegrationStamp record={installment} /></dd></div>
+              </dl>
+              <PayableChargeReviewButton item={installment} title={`Título #${bill?.id || billId} / Parcela ${installment.installmentNumber}`} />
+              <button className="button secondary" type="button" onClick={() => setSelected(installment.installmentNumber)}>Cadastrar pagamento Pix</button>
+            </article>
+          );
+        })}
       </section>
       {selected && <form className="card pix-form" onSubmit={savePix}>
         <div className="form-section-head"><span>PIX</span><div><h2>Instrução de pagamento da parcela {selected}</h2><p>Este cadastro prepara os dados de pagamento no Sienge. Ele não efetiva a baixa.</p></div></div>

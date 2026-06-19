@@ -21,6 +21,8 @@ type RawInstallment = {
   billDate?: string;
   installmentBaseDate?: string;
   originalAmount?: number;
+  balanceAmount?: number;
+  correctedBalanceAmount?: number;
   discountAmount?: number;
   indexerId?: number;
   consistencyStatus?: string;
@@ -127,7 +129,12 @@ export async function GET(_: Request, { params }: { params: { billId: string } }
         baseDate: raw.installmentBaseDate,
         billDate: raw.billDate,
         amount: raw.originalAmount || 0,
+        originalAmount: raw.originalAmount || 0,
+        balanceAmount: raw.balanceAmount,
+        correctedBalanceAmount: raw.correctedBalanceAmount,
         indexId: raw.indexerId,
+        authorizationStatus: raw.authorizationStatus,
+        payments: raw.payments || [],
         situation: paid ? "Com baixa" : raw.consistencyStatus === "S" ? "Não paga" : "Em revisão",
         sentToBank: false,
         batchNumber: undefined,

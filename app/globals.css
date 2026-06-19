@@ -597,7 +597,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .advanced-stats .stat-value { font-size: 20px; }
 .advanced-results { display: grid; gap: 9px; }
 .advanced-result { overflow: hidden; }
-.advanced-result-main { width: 100%; display: grid; grid-template-columns: 1.1fr 1.5fr .7fr .7fr 95px 20px; gap: 14px; align-items: center; padding: 15px 17px; border: 0; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
+.advanced-result-main { width: 100%; display: grid; grid-template-columns: 1.1fr 1.4fr .65fr .65fr .8fr 95px 20px; gap: 14px; align-items: center; padding: 15px 17px; border: 0; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
 .advanced-result-main:hover { background: #fbfcfb; }
 .advanced-result-main > span:not(.badge):not(.sales-expand) { display: grid; gap: 4px; min-width: 0; }
 .advanced-result-main strong { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -607,6 +607,21 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .copy-title-button { width: fit-content; margin-top: 3px; padding: 4px 7px; border: 1px solid #cfe1d7; border-radius: 7px; color: var(--green); background: var(--green-soft); font-family: Arial, Helvetica, sans-serif; font-size: 8px; font-weight: 800; cursor: pointer; }
 .copy-title-button:hover { border-color: var(--green); }
 .advanced-result-details { padding: 17px; background: #f9fbfa; border-top: 1px solid var(--line); }
+.payable-review-button { width: fit-content; border: 1px solid #cfe1d7; border-radius: 999px; background: #f8fbf9; color: var(--green); padding: 8px 11px; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+.payable-review-button.warn { border-color: #ead3ad; background: #fff4dc; color: #9b641d; }
+.payable-review-button.compact { justify-self: end; padding: 6px 8px; font-size: 8px; }
+.payable-review-modal { grid-template-rows: auto auto 1fr auto; }
+.payable-review-status { display: grid; gap: 5px; padding: 13px; border: 1px solid #cfe1d7; border-radius: 12px; background: #f8fbf9; }
+.payable-review-status.warn { border-color: #ead3ad; background: #fffaf1; }
+.payable-review-status strong { color: var(--green); font-size: 12px; }
+.payable-review-status.warn strong { color: #9b641d; }
+.payable-review-status span, .payable-review-note { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.payable-review-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; overflow: auto; }
+.payable-review-grid div { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfb; }
+.payable-review-grid span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.payable-review-grid strong { font-family: Georgia, serif; font-size: 20px; font-weight: 500; }
+.payable-review-grid strong.negative { color: var(--red); }
+.payable-review-note { margin: 0; }
 .payments-list { margin-top: 15px; }
 .payments-list h3 { margin: 0 0 8px; font-size: 11px; }
 .payments-list > div { display: grid; grid-template-columns: 100px 120px 1fr auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
@@ -669,7 +684,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .sales-contract-main { grid-template-columns: 110px 1fr 115px 95px 110px 95px 20px; }
   .advanced-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .advanced-result-main { grid-template-columns: 1fr 1fr 90px 20px; }
-  .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4) { display: none; }
+  .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4), .advanced-result-main > span:nth-child(5) { display: none; }
   .bill-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .payables-agenda { grid-template-columns: 1fr; }
   .payables-period:last-child { grid-column: auto; }
@@ -751,7 +766,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .local-list-controls { align-items: flex-start; flex-direction: column; }
   .local-list-pages { width: 100%; justify-content: space-between; }
   .advanced-result-main { grid-template-columns: 1fr auto; }
-  .advanced-result-main > span:nth-child(2), .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4), .advanced-result-main > span:nth-child(5) { display: none; }
+  .advanced-result-main > span:nth-child(2), .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4), .advanced-result-main > span:nth-child(5), .advanced-result-main > span:nth-child(6) { display: none; }
+  .payable-review-grid { grid-template-columns: 1fr; }
   .payments-list > div { grid-template-columns: 1fr; gap: 4px; }
   .bill-overview-head { flex-direction: column; }
   .bill-overview-head > div:last-child { text-align: left; }
