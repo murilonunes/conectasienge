@@ -1,12 +1,5 @@
 import Link from "next/link";
-import { CashFlowChart } from "@/components/charts/cash-flow-chart";
-import { MonthlyCountLine } from "@/components/charts/monthly-count-line";
-import { MonthlyVolumeChart } from "@/components/charts/monthly-volume-chart";
-import { PercentPieChart } from "@/components/charts/percent-pie-chart";
-import { RankingChart } from "@/components/charts/ranking-chart";
-import { StatusDonut } from "@/components/charts/status-donut";
 import { PageHeading } from "@/components/ui/page-heading";
-import { StatCard } from "@/components/ui/stat-card";
 import { analyzeContracts, loadSupplyContracts } from "@/features/contracts/data";
 import {
   DASHBOARD_PERIOD_OPTIONS,
@@ -25,6 +18,18 @@ type RelatoriosPageProps = {
   };
 };
 
+type ReportDefinition = {
+  icon: string;
+  title: string;
+  description: string;
+  href: string;
+  scope: string;
+  primaryMetric: string;
+  primaryLabel: string;
+  secondaryMetric: string;
+  secondaryLabel: string;
+};
+
 function selectedDays(value?: string | string[]) {
   return value ? normalizeDashboardDays(value) : 365;
 }
@@ -39,6 +44,10 @@ function periodLabel(days: number, direction: "future" | "past") {
   return direction === "past" ? `${label} passados` : `${label} futuros`;
 }
 
+function countLabel(value: number, singular: string, plural: string) {
+  return `${value} ${value === 1 ? singular : plural}`;
+}
+
 export default async function RelatoriosPage({ searchParams }: RelatoriosPageProps) {
   const days = selectedDays(searchParams?.dias);
   const direction = selectedDirection(searchParams?.periodo);
@@ -46,33 +55,114 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
   const contracts = await loadSupplyContracts();
   const contractSummary = analyzeContracts(contracts.contracts);
   const isPast = direction === "past";
-  const donePurchases = overview.purchaseSummary.flow.length - overview.purchaseSummary.pendingCount;
   const unavailable = [
     ...overview.unavailable,
     contracts.error && !contracts.contracts.length ? "contratos" : undefined
   ].filter(Boolean) as string[];
-  const resultBalance = isPast ? overview.realizedBalance : overview.predictedBalance;
-  const pendingReceivable = isPast ? overview.receivableSummary.periodOpenAmount : overview.receivableSummary.totalOpen;
-  const pendingPayable = isPast ? overview.payableSummary.periodAmount : overview.payableSummary.totalAmount;
+
+  const receivablePending = isPast ? overview.receivableSummary.periodOpenAmount : overview.receivableSummary.totalOpen;
+  const payablePending = isPast ? overview.payableSummary.periodAmount : overview.payableSummary.totalAmount;
+  const payablePendingCount = isPast ? overview.payableSummary.periodCount : overview.payables.totalCount;
+  const receivablePendingCount = isPast ? overview.receivableSummary.periodOpenCount : overview.receivableSummary.forecastCount;
+
+  const reports: ReportDefinition[] = [
+    {
+      icon: "R$",
+      title: "Relatório financeiro por período",
+      description: "Compara entradas, saídas, saldo previsto ou realizado e pendências do recorte escolhido.",
+      href: `/dashboard?dias=${days}&periodo=${direction}`,
+      scope: periodLabel(days, direction),
+      primaryMetric: formatCompactCurrency(isPast ? overview.realizedBalance : overview.predictedBalance),
+      primaryLabel: isPast ? "resultado realizado" : "saldo futuro",
+      secondaryMetric: `${formatCompactCurrency(isPast ? overview.receivableSummary.periodReceivedAmount : overview.receivableSummary.totalOpen)} / ${formatCompactCurrency(isPast ? overview.payableSummary.periodPaidAmount : overview.payableSummary.totalAmount)}`,
+      secondaryLabel: isPast ? "recebido / pago" : "a receber / a pagar"
+    },
+    {
+      icon: "P",
+      title: "Relatório de contas a pagar",
+      description: "Lista compromissos, pagamentos, valores em aberto e títulos que precisam de atenção.",
+      href: "/contas-pagar",
+      scope: "Financeiro",
+      primaryMetric: formatCompactCurrency(isPast ? overview.payableSummary.expectedAmount : overview.payableSummary.totalAmount),
+      primaryLabel: isPast ? "previsto no período" : "saldo a pagar",
+      secondaryMetric: countLabel(payablePendingCount, "parcela pendente", "parcelas pendentes"),
+      secondaryLabel: formatCompactCurrency(payablePending)
+    },
+    {
+      icon: "R",
+      title: "Relatório de contas a receber",
+      description: "Mostra previsões, recebimentos vinculados, saldos pendentes e concentração por cliente.",
+      href: "/contas-receber",
+      scope: "Financeiro",
+      primaryMetric: formatCompactCurrency(isPast ? overview.receivableSummary.expectedAmount : overview.receivableSummary.totalOpen),
+      primaryLabel: isPast ? "previsto no período" : "saldo a receber",
+      secondaryMetric: countLabel(receivablePendingCount, "parcela pendente", "parcelas pendentes"),
+      secondaryLabel: formatCompactCurrency(receivablePending)
+    },
+    {
+      icon: "C",
+      title: "Relatório de compras",
+      description: "Acompanha pedidos, solicitações, compras concluídas e pendências do processo.",
+      href: "/compras",
+      scope: "Suprimentos",
+      primaryMetric: formatCompactCurrency(overview.purchaseSummary.purchasedAmount),
+      primaryLabel: "comprado no recorte",
+      secondaryMetric: countLabel(overview.purchaseSummary.pendingCount, "pendência", "pendências"),
+      secondaryLabel: `${overview.purchaseSummary.orderCount} pedidos`
+    },
+    {
+      icon: "V",
+      title: "Relatório de vendas",
+      description: "Consolida contratos de venda, valor vendido, empreendimentos e evolução comercial.",
+      href: "/sales",
+      scope: "Comercial",
+      primaryMetric: formatCompactCurrency(overview.salesSummary.totalValue),
+      primaryLabel: "valor vendido",
+      secondaryMetric: countLabel(overview.salesSummary.activeCount, "contrato ativo", "contratos ativos"),
+      secondaryLabel: "carteira comercial"
+    },
+    {
+      icon: "CT",
+      title: "Relatório de contratos",
+      description: "Resume contratos de fornecimento, situação, valores contratados e saldo estimado.",
+      href: "/contratos",
+      scope: "Contratos",
+      primaryMetric: formatCompactCurrency(contractSummary.totalValue),
+      primaryLabel: "valor contratado",
+      secondaryMetric: countLabel(contractSummary.activeCount, "contrato ativo", "contratos ativos"),
+      secondaryLabel: `${contracts.contracts.length} integrados`
+    },
+    {
+      icon: "E",
+      title: "Relatório de estoque",
+      description: "Organiza unidades e bens salvos, com situação comercial, origem e valores disponíveis.",
+      href: "/estoque",
+      scope: "Estoque",
+      primaryMetric: String(overview.inventorySummary.unitCount),
+      primaryLabel: "unidades salvas",
+      secondaryMetric: formatCompactCurrency(overview.inventorySummary.totalValue),
+      secondaryLabel: "valor informado"
+    }
+  ];
 
   return (
     <>
       <PageHeading
         eyebrow="Relatórios"
         title="Central de relatórios"
-        subtitle={`Visão consolidada de ${periodLabel(days, direction)}, usando somente os dados já integrados.`}
+        subtitle="Escolha um relatório gerencial para abrir com os dados já integrados. O dashboard fica reservado para visão executiva rápida."
         action="Atualizar dados"
         actionHref="/configuracoes"
       />
 
-      <section className="dashboard-view-switch reports-view-switch">
-        <div className="dashboard-view-summary">
-          <span>{isPast ? "Realizado" : "Previsto"}</span>
+      <section className="reports-filter card">
+        <div>
+          <span>Período padrão</span>
           <strong>{periodLabel(days, direction)}</strong>
           <small>{overview.dashboardRange.start} até {overview.dashboardRange.end}</small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-view-options compact" aria-label="Período do relatório">
+          <div className="dashboard-view-options compact" aria-label="Período dos relatórios">
             {DASHBOARD_PERIOD_OPTIONS.map((option) => (
               <Link
                 key={option.days}
@@ -92,100 +182,61 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
 
       {unavailable.length > 0 && (
         <section className="card data-notice">
-          <strong>Relatório parcial</strong>
-          <span>Algumas áreas ainda não têm dados salvos: {unavailable.join(", ")}. Atualize essas áreas em Configurações quando quiser completar a visão.</span>
+          <strong>Relatórios parciais</strong>
+          <span>Algumas áreas ainda não têm dados salvos: {unavailable.join(", ")}. Atualize essas áreas em Configurações para completar os relatórios.</span>
         </section>
       )}
 
-      <section className={`card report-hero ${resultBalance < 0 ? "warning" : ""}`}>
+      <section className="reports-intro card">
         <div>
-          <span>{isPast ? "Resultado realizado" : "Saldo futuro líquido"}</span>
-          <h2>{formatCompactCurrency(resultBalance)}</h2>
+          <span>Como usar</span>
+          <h2>Abra o relatório certo para cada análise</h2>
           <p>
-            {isPast
-              ? `${formatCompactCurrency(overview.receivableSummary.receivedAmount)} recebido e ${formatCompactCurrency(overview.payableSummary.paidAmount)} pago no período.`
-              : `${formatCompactCurrency(overview.receivableSummary.totalOpen)} a receber e ${formatCompactCurrency(overview.payableSummary.totalAmount)} a pagar no período.`}
+            Cada cartão abaixo leva para a tela detalhada correspondente, já seguindo o período escolhido quando fizer sentido.
+            Exportação em PDF e Excel fica preparada como próxima etapa, sem misturar essa central com o dashboard.
           </p>
         </div>
-        <div className="report-hero-grid">
+        <div className="reports-intro-grid">
           <div>
-            <span>Recebível pendente</span>
-            <strong>{formatCompactCurrency(pendingReceivable)}</strong>
-            <small>{isPast ? "Previsto e ainda não recebido" : "Saldo futuro a receber"}</small>
+            <strong>{reports.length}</strong>
+            <span>relatórios disponíveis</span>
           </div>
           <div>
-            <span>Pagamento pendente</span>
-            <strong>{formatCompactCurrency(pendingPayable)}</strong>
-            <small>{isPast ? "Previsto e ainda não pago" : "Saldo futuro a pagar"}</small>
+            <strong>{periodLabel(days, direction)}</strong>
+            <span>recorte selecionado</span>
           </div>
           <div>
-            <span>Contratos ativos</span>
-            <strong>{contractSummary.activeCount}</strong>
-            <small>{formatCompactCurrency(contractSummary.balanceValue)} de saldo estimado</small>
+            <strong>Dados salvos</strong>
+            <span>sem consulta ao Sienge na abertura</span>
           </div>
         </div>
       </section>
 
-      <div className="stats report-stats">
-        <StatCard label={isPast ? "Recebido" : "Previsto a receber"} value={formatCompactCurrency(isPast ? overview.receivableSummary.receivedAmount : overview.receivableSummary.expectedAmount)} delta={`${isPast ? overview.receivableSummary.receivedCount : overview.receivableSummary.expectedCount} parcelas`} icon="R$" />
-        <StatCard label={isPast ? "Pago" : "Previsto a pagar"} value={formatCompactCurrency(isPast ? overview.payableSummary.paidAmount : overview.payableSummary.expectedAmount)} delta={`${isPast ? overview.payableSummary.paidCount : overview.payableSummary.expectedCount} parcelas`} icon="P" />
-        <StatCard label="Vendas" value={formatCompactCurrency(overview.salesSummary.totalValue)} delta={`${overview.salesSummary.activeCount} contratos ativos`} icon="V" />
-        <StatCard label="Compras" value={formatCompactCurrency(overview.purchaseSummary.purchasedAmount)} delta={`${overview.purchaseSummary.orderCount} pedidos no recorte`} icon="C" />
-        <StatCard label="Contratos" value={formatCompactCurrency(contractSummary.totalValue)} delta={`${contracts.contracts.length} contratos integrados`} icon="CT" />
-        <StatCard label="Estoque" value={String(overview.inventorySummary.unitCount)} delta="unidades imobiliárias salvas" icon="E" />
-        <StatCard label="Pendências a receber" value={formatCompactCurrency(pendingReceivable)} delta={`${isPast ? overview.receivableSummary.periodOpenCount : overview.receivableSummary.forecastCount} parcelas`} warn={pendingReceivable > 0 && isPast} icon="!" />
-        <StatCard label="Pendências a pagar" value={formatCompactCurrency(pendingPayable)} delta={`${isPast ? overview.payableSummary.periodCount : overview.payables.totalCount} parcelas`} warn={pendingPayable > 0 && isPast} icon="!" />
-      </div>
-
-      <div className="charts-dashboard reports-dashboard">
-        <div className="chart-wide">
-          <CashFlowChart
-            data={overview.cashFlow}
-            title={isPast ? "Entradas x saídas realizadas" : "Fluxo futuro previsto"}
-            note={isPast ? "Recebimentos e pagamentos realizados no período" : "Recebíveis e compromissos por vencimento"}
-          />
-        </div>
-        <div className="chart-wide">
-          <MonthlyVolumeChart
-            data={overview.salesMonthly}
-            title="Vendas no período"
-            note="Valor e quantidade de contratos de venda"
-            countLabel="contrato"
-          />
-        </div>
-        <RankingChart title="Recebíveis por cliente" note={isPast ? "Maiores saldos pendentes no período" : "Maiores saldos futuros"} data={overview.receivableSummary.clients} countLabel="parcela" />
-        <RankingChart title="Pagamentos por fornecedor" note={isPast ? "Maiores saldos pendentes no período" : "Maiores compromissos futuros"} data={overview.payableSummary.creditors} countLabel="parcela" />
-        <MonthlyCountLine data={overview.purchasesMonthly} title="Pedidos de compra" note={`Quantidade de pedidos, ${overview.cashFlowGranularityLabel}`} />
-        <StatusDonut
-          complete={donePurchases}
-          incomplete={overview.purchaseSummary.pendingCount}
-          title="Andamento de compras"
-          note="Processos concluídos e pendentes"
-          completeLabel="Concluídos"
-          incompleteLabel="Pendentes"
-          centerLabel="concluído"
-        />
-        <PercentPieChart title="Unidades por situação" note="Distribuição comercial das unidades salvas" data={overview.inventorySummary.byStock} centerLabel="unidades" />
-        <RankingChart title="Contratos por situação" note="Carteira de contratos de fornecimento" data={contractSummary.byStatus} countLabel="contrato" />
-      </div>
-
-      <section className="card panel report-links">
-        <div className="panel-head">
-          <div>
-            <h2 className="panel-title">Abrir detalhes</h2>
-            <span className="panel-note">Use os portais abaixo para analisar registros e listas completas.</span>
-          </div>
-        </div>
-        <div>
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/contas-receber">Contas a receber</Link>
-          <Link href="/contas-pagar">Contas a pagar</Link>
-          <Link href="/sales">Vendas</Link>
-          <Link href="/compras">Compras</Link>
-          <Link href="/estoque">Estoque</Link>
-          <Link href="/contratos">Contratos</Link>
-          <Link href="/conciliacao">Conciliação</Link>
-        </div>
+      <section className="report-catalog">
+        {reports.map((report) => (
+          <article className="card report-card" key={report.title}>
+            <div className="report-card-top">
+              <div className="report-icon">{report.icon}</div>
+              <span>{report.scope}</span>
+            </div>
+            <h2>{report.title}</h2>
+            <p>{report.description}</p>
+            <div className="report-card-metrics">
+              <div>
+                <strong>{report.primaryMetric}</strong>
+                <span>{report.primaryLabel}</span>
+              </div>
+              <div>
+                <strong>{report.secondaryMetric}</strong>
+                <span>{report.secondaryLabel}</span>
+              </div>
+            </div>
+            <div className="report-card-actions">
+              <Link className="button" href={report.href}>Abrir relatório</Link>
+              <span>Exportar PDF/Excel em breve</span>
+            </div>
+          </article>
+        ))}
       </section>
     </>
   );

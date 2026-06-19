@@ -1,11 +1,15 @@
 # Status do projeto Brasin
 
-Atualizado em: 18/06/2026
+Atualizado em: 19/06/2026
 
 Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A ideia e manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
+- A rota `/relatorios` foi transformada em uma central de relatórios geráveis, separando seu propósito do Dashboard.
+- A Central de relatórios agora apresenta cartões para financeiro por período, contas a pagar, contas a receber, compras, vendas, contratos e estoque.
+- Cada relatório mostra escopo, métricas rápidas, botão para abrir a tela detalhada e indicação de exportação PDF/Excel como próxima etapa.
+- A tela continua lendo somente dados salvos e não consulta o Sienge na abertura.
 - Foi feita uma revisão dos textos visíveis fora da tela de Configurações.
 - Textos sem acento, mensagens com encoding quebrado e rótulos técnicos em telas de usuário foram padronizados.
 - Mensagens de erro, carregamento e detalhes passaram a usar linguagem mais clara para o usuário, deixando termos como banco local, SQLite, endpoint e bulk fora da leitura principal.
@@ -15,7 +19,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A rota `/financeiro` deixou de ser uma tela antiga de listagem financeira e passou a ser uma Central financeira leve, com atalhos para Dashboard, Contas a pagar, Contas a receber, Conciliação, Lançamento, Baixa e Configurações.
 - O componente financeiro legado que alimentava essa tela antiga foi removido para evitar duplicidade de propósito.
 - A rota `/contratos` foi atualizada para o novo padrão, lendo contratos de fornecimento dos dados salvos, com cards, ranking por situação, paginação e atualização pela tela de Configurações.
-- A rota `/relatorios` foi atualizada para funcionar como central de relatórios consolidados, lendo somente dados salvos e reunindo financeiro, vendas, compras, estoque, contratos e atalhos para os portais.
+- A rota `/relatorios` funciona como central de relatórios geráveis, lendo somente dados salvos e apontando para os portais detalhados.
 
 ## Estado geral
 
@@ -23,8 +27,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - As credenciais do Sienge ficam em `.env` para uso local. Esse arquivo nao entra no Git.
 - Os dados consultados no Sienge agora sao gravados em SQLite local como um espelho da API.
 - Bancos locais, `.env`, `node_modules`, builds e arquivos temporarios estao ignorados no Git.
-- Existe um commit principal ja feito: `3d1a69e feat: build Sienge finance portals`.
-- Depois desse commit, o dashboard inicial geral foi melhorado e ainda esta como alteracao local pendente de commit.
+- O histórico de etapas concluídas fica registrado em commits pequenos e descritivos no Git.
 
 ## Padrao atual do projeto
 
@@ -179,12 +182,12 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Relatórios
 
-- A tela `/relatorios` deixou de ser um painel restrito a gráficos de contas a pagar.
+- A tela `/relatorios` deixou de concorrer visualmente com o Dashboard.
 - A abertura da tela lê somente os dados salvos no banco local, sem consultar o Sienge.
-- A central de relatórios permite trocar período e visão de passado/futuro na própria tela.
-- A tela consolida resultado financeiro, recebíveis, pagamentos, vendas, compras, estoque e contratos.
-- Foram adicionados cards executivos, fluxo de entradas e saídas, vendas no período, rankings por cliente e fornecedor, pedidos de compra, andamento de compras, unidades por situação e contratos por situação.
-- A tela possui atalhos para abrir os portais detalhados quando o usuário precisar analisar registros.
+- A central permite escolher o período padrão e a visão de passado/futuro para orientar os relatórios.
+- A tela funciona como catálogo de relatórios gerenciais: financeiro por período, contas a pagar, contas a receber, compras, vendas, contratos e estoque.
+- Cada relatório mostra escopo, métricas rápidas e botão para abrir o portal detalhado correspondente.
+- A exportação PDF/Excel ficou sinalizada como próxima etapa, sem prometer geração antes de implementar a rotina.
 
 ## Estoque, patrimonio e unidades imobiliarias
 
