@@ -47,7 +47,7 @@ function ResultTrend({ monthly }: { monthly: DreMonthlyItem[] }) {
       <div className="panel-head">
         <div>
           <h2 className="panel-title">Resultado por mês</h2>
-          <span className="panel-note">Receita líquida menos custos e despesas lançados</span>
+          <span className="panel-note">Receita POC líquida menos custos e despesas lançados</span>
         </div>
       </div>
       {recent.length ? (
@@ -79,7 +79,7 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
   return (
     <section className="card table-card dre-monthly-table">
       <div className="table-head">
-        <h2 className="panel-title">DRE mês a mês</h2>
+        <h2 className="panel-title">DRE POC mês a mês</h2>
         <span className="panel-note">Valores consolidados por competência e por caixa</span>
       </div>
       {rows.length ? (
@@ -87,7 +87,8 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
           <thead>
             <tr>
               <th>Mês</th>
-              <th>Receita líquida</th>
+              <th>Vendas contratadas</th>
+              <th>Receita POC líquida</th>
               <th>Custos/despesas</th>
               <th>Resultado</th>
               <th>Recebido</th>
@@ -99,6 +100,7 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
             {rows.map((item) => (
               <tr key={item.key}>
                 <td><strong>{item.label}</strong></td>
+                <td>{formatCurrency(item.contractedRevenue)}</td>
                 <td>{formatCurrency(item.netRevenue)}</td>
                 <td>{formatCurrency(item.costs)}</td>
                 <td className={item.competenceResult < 0 ? "negative-cell" : "positive-cell"}>{formatCurrency(item.competenceResult)}</td>
@@ -125,8 +127,8 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
     <>
       <PageHeading
         eyebrow="Resultado histórico"
-        title="DRE gerencial"
-        subtitle="Análise anual de lucro, prejuízo e caixa realizado da operação."
+        title="DRE POC gerencial"
+        subtitle="Análise anual por POC: receita reconhecida pelo avanço da obra, custos e caixa realizado."
         action="Atualizar dados"
         actionHref="/configuracoes"
       />
@@ -161,11 +163,11 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
 
       <section className={`card dashboard-executive dre-executive ${hasProfit ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
-          <span>{hasProfit ? "Lucro gerencial" : "Prejuízo gerencial"}</span>
+          <span>{hasProfit ? "Lucro POC" : "Prejuízo POC"}</span>
           <h2>{formatCompactCurrency(dre.netResult)}</h2>
           <p>
-            Receita líquida de {formatCompactCurrency(dre.netRevenue)} menos {formatCompactCurrency(dre.costAmount)}
-            {" "}em custos e despesas lançados. Margem gerencial de {formatPercent(dre.margin)}.
+            Receita POC líquida de {formatCompactCurrency(dre.netRevenue)} menos {formatCompactCurrency(dre.costAmount)}
+            {" "}em custos e despesas lançados. POC médio ponderado de {formatPercent(dre.averagePoc * 100)}.
           </p>
         </div>
         <div className="dashboard-executive-grid">
@@ -188,10 +190,11 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       </section>
 
       <div className="stats dre-stats">
-        <StatCard label="Receita bruta" value={formatCompactCurrency(dre.grossRevenue)} delta={`${dre.contractCount} contratos no ano`} icon="R$" />
-        <StatCard label="Cancelamentos" value={formatCompactCurrency(dre.cancellations)} delta={`${dre.cancelledContractCount} contratos cancelados/distratados`} warn={dre.cancellations > 0} icon="-" />
+        <StatCard label="Receita POC" value={formatCompactCurrency(dre.pocRevenue)} delta={`${dre.pocMatchedCount} contratos vinculados ao avanço`} icon="R$" />
+        <StatCard label="Vendas contratadas" value={formatCompactCurrency(dre.contractedRevenue)} delta={`${dre.contractCount} contratos no ano`} icon="V" />
+        <StatCard label="POC médio" value={formatPercent(dre.averagePoc * 100)} delta={`${dre.pocUnmatchedCount} contratos sem vínculo de obra`} warn={dre.pocUnmatchedCount > 0} icon="%" />
+        <StatCard label="Cancelamentos POC" value={formatCompactCurrency(dre.cancellations)} delta={`${dre.cancelledContractCount} contratos cancelados/distratados`} warn={dre.cancellations > 0} icon="-" />
         <StatCard label="Custos e despesas" value={formatCompactCurrency(dre.costAmount)} delta={`${dre.costCount} parcelas lançadas`} warn={dre.costAmount > dre.netRevenue} icon="C" />
-        <StatCard label="Compras contratadas" value={formatCompactCurrency(dre.purchasedAmount)} delta={`${dre.purchaseOrderCount} pedidos, ${dre.pendingPurchaseCount} pendentes`} icon="P" />
         <StatCard label="Recebido" value={formatCompactCurrency(dre.receivedAmount)} delta={`${dre.receivedCount} recebimentos no ano`} icon="R" />
         <StatCard label="Pago" value={formatCompactCurrency(dre.paidAmount)} delta={`${dre.paidCount} pagamentos no ano`} warn={dre.paidAmount > dre.receivedAmount} icon="S" />
       </div>
@@ -201,8 +204,8 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       <div className="dre-grid-wide">
         <CashFlowChart
           data={dre.competenceFlow}
-          title="Receita x custos"
-          note="Leitura por competência gerencial, agrupada por mês"
+          title="Receita POC x custos"
+          note="Receita reconhecida pelo POC e custos lançados, agrupados por mês"
         />
         <CashFlowChart
           data={dre.cashFlow}
@@ -215,16 +218,17 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
 
       <div className="grid-main equal-grid">
         <RankingChart title="Custos por fornecedor" note="Maiores custos e despesas lançados" data={dre.expenseByCreditor} countLabel="parcela" />
-        <RankingChart title="Vendas por empreendimento" note="Maiores receitas vendidas no ano" data={dre.salesByEnterprise} countLabel="contrato" />
+        <RankingChart title="Receita POC por empreendimento" note="Maiores receitas reconhecidas no ano" data={dre.salesByEnterprise} countLabel="contrato" />
       </div>
 
       <MonthlyTable monthly={dre.monthly} />
 
       <section className="card methodology dre-methodology">
-        <strong>Como ler esta DRE gerencial</strong>
+        <strong>Como ler esta DRE POC gerencial</strong>
         <p>
-          Resultado gerencial considera contratos de venda menos cancelamentos, custos e despesas lançados no espelho local.
-          Caixa realizado é separado: recebimentos efetivos menos pagamentos efetivos. Essa separação ajuda a enxergar quando a operação dá lucro, mas o caixa ainda não acompanhou.
+          Resultado POC considera vendas contratadas multiplicadas pelo percentual de avanço encontrado nos contratos de fornecimento da obra,
+          menos cancelamentos, custos e despesas lançados. Caixa realizado continua separado: recebimentos efetivos menos pagamentos efetivos.
+          Quando uma venda não encontra vínculo com obra/contrato, ela fica fora da receita POC e aparece no card de contratos sem vínculo.
         </p>
       </section>
     </>

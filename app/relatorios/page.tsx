@@ -88,12 +88,12 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
     },
     {
       icon: "=",
-      title: "DRE gerencial",
-      description: "Mostra lucro ou prejuízo por competência, caixa realizado e evolução mensal do exercício.",
+      title: "DRE POC gerencial",
+      description: "Reconhece receita pelo avanço da obra, compara custos e separa o caixa realizado.",
       href: `/dre-gerencial?ano=${dreYear}`,
       scope: `Resultado ${dreYear}`,
       primaryMetric: formatCompactCurrency(dre.netResult),
-      primaryLabel: dre.netResult >= 0 ? "lucro gerencial" : "prejuízo gerencial",
+      primaryLabel: dre.netResult >= 0 ? "lucro POC" : "prejuízo POC",
       secondaryMetric: formatCompactCurrency(dre.cashResult),
       secondaryLabel: "caixa realizado"
     },

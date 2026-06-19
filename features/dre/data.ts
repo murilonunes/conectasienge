@@ -15,7 +15,8 @@ type ChartItem = {
 export type DreMonthlyItem = {
   key: string;
   label: string;
-  grossRevenue: number;
+  contractedRevenue: number;
+  pocRevenue: number;
   cancellations: number;
   netRevenue: number;
   costs: number;
@@ -28,6 +29,7 @@ export type DreMonthlyItem = {
 type SalesContract = {
   id?: number;
   number?: string;
+  companyName?: string;
   enterpriseName?: string;
   contractDate?: string;
   issueDate?: string;
@@ -45,12 +47,32 @@ type PurchaseOrder = {
   supplierId?: number;
 };
 
+type SupplyContract = {
+  companyName?: string;
+  buildingName?: string;
+  projectName?: string;
+  totalValue?: number;
+  contractValue?: number;
+  value?: number;
+  balanceAmount?: number;
+  measuredAmount?: number;
+  accumulatedMeasuredValue?: number;
+};
+
+type PocProgress = {
+  label: string;
+  plannedCost: number;
+  measuredCost: number;
+  percent: number;
+};
+
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const dbFiles = {
   payables: path.join(dataDir, "finance-payables.sqlite"),
   receivables: path.join(dataDir, "finance-receivables.sqlite"),
   sales: path.join(dataDir, "commercial-sales.sqlite"),
-  purchases: path.join(dataDir, "purchases.sqlite")
+  purchases: path.join(dataDir, "purchases.sqlite"),
+  contracts: path.join(dataDir, "contracts-supply.sqlite")
 };
 
 function iso(date: Date) {
@@ -111,6 +133,20 @@ function safeJson<T>(text: string): T | undefined {
 function money(value: unknown) {
   const numberValue = Number(value || 0);
   return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
+function normalizeKey(value?: string) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function ratio(value: number) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
 }
 
 function addMonthlyValue(map: Map<string, number>, key: string | undefined, value: number) {
@@ -209,10 +245,26 @@ function addPurchaseYears(years: Set<number>) {
   }
 }
 
+function addContractYears(years: Set<number>) {
+  const database = openDatabase(dbFiles.contracts);
+  if (!database) return;
+  try {
+    if (!tableExists(database, "sienge_records")) return;
+    const rows = database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/supply-contracts'").all() as JsonRow[];
+    rows.forEach((row) => {
+      const contract = safeJson<SupplyContract & { issueDate?: string; contractDate?: string; signatureDate?: string; startDate?: string }>(row.raw_json);
+      addYearFromDate(years, contract?.issueDate || contract?.contractDate || contract?.signatureDate || contract?.startDate);
+    });
+  } finally {
+    database.close();
+  }
+}
+
 export function loadDreYearOptions() {
   const years = new Set<number>([Number(todayIso().slice(0, 4))]);
   addSalesYears(years);
   addPurchaseYears(years);
+  addContractYears(years);
   addYearsFromSql(dbFiles.payables, "bulk_outcome_installments", "COALESCE(issueDate, billDate, dueDate)", years);
   addYearsFromSql(dbFiles.payables, "bulk_outcome_payments", "paymentDate", years);
   addYearsFromSql(dbFiles.receivables, "bulk_income_installments", "dueDate", years);
@@ -220,16 +272,80 @@ export function loadDreYearOptions() {
   return Array.from(years).sort((left, right) => right - left);
 }
 
-function loadSales(start: string, end: string) {
+function contractValue(contract: SupplyContract) {
+  return money(contract.totalValue ?? contract.contractValue ?? contract.value);
+}
+
+function measuredValue(contract: SupplyContract) {
+  return money(contract.measuredAmount ?? contract.accumulatedMeasuredValue);
+}
+
+function progressLabels(contract: SupplyContract) {
+  return Array.from(new Set([contract.projectName, contract.buildingName, contract.companyName]
+    .map((item) => normalizeKey(item))
+    .filter(Boolean)));
+}
+
+function loadPocProgress() {
+  const database = openDatabase(dbFiles.contracts);
+  const progress = new Map<string, PocProgress>();
+  let unavailable = false;
+  if (!database) unavailable = true;
+  try {
+    if (!database || !tableExists(database, "sienge_records")) unavailable = true;
+    const rows = database && tableExists(database, "sienge_records")
+      ? database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/supply-contracts'").all() as JsonRow[]
+      : [];
+
+    rows.forEach((row) => {
+      const contract = safeJson<SupplyContract>(row.raw_json);
+      if (!contract) return;
+      const plannedCost = contractValue(contract);
+      const measuredCost = measuredValue(contract);
+      if (plannedCost <= 0 || measuredCost <= 0) return;
+      progressLabels(contract).forEach((key) => {
+        const label = contract.projectName || contract.buildingName || contract.companyName || "Obra não informada";
+        const current = progress.get(key) || { label, plannedCost: 0, measuredCost: 0, percent: 0 };
+        current.plannedCost += plannedCost;
+        current.measuredCost += measuredCost;
+        current.percent = ratio(current.measuredCost / current.plannedCost);
+        progress.set(key, current);
+      });
+    });
+  } finally {
+    database?.close();
+  }
+
+  return { progress, unavailable };
+}
+
+function progressForSale(contract: SalesContract, progress: Map<string, PocProgress>) {
+  const candidates = [contract.enterpriseName, contract.companyName]
+    .map((item) => normalizeKey(item))
+    .filter(Boolean);
+  for (const key of candidates) {
+    const item = progress.get(key);
+    if (item) return item;
+  }
+  return undefined;
+}
+
+function loadSales(start: string, end: string, pocProgress: Map<string, PocProgress>) {
   const database = openDatabase(dbFiles.sales);
-  const monthlyGross = new Map<string, number>();
+  const monthlyContracted = new Map<string, number>();
+  const monthlyPoc = new Map<string, number>();
   const monthlyCancellations = new Map<string, number>();
   const monthlyCount = new Map<string, number>();
   const enterprises = new Map<string, ChartItem>();
-  let grossRevenue = 0;
+  let contractedRevenue = 0;
+  let pocRevenue = 0;
   let cancellations = 0;
   let contractCount = 0;
   let cancelledCount = 0;
+  let pocMatchedCount = 0;
+  let pocUnmatchedCount = 0;
+  let weightedPocTotal = 0;
+  let weightedPocBase = 0;
   let unavailable = false;
 
   if (!database) unavailable = true;
@@ -246,24 +362,37 @@ function loadSales(start: string, end: string) {
       const value = money(contract.totalSellingValue || contract.value);
       const cancelled = /cancelad|distrat/i.test(contract.situation || "") || Boolean(contract.cancellationDate);
       const cancellationDate = normalizeDate(contract.cancellationDate || saleDate);
+      const progress = progressForSale(contract, pocProgress);
+      const pocPercent = progress?.percent || 0;
+      const recognizedValue = value * pocPercent;
 
       if (inRange(saleDate, start, end)) {
-        grossRevenue += value;
+        contractedRevenue += value;
+        pocRevenue += recognizedValue;
         contractCount += 1;
-        addMonthlyValue(monthlyGross, monthKey(saleDate), value);
+        addMonthlyValue(monthlyContracted, monthKey(saleDate), value);
+        addMonthlyValue(monthlyPoc, monthKey(saleDate), recognizedValue);
         addMonthlyCount(monthlyCount, monthKey(saleDate));
+
+        if (progress) {
+          pocMatchedCount += 1;
+          weightedPocTotal += pocPercent * value;
+          weightedPocBase += value;
+        } else {
+          pocUnmatchedCount += 1;
+        }
 
         const label = contract.enterpriseName || "Empreendimento não informado";
         const current = enterprises.get(label) || { label, value: 0, count: 0 };
-        current.value += value;
+        current.value += recognizedValue;
         current.count += 1;
         enterprises.set(label, current);
       }
 
       if (cancelled && inRange(cancellationDate, start, end)) {
-        cancellations += value;
+        cancellations += value * pocPercent;
         cancelledCount += 1;
-        addMonthlyValue(monthlyCancellations, monthKey(cancellationDate), value);
+        addMonthlyValue(monthlyCancellations, monthKey(cancellationDate), value * pocPercent);
       }
     });
   } finally {
@@ -271,12 +400,17 @@ function loadSales(start: string, end: string) {
   }
 
   return {
-    grossRevenue,
+    contractedRevenue,
+    pocRevenue,
     cancellations,
-    netRevenue: grossRevenue - cancellations,
+    netRevenue: pocRevenue - cancellations,
     contractCount,
     cancelledCount,
-    monthlyGross,
+    pocMatchedCount,
+    pocUnmatchedCount,
+    averagePoc: weightedPocBase ? weightedPocTotal / weightedPocBase : 0,
+    monthlyContracted,
+    monthlyPoc,
     monthlyCancellations,
     monthlyCount,
     enterprises: Array.from(enterprises.values()).sort((left, right) => right.value - left.value).slice(0, 10),
@@ -476,7 +610,8 @@ function buildMonthly({
 }) {
   const keys = new Set<string>();
   [
-    sales.monthlyGross,
+    sales.monthlyContracted,
+    sales.monthlyPoc,
     sales.monthlyCancellations,
     payables.monthlyCosts,
     payables.monthlyPaid,
@@ -486,16 +621,18 @@ function buildMonthly({
   return Array.from(keys)
     .sort((left, right) => left.localeCompare(right))
     .map((key): DreMonthlyItem => {
-      const grossRevenue = sales.monthlyGross.get(key) || 0;
+      const contractedRevenue = sales.monthlyContracted.get(key) || 0;
+      const pocRevenue = sales.monthlyPoc.get(key) || 0;
       const cancellations = sales.monthlyCancellations.get(key) || 0;
-      const netRevenue = grossRevenue - cancellations;
+      const netRevenue = pocRevenue - cancellations;
       const costs = payables.monthlyCosts.get(key) || 0;
       const received = receivables.monthlyReceived.get(key) || 0;
       const paid = payables.monthlyPaid.get(key) || 0;
       return {
         key,
         label: monthLabel(key),
-        grossRevenue,
+        contractedRevenue,
+        pocRevenue,
         cancellations,
         netRevenue,
         costs,
@@ -510,7 +647,8 @@ function buildMonthly({
 export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
   const start = `${year}-01-01`;
   const end = `${year}-12-31`;
-  const sales = loadSales(start, end);
+  const poc = loadPocProgress();
+  const sales = loadSales(start, end, poc.progress);
   const payables = loadPayables(start, end);
   const receivables = loadReceivables(start, end);
   const purchases = loadPurchases(start, end);
@@ -526,9 +664,11 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
       sales.unavailable ? "vendas" : undefined,
       payables.unavailable ? "contas a pagar" : undefined,
       receivables.unavailable ? "contas a receber" : undefined,
-      purchases.unavailable ? "compras" : undefined
+      purchases.unavailable ? "compras" : undefined,
+      poc.unavailable ? "contratos de fornecimento para POC" : undefined
     ].filter(Boolean) as string[],
-    grossRevenue: sales.grossRevenue,
+    contractedRevenue: sales.contractedRevenue,
+    pocRevenue: sales.pocRevenue,
     cancellations: sales.cancellations,
     netRevenue: sales.netRevenue,
     costAmount: payables.costs,
@@ -549,6 +689,9 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
     pendingPurchaseCount: purchases.pendingCount,
     contractCount: sales.contractCount,
     cancelledContractCount: sales.cancelledCount,
+    pocMatchedCount: sales.pocMatchedCount,
+    pocUnmatchedCount: sales.pocUnmatchedCount,
+    averagePoc: sales.averagePoc,
     monthly,
     competenceFlow: monthly.map((item) => ({ label: item.label, income: Math.max(0, item.netRevenue), outcome: Math.max(0, item.costs) })),
     cashFlow: monthly.map((item) => ({ label: item.label, income: Math.max(0, item.received), outcome: Math.max(0, item.paid) })),
@@ -558,7 +701,8 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
       sourceStatus(dbFiles.sales, "sienge_records", "Vendas", "/v1/sales-contracts"),
       sourceStatus(dbFiles.receivables, "bulk_income_installments", "Contas a receber"),
       sourceStatus(dbFiles.payables, "bulk_outcome_installments", "Contas a pagar"),
-      sourceStatus(dbFiles.purchases, "sienge_records", "Compras", "/v1/purchase-orders")
+      sourceStatus(dbFiles.purchases, "sienge_records", "Compras", "/v1/purchase-orders"),
+      sourceStatus(dbFiles.contracts, "sienge_records", "Contratos para POC", "/v1/supply-contracts")
     ]
   };
 }

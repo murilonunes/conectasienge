@@ -6,11 +6,11 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
-- Foi criada a tela `/dre-gerencial` para mostrar uma DRE gerencial baseada nos dados já salvos localmente.
-- A DRE gerencial separa resultado por competência de caixa realizado, para indicar lucro/prejuízo operacional sem confundir com entrada e saída de dinheiro.
-- A tela mostra receita bruta, cancelamentos, receita líquida, custos/despesas, resultado gerencial, margem, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar por exercício anual.
+- Foi criada a tela `/dre-gerencial` para mostrar uma DRE POC gerencial baseada nos dados já salvos localmente.
+- A DRE POC separa resultado por avanço da obra de caixa realizado, para indicar lucro/prejuízo operacional sem confundir com entrada e saída de dinheiro.
+- A tela mostra vendas contratadas, receita POC, cancelamentos POC, custos/despesas, resultado POC, POC médio, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar por exercício anual.
 - Foram adicionados gráficos de receita x custos, recebido x pago, evolução mensal do resultado, rankings por fornecedor e por empreendimento, além de tabela mensal.
-- A DRE gerencial foi incluída no menu de Análise, na tela inicial e na Central de relatórios.
+- A DRE POC foi incluída no menu de Análise, na tela inicial e na Central de relatórios.
 - Contas a pagar passou a exibir valor corrigido e multa/juros pagos a mais nas visões de agenda, busca avançada e consulta de parcelas por título.
 - Foi criado um botão de análise de cobrança que abre um modal para detectar possíveis cobranças acima do critério de 2% no ato mais 1% ao mês.
 - A análise de cobrança usa os dados salvos no banco local e serve como triagem operacional para revisão.
@@ -207,16 +207,17 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A exportação PDF/Excel ficou sinalizada como próxima etapa, sem prometer geração antes de implementar a rotina.
 - A Central de relatórios possui um painel para atualizar em segundo plano os dados que alimentam os relatórios.
 - A atualização "Todos os relatórios" carrega financeiro, contas a receber, vendas, contratos, estoque e compras sem puxar conciliação junto.
-- A Central de relatórios passou a incluir o relatório de DRE gerencial, com atalho para análise de lucro/prejuízo e caixa realizado.
+- A Central de relatórios passou a incluir o relatório de DRE POC gerencial, com atalho para análise de lucro/prejuízo e caixa realizado.
 
-## DRE gerencial
+## DRE POC gerencial
 
 - Foi criada a rota `/dre-gerencial`.
 - A tela lê somente os dados salvos nos bancos locais e não consulta o Sienge na abertura.
-- A visão separa resultado por competência e caixa realizado:
-  - competência: contratos de venda, cancelamentos, custos e despesas lançados
+- A visão separa resultado por POC e caixa realizado:
+  - POC: vendas contratadas multiplicadas pelo avanço da obra, cancelamentos, custos e despesas lançados
   - caixa: recebimentos efetivos menos pagamentos efetivos
-- A tela mostra se o resultado gerencial foi lucro ou prejuízo no ano escolhido.
+- O avanço da obra é estimado pelos contratos de fornecimento salvos, usando valor medido sobre valor contratado quando esses campos existem.
+- A tela mostra se o resultado POC foi lucro ou prejuízo no ano escolhido.
 - A tela possui seletor anual, usando os anos encontrados nos dados salvos localmente.
 - A tela apresenta cards executivos, gráficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mês a mês.
 - A tela exibe resumo de integração por área usada na DRE, indicando registros salvos e data de integração quando disponível.
