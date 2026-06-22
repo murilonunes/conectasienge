@@ -1,4 +1,7 @@
 import "server-only";
+import { existsSync } from "fs";
+import { DatabaseSync } from "node:sqlite";
+import path from "path";
 import { contratosApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails } from "@/lib/api/sienge";
 import type { SalesContract, SalesSummary } from "./types";
@@ -9,7 +12,97 @@ export type SalesResult = {
   error?: SiengeErrorDetails;
 };
 
+type SqlRow = {
+  raw_json: string;
+  source_day?: string;
+  saved_at?: string;
+};
+
+const dataDir = path.join(process.cwd(), ".sienge-data");
+const salesDatabasePath = path.join(dataDir, "commercial-sales.sqlite");
+
+function openDatabase() {
+  const database = new DatabaseSync(salesDatabasePath);
+  database.exec("PRAGMA busy_timeout = 8000;");
+  return database;
+}
+
+function tableExists(database: DatabaseSync, table: string) {
+  return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+function localDataError(title: string, explanation: string): SiengeErrorDetails {
+  return {
+    method: "GET",
+    endpoint: "/v1/sales-contracts",
+    title,
+    explanation,
+    suggestion: "Atualize Vendas em Configurações para preencher os dados.",
+    occurredAt: new Date().toISOString()
+  };
+}
+
+function annotate(row: SqlRow): SalesContract | undefined {
+  try {
+    return {
+      ...(JSON.parse(row.raw_json) as SalesContract),
+      __siengeIntegrationDay: row.source_day,
+      __siengeIntegratedAt: row.saved_at
+    } as SalesContract;
+  } catch {
+    return undefined;
+  }
+}
+
+function saleDate(contract: SalesContract) {
+  return contract.issueDate || contract.contractDate || "";
+}
+
+function readLocalSales(): SalesResult {
+  if (!existsSync(salesDatabasePath)) {
+    return {
+      contracts: [],
+      totalCount: 0,
+      error: localDataError("Vendas sem dados carregados", "Os contratos de venda ainda não foram atualizados.")
+    };
+  }
+
+  const database = openDatabase();
+  try {
+    if (!tableExists(database, "sienge_records")) {
+      return {
+        contracts: [],
+        totalCount: 0,
+        error: localDataError("Vendas ainda não disponíveis", "Ainda não há contratos de venda salvos para exibição.")
+      };
+    }
+
+    const rows = database.prepare(`
+      SELECT raw_json, source_day, saved_at
+      FROM sienge_records
+      WHERE endpoint = '/v1/sales-contracts'
+      ORDER BY saved_at DESC
+    `).all() as SqlRow[];
+    const contracts = rows
+      .map(annotate)
+      .filter((item): item is SalesContract => Boolean(item))
+      .sort((left, right) => saleDate(right).localeCompare(saleDate(left)) || Number(right.id || 0) - Number(left.id || 0));
+
+    return {
+      contracts,
+      totalCount: contracts.length,
+      ...(contracts.length === 0 ? {
+        error: localDataError("Vendas sem dados", "Nenhum contrato de venda foi encontrado na base local.")
+      } : {})
+    };
+  } finally {
+    database.close();
+  }
+}
+
 export async function loadSalesContracts(forceRefresh = false, forceReplaceFinalized = false): Promise<SalesResult> {
+  if (!forceRefresh) return readLocalSales();
+
   try {
     const limit = 200;
     const response = await contratosApi.sales<SalesContract>({ limit, offset: 0 }, forceRefresh, forceReplaceFinalized);

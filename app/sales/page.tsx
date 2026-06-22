@@ -15,7 +15,7 @@ export default async function SalesPage() {
   const summary = analyzeSales(result.contracts);
   return (
     <>
-      <PageHeading eyebrow="Portal comercial" title="Contratos de vendas" subtitle={`${result.contracts.length} de ${result.totalCount} contratos disponíveis na consulta diária armazenada.`} />
+      <PageHeading eyebrow="Portal comercial" title="Contratos de vendas" subtitle={`${result.contracts.length} de ${result.totalCount} contratos disponíveis nos dados integrados.`} />
       <div className="stats">
         <StatCard label="Valor da carteira" value={formatCompactCurrency(summary.totalValue)} delta="Valor total de venda da amostra" icon="R$" />
         <StatCard label="Saldo em aberto" value={formatCompactCurrency(summary.outstandingBalance)} delta="Somado das condições de pagamento" warn icon="↗" />

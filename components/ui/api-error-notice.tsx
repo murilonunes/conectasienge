@@ -17,7 +17,7 @@ export function ApiErrorNotice({ error }: { error: SiengeErrorDetails }) {
       <details>
         <summary>Ver detalhes do erro</summary>
         <dl className="api-error-details">
-          <div><dt>Consulta técnica</dt><dd>{error.method} {error.endpoint}</dd></div>
+          <div><dt>Origem da informação</dt><dd>{error.method} {error.endpoint}</dd></div>
           <div><dt>Status</dt><dd>{error.status ? `${error.status} ${error.statusText || ""}` : "Sem resposta HTTP"}</dd></div>
           {error.apiMessage && <div><dt>Resposta do Sienge</dt><dd>{error.apiMessage}</dd></div>}
           {error.requestId && <div><dt>ID da consulta</dt><dd>{error.requestId}</dd></div>}

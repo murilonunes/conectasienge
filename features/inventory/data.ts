@@ -1,4 +1,7 @@
 import "server-only";
+import { existsSync } from "fs";
+import { DatabaseSync } from "node:sqlite";
+import path from "path";
 import { estoqueApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails, type SiengePage } from "@/lib/api/sienge";
 import type { InventoryAsset, InventorySourceStat, InventorySummary, RawInventoryUnit, RawPatrimonyAsset } from "./types";
@@ -14,6 +17,19 @@ export type InventoryResult = {
 };
 
 const LIMIT = 200;
+const dataDir = path.join(process.cwd(), ".sienge-data");
+const inventoryDatabasePath = path.join(dataDir, "inventory-assets.sqlite");
+const SOURCE_DEFINITIONS: Array<{ key: InventorySourceStat["key"]; label: string; endpoint: string }> = [
+  { key: "unit", label: "unidades imobiliárias", endpoint: "/v1/units" },
+  { key: "movable", label: "bens móveis", endpoint: "/v1/patrimony/movable" },
+  { key: "fixed", label: "bens imóveis", endpoint: "/v1/patrimony/fixed" }
+];
+
+type SqlRow = {
+  raw_json: string;
+  source_day?: string;
+  saved_at?: string;
+};
 
 async function loadAllPages<T>(loadPage: (offset: number) => Promise<SiengePage<T>>) {
   const firstPage = await loadPage(0);
@@ -45,6 +61,123 @@ function normalizePatrimony(asset: RawPatrimonyAsset, kind: "movable" | "fixed",
     id: `${kind}-${asset.patrimonyId || index}`,
     kind
   };
+}
+
+function openDatabase() {
+  const database = new DatabaseSync(inventoryDatabasePath);
+  database.exec("PRAGMA busy_timeout = 8000;");
+  return database;
+}
+
+function tableExists(database: DatabaseSync, table: string) {
+  return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+function localDataError(title: string, explanation: string): SiengeErrorDetails {
+  return {
+    method: "GET",
+    endpoint: "/v1/units",
+    title,
+    explanation,
+    suggestion: "Atualize Estoque em Configurações para preencher os dados.",
+    occurredAt: new Date().toISOString()
+  };
+}
+
+function emptySourceStats(status: InventorySourceStat["status"]) {
+  return SOURCE_DEFINITIONS.map((source) => ({
+    key: source.key,
+    label: source.label,
+    endpoint: source.endpoint,
+    apiCount: 0,
+    loadedCount: 0,
+    status
+  }));
+}
+
+function annotate<T>(row: SqlRow): T | undefined {
+  try {
+    return {
+      ...(JSON.parse(row.raw_json) as T & object),
+      __siengeIntegrationDay: row.source_day,
+      __siengeIntegratedAt: row.saved_at
+    } as T;
+  } catch {
+    return undefined;
+  }
+}
+
+function readEndpoint<T>(database: DatabaseSync, endpoint: string) {
+  const rows = database.prepare(`
+    SELECT raw_json, source_day, saved_at
+    FROM sienge_records
+    WHERE endpoint = ?
+    ORDER BY saved_at DESC
+  `).all(endpoint) as SqlRow[];
+
+  return rows.map(annotate<T>).filter((item): item is T => Boolean(item));
+}
+
+function localSourceStat(source: (typeof SOURCE_DEFINITIONS)[number], loadedCount: number): InventorySourceStat {
+  return {
+    key: source.key,
+    label: source.label,
+    endpoint: source.endpoint,
+    apiCount: loadedCount,
+    loadedCount,
+    status: loadedCount === 0 ? "empty" : "ok"
+  };
+}
+
+function readLocalInventory(): InventoryResult {
+  if (!existsSync(inventoryDatabasePath)) {
+    return {
+      assets: [],
+      totalCount: 0,
+      rawTotalCount: 0,
+      sourceStats: emptySourceStats("error"),
+      error: localDataError("Estoque sem dados carregados", "Os dados de estoque ainda não foram atualizados.")
+    };
+  }
+
+  const database = openDatabase();
+  try {
+    if (!tableExists(database, "sienge_records")) {
+      return {
+        assets: [],
+        totalCount: 0,
+        rawTotalCount: 0,
+        sourceStats: emptySourceStats("error"),
+        error: localDataError("Estoque ainda não disponível", "Ainda não há bens ou unidades salvos para exibição.")
+      };
+    }
+
+    const units = readEndpoint<RawInventoryUnit>(database, SOURCE_DEFINITIONS[0].endpoint).map(normalizeUnit);
+    const movable = readEndpoint<RawPatrimonyAsset>(database, SOURCE_DEFINITIONS[1].endpoint).map((asset, index) => normalizePatrimony(asset, "movable", index));
+    const fixed = readEndpoint<RawPatrimonyAsset>(database, SOURCE_DEFINITIONS[2].endpoint).map((asset, index) => normalizePatrimony(asset, "fixed", index));
+    const assets = [...units, ...movable, ...fixed].sort((left, right) => {
+      const leftValue = left.patrimonyId || left.unitId || 0;
+      const rightValue = right.patrimonyId || right.unitId || 0;
+      return rightValue - leftValue || assetKindLabel(left.kind).localeCompare(assetKindLabel(right.kind));
+    });
+    const sourceStats = [
+      localSourceStat(SOURCE_DEFINITIONS[0], units.length),
+      localSourceStat(SOURCE_DEFINITIONS[1], movable.length),
+      localSourceStat(SOURCE_DEFINITIONS[2], fixed.length)
+    ];
+
+    return {
+      assets,
+      totalCount: assets.length,
+      rawTotalCount: assets.length,
+      sourceStats,
+      ...(assets.length === 0 ? {
+        error: localDataError("Estoque sem dados", "Nenhuma unidade ou bem foi encontrado na base local.")
+      } : {})
+    };
+  } finally {
+    database.close();
+  }
 }
 
 function inventoryError(error: unknown, endpoint: string, label: string): SiengeErrorDetails {
@@ -119,6 +252,8 @@ function sourceStat(source: PromiseSettledResult<{ totalCount: number; assets: I
 }
 
 export async function loadInventoryAssets(forceRefresh = false, forceReplaceFinalized = false): Promise<InventoryResult> {
+  if (!forceRefresh) return readLocalInventory();
+
   const sources = await Promise.allSettled([
     loadUnits(forceRefresh, forceReplaceFinalized),
     loadMovable(forceRefresh, forceReplaceFinalized),

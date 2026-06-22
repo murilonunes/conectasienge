@@ -42,6 +42,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A rota `/contratos` foi atualizada para o novo padrão, lendo contratos de fornecimento dos dados salvos, com cards, ranking por situação, paginação e atualização pela tela de Configurações.
 - A rota `/relatorios` funciona como central de relatórios geráveis, lendo somente dados salvos e apontando para os portais detalhados.
 
+- A revisão tela a tela corrigiu Vendas e Estoque para abrirem lendo somente o SQLite local; a API do Sienge fica restrita às atualizações iniciadas em Configurações.
+- Os detalhes de erro visíveis foram suavizados para falar em origem da informação, mantendo os dados de suporte sem expor a tela como uma falha técnica crua.
+
 ## Estado geral
 
 - O projeto principal esta em `frontend`, usando Next.js 14, React 18 e TypeScript.
@@ -195,6 +198,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A listagem foi ajustada para exibir por ordem de venda.
 - Foi criado grafico de vendas por mes.
 - Os contratos carregados entram no banco local para evitar consultas repetidas.
+- A abertura do portal passou a ler os contratos de venda salvos em `commercial-sales.sqlite`, sem consultar o Sienge automaticamente.
 
 ## Contratos de fornecimento
 
@@ -245,6 +249,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
   - `/v1/patrimony/fixed`
 - A tela considera datas de entrada, valores e origem quando a API retorna esses campos.
 - A consulta deve trazer todos os registros possiveis usando o banco local.
+- A abertura do portal passou a ler unidades imobiliárias, bens móveis e bens imóveis salvos em `inventory-assets.sqlite`, sem consultar o Sienge automaticamente.
 
 ## Conciliacao
 
