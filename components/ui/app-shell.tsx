@@ -21,7 +21,8 @@ const operationNavigation = [
 
 const analysisNavigation = [
   ["Relatórios", "/relatorios", "G"],
-  ["DRE POC", "/dre-gerencial", "="]
+  ["DRE POC", "/dre-gerencial", "="],
+  ["Mapa Sienge", "/sienge", "S"]
 ] as const;
 const settingsNavigation = [["Configurações", "/configuracoes", "CF"]] as const;
 

@@ -211,6 +211,52 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .positive-cell { color: var(--green); font-weight: 800; }
 .negative-cell { color: var(--red); font-weight: 800; }
 .dre-methodology { margin-top: 0; }
+.sienge-hero { margin-bottom: 20px; }
+.sienge-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sienge-priority { margin-bottom: 20px; }
+.sienge-priority-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.sienge-priority-list div { display: grid; gap: 7px; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.sienge-priority-list strong { font-size: 12px; }
+.sienge-priority-list p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.sienge-module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.sienge-module { display: grid; gap: 15px; padding: 20px; min-width: 0; }
+.sienge-module.active { border-color: #cfe1d7; }
+.sienge-module.partial, .sienge-module.ready { border-color: #ead3ad; }
+.sienge-module.unused { border-style: dashed; }
+.sienge-module-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.sienge-module-head > div:first-child { display: grid; gap: 6px; min-width: 0; }
+.sienge-module-head span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.sienge-module-head h2 { margin: 0; font-size: 18px; }
+.sienge-module-head p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.sienge-status { width: fit-content; display: grid; gap: 2px; justify-items: center; padding: 7px 10px; border-radius: 999px; background: #eef1ef; color: var(--muted); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+.sienge-status strong { font-size: 9px; }
+.sienge-status small { font-size: 9px; }
+.sienge-status.active { background: var(--green-soft); color: var(--green); }
+.sienge-status.partial, .sienge-status.ready { background: #fff2dc; color: #9b641d; }
+.sienge-status.unused { background: #f1f1f1; color: var(--muted); }
+.sienge-module-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.sienge-module-metrics div { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; min-width: 0; }
+.sienge-module-metrics strong { font-family: Georgia, serif; font-size: 18px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sienge-module-metrics span { color: var(--muted); font-size: 9px; line-height: 1.35; }
+.sienge-module-purpose { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.sienge-module-purpose div { display: grid; gap: 5px; padding: 12px; border-radius: 12px; background: #f8faf9; }
+.sienge-module-purpose strong, .sienge-module-footer strong { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.sienge-module-purpose p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.sienge-endpoints { display: grid; gap: 8px; }
+.sienge-endpoints > div { display: grid; grid-template-columns: 1fr 118px; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.sienge-endpoints > div.loaded { border-color: #d4e6dc; background: #fbfefd; }
+.sienge-endpoints > div.empty { border-color: #ead3ad; background: #fffaf1; }
+.sienge-endpoints > div.unused { border-style: dashed; background: #fbfcfb; }
+.sienge-endpoints strong { font-size: 11px; }
+.sienge-endpoints span { display: block; margin-top: 3px; color: var(--green); font-size: 9px; font-weight: 800; overflow-wrap: anywhere; }
+.sienge-endpoints small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.sienge-endpoints b { display: block; text-align: right; font-family: Georgia, serif; font-size: 18px; font-weight: 500; }
+.sienge-endpoints > div > div:last-child small { text-align: right; }
+.sienge-module-footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.sienge-module-footer div { display: grid; gap: 5px; }
+.sienge-module-footer span { color: var(--muted); font-size: 10px; line-height: 1.5; }
+.sienge-module-action { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 2px; }
+.sienge-module-action span { color: var(--muted); font-size: 10px; font-weight: 800; }
 .reports-update-panel { margin-bottom: 20px; }
 .dashboard-view-switch { display: grid; grid-template-columns: minmax(175px, .38fr) minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px; margin: -6px 0 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow); }
 .dashboard-view-summary { display: grid; gap: 3px; min-width: 0; padding: 0 4px; }
@@ -715,6 +761,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .dre-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dre-integration-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dre-grid-wide { grid-template-columns: 1fr; }
+  .sienge-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sienge-priority-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sienge-module-grid { grid-template-columns: 1fr; }
   .dashboard-view-switch { grid-template-columns: 1fr; }
   .dashboard-view-controls { grid-template-columns: 1fr auto; }
   .dashboard-executive { grid-template-columns: 1fr; }
@@ -759,6 +808,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .content { padding: 25px 18px; }
   .stats { grid-template-columns: 1fr; }
   .dre-stats, .dre-integration-panel { grid-template-columns: 1fr; }
+  .sienge-stats, .sienge-priority-list, .sienge-module-metrics, .sienge-module-purpose, .sienge-module-footer { grid-template-columns: 1fr; }
+  .sienge-module-head, .sienge-module-action { align-items: flex-start; flex-direction: column; }
+  .sienge-endpoints > div { grid-template-columns: 1fr; }
+  .sienge-endpoints b, .sienge-endpoints > div > div:last-child small { text-align: left; }
   .dashboard-view-controls { grid-template-columns: 1fr; }
   .dashboard-direction-options { width: fit-content; }
   .dashboard-executive-grid { grid-template-columns: 1fr; }

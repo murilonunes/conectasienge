@@ -6,6 +6,11 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- Foi criada a rota `/sienge` como um dashboard de cobertura operacional do Sienge.
+- O Mapa Sienge mostra quais módulos operacionais já são usados pelo sistema, quais têm dados salvos localmente, quais estão parciais e quais ainda não são usados.
+- A tela apresenta módulos como contas a pagar, contas a receber, caixa/bancos, vendas, contratos, compras, estoque, cadastros e operações de escrita.
+- Cada módulo mostra endpoints/fontes, registros locais, última integração, telas que usam os dados, pontos fortes, lacunas e próximo passo recomendado.
+- O Mapa Sienge foi incluído no menu de Análise e na tela inicial.
 - Foi criada a tela `/dre-gerencial` para mostrar uma DRE POC gerencial baseada nos dados já salvos localmente.
 - A DRE POC separa resultado por avanço da obra de caixa realizado, para indicar lucro/prejuízo operacional sem confundir com entrada e saída de dinheiro.
 - A tela mostra vendas contratadas, receita POC, cancelamentos POC, custos/despesas, resultado POC, POC médio, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar por exercício anual.
@@ -298,6 +303,21 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A exibicao da integracao foi padronizada no componente `IntegrationStamp`.
 - A formatacao de datas opcionais foi centralizada em `formatOptionalDate`.
 - Separadores especiais foram trocados por hifen simples para evitar caracteres quebrados em Windows/terminal.
+
+## Mapa Sienge
+
+- Foi criada a rota `/sienge`.
+- A tela funciona como auditoria de cobertura operacional do Sienge dentro do sistema.
+- A abertura lê somente os bancos locais e não consulta o Sienge.
+- A visão mostra:
+  - módulos em uso, parciais, preparados e não usados
+  - fontes/endpoints mapeados
+  - registros locais por fonte
+  - última integração detectada
+  - telas onde cada módulo é usado
+  - melhor uso operacional do Sienge para cada área
+  - lacunas e próximos passos
+- A tela ajuda a decidir quais integrações precisam ser completadas para aproveitar melhor o Sienge.
 
 ## Validacoes recentes
 

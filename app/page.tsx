@@ -9,6 +9,7 @@ export default function Home() {
     { title: "Contas a receber", href: "/contas-receber", note: "Previsão de recebimentos" },
     { title: "Vendas", href: "/sales", note: "Contratos e vendas por mês" },
     { title: "DRE POC", href: "/dre-gerencial", note: "Resultado pelo avanço da obra e caixa realizado" },
+    { title: "Mapa Sienge", href: "/sienge", note: "Cobertura de módulos, dados usados e lacunas" },
     { title: "Configurações", href: "/configuracoes", note: "Parâmetros e histórico de atualização" }
   ];
 
