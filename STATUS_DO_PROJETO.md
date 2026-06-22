@@ -1,6 +1,6 @@
 # Status do projeto Brasin
 
-Atualizado em: 19/06/2026
+Atualizado em: 22/06/2026
 
 Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A ideia e manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
@@ -14,6 +14,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Foi criada a tela `/dre-gerencial` para mostrar uma DRE POC gerencial baseada nos dados já salvos localmente.
 - A DRE POC separa resultado por avanço da obra de caixa realizado, para indicar lucro/prejuízo operacional sem confundir com entrada e saída de dinheiro.
 - A tela mostra vendas contratadas, receita POC, cancelamentos POC, custos/despesas, resultado POC, POC médio, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar por exercício anual.
+- O seletor anual da DRE POC passou a usar somente anos com vendas ou contratos salvos, evitando resultado artificial com receita POC zerada e custos de anos sem base comercial.
 - Foram adicionados gráficos de receita x custos, recebido x pago, evolução mensal do resultado, rankings por fornecedor e por empreendimento, além de tabela mensal.
 - A DRE POC foi incluída no menu de Análise, na tela inicial e na Central de relatórios.
 - Contas a pagar passou a exibir valor corrigido e multa/juros pagos a mais nas visões de agenda, busca avançada e consulta de parcelas por título.
@@ -226,7 +227,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A DRE POC agora avisa quando não há contratos de fornecimento medidos suficientes para reconhecer receita por avanço de obra.
 - Vendas sem vínculo com obra/contrato ficam fora da Receita POC e aparecem como item a revisar, evitando transformar venda contratada em receita indevida.
 - A tela passou a mostrar a base usada no POC: valor contratado, valor medido, contratos com medição e ranking de avanço por obra.
-- A tela possui seletor anual, usando os anos encontrados nos dados salvos localmente.
+- A tela possui seletor anual, usando somente anos com vendas ou contratos salvos localmente.
+- Quando um link antigo aponta para um ano sem base comercial/contratual, a tela ajusta para o exercício válido mais recente e informa isso ao usuário.
 - A tela apresenta cards executivos, gráficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mês a mês.
 - A tela exibe resumo de integração por área usada na DRE, indicando registros salvos e data de integração quando disponível.
 

@@ -119,6 +119,9 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
 export default async function DreGerencialPage({ searchParams }: DreGerencialPageProps) {
   const availableYears = loadDreYearOptions();
   const selectedYear = normalizeDreYear(searchParams?.ano, availableYears);
+  const requestedYearParam = Array.isArray(searchParams?.ano) ? searchParams?.ano[0] : searchParams?.ano;
+  const requestedYear = Number(requestedYearParam);
+  const yearWasAdjusted = Boolean(requestedYearParam && Number.isInteger(requestedYear) && requestedYear !== selectedYear);
   const dre = await loadDreGerencial(selectedYear);
   const hasProfit = dre.netResult >= 0;
   const cashPositive = dre.cashResult >= 0;
@@ -153,6 +156,16 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
           </div>
         </div>
       </section>
+
+      {yearWasAdjusted && (
+        <section className="card data-notice">
+          <strong>Ano ajustado</strong>
+          <span>
+            O exercício {requestedYear} não tem vendas ou contratos salvos para calcular POC.
+            A tela foi aberta em {selectedYear}, que possui base comercial local.
+          </span>
+        </section>
+      )}
 
       {dre.unavailable.length > 0 && (
         <section className="card data-notice">

@@ -208,22 +208,6 @@ function addYearFromDate(years: Set<number>, value?: string) {
   if (Number.isInteger(year) && year >= 2000 && year <= 2100) years.add(year);
 }
 
-function addYearsFromSql(databasePath: string, table: string, expression: string, years: Set<number>) {
-  const database = openDatabase(databasePath);
-  if (!database) return;
-  try {
-    if (!tableExists(database, table)) return;
-    const rows = database.prepare(`
-      SELECT DISTINCT substr(${expression}, 1, 4) AS year
-      FROM ${table}
-      WHERE ${expression} IS NOT NULL
-    `).all() as Row[];
-    rows.forEach((row) => addYearFromDate(years, String(row.year || "")));
-  } finally {
-    database.close();
-  }
-}
-
 function addSalesYears(years: Set<number>) {
   const database = openDatabase(dbFiles.sales);
   if (!database) return;
@@ -235,21 +219,6 @@ function addSalesYears(years: Set<number>) {
       if (!contract) return;
       addYearFromDate(years, contract.issueDate || contract.contractDate);
       addYearFromDate(years, contract.cancellationDate);
-    });
-  } finally {
-    database.close();
-  }
-}
-
-function addPurchaseYears(years: Set<number>) {
-  const database = openDatabase(dbFiles.purchases);
-  if (!database) return;
-  try {
-    if (!tableExists(database, "sienge_records")) return;
-    const rows = database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/purchase-orders'").all() as JsonRow[];
-    rows.forEach((row) => {
-      const order = safeJson<PurchaseOrder>(row.raw_json);
-      addYearFromDate(years, order?.date);
     });
   } finally {
     database.close();
@@ -272,14 +241,10 @@ function addContractYears(years: Set<number>) {
 }
 
 export function loadDreYearOptions() {
-  const years = new Set<number>([Number(todayIso().slice(0, 4))]);
+  const years = new Set<number>();
   addSalesYears(years);
-  addPurchaseYears(years);
   addContractYears(years);
-  addYearsFromSql(dbFiles.payables, "bulk_outcome_installments", "COALESCE(issueDate, billDate, dueDate)", years);
-  addYearsFromSql(dbFiles.payables, "bulk_outcome_payments", "paymentDate", years);
-  addYearsFromSql(dbFiles.receivables, "bulk_income_installments", "dueDate", years);
-  addYearsFromSql(dbFiles.receivables, "bulk_income_receipts", "paymentDate", years);
+  if (!years.size) years.add(Number(todayIso().slice(0, 4)));
   return Array.from(years).sort((left, right) => right - left);
 }
 
