@@ -88,12 +88,12 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
     },
     {
       icon: "=",
-      title: "DRE POC gerencial",
-      description: "Reconhece receita pelo avanço da obra, compara custos e separa o caixa realizado.",
+      title: "DRE POC estimada",
+      description: "Estima receita pelo avanço da obra, compara custos e separa o caixa realizado.",
       href: `/dre-gerencial?ano=${dreYear}`,
       scope: `Resultado ${dreYear}`,
       primaryMetric: formatCompactCurrency(dre.netResult),
-      primaryLabel: dre.netResult >= 0 ? "lucro POC" : "prejuízo POC",
+      primaryLabel: dre.netResult >= 0 ? "lucro POC estimado" : "prejuízo POC estimado",
       secondaryMetric: formatCompactCurrency(dre.cashResult),
       secondaryLabel: "caixa realizado"
     },

@@ -11,12 +11,12 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A tela apresenta módulos como contas a pagar, contas a receber, caixa/bancos, vendas, contratos, compras, estoque, cadastros e operações de escrita.
 - Cada módulo mostra endpoints/fontes, registros locais, última integração, telas que usam os dados, pontos fortes, lacunas e próximo passo recomendado.
 - O Mapa Sienge foi incluído no menu de Análise e na tela inicial.
-- Foi criada a tela `/dre-gerencial` para mostrar uma DRE POC gerencial baseada nos dados já salvos localmente.
+- Foi criada a tela `/dre-gerencial` para mostrar uma DRE POC estimada baseada nos dados já salvos localmente.
 - A DRE POC separa resultado por avanço da obra de caixa realizado, para indicar lucro/prejuízo operacional sem confundir com entrada e saída de dinheiro.
 - A tela mostra vendas contratadas, receita POC, cancelamentos POC, custos/despesas, resultado POC, POC médio, recebido, pago, caixa realizado e saldos acumulados a receber/a pagar por exercício anual.
 - O seletor anual da DRE POC passou a usar somente anos com vendas ou contratos salvos, evitando resultado artificial com receita POC zerada e custos de anos sem base comercial.
 - Foram adicionados gráficos de receita x custos, recebido x pago, evolução mensal do resultado, rankings por fornecedor e por empreendimento, além de tabela mensal.
-- A DRE POC foi incluída no menu de Análise, na tela inicial e na Central de relatórios.
+- A DRE POC estimada foi incluída no menu de Análise, na tela inicial e na Central de relatórios.
 - Contas a pagar passou a exibir valor corrigido e multa/juros pagos a mais nas visões de agenda, busca avançada e consulta de parcelas por título.
 - Foi criado um botão de análise de cobrança que abre um modal para detectar possíveis cobranças acima do critério de 2% no ato mais 1% ao mês.
 - A análise de cobrança usa os dados salvos no banco local e serve como triagem operacional para revisão.
@@ -217,17 +217,18 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A exportação PDF/Excel ficou sinalizada como próxima etapa, sem prometer geração antes de implementar a rotina.
 - A Central de relatórios possui um painel para atualizar em segundo plano os dados que alimentam os relatórios.
 - A atualização "Todos os relatórios" carrega financeiro, contas a receber, vendas, contratos, estoque e compras sem puxar conciliação junto.
-- A Central de relatórios passou a incluir o relatório de DRE POC gerencial, com atalho para análise de lucro/prejuízo e caixa realizado.
+- A Central de relatórios passou a incluir o relatório de DRE POC estimada, com atalho para análise de lucro/prejuízo e caixa realizado.
 
-## DRE POC gerencial
+## DRE POC estimada
 
 - Foi criada a rota `/dre-gerencial`.
 - A tela lê somente os dados salvos nos bancos locais e não consulta o Sienge na abertura.
+- A tela foi renomeada visualmente para DRE POC estimada, deixando claro que ainda não substitui a apuração contábil por unidade vendida.
 - A visão separa resultado por POC e caixa realizado:
   - POC: vendas contratadas multiplicadas pelo avanço da obra, cancelamentos, custos e despesas lançados
   - caixa: recebimentos efetivos menos pagamentos efetivos
 - O avanço da obra é estimado pelos contratos de fornecimento salvos, usando valor medido sobre valor contratado quando esses campos existem.
-- A tela mostra se o resultado POC foi lucro ou prejuízo no ano escolhido.
+- A tela mostra se o resultado POC estimado foi lucro ou prejuízo no ano escolhido.
 - A DRE POC agora avisa quando não há contratos de fornecimento medidos suficientes para reconhecer receita por avanço de obra.
 - Vendas sem vínculo com obra/contrato ficam fora da Receita POC e aparecem como item a revisar, evitando transformar venda contratada em receita indevida.
 - A tela passou a mostrar a base usada no POC: valor contratado, valor medido, contratos com medição e ranking de avanço por obra.
@@ -235,6 +236,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Quando um link antigo aponta para um ano sem base comercial/contratual, a tela ajusta para o exercício válido mais recente e informa isso ao usuário.
 - A tela apresenta cards executivos, gráficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mês a mês.
 - A tela exibe resumo de integração por área usada na DRE, indicando registros salvos e data de integração quando disponível.
+- A metodologia informa que, sem histórico mensal de medições e sem apropriação por unidade vendida, a receita POC é uma estimativa anual baseada na última medição salva.
 
 ## Estoque, patrimonio e unidades imobiliarias
 

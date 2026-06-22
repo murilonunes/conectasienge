@@ -130,8 +130,8 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
     <>
       <PageHeading
         eyebrow="Resultado histórico"
-        title="DRE POC gerencial"
-        subtitle="Análise anual por POC: receita reconhecida pelo avanço da obra, custos e caixa realizado."
+        title="DRE POC estimada"
+        subtitle="Análise gerencial anual: estima receita por avanço da obra, compara custos e separa o caixa realizado."
         action="Atualizar dados"
         actionHref="/configuracoes"
       />
@@ -174,6 +174,14 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         </section>
       )}
 
+      <section className="card data-notice">
+        <strong>Estimativa gerencial</strong>
+        <span>
+          Esta visão ainda não substitui a apuração contábil do POC por unidade vendida. Ela usa os dados salvos para estimar
+          receita por avanço de obra e destacar o que precisa ser validado.
+        </span>
+      </section>
+
       {dre.pocSourceContractCount === 0 && (
         <section className="card data-notice">
           <strong>POC sem base de medição</strong>
@@ -186,7 +194,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
 
       <section className={`card dashboard-executive dre-executive ${hasProfit ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
-          <span>{hasProfit ? "Lucro POC" : "Prejuízo POC"}</span>
+          <span>{hasProfit ? "Lucro POC estimado" : "Prejuízo POC estimado"}</span>
           <h2>{formatCompactCurrency(dre.netResult)}</h2>
           <p>
             Receita POC líquida de {formatCompactCurrency(dre.netRevenue)} menos {formatCompactCurrency(dre.costAmount)}
@@ -277,12 +285,12 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       <MonthlyTable monthly={dre.monthly} />
 
       <section className="card methodology dre-methodology">
-        <strong>Como ler esta DRE POC gerencial</strong>
+        <strong>Como ler esta DRE POC estimada</strong>
         <p>
           Resultado POC considera vendas contratadas multiplicadas pelo percentual de avanço encontrado nos contratos de fornecimento da obra,
           menos cancelamentos, custos e despesas lançados. Caixa realizado continua separado: recebimentos efetivos menos pagamentos efetivos.
           Quando uma venda não encontra vínculo com obra/contrato, ela fica fora da receita POC e aparece no card de contratos sem vínculo.
-          Sem histórico mensal de medições, a receita POC é uma estimativa anual baseada na última medição salva.
+          Sem histórico mensal de medições e sem apropriação por unidade vendida, a receita POC é uma estimativa anual baseada na última medição salva.
         </p>
       </section>
     </>

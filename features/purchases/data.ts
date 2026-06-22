@@ -390,7 +390,7 @@ function orderStatusLabel(status?: string) {
 function requestStatus(item: PurchaseRequestItem) {
   if (item.disapproved) return "Reprovada";
   if (item.authorized) return "Autorizada";
-  return "Pendente de autorizacao";
+  return "Pendente de autorização";
 }
 
 function quotationAmount(quotation: PurchaseQuotation) {
@@ -463,14 +463,14 @@ function requestToFlow(item: PurchaseRequestItem): PurchaseFlowItem {
   return {
     id: `request-${item.purchaseRequestId}-${item.itemNumber}`,
     kind: "request",
-    kindLabel: "Solicitacao",
+    kindLabel: "Solicitação",
     code: `${item.purchaseRequestId}.${item.itemNumber}`,
     title: item.productDescription || `Item ${item.productId || item.itemNumber}`,
     subtitle: item.detailDescription || item.notes || "Sem detalhe informado",
     quantity: item.quantity,
     amount: 0,
     status,
-    pending: status === "Pendente de autorizacao",
+    pending: status === "Pendente de autorização",
     raw: item
   };
 }
@@ -485,14 +485,14 @@ function quotationToFlow(quotation: PurchaseQuotation): PurchaseFlowItem {
   return {
     id: `quotation-${quotation.purchaseQuotationId}`,
     kind: "quotation",
-    kindLabel: "Cotacao",
+    kindLabel: "Cotação",
     code: String(quotation.purchaseQuotationId),
-    title: quotation.notes || `Cotacao #${quotation.purchaseQuotationId}`,
+    title: quotation.notes || `Cotação #${quotation.purchaseQuotationId}`,
     subtitle: `${itemCount} item(ns) - ${supplierCount} fornecedor(es)`,
     date: quotation.purchaseQuotationDate || quotation.registeredDate,
     futureDate: quotation.responseDeadline,
     amount,
-    status: selected ? "Opcao selecionada" : "Em cotacao",
+    status: selected ? "Opção selecionada" : "Em cotação",
     pending: !selected,
     buyer: quotation.buyerId,
     raw: quotation
@@ -527,8 +527,8 @@ function buildPeriods(flow: PurchaseFlowItem[]): PurchasePeriodSummary[] {
   const previous = previousMonthRange(today);
 
   return [
-    periodSummary("last12", "Ultimos 12 meses", "Movimento geral", flow.filter((item) => inRange(parseDate(item.date), last12Start, today))),
-    periodSummary("last6", "Ultimos 6 meses", "Recorte recente", flow.filter((item) => inRange(parseDate(item.date), last6Start, today))),
+    periodSummary("last12", "Últimos 12 meses", "Movimento geral", flow.filter((item) => inRange(parseDate(item.date), last12Start, today))),
+    periodSummary("last6", "Últimos 6 meses", "Recorte recente", flow.filter((item) => inRange(parseDate(item.date), last6Start, today))),
     periodSummary("previousMonth", "Mês anterior", "Mês fechado", flow.filter((item) => inRange(parseDate(item.date), previous.start, previous.end))),
     periodSummary("future", "Futuro", "Prazos futuros", flow.filter((item) => {
       const mainDate = parseDate(item.date);
@@ -549,8 +549,8 @@ function stageSummary(label: string, items: PurchaseFlowItem[]): PurchaseStageSu
 
 function buildStages(flow: PurchaseFlowItem[]): PurchaseStageSummary[] {
   return [
-    stageSummary("Solicitacoes", flow.filter((item) => item.kind === "request")),
-    stageSummary("Cotacoes", flow.filter((item) => item.kind === "quotation")),
+    stageSummary("Solicitações", flow.filter((item) => item.kind === "request")),
+    stageSummary("Cotações", flow.filter((item) => item.kind === "quotation")),
     stageSummary("Pedidos", flow.filter((item) => item.kind === "order")),
     stageSummary("Notas fiscais", flow.filter((item) => item.kind === "invoice"))
   ];

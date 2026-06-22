@@ -82,7 +82,7 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
               title="Comprado por mês"
               note="Valor e quantidade dos pedidos de compra por mês"
             />
-            <RankingChart title="Onde está pendente" note="Quantidade por situação" data={summary.byStatus} countLabel="registro" />
+            <RankingChart title="Situação das compras" note="Quantidade por status em cada etapa" data={summary.byStatus} countLabel="registro" />
           </div>
 
           <div className="grid-main equal-grid">
