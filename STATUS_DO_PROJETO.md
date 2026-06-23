@@ -10,6 +10,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A especificação pública disponível foi revisada e não foi encontrado endpoint seguro para efetivar baixa de contas a receber; a tela informa essa limitação e não promete uma operação que não seria gravada.
 - A nova tela lê somente o banco local `finance-receivables.sqlite`, usando as tabelas estruturadas de parcelas e recebimentos do espelho `/bulk-data/v1/income`.
 - A busca avançada de contas a receber permite consultar por vencimento, emissão, competência ou data de recebimento, filtrando por situação do recebimento, empresa, projeto, área de negócio e cliente.
+- Nas buscas avançadas de contas a pagar e contas a receber, pesquisar com `#385` filtra exatamente o título 385.
+- A listagem de recebimentos passou a mostrar o vencimento diretamente na linha principal, sem precisar expandir o detalhe.
 - A consulta por código do título a receber mostra parcelas, saldo, recebimentos registrados, movimentos vinculados, cliente, projeto e data de integração.
 - A tela foi adicionada ao menu de Operações, à Central financeira e como ação da tela de Contas a receber.
 - As telas `/compras`, `/contas-receber` e `/sales` foram otimizadas para reduzir o HTML inicial enviado pelo Next.js.

@@ -65,6 +65,13 @@ function paymentValue(payment: Payment) {
   return payment.netAmount || payment.grossAmount || payment.amount || 0;
 }
 
+function titleSearchValue(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("#")) return undefined;
+  const billId = Number(trimmed.slice(1).replace(/\D/g, ""));
+  return Number.isInteger(billId) && billId > 0 ? billId : undefined;
+}
+
 export function AdvancedPayablesSearch() {
   const [filters, setFilters] = useState({
     startDate: initialStart, endDate: today, selectionType: "D", correctionIndexerId: "1",
@@ -82,6 +89,14 @@ export function AdvancedPayablesSearch() {
   const [copiedBillId, setCopiedBillId] = useState<number>();
 
   const filtered = useMemo(() => results.filter((item) => {
+    const titleSearch = titleSearchValue(textFilter);
+    if (titleSearch !== undefined) {
+      const hasPayment = (item.payments || []).length > 0;
+      const hasAbusiveCharge = analyzePayableCharge(item, filters.correctionDate).hasRisk;
+      const matchesStatus = paymentStatus === "all" || (paymentStatus === "paid" ? hasPayment : !hasPayment);
+      const matchesAbuse = !onlyAbusiveCharges || hasAbusiveCharge;
+      return item.billId === titleSearch && matchesStatus && matchesAbuse;
+    }
     const text = `${item.billId} ${item.installmentId} ${item.creditorName || ""} ${item.creditorCnpj || ""} ${item.creditorCpf || ""} ${item.documentIdentificationId || ""} ${item.documentNumber || ""} ${item.companyName || ""}`.toLowerCase();
     const search = textFilter.toLowerCase();
     const digitSearch = textFilter.replace(/\D/g, "");
@@ -200,7 +215,7 @@ export function AdvancedPayablesSearch() {
           <article className="card stat"><div className="stat-top"><span>Possíveis abusos</span></div><div className="stat-value">{totals.riskCount}</div><span className="panel-note">Acima de 2% + 1% ao mês</span></article>
         </div>
         <div className="card filters">
-          <input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código" />
+          <input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código. Use #385 para buscar só o título 385" />
           <label className="advanced-inline-check"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /> Somente possíveis abusos</label>
           <PayablesAbuseDashboardModal items={filtered} referenceDate={filters.correctionDate} />
         </div>

@@ -67,6 +67,13 @@ function documentLabel(item: ReceivableInstallment) {
   return document || `Título #${item.billId}`;
 }
 
+function titleSearchValue(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("#")) return undefined;
+  const billId = Number(trimmed.slice(1).replace(/\D/g, ""));
+  return Number.isInteger(billId) && billId > 0 ? billId : undefined;
+}
+
 export function AdvancedReceivablesSearch() {
   const [filters, setFilters] = useState({
     startDate: initialStart,
@@ -87,6 +94,12 @@ export function AdvancedReceivablesSearch() {
   const [copiedBillId, setCopiedBillId] = useState<number>();
 
   const filtered = useMemo(() => results.filter((item) => {
+    const titleSearch = titleSearchValue(textFilter);
+    if (titleSearch !== undefined) {
+      const hasReceipt = (item.receipts || []).length > 0;
+      const matchesStatus = receiptStatus === "all" || (receiptStatus === "received" ? hasReceipt : !hasReceipt);
+      return item.billId === titleSearch && matchesStatus;
+    }
     const text = [
       item.billId,
       item.installmentId,
@@ -194,7 +207,7 @@ export function AdvancedReceivablesSearch() {
           <article className="card stat"><div className="stat-top"><span>Recebido</span></div><div className="stat-value">{formatCurrency(totals.received)}</div><span className="panel-note">{totals.receivedCount} parcela(s) com recebimento</span></article>
         </div>
         <div className="card filters">
-          <input className="field search-field" value={textFilter} onChange={(event) => setTextFilter(event.target.value)} placeholder="Filtrar por cliente, título, documento, empresa, projeto ou unidade" />
+          <input className="field search-field" value={textFilter} onChange={(event) => setTextFilter(event.target.value)} placeholder="Filtrar por cliente, título, documento, empresa, projeto ou unidade. Use #385 para buscar só o título 385" />
         </div>
         <LocalDataList
           items={filtered}
@@ -226,6 +239,7 @@ export function AdvancedReceivablesSearch() {
                     <span><strong>{formatCurrency(item.originalAmount || 0)}</strong><small>Original</small></span>
                     <span><strong>{formatCurrency(openAmount(item))}</strong><small>Saldo</small></span>
                     <span><strong>{formatCurrency(received)}</strong><small>Recebido</small></span>
+                    <span><strong>{formatOptionalDate(item.dueDate)}</strong><small>Vencimento</small></span>
                     <span className={`badge ${receipts.length ? "" : "pending"}`}>{receipts.length ? `${receipts.length} recebimento(s)` : "Sem recebimento"}</span>
                     <span className="sales-expand">{expanded === key ? "-" : "+"}</span>
                   </button>
