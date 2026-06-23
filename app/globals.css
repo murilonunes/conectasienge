@@ -669,6 +669,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .advanced-results { display: grid; gap: 9px; }
 .advanced-result { overflow: hidden; }
 .advanced-result-main { width: 100%; display: grid; grid-template-columns: 1.1fr 1.4fr .65fr .65fr .8fr 95px 20px; gap: 14px; align-items: center; padding: 15px 17px; border: 0; background: #fff; color: var(--ink); text-align: left; cursor: pointer; }
+.receivable-result-main { grid-template-columns: 1.05fr 1.25fr .55fr .55fr .55fr .65fr 112px 20px; gap: 10px; }
 .advanced-result-main:hover { background: #fbfcfb; }
 .advanced-result-main > span:not(.badge):not(.sales-expand) { display: grid; gap: 4px; min-width: 0; }
 .advanced-result-main strong { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -779,6 +780,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .advanced-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .advanced-result-main { grid-template-columns: 1fr 1fr 90px 20px; }
   .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4), .advanced-result-main > span:nth-child(5) { display: none; }
+  .receivable-result-main { grid-template-columns: 1fr 1fr 100px 20px; }
+  .receivable-result-main > span:nth-child(6) { display: none; }
   .bill-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .payables-agenda { grid-template-columns: 1fr; }
   .payables-period:last-child { grid-column: auto; }
@@ -866,6 +869,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .local-list-pages { width: 100%; justify-content: space-between; }
   .advanced-result-main { grid-template-columns: 1fr auto; }
   .advanced-result-main > span:nth-child(2), .advanced-result-main > span:nth-child(3), .advanced-result-main > span:nth-child(4), .advanced-result-main > span:nth-child(5), .advanced-result-main > span:nth-child(6) { display: none; }
+  .receivable-result-main > span:nth-child(7) { display: none; }
   .payable-review-grid { grid-template-columns: 1fr; }
   .payable-abuse-summary { grid-template-columns: 1fr; }
   .payable-abuse-chart-row, .payable-abuse-creditor-list article { grid-template-columns: 1fr; }

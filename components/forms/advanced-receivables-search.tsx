@@ -221,12 +221,11 @@ export function AdvancedReceivablesSearch() {
                 const receipts = item.receipts || [];
                 const received = receipts.reduce((sum, receipt) => sum + receiptValue(receipt), 0);
                 return <article className="card advanced-result" key={key}>
-                  <button className="advanced-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
+                  <button className="advanced-result-main receivable-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
                     <span>
                       <span className="advanced-title-id">Título #{item.billId}</span>
                       <strong>{documentLabel(item)}</strong>
                       <small>Parcela {item.installmentId}</small>
-                      <IntegrationStamp record={item} />
                       <span className="copy-title-button" role="button" tabIndex={0} onClick={(event) => copyBillId(event, item.billId)} onKeyDown={(event) => { if (event.key === "Enter") copyBillId(event, item.billId); }}>
                         {copiedBillId === item.billId ? "Copiado" : "Copiar número"}
                       </span>
@@ -249,6 +248,7 @@ export function AdvancedReceivablesSearch() {
                       <div><span>Emissão</span><strong>{formatOptionalDate(item.issueDate)}</strong></div>
                       <div><span>Competência</span><strong>{formatOptionalDate(item.billDate)}</strong></div>
                       <div><span>Previsão</span><strong>{item.documentForecast === "S" ? "Sim" : "Não"}</strong></div>
+                      <div><span>Integração</span><strong><IntegrationStamp record={item} /></strong></div>
                     </div>
                     <div className="payments-list">
                       <h3>Recebimentos</h3>
