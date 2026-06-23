@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { updateAreas } from "@/lib/sienge-update-areas";
 import type { UpdateAreaStatus } from "@/lib/sienge-update-status";
 
@@ -64,9 +65,11 @@ function stepStatusLabel(status: SiengeUpdateJob["steps"][number]["status"]) {
 }
 
 export function SiengeUpdateControls({ areas, statuses, showForce = true }: SiengeUpdateControlsProps) {
+  const router = useRouter();
   const [jobs, setJobs] = useState<JobsResponse>({ jobs: [] });
   const [startingKey, setStartingKey] = useState<string>();
   const [message, setMessage] = useState<string>();
+  const observedActiveJobId = useRef<string>();
 
   const activeJob = jobs.active;
   const latestJob = activeJob || jobs.jobs[0];
@@ -96,6 +99,7 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
       if (!data.started) {
         setMessage("Já existe uma atualização em andamento. Aguarde ela terminar antes de iniciar outra.");
       } else {
+        observedActiveJobId.current = data.job?.id;
         setMessage("Atualização iniciada em segundo plano. Você pode continuar usando o sistema.");
       }
       await refreshJobs();
@@ -112,11 +116,19 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
 
   useEffect(() => {
     if (!activeJob) return;
+    observedActiveJobId.current = activeJob.id;
     const timer = window.setInterval(() => {
       void refreshJobs();
     }, 2000);
     return () => window.clearInterval(timer);
   }, [activeJob?.id]);
+
+  useEffect(() => {
+    if (!latestJob?.finishedAt) return;
+    if (latestJob.id !== observedActiveJobId.current) return;
+    observedActiveJobId.current = undefined;
+    router.refresh();
+  }, [latestJob?.id, latestJob?.finishedAt, router]);
 
   return (
     <div className="settings-update-control">

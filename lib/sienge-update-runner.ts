@@ -87,7 +87,13 @@ async function runStep(job: SiengeUpdateJob, key: RunnableArea, task: () => Prom
   updateStep(job, key, "running", "Consultando o Sienge e gravando os dados salvos.");
   job.message = `Atualizando ${updateAreaLabel(key)}.`;
   try {
-    await task();
+    const result = await task();
+    const returnedError = result && typeof result === "object" && "error" in result
+      ? (result as { error?: { title?: string; explanation?: string; suggestion?: string } }).error
+      : undefined;
+    if (returnedError) {
+      throw new Error([returnedError.title, returnedError.explanation, returnedError.suggestion].filter(Boolean).join(" "));
+    }
     updateStep(job, key, "completed", "Dados atualizados e gravados.");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível concluir esta área.";
