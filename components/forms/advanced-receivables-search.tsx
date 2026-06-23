@@ -37,6 +37,7 @@ type ReceivableInstallment = {
   documentIdentificationId?: string;
   documentNumber?: string;
   documentForecast?: string;
+  installmentNumber?: string | number;
   originalAmount?: number;
   balanceAmount?: number;
   correctedBalanceAmount?: number;
@@ -72,6 +73,14 @@ function titleSearchValue(value: string) {
   if (!trimmed.startsWith("#")) return undefined;
   const billId = Number(trimmed.slice(1).replace(/\D/g, ""));
   return Number.isInteger(billId) && billId > 0 ? billId : undefined;
+}
+
+function installmentLabel(item: ReceivableInstallment, total?: number) {
+  const current = item.installmentNumber || item.installmentId;
+  const text = String(current || "").trim();
+  if (text.includes("/")) return `Parcela ${text}`;
+  if (total && total > 1) return `Parcela ${text || item.installmentId} de ${total}`;
+  return `Parcela ${text || item.installmentId}`;
 }
 
 export function AdvancedReceivablesSearch() {
@@ -125,6 +134,16 @@ export function AdvancedReceivablesSearch() {
     receivedCount: filtered.filter((item) => (item.receipts || []).length > 0).length,
     openCount: filtered.filter((item) => !(item.receipts || []).length).length
   }), [filtered]);
+
+  const installmentTotals = useMemo(() => {
+    const counts = new Map<number, Set<string | number>>();
+    results.forEach((item) => {
+      const current = counts.get(item.billId) || new Set<string | number>();
+      current.add(item.installmentNumber || item.installmentId);
+      counts.set(item.billId, current);
+    });
+    return new Map(Array.from(counts.entries()).map(([billId, installments]) => [billId, installments.size]));
+  }, [results]);
 
   const set = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value }));
 
@@ -223,12 +242,12 @@ export function AdvancedReceivablesSearch() {
                 return <article className="card advanced-result" key={key}>
                   <button className="advanced-result-main receivable-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
                     <span>
-                      <span className="advanced-title-id">Título #{item.billId}</span>
-                      <strong>{documentLabel(item)}</strong>
-                      <small>Parcela {item.installmentId}</small>
-                      <span className="copy-title-button" role="button" tabIndex={0} onClick={(event) => copyBillId(event, item.billId)} onKeyDown={(event) => { if (event.key === "Enter") copyBillId(event, item.billId); }}>
-                        {copiedBillId === item.billId ? "Copiado" : "Copiar número"}
+                      <span className="advanced-title-id" onClick={(event) => copyBillId(event, item.billId)} title="Copiar número do título">
+                        Título #{item.billId}
+                        <span className="copy-title-icon" aria-label="Copiar título">{copiedBillId === item.billId ? "OK" : "⧉"}</span>
                       </span>
+                      <strong>{documentLabel(item)}</strong>
+                      <small className="installment-conference">{installmentLabel(item, installmentTotals.get(item.billId))}</small>
                     </span>
                     <span>
                       <strong>{item.clientName || `Cliente #${item.clientId || "não informado"}`}</strong>

@@ -675,7 +675,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .advanced-result-main strong { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .advanced-result-main small { color: var(--muted); font-size: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .advanced-result-main .advanced-creditor-document { color: var(--green); font-size: 9px; font-weight: 800; }
-.advanced-title-id { color: var(--green); font-family: Georgia, serif; font-size: 17px; font-weight: 700; line-height: 1.1; }
+.advanced-title-id { width: fit-content; display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-family: Georgia, serif; font-size: 17px; font-weight: 700; line-height: 1.1; cursor: copy; }
+.copy-title-icon { width: 18px; height: 18px; display: inline-grid; place-items: center; border: 1px solid #cfe1d7; border-radius: 6px; background: var(--green-soft); color: var(--green); font-family: Arial, Helvetica, sans-serif; font-size: 8px; font-weight: 900; line-height: 1; }
+.installment-conference { color: var(--green) !important; font-size: 10px !important; font-weight: 900; }
 .copy-title-button { width: fit-content; margin-top: 3px; padding: 4px 7px; border: 1px solid #cfe1d7; border-radius: 7px; color: var(--green); background: var(--green-soft); font-family: Arial, Helvetica, sans-serif; font-size: 8px; font-weight: 800; cursor: pointer; }
 .copy-title-button:hover { border-color: var(--green); }
 .advanced-result-details { padding: 17px; background: #f9fbfa; border-top: 1px solid var(--line); }
