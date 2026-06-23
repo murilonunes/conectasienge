@@ -6,6 +6,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A rota `/contratos` passou a tratar ausência de `contracts-supply.sqlite` como dado local ainda não salvo, sem exibir detalhes técnicos de API na abertura.
+- A abertura de `/contratos` continua lendo somente o SQLite local; a consulta ao Sienge fica restrita à atualização feita em Configurações.
 - A rota `/contratos` foi corrigida para carregar contratos de fornecimento pelo endpoint de listagem `/v1/supply-contracts/all`, com período definido em Configurações.
 - A DRE POC, o Mapa Sienge e o histórico de integração passaram a usar o mesmo endpoint de contratos de fornecimento, evitando leitura vazia por endpoint incorreto.
 - A rota `/sales` ganhou seletor de período no mesmo padrão visual do Dashboard, com Hoje, 7, 15, 30, 60, 90 dias, 6, 12 e 24 meses, além de visão passada ou futura.

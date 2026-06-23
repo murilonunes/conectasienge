@@ -1,4 +1,3 @@
-import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { ContractsExplorer } from "@/components/contracts/contracts-explorer";
@@ -29,7 +28,15 @@ export default async function ContratosPage() {
         <StatCard label="Fornecedores" value={String(summary.suppliersCount)} delta="Fornecedores identificados nos contratos" icon="F" />
       </div>
 
-      {result.error && <ApiErrorNotice error={result.error} />}
+      {result.error && result.contracts.length === 0 && (
+        <section className="card data-notice">
+          <strong>Contratos ainda não salvos</strong>
+          <span>
+            Esta tela lê somente o banco local. Atualize Contratos em Configurações para consultar o Sienge uma vez,
+            gravar os dados no SQLite e liberar a visão de contratos aqui.
+          </span>
+        </section>
+      )}
 
       {!result.error && result.contracts.length > 0 && (
         <div className="grid-main">
