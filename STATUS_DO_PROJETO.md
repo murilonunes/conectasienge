@@ -6,6 +6,10 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A etapa de revisão de listas grandes foi concluída para `/compras`, `/contas-receber` e `/sales`.
+- A aba Registros de `/compras` deixou de receber só 500 itens e passou a paginar/filtrar toda a base local por `/api/purchases/records`.
+- A listagem principal de `/contas-receber` deixou de receber só 200 parcelas e passou a paginar/filtrar toda a base local por `/api/receivables/forecast`.
+- `/sales` foi revisada quanto a período, permutas e volume exibido; não recebeu ajuste nesta etapa porque já usa contratos enxutos e paginação no recorte.
 - A primeira etapa da revisão de telas foi iniciada e documentada: `/`, menu lateral e `/financeiro` foram revisados.
 - A Central financeira deixou de exibir atalho direto para `Novo lançamento`; essa operação permanece contextualizada em Contas a pagar e será revisada como operação transacional.
 - Foi criado o arquivo `revisão.md` para acompanhar a revisão tela por tela, com critérios, prioridades, achados transversais e plano por etapas.

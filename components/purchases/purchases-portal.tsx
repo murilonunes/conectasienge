@@ -5,7 +5,6 @@ import { MonthlyVolumeChart } from "@/components/charts/monthly-volume-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
 import { StatCard } from "@/components/ui/stat-card";
 import type { PurchaseSummary } from "@/features/purchases/data";
-import type { PurchaseFlowItem } from "@/features/purchases/types";
 import { formatCompactCurrency } from "@/lib/formatters";
 import { PurchasesExplorer } from "./purchases-explorer";
 
@@ -18,12 +17,10 @@ type PurchasesPortalSummary = Omit<PurchaseSummary, "flow">;
 
 export function PurchasesPortal({
   summary,
-  records,
   totalRecords,
   warning
 }: {
   summary: PurchasesPortalSummary;
-  records: PurchaseFlowItem[];
   totalRecords: number;
   warning?: string;
 }) {
@@ -108,7 +105,7 @@ export function PurchasesPortal({
           </div>
         </>
       ) : (
-        <PurchasesExplorer items={records} totalRecords={totalRecords} />
+        <PurchasesExplorer totalRecords={totalRecords} />
       )}
     </>
   );

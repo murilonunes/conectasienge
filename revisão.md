@@ -29,13 +29,13 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/` | `app/page.tsx` | Tela inicial confirmada como abertura rápida: não carrega dados pesados e mantém atalhos para os portais principais. |
 | Pendente | Média | `/dashboard` | `app/dashboard/page.tsx`, `features/dashboard/data.ts` | Auditar card a card contra as consultas SQL resumidas. A tela está local e otimizada, mas é a mais sensível a inconsistência de fórmula. |
 | Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |
-| Pendente | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | A listagem usa paginação, mas todos os contratos do recorte são enviados para o cliente. Revisar volume em períodos longos e confirmar se filtros, permutas e totais continuam coerentes. |
-| Pendente | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | A página corta a lista inicial em 500 registros antes de enviar para a aba Registros. Isso deixa a tela mais leve, mas a busca não alcança tudo que existe no SQLite. |
+| Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
+| Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
 | Pendente | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx` | Conferir se valores zerados e propriedade própria/terceiro estão claros. A tela já usa lista local paginada. |
 | Pendente | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Validar atualização via Configurações e estado vazio. A abertura lê SQLite, mas precisa confirmar em uso real se o job grava contratos e se o card muda depois da carga. |
 | Pendente | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | A tela abre fazendo fetch interno para uma rota API, mesmo lendo local por padrão. Melhorar para renderizar a primeira leitura local no servidor e deixar progresso só para atualização/recarga quando necessário. |
 | Pendente | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Conferir se agenda, valores corrigidos, juros/multa e abuso usam a mesma base local e se a navegação para busca avançada está clara. |
-| Pendente | Alta | `/contas-receber` | `app/contas-receber/page.tsx`, `components/tables/receivables-forecast-table.tsx` | A página corta a listagem inicial em 200 parcelas. Isso melhora o HTML, mas a busca/lista principal não cobre todos os registros salvos. |
+| Revisado | Alta | `/contas-receber` | `app/contas-receber/page.tsx`, `components/tables/receivables-forecast-table.tsx` | Corrigida a listagem principal: deixou de receber só 200 parcelas e passou a buscar páginas filtradas em `/api/receivables/forecast`, lendo somente o SQLite local. |
 | Pendente | Média | `/lancamentos/baixa` | `app/lancamentos/baixa/page.tsx`, `components/forms/advanced-payables-search.tsx`, `components/forms/installment-settlement.tsx` | Busca avançada e consulta de parcelas leem rotas locais, mas a atualização de dados Pix ainda faz PATCH no Sienge. Decidir se esta operação continua permitida ou se deve sair da tela. |
 | Pendente | Média | `/lancamentos/baixa-receber` | `app/lancamentos/baixa-receber/page.tsx`, `components/forms/advanced-receivables-search.tsx`, `components/forms/receivable-settlement.tsx` | Revisar espelhamento visual com contas a pagar e remover qualquer texto que pareça prometer baixa efetiva quando a API pública não confirmou esse endpoint. |
 | Pendente | Alta | `/lancamentos/novo` | `app/lancamentos/novo/page.tsx`, `components/forms/bill-entry-form.tsx`, `app/api/sienge/bills/route.ts` | Esta tela cria título direto no Sienge. Precisa decisão: manter como operação transacional explícita, mover para área separada ou remover do fluxo atual. |
@@ -60,12 +60,13 @@ Pendência mantida:
 
 ### 1. Listas cortadas antes da paginação
 
-Telas afetadas:
+Revisado nesta etapa:
 
-- `/compras`: limite inicial de 500 registros.
-- `/contas-receber`: limite inicial de 200 registros.
+- `/compras`: removido o limite inicial de 500 registros na aba Registros. A tela agora pagina e filtra via rota local `/api/purchases/records`.
+- `/contas-receber`: removido o limite inicial de 200 parcelas na tabela principal. A tela agora pagina e filtra via rota local `/api/receivables/forecast`.
+- `/sales`: revisado o fluxo atual; contratos são enviados de forma enxuta por recorte e paginados na tela. Não recebeu mudança nesta etapa.
 
-Decisão técnica pendente: trocar o envio parcial para paginação/consulta local sob demanda, mantendo a tela leve sem esconder registros do usuário.
+Resultado: as listas que escondiam registros salvos deixaram de depender de amostra inicial. A busca passa a considerar toda a base local sem consultar o Sienge.
 
 ### 2. Operações diretas no Sienge fora de Configurações
 

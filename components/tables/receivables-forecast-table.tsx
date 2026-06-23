@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
-import { LocalDataList } from "@/components/ui/local-data-list";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 
 type ReceivableReceipt = {
@@ -86,79 +86,180 @@ function badgeClass(status: string) {
   return "badge";
 }
 
-export function ReceivablesForecastTable({
-  entries,
-  totalEntries = entries.length
-}: {
-  entries: ReceivableInstallment[];
-  totalEntries?: number;
-}) {
+type ReceivablesForecastResponse = {
+  items: ReceivableInstallment[];
+  totalEntries: number;
+  filteredCount: number;
+  totalOpen: number;
+  statuses: string[];
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+const PAGE_SIZE_OPTIONS = [50, 100, 200, 500];
+
+export function ReceivablesForecastTable({ totalEntries }: { totalEntries: number }) {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string>();
+  const [payload, setPayload] = useState<ReceivablesForecastResponse>({
+    items: [],
+    totalEntries,
+    filteredCount: 0,
+    totalOpen: 0,
+    statuses: [],
+    page: 1,
+    pageSize: 100,
+    totalPages: 1
+  });
+  const queryKey = useMemo(() => `${search}|${status}|${pageSize}`, [search, status, pageSize]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [queryKey]);
+
+  useEffect(() => {
+    let active = true;
+    const query = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize)
+    });
+    if (search.trim()) query.set("search", search.trim());
+    if (status) query.set("status", status);
+
+    setLoading(true);
+    setMessage(undefined);
+    fetch(`/api/receivables/forecast?${query}`, { cache: "no-store" })
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.message || "Não foi possível carregar as parcelas.");
+        return body as ReceivablesForecastResponse;
+      })
+      .then((body) => {
+        if (active) setPayload(body);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setMessage(error instanceof Error ? error.message : "Erro inesperado ao carregar as parcelas.");
+        setPayload((current) => ({ ...current, items: [], filteredCount: 0, totalOpen: 0, totalPages: 1 }));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [search, status, page, pageSize]);
+
+  function changePageSize(value: string) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) setPageSize(parsed);
+  }
+
   return (
     <section className="card table-card">
       <div className="panel-head table-head">
         <div>
           <h2 className="panel-title">Parcelas previstas a receber</h2>
           <span className="panel-note">
-            {entries.length < totalEntries
-              ? `Exibindo ${entries.length} de ${totalEntries} parcelas abertas por vencimento`
-              : `${entries.length} parcelas abertas por vencimento`}
+            {payload.filteredCount === totalEntries
+              ? `${totalEntries} parcelas abertas por vencimento`
+              : `${payload.filteredCount} de ${totalEntries} parcelas abertas por vencimento`}
           </span>
         </div>
+        <strong>{formatCurrency(payload.totalOpen)}</strong>
       </div>
-      <LocalDataList
-        items={entries}
-        itemLabel="parcelas"
-        emptyMessage="Nenhuma parcela aberta encontrada para a previsão."
-        renderItems={(pageItems) => (
+
+      <div className="card purchases-filters">
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar título, cliente, projeto, unidade ou empresa" />
+        <select value={status} onChange={(event) => setStatus(event.target.value)}>
+          <option value="">Todas as situações</option>
+          {payload.statuses.map((item) => <option key={item}>{item}</option>)}
+        </select>
+        <div>
+          <strong>{payload.filteredCount}</strong>
+          <span>parcelas</span>
+          <strong>{formatCurrency(payload.totalOpen)}</strong>
+        </div>
+      </div>
+
+      {message && <div className="card data-notice"><strong>Parcelas</strong><span>{message}</span></div>}
+
+      <div className="local-data-list">
+        <div className="local-list-controls top">
+          <div>
+            <strong>{payload.filteredCount}</strong>
+            <span>parcelas</span>
+            <small>{loading ? "Carregando..." : `Página ${payload.page} de ${payload.totalPages}`}</small>
+          </div>
+          <label>
+            Registros por página
+            <select value={pageSize} onChange={(event) => changePageSize(event.target.value)}>
+              {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <div className="local-list-pages">
+            <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={loading || page <= 1}>Anterior</button>
+            <span>Página {payload.page} de {payload.totalPages}</span>
+            <button type="button" onClick={() => setPage((current) => Math.min(payload.totalPages, current + 1))} disabled={loading || page >= payload.totalPages}>Próxima</button>
+          </div>
+        </div>
+
+        {loading ? <div className="empty-state">Carregando parcelas a receber...</div> : payload.items.length ? (
           <table>
-            <thead>
-              <tr>
-                <th>Título</th>
-                <th>Cliente</th>
-                <th>Vencimento</th>
-                <th>Projeto / unidade</th>
-                <th>Valor em aberto</th>
-                <th>Recebido</th>
-                <th>Situação</th>
-                <th>Integração</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageItems.map((entry) => {
-                const status = receivableStatus(entry);
-                return (
-                  <tr key={`${entry.billId || entry.receivableBillId || "bill"}-${entry.installmentId || "installment"}-${entry.dueDate || "date"}`}>
-                    <td>
-                      <strong>{receivableDocument(entry)}</strong>
-                      <br />
-                      <span className="table-muted">Título #{titleNumber(entry)} - Parcela {entry.installmentNumber || entry.installmentId || "não informada"}</span>
-                    </td>
-                    <td>
-                      {entry.clientName || "Cliente não informado"}
-                      <br />
-                      <span className="table-muted">{entry.clientId ? `Cliente #${entry.clientId}` : entry.companyName || ""}</span>
-                    </td>
-                    <td>{formatOptionalDate(entry.dueDate)}</td>
-                    <td>
-                      {entry.projectName || entry.businessAreaName || "Não informado"}
-                      <br />
-                      <span className="table-muted">{entry.mainUnit || entry.companyName || ""}</span>
-                    </td>
-                    <td><strong>{formatCurrency(receivableOpenAmount(entry))}</strong></td>
-                    <td>
-                      {formatCurrency(receivablePaidAmount(entry))}
-                      <br />
-                      <span className="table-muted">{entry.receipts?.length || 0} baixa{entry.receipts?.length === 1 ? "" : "s"}</span>
-                    </td>
-                    <td><span className={badgeClass(status)}>{status}</span></td>
-                    <td><IntegrationStamp record={entry} /></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      />
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Cliente</th>
+              <th>Vencimento</th>
+              <th>Projeto / unidade</th>
+              <th>Valor em aberto</th>
+              <th>Recebido</th>
+              <th>Situação</th>
+              <th>Integração</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payload.items.map((entry) => {
+              const currentStatus = receivableStatus(entry);
+              return (
+                <tr key={`${entry.billId || entry.receivableBillId || "bill"}-${entry.installmentId || "installment"}-${entry.dueDate || "date"}`}>
+                  <td>
+                    <strong>{receivableDocument(entry)}</strong>
+                    <br />
+                    <span className="table-muted">Título #{titleNumber(entry)} - Parcela {entry.installmentNumber || entry.installmentId || "não informada"}</span>
+                  </td>
+                  <td>
+                    {entry.clientName || "Cliente não informado"}
+                    <br />
+                    <span className="table-muted">{entry.clientId ? `Cliente #${entry.clientId}` : entry.companyName || ""}</span>
+                  </td>
+                  <td>{formatOptionalDate(entry.dueDate)}</td>
+                  <td>
+                    {entry.projectName || entry.businessAreaName || "Não informado"}
+                    <br />
+                    <span className="table-muted">{entry.mainUnit || entry.companyName || ""}</span>
+                  </td>
+                  <td><strong>{formatCurrency(receivableOpenAmount(entry))}</strong></td>
+                  <td>
+                    {formatCurrency(receivablePaidAmount(entry))}
+                    <br />
+                    <span className="table-muted">{entry.receipts?.length || 0} baixa{entry.receipts?.length === 1 ? "" : "s"}</span>
+                  </td>
+                  <td><span className={badgeClass(currentStatus)}>{currentStatus}</span></td>
+                  <td><IntegrationStamp record={entry} /></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        ) : <div className="empty-state">Nenhuma parcela aberta encontrada para a previsão.</div>}
+      </div>
     </section>
   );
 }
