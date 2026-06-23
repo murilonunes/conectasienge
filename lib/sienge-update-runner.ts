@@ -113,7 +113,7 @@ async function runSiengeUpdateJob(job: SiengeUpdateJob) {
       await runStep(job, "sales", () => loadSalesContracts(true, force));
     }
     if (job.area === "contracts" || job.area === "all" || job.area === "reports") {
-      await runStep(job, "contracts", () => loadSupplyContracts(true, force));
+      await runStep(job, "contracts", () => loadSupplyContracts(true, force, integrationRange));
     }
     if (job.area === "inventory" || job.area === "all" || job.area === "reports") {
       await runStep(job, "inventory", () => loadInventoryAssets(true, force));

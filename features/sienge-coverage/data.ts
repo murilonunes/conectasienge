@@ -141,7 +141,7 @@ const modules: ModuleDefinition[] = [
     strengths: ["Valor contratado", "Valor medido quando disponível", "Fornecedores e situação contratual"],
     gaps: ["Sem base local, a DRE POC fica sem avanço de obra", "Medição mensal histórica ainda não está separada"],
     endpoints: [
-      { label: "Contratos de fornecimento", endpoint: "/v1/supply-contracts", database: "contracts", implemented: true, role: "Contratos, saldos e POC" }
+      { label: "Contratos de fornecimento", endpoint: "/v1/supply-contracts/all", database: "contracts", implemented: true, role: "Contratos, saldos e POC" }
     ]
   },
   {

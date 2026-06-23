@@ -11,4 +11,4 @@ Os serviços iniciais estão em `financeiro.ts`:
 - contas a pagar: `/v1/bills`
 - contas a receber: `/v1/accounts-receivable/receivable-bills`
 - inadimplência: `/v1/overdue-receivable-bill`
-- contratos: `/v1/supply-contracts` e `/v1/sales-contracts`
+- contratos: `/v1/supply-contracts/all` e `/v1/sales-contracts`

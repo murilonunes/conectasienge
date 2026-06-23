@@ -230,7 +230,7 @@ function addContractYears(years: Set<number>) {
   if (!database) return;
   try {
     if (!tableExists(database, "sienge_records")) return;
-    const rows = database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/supply-contracts'").all() as JsonRow[];
+    const rows = database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint IN ('/v1/supply-contracts/all', '/v1/supply-contracts')").all() as JsonRow[];
     rows.forEach((row) => {
       const contract = safeJson<SupplyContract & { issueDate?: string; contractDate?: string; signatureDate?: string; startDate?: string }>(row.raw_json);
       addYearFromDate(years, contract?.issueDate || contract?.contractDate || contract?.signatureDate || contract?.startDate);
@@ -274,7 +274,7 @@ function loadPocProgress(): PocProgressResult {
   try {
     if (!database || !tableExists(database, "sienge_records")) unavailable = true;
     const rows = database && tableExists(database, "sienge_records")
-      ? database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/supply-contracts'").all() as JsonRow[]
+      ? database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint IN ('/v1/supply-contracts/all', '/v1/supply-contracts')").all() as JsonRow[]
       : [];
 
     rows.forEach((row) => {
@@ -717,7 +717,7 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
       sourceStatus(dbFiles.receivables, "bulk_income_installments", "Contas a receber"),
       sourceStatus(dbFiles.payables, "bulk_outcome_installments", "Contas a pagar"),
       sourceStatus(dbFiles.purchases, "sienge_records", "Compras", "/v1/purchase-orders"),
-      sourceStatus(dbFiles.contracts, "sienge_records", "Contratos para POC", "/v1/supply-contracts")
+      sourceStatus(dbFiles.contracts, "sienge_records", "Contratos para POC", "/v1/supply-contracts/all")
     ]
   };
 }

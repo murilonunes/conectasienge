@@ -82,7 +82,7 @@ const screenDefinitions = [
     key: "contracts",
     label: "Contratos",
     description: "Contratos de fornecimento e leituras contratuais.",
-    endpoints: ["/v1/supply-contracts"]
+    endpoints: ["/v1/supply-contracts/all"]
   },
   {
     key: "parties",

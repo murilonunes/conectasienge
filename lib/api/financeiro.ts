@@ -49,7 +49,7 @@ export const contasReceberApi = {
 
 export const contratosApi = {
   supply: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
-    siengeRequest<SiengePage<T>>("/v1/supply-contracts", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
+    siengeRequest<SiengePage<T>>("/v1/supply-contracts/all", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
   sales: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
     siengeRequest<SiengePage<T>>("/v1/sales-contracts", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized })
 };

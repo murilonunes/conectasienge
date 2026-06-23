@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import path from "path";
 import { contratosApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails, type SiengePage } from "@/lib/api/sienge";
+import { getSiengeIntegrationRange, type SiengeIntegrationRange } from "@/lib/settings";
 import type { SupplyContract, ContractsResult, ContractsSummary } from "./types";
 import { contractStatus, contractValue, isClosedContract, measuredValue, balanceValue } from "./utils";
 
@@ -30,7 +31,7 @@ function tableExists(database: DatabaseSync, table: string) {
 function localDataError(title: string, explanation: string): SiengeErrorDetails {
   return {
     method: "GET",
-    endpoint: "/v1/supply-contracts",
+    endpoint: "/v1/supply-contracts/all",
     title,
     explanation,
     suggestion: "Atualize Contratos em Configurações para preencher os dados.",
@@ -80,7 +81,7 @@ function readLocalContracts(): ContractsResult {
     const rows = database.prepare(`
       SELECT raw_json, source_day, saved_at
       FROM sienge_records
-      WHERE endpoint = '/v1/supply-contracts'
+      WHERE endpoint IN ('/v1/supply-contracts/all', '/v1/supply-contracts')
       ORDER BY saved_at DESC
     `).all() as SqlRow[];
     const contracts = rows
@@ -94,12 +95,16 @@ function readLocalContracts(): ContractsResult {
   }
 }
 
-async function loadAllPages(forceReplaceFinalized = false) {
-  const firstPage = await contratosApi.supply<SupplyContract>({ limit: LIMIT, offset: 0 }, true, forceReplaceFinalized);
+async function loadAllPages(forceReplaceFinalized = false, range: SiengeIntegrationRange = getSiengeIntegrationRange()) {
+  const baseFilters = {
+    contractStartDate: range.startDate,
+    contractEndDate: range.endDate
+  };
+  const firstPage = await contratosApi.supply<SupplyContract>({ ...baseFilters, limit: LIMIT, offset: 0 }, true, forceReplaceFinalized);
   const totalCount = firstPage.resultSetMetadata?.count ?? firstPage.results.length;
   const remainingPages = Math.max(0, Math.ceil(totalCount / LIMIT) - 1);
   const additionalPages = await Promise.all(Array.from({ length: remainingPages }, (_, index) =>
-    contratosApi.supply<SupplyContract>({ limit: LIMIT, offset: (index + 1) * LIMIT }, true, forceReplaceFinalized)
+    contratosApi.supply<SupplyContract>({ ...baseFilters, limit: LIMIT, offset: (index + 1) * LIMIT }, true, forceReplaceFinalized)
   ));
 
   const contracts = [
@@ -110,11 +115,11 @@ async function loadAllPages(forceReplaceFinalized = false) {
   return { contracts, totalCount };
 }
 
-export async function loadSupplyContracts(forceRefresh = false, forceReplaceFinalized = false): Promise<ContractsResult> {
+export async function loadSupplyContracts(forceRefresh = false, forceReplaceFinalized = false, range: SiengeIntegrationRange = getSiengeIntegrationRange()): Promise<ContractsResult> {
   if (!forceRefresh) return readLocalContracts();
 
   try {
-    return await loadAllPages(forceReplaceFinalized);
+    return await loadAllPages(forceReplaceFinalized, range);
   } catch (error) {
     return {
       ...readLocalContracts(),
@@ -128,7 +133,7 @@ export async function loadSupplyContracts(forceRefresh = false, forceReplaceFina
           : error.details.suggestion
       } : {
         method: "GET",
-        endpoint: "/v1/supply-contracts",
+        endpoint: "/v1/supply-contracts/all",
         title: "Não foi possível atualizar contratos",
         explanation: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         suggestion: "Confira o acesso a Contratos de Fornecimento e tente atualizar novamente em Configurações.",
