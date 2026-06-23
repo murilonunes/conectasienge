@@ -532,7 +532,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .sales-conditions { margin-top: 16px; }
 .sales-conditions h3 { font-size: 11px; margin: 0 0 9px; }
 .sales-conditions > div { display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.sales-conditions > div.exchange { color: #9b641d; background: #fffaf1; margin: 0 -10px; padding: 10px; border-radius: 9px; }
 .sales-conditions strong { color: var(--ink); }
+.sales-conditions > div.exchange strong { color: #9b641d; }
 .sales-situation-layout { min-height: 240px; display: grid; grid-template-columns: 150px 1fr; gap: 23px; align-items: center; }
 .sales-situation-donut { width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; }
 .sales-situation-donut > div { width: 102px; height: 102px; border-radius: 50%; background: #fff; display: grid; place-content: center; text-align: center; }

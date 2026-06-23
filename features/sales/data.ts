@@ -4,6 +4,12 @@ import { DatabaseSync } from "node:sqlite";
 import path from "path";
 import { contratosApi } from "@/lib/api/financeiro";
 import { SiengeApiError, type SiengeErrorDetails } from "@/lib/api/sienge";
+import {
+  salesContractExchangeValue,
+  salesContractGrossValue,
+  salesContractNetValue,
+  salesFinancialConditions
+} from "./calculations";
 import type { SalesContract, SalesSummary } from "./types";
 
 export type SalesResult = {
@@ -149,7 +155,7 @@ function groupContracts(contracts: SalesContract[], label: (contract: SalesContr
   contracts.forEach((contract) => {
     const key = label(contract);
     const current = groups.get(key) || { label: key, value: 0, count: 0 };
-    current.value += contract.totalSellingValue || contract.value || 0;
+    current.value += salesContractNetValue(contract);
     current.count += 1;
     groups.set(key, current);
   });
@@ -157,8 +163,10 @@ function groupContracts(contracts: SalesContract[], label: (contract: SalesContr
 }
 
 export function analyzeSales(contracts: SalesContract[]): SalesSummary {
-  const totalValue = contracts.reduce((sum, contract) => sum + (contract.totalSellingValue || contract.value || 0), 0);
-  const conditions = contracts.flatMap((contract) => contract.paymentConditions || []);
+  const grossValue = contracts.reduce((sum, contract) => sum + salesContractGrossValue(contract), 0);
+  const exchangeValue = contracts.reduce((sum, contract) => sum + salesContractExchangeValue(contract), 0);
+  const totalValue = contracts.reduce((sum, contract) => sum + salesContractNetValue(contract), 0);
+  const conditions = contracts.flatMap(salesFinancialConditions);
   const outstandingBalance = conditions.reduce((sum, condition) => sum + (condition.outstandingBalance || 0), 0);
   const amountPaid = conditions.reduce((sum, condition) => sum + (condition.amountPaid || 0), 0);
   const monthlyMap = new Map<string, { label: string; value: number; count: number; order: number }>();
@@ -174,18 +182,22 @@ export function analyzeSales(contracts: SalesContract[]): SalesSummary {
       count: 0,
       order: date.getFullYear() * 12 + date.getMonth()
     };
-    current.value += contract.totalSellingValue || contract.value || 0;
+    current.value += salesContractNetValue(contract);
     current.count += 1;
     monthlyMap.set(label, current);
   });
 
   return {
     totalValue,
+    grossValue,
+    exchangeValue,
+    netValue: totalValue,
     outstandingBalance,
     amountPaid,
     averageValue: contracts.length ? totalValue / contracts.length : 0,
     activeCount: contracts.filter((contract) => !/cancelad|distrat/i.test(contract.situation || "")).length,
     cancelledCount: contracts.filter((contract) => /cancelad|distrat/i.test(contract.situation || "")).length,
+    exchangeContractCount: contracts.filter((contract) => salesContractExchangeValue(contract) > 0).length,
     byEnterprise: groupContracts(contracts, (contract) => contract.enterpriseName || "Empreendimento não informado").slice(0, 8),
     bySituation: groupContracts(contracts, (contract) => contract.situation || "Situação não informada"),
     monthlySales: Array.from(monthlyMap.values()).sort((a, b) => a.order - b.order)

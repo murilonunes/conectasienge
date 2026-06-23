@@ -6,6 +6,10 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A rota `/sales` foi revisada para separar valor bruto contratado, permutas e carteira líquida comercial.
+- Condições de pagamento do tipo `PE` ou com nome de permuta deixam de inflar os indicadores comerciais, evitando contar duas vezes bens dados em outros negócios.
+- Os cards, gráfico mensal, ranking por empreendimento/situação e listagem de contratos de vendas agora usam valor líquido comercial; o detalhe do contrato mostra bruto, permuta abatida e valor líquido para conferência.
+- A busca/listagem de `/sales` passou a receber todos os contratos locais enxutos, com paginação na tela, em vez de filtrar apenas uma amostra inicial.
 - Foi criada a tela `/lancamentos/baixa-receber` para consultar recebimentos e baixas de contas a receber.
 - A especificação pública disponível foi revisada e não foi encontrado endpoint seguro para efetivar baixa de contas a receber; a tela informa essa limitação e não promete uma operação que não seria gravada.
 - A nova tela lê somente o banco local `finance-receivables.sqlite`, usando as tabelas estruturadas de parcelas e recebimentos do espelho `/bulk-data/v1/income`.

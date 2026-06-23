@@ -7,11 +7,9 @@ import { SalesSituationChart } from "@/components/sales/sales-situation-chart";
 import { MonthlySalesChart } from "@/components/sales/monthly-sales-chart";
 import { analyzeSales, loadSalesContracts } from "@/features/sales/data";
 import type { SalesContract } from "@/features/sales/types";
-import { formatCompactCurrency, formatCurrency } from "@/lib/formatters";
+import { formatCompactCurrency } from "@/lib/formatters";
 
 export const dynamic = "force-dynamic";
-
-const INITIAL_CONTRACT_LIMIT = 100;
 
 function slimSalesContract(contract: SalesContract): SalesContract {
   const mainCustomer = contract.salesContractCustomers?.find((customer) => customer.main) || contract.salesContractCustomers?.[0];
@@ -46,15 +44,15 @@ function slimSalesContract(contract: SalesContract): SalesContract {
 export default async function SalesPage() {
   const result = await loadSalesContracts();
   const summary = analyzeSales(result.contracts);
-  const initialContracts = result.contracts.slice(0, INITIAL_CONTRACT_LIMIT).map(slimSalesContract);
+  const initialContracts = result.contracts.map(slimSalesContract);
   return (
     <>
       <PageHeading eyebrow="Portal comercial" title="Contratos de vendas" subtitle={`${result.contracts.length} de ${result.totalCount} contratos disponíveis nos dados integrados.`} />
       <div className="stats">
-        <StatCard label="Valor da carteira" value={formatCompactCurrency(summary.totalValue)} delta="Valor total de venda da amostra" icon="R$" />
-        <StatCard label="Saldo em aberto" value={formatCompactCurrency(summary.outstandingBalance)} delta="Somado das condições de pagamento" warn icon="↗" />
-        <StatCard label="Valor pago" value={formatCompactCurrency(summary.amountPaid)} delta="Informado nas condições de pagamento" icon="✓" />
-        <StatCard label="Ticket médio" value={formatCurrency(summary.averageValue)} delta={`${summary.activeCount} contratos não cancelados`} icon="TM" />
+        <StatCard label="Carteira líquida" value={formatCompactCurrency(summary.netValue)} delta={`${formatCompactCurrency(summary.grossValue)} bruto - ${formatCompactCurrency(summary.exchangeValue)} em permutas`} icon="R$" />
+        <StatCard label="Permutas abatidas" value={formatCompactCurrency(summary.exchangeValue)} delta={`${summary.exchangeContractCount} contratos com bem no negócio`} warn={summary.exchangeValue > 0} icon="P" />
+        <StatCard label="A receber financeiro" value={formatCompactCurrency(summary.outstandingBalance)} delta="Sem condições de permuta" warn icon="↗" />
+        <StatCard label="Recebido financeiro" value={formatCompactCurrency(summary.amountPaid)} delta="Sem condições de permuta" icon="✓" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
         <MonthlySalesChart data={summary.monthlySales} />

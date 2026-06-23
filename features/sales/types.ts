@@ -13,10 +13,12 @@ export type SalesUnit = {
 };
 
 export type PaymentCondition = {
+  conditionTypeId?: string;
   conditionTypeName?: string;
   installmentsNumber?: number;
   openInstallmentsNumber?: number;
   totalValue?: number;
+  totalValueInterest?: number;
   outstandingBalance?: number;
   amountPaid?: number;
   firstPayment?: string;
@@ -48,11 +50,15 @@ export type SalesContract = {
 
 export type SalesSummary = {
   totalValue: number;
+  grossValue: number;
+  exchangeValue: number;
+  netValue: number;
   outstandingBalance: number;
   amountPaid: number;
   averageValue: number;
   activeCount: number;
   cancelledCount: number;
+  exchangeContractCount: number;
   byEnterprise: { label: string; value: number; count: number }[];
   bySituation: { label: string; value: number; count: number }[];
   monthlySales: { label: string; value: number; count: number }[];
