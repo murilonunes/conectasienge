@@ -2,7 +2,6 @@ import Link from "next/link";
 import { getAppSettings } from "@/lib/settings";
 
 const overviewNavigation = [
-  ["Início", "/", "I"],
   ["Dashboard", "/dashboard", "D"],
   ["Central financeira", "/financeiro", "F"],
   ["Portal de vendas", "/sales", "V"],
@@ -15,7 +14,6 @@ const operationNavigation = [
   ["Conciliação", "/conciliacao", "CC"],
   ["Contas a pagar", "/contas-pagar", "P"],
   ["Contas a receber", "/contas-receber", "R"],
-  ["Novo lançamento", "/lancamentos/novo", "+"],
   ["Baixa a pagar", "/lancamentos/baixa", "BP"],
   ["Baixa a receber", "/lancamentos/baixa-receber", "BR"]
 ] as const;
@@ -44,10 +42,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">
+        <Link className="brand" href="/" aria-label="Ir para a tela inicial">
           <div className="brand-mark">B</div>
           <div><strong>Brasin</strong><span>GESTÃO FINANCEIRA</span></div>
-        </div>
+        </Link>
         <nav>
           <NavigationGroup label="VISÃO GERAL" items={overviewNavigation} />
           <NavigationGroup label="OPERAÇÕES" items={operationNavigation} />

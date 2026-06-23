@@ -6,6 +6,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- O menu lateral foi simplificado: `Início` saiu da lista e o logo/nome Brasin passou a ser o atalho para a tela inicial.
+- `Novo lançamento` saiu do menu lateral de operações e passou a ficar como botão dentro da tela `/contas-pagar`.
 - A rota `/contratos` passou a tratar ausência de `contracts-supply.sqlite` como dado local ainda não salvo, sem exibir detalhes técnicos de API na abertura.
 - A abertura de `/contratos` continua lendo somente o SQLite local; a consulta ao Sienge fica restrita à atualização feita em Configurações.
 - A rota `/contratos` foi corrigida para carregar contratos de fornecimento pelo endpoint de listagem `/v1/supply-contracts/all`, com período definido em Configurações.
