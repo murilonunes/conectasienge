@@ -6,7 +6,7 @@ import { PayableChargeReviewButton } from "@/components/payables/payable-charge-
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import { analyzePayableCharge } from "@/lib/payables-abuse-analysis";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency, formatDate, formatOptionalDate } from "@/lib/formatters";
 
 type BankMovement = {
   id?: number;
@@ -72,6 +72,26 @@ function titleSearchValue(value: string) {
   return Number.isInteger(billId) && billId > 0 ? billId : undefined;
 }
 
+function documentLabel(item: PayableInstallment) {
+  const document = [item.documentIdentificationId, item.documentNumber].filter(Boolean).join("-");
+  return document || `Título #${item.billId}`;
+}
+
+function installmentLabel(item: PayableInstallment, total?: number) {
+  if (total && total > 1) return `Parcela ${item.installmentId} de ${total}`;
+  return `Parcela ${item.installmentId}`;
+}
+
+function dueStatus(item: PayableInstallment) {
+  if ((item.payments || []).length > 0) return "paid";
+  if (!item.dueDate) return "future";
+  const due = new Date(`${item.dueDate.slice(0, 10)}T00:00:00`);
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!Number.isNaN(due.getTime()) && due < todayOnly) return "late";
+  return "future";
+}
+
 export function AdvancedPayablesSearch() {
   const [filters, setFilters] = useState({
     startDate: initialStart, endDate: today, selectionType: "D", correctionIndexerId: "1",
@@ -117,6 +137,16 @@ export function AdvancedPayablesSearch() {
     paidIncrease: filtered.reduce((sum, item) => sum + analyzePayableCharge(item, filters.correctionDate).paidIncrease, 0),
     riskCount: filtered.filter((item) => analyzePayableCharge(item, filters.correctionDate).hasRisk).length
   }), [filtered, filters.correctionDate]);
+
+  const installmentTotals = useMemo(() => {
+    const counts = new Map<number, Set<number>>();
+    results.forEach((item) => {
+      const current = counts.get(item.billId) || new Set<number>();
+      current.add(item.installmentId);
+      counts.set(item.billId, current);
+    });
+    return new Map(Array.from(counts.entries()).map(([billId, installments]) => [billId, installments.size]));
+  }, [results]);
 
   async function search(event: FormEvent) {
     event.preventDefault();
@@ -231,15 +261,26 @@ export function AdvancedPayablesSearch() {
                 const payments = item.payments || [];
                 const review = analyzePayableCharge(item, filters.correctionDate);
                 return <article className="card advanced-result" key={key}>
-                  <button className="advanced-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
-                    <span>
-                      <span className="advanced-title-id">Título #{item.billId}</span>
-                      <strong>{item.documentIdentificationId}-{item.documentNumber}</strong>
-                      <small>Parcela {item.installmentId}</small>
-                      <IntegrationStamp record={item} />
-                      <span className="copy-title-button" role="button" tabIndex={0} onClick={(event) => copyBillId(event, item.billId)} onKeyDown={(event) => { if (event.key === "Enter") copyBillId(event, item.billId); }}>
-                        {copiedBillId === item.billId ? "Copiado" : "Copiar número"}
+                  <button className="advanced-result-main payable-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
+                    <span className="title-installment-block">
+                      <span className="title-installment-row">
+                        <span className="advanced-title-id" onClick={(event) => copyBillId(event, item.billId)} title="Copiar número do título">
+                          <small>Título</small>
+                          <strong>#{item.billId}</strong>
+                          <span className="copy-title-icon" aria-label="Copiar título">{copiedBillId === item.billId ? "OK" : "⧉"}</span>
+                        </span>
+                        <span className="title-installment-connector" aria-hidden="true" />
+                        <span className="installment-pill">
+                          <small>Parcela</small>
+                          <strong>{installmentLabel(item, installmentTotals.get(item.billId)).replace(/^Parcela\s*/i, "")}</strong>
+                        </span>
+                        <span className="title-installment-connector" aria-hidden="true" />
+                        <span className={`due-pill ${dueStatus(item)}`}>
+                          <small>Vencimento</small>
+                          <strong>{formatOptionalDate(item.dueDate)}</strong>
+                        </span>
                       </span>
+                      <strong>{documentLabel(item)}</strong>
                     </span>
                     <span>
                       <strong>{item.creditorName || `Credor #${item.creditorId}`}</strong>
@@ -262,6 +303,7 @@ export function AdvancedPayablesSearch() {
                       <div><span>Saldo em aberto</span><strong>{formatCurrency(item.balanceAmount || 0)}</strong></div>
                       <div><span>Acréscimo corrigido</span><strong>{formatCurrency(review.correctedIncrease)}</strong></div>
                       <div><span>Limite 2% + 1% ao mês</span><strong>{formatCurrency(review.allowedIncrease)}</strong></div>
+                      <div><span>Integração</span><strong><IntegrationStamp record={item} /></strong></div>
                     </div>
                     <PayableChargeReviewButton item={item} title={`Título #${item.billId} / Parcela ${item.installmentId}`} referenceDate={filters.correctionDate} />
                     <div className="payments-list">
