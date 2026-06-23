@@ -677,13 +677,24 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .advanced-result-main .advanced-creditor-document { color: var(--green); font-size: 9px; font-weight: 800; }
 .title-installment-block { gap: 6px !important; }
 .title-installment-row { display: grid !important; grid-template-columns: max-content 16px max-content 16px max-content; align-items: stretch; gap: 0 !important; }
-.advanced-title-id { width: fit-content; min-height: 36px; display: inline-grid; grid-template-columns: auto auto; align-items: center; gap: 1px 7px; padding: 6px 8px; border: 1px solid #cfe1d7; border-radius: 10px; background: var(--green-soft); color: var(--green); line-height: 1.1; cursor: copy; }
-.advanced-title-id small, .installment-pill small, .due-pill small { grid-column: 1 / -1; color: inherit; font-family: Arial, Helvetica, sans-serif; font-size: 7px !important; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-.advanced-title-id strong { font-family: Georgia, serif; font-size: 17px; line-height: 1; }
+.advanced-title-id,
+.installment-pill,
+.due-pill {
+  box-sizing: border-box;
+  height: 42px;
+  display: inline-grid !important;
+  grid-template-rows: 10px 18px;
+  align-content: center;
+  align-items: center;
+  gap: 2px !important;
+}
+.advanced-title-id { width: fit-content; grid-template-columns: auto 18px; column-gap: 7px !important; padding: 6px 8px; border: 1px solid #cfe1d7; border-radius: 10px; background: var(--green-soft); color: var(--green); cursor: copy; }
+.advanced-title-id small, .installment-pill small, .due-pill small { grid-column: 1 / -1; color: inherit; font-family: Arial, Helvetica, sans-serif; font-size: 7px !important; font-weight: 900; letter-spacing: .08em; line-height: 10px; text-transform: uppercase; }
+.advanced-title-id strong { font-family: Georgia, serif; font-size: 16px; line-height: 18px; }
 .copy-title-icon { width: 18px; height: 18px; display: inline-grid; place-items: center; border: 1px solid #cfe1d7; border-radius: 6px; background: var(--green-soft); color: var(--green); font-family: Arial, Helvetica, sans-serif; font-size: 8px; font-weight: 900; line-height: 1; }
 .title-installment-connector { align-self: center; height: 2px; background: #cfe1d7; }
-.installment-pill, .due-pill { min-height: 36px; display: inline-grid !important; align-content: center; align-items: center; gap: 1px !important; padding: 6px 8px; border: 1px solid #dfe8e3; border-radius: 10px; background: #fbfcfb; color: var(--ink); }
-.installment-pill strong, .due-pill strong { font-family: Georgia, serif; font-size: 15px; line-height: 1; }
+.installment-pill, .due-pill { min-width: 66px; padding: 6px 8px; border: 1px solid #dfe8e3; border-radius: 10px; background: #fbfcfb; color: var(--ink); }
+.installment-pill strong, .due-pill strong { font-family: Georgia, serif; font-size: 15px; line-height: 18px; }
 .due-pill.paid { border-color: #cfe1d7; background: var(--green-soft); color: var(--green); }
 .due-pill.late { border-color: #e8c6c2; background: #f9e3e1; color: #a54a43; }
 .due-pill.future { background: #fff; color: var(--ink); }
