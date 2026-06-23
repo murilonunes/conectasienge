@@ -6,6 +6,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- Foi criado o arquivo `revisão.md` para acompanhar a revisão tela por tela, com critérios, prioridades, achados transversais e plano por etapas.
 - A atualização em Configurações passou a marcar a etapa como erro quando uma área retorna falha de carga, em vez de exibir conclusão sem dados gravados.
 - Os cartões de status da tela de Configurações são atualizados automaticamente quando o job em segundo plano termina.
 - O menu lateral foi simplificado: `Início` saiu da lista e o logo/nome Brasin passou a ser o atalho para a tela inicial.
