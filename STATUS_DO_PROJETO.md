@@ -1,11 +1,17 @@
 # Status do projeto Brasin
 
-Atualizado em: 22/06/2026
+Atualizado em: 23/06/2026
 
 Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A ideia e manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
+- As telas `/compras`, `/contas-receber` e `/sales` foram otimizadas para reduzir o HTML inicial enviado pelo Next.js.
+- Os cards, gráficos e indicadores continuam sendo calculados com todos os dados salvos no SQLite local.
+- As listagens client-side dessas telas passam a receber apenas uma amostra inicial para consulta rápida, mostrando ao usuário quantos registros existem no total.
+- Em compras, o registro bruto completo da API deixou de ser enviado para a aba de registros; a tela mantém apenas os campos exibidos e os metadados de integração.
+- Em contas a receber e vendas, os registros enviados para as listas foram reduzidos aos campos efetivamente exibidos, preservando data de integração.
+- A medição em build local reduziu `/compras` de cerca de 9,5 MB para 253 KB, `/contas-receber` de cerca de 6,9 MB para 232 KB e `/sales` de cerca de 1 MB para 255 KB.
 - Foi criada a rota `/sienge` como um dashboard de cobertura operacional do Sienge.
 - O Mapa Sienge mostra quais módulos operacionais já são usados pelo sistema, quais têm dados salvos localmente, quais estão parciais e quais ainda não são usados.
 - A tela apresenta módulos como contas a pagar, contas a receber, caixa/bancos, vendas, contratos, compras, estoque, cadastros e operações de escrita.

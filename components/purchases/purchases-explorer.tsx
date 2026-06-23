@@ -12,7 +12,7 @@ function badgeClass(item: PurchaseFlowItem) {
   return "badge";
 }
 
-export function PurchasesExplorer({ items }: { items: PurchaseFlowItem[] }) {
+export function PurchasesExplorer({ items, totalRecords = items.length }: { items: PurchaseFlowItem[]; totalRecords?: number }) {
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("");
   const [status, setStatus] = useState("");
@@ -51,7 +51,11 @@ export function PurchasesExplorer({ items }: { items: PurchaseFlowItem[] }) {
           <option value="">Todas as situações</option>
           {statuses.map((item) => <option key={item}>{item}</option>)}
         </select>
-        <div><strong>{filtered.length}</strong><span>registros</span><strong>{formatCompactCurrency(total)}</strong></div>
+        <div>
+          <strong>{filtered.length}</strong>
+          <span>{items.length < totalRecords ? `de ${totalRecords} registros carregados para consulta rápida` : "registros"}</span>
+          <strong>{formatCompactCurrency(total)}</strong>
+        </div>
       </div>
 
       <LocalDataList

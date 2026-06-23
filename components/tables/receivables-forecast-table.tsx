@@ -86,13 +86,23 @@ function badgeClass(status: string) {
   return "badge";
 }
 
-export function ReceivablesForecastTable({ entries }: { entries: ReceivableInstallment[] }) {
+export function ReceivablesForecastTable({
+  entries,
+  totalEntries = entries.length
+}: {
+  entries: ReceivableInstallment[];
+  totalEntries?: number;
+}) {
   return (
     <section className="card table-card">
       <div className="panel-head table-head">
         <div>
           <h2 className="panel-title">Parcelas previstas a receber</h2>
-          <span className="panel-note">{entries.length} parcelas abertas por vencimento</span>
+          <span className="panel-note">
+            {entries.length < totalEntries
+              ? `Exibindo ${entries.length} de ${totalEntries} parcelas abertas por vencimento`
+              : `${entries.length} parcelas abertas por vencimento`}
+          </span>
         </div>
       </div>
       <LocalDataList

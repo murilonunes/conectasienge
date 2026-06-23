@@ -5,13 +5,43 @@ import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { formatCurrency } from "@/lib/formatters";
-import { analyzeReceivablesForecast, loadReceivablesForecast } from "@/features/receivables-forecast/sienge-data";
+import { analyzeReceivablesForecast, loadReceivablesForecast, type ReceivableInstallment } from "@/features/receivables-forecast/sienge-data";
 
 export const dynamic = "force-dynamic";
+
+const INITIAL_RECEIVABLES_LIMIT = 200;
+
+function slimReceivableEntry(entry: ReceivableInstallment): ReceivableInstallment {
+  return {
+    companyName: entry.companyName,
+    businessAreaName: entry.businessAreaName,
+    clientId: entry.clientId,
+    clientName: entry.clientName,
+    billId: entry.billId,
+    receivableBillId: entry.receivableBillId,
+    installmentId: entry.installmentId,
+    documentIdentificationId: entry.documentIdentificationId,
+    documentNumber: entry.documentNumber,
+    documentForecast: entry.documentForecast,
+    originalAmount: entry.originalAmount,
+    balanceAmount: entry.balanceAmount,
+    correctedBalanceAmount: entry.correctedBalanceAmount,
+    dueDate: entry.dueDate,
+    mainUnit: entry.mainUnit,
+    installmentNumber: entry.installmentNumber,
+    receipts: entry.receipts?.map((receipt) => ({
+      grossAmount: receipt.grossAmount,
+      netAmount: receipt.netAmount
+    })),
+    __siengeIntegrationDay: entry.__siengeIntegrationDay,
+    __siengeIntegratedAt: entry.__siengeIntegratedAt
+  };
+}
 
 export default async function ContasReceberPage() {
   const forecast = await loadReceivablesForecast();
   const analytics = analyzeReceivablesForecast(forecast);
+  const initialEntries = forecast.forecastEntries.slice(0, INITIAL_RECEIVABLES_LIMIT).map(slimReceivableEntry);
 
   return (
     <>
@@ -71,7 +101,7 @@ export default async function ContasReceberPage() {
             </section>
           </div>
 
-          <ReceivablesForecastTable entries={forecast.forecastEntries} />
+          <ReceivablesForecastTable entries={initialEntries} totalEntries={forecast.forecastEntries.length} />
         </>
       )}
     </>

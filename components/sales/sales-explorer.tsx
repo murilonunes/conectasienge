@@ -19,7 +19,13 @@ function saleTimestamp(contract: SalesContract) {
   return Number.isNaN(time) ? 0 : time;
 }
 
-export function SalesExplorer({ contracts }: { contracts: SalesContract[] }) {
+export function SalesExplorer({
+  contracts,
+  totalContracts = contracts.length
+}: {
+  contracts: SalesContract[];
+  totalContracts?: number;
+}) {
   const [search, setSearch] = useState("");
   const [situation, setSituation] = useState("");
   const [expanded, setExpanded] = useState<number>();
@@ -42,7 +48,15 @@ export function SalesExplorer({ contracts }: { contracts: SalesContract[] }) {
           <option value="">Todas as situações</option>
           {situations.map((item) => <option key={item}>{item}</option>)}
         </select>
-        <div><strong>{filtered.length}</strong><span>contratos - venda mais recente primeiro</span><strong>{formatCompactCurrency(total)}</strong></div>
+        <div>
+          <strong>{filtered.length}</strong>
+          <span>
+            {contracts.length < totalContracts
+              ? `de ${totalContracts} contratos carregados para consulta rápida`
+              : "contratos - venda mais recente primeiro"}
+          </span>
+          <strong>{formatCompactCurrency(total)}</strong>
+        </div>
       </div>
       <LocalDataList
         items={filtered}

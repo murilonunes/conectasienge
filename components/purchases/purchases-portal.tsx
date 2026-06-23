@@ -5,6 +5,7 @@ import { MonthlyVolumeChart } from "@/components/charts/monthly-volume-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
 import { StatCard } from "@/components/ui/stat-card";
 import type { PurchaseSummary } from "@/features/purchases/data";
+import type { PurchaseFlowItem } from "@/features/purchases/types";
 import { formatCompactCurrency } from "@/lib/formatters";
 import { PurchasesExplorer } from "./purchases-explorer";
 
@@ -13,9 +14,20 @@ function stagePercent(done: number, total: number) {
   return Math.round((done / total) * 100);
 }
 
-export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary; warning?: string }) {
+type PurchasesPortalSummary = Omit<PurchaseSummary, "flow">;
+
+export function PurchasesPortal({
+  summary,
+  records,
+  totalRecords,
+  warning
+}: {
+  summary: PurchasesPortalSummary;
+  records: PurchaseFlowItem[];
+  totalRecords: number;
+  warning?: string;
+}) {
   const [tab, setTab] = useState<"overview" | "records">("overview");
-  const totalRecords = summary.flow.length;
   const doneCount = totalRecords - summary.pendingCount;
   const donePercent = stagePercent(doneCount, totalRecords);
   const future = useMemo(() => summary.periods.find((period) => period.key === "future"), [summary.periods]);
@@ -96,7 +108,7 @@ export function PurchasesPortal({ summary, warning }: { summary: PurchaseSummary
           </div>
         </>
       ) : (
-        <PurchasesExplorer items={summary.flow} />
+        <PurchasesExplorer items={records} totalRecords={totalRecords} />
       )}
     </>
   );
