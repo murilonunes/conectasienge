@@ -6,6 +6,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A primeira etapa da revisão de telas foi iniciada e documentada: `/`, menu lateral e `/financeiro` foram revisados.
+- A Central financeira deixou de exibir atalho direto para `Novo lançamento`; essa operação permanece contextualizada em Contas a pagar e será revisada como operação transacional.
 - Foi criado o arquivo `revisão.md` para acompanhar a revisão tela por tela, com critérios, prioridades, achados transversais e plano por etapas.
 - A atualização em Configurações passou a marcar a etapa como erro quando uma área retorna falha de carga, em vez de exibir conclusão sem dados gravados.
 - Os cartões de status da tela de Configurações são atualizados automaticamente quando o job em segundo plano termina.

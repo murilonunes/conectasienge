@@ -23,11 +23,6 @@ const mainShortcuts = [
     note: "Visão mensal dos movimentos conciliados, pendentes e avulsos."
   },
   {
-    title: "Novo lançamento",
-    href: "/lancamentos/novo",
-    note: "Registre um novo título quando a operação estiver disponível."
-  },
-  {
     title: "Baixa de parcela",
     href: "/lancamentos/baixa",
     note: "Consulte título a pagar, parcelas, pagamentos e instruções vinculadas."
@@ -50,7 +45,7 @@ const flow = [
   },
   {
     title: "Executar rotinas",
-    text: "Faça consultas, lançamentos, baixas e conciliação nas telas específicas."
+    text: "Faça consultas, conferências, baixas e conciliação nas telas específicas."
   }
 ];
 

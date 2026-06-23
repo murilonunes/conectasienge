@@ -26,9 +26,9 @@ Cada tela deve ser conferida pelos mesmos pontos:
 
 | Status | Prioridade | Rota | Evidência no código | O que precisa arrumar |
 | --- | --- | --- | --- | --- |
-| Pendente | Média | `/` | `app/page.tsx` | Revisar textos e atalhos da tela inicial para garantir que continua sem carga pesada e com links alinhados ao menu atual. |
+| Revisado | Média | `/` | `app/page.tsx` | Tela inicial confirmada como abertura rápida: não carrega dados pesados e mantém atalhos para os portais principais. |
 | Pendente | Média | `/dashboard` | `app/dashboard/page.tsx`, `features/dashboard/data.ts` | Auditar card a card contra as consultas SQL resumidas. A tela está local e otimizada, mas é a mais sensível a inconsistência de fórmula. |
-| Pendente | Média | `/financeiro` | `app/financeiro/page.tsx` | Revisar a central financeira: ainda exibe atalho para `Novo lançamento`, que é uma operação direta no Sienge e pode destoar do padrão atual de consulta local. |
+| Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |
 | Pendente | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | A listagem usa paginação, mas todos os contratos do recorte são enviados para o cliente. Revisar volume em períodos longos e confirmar se filtros, permutas e totais continuam coerentes. |
 | Pendente | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | A página corta a lista inicial em 500 registros antes de enviar para a aba Registros. Isso deixa a tela mais leve, mas a busca não alcança tudo que existe no SQLite. |
 | Pendente | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx` | Conferir se valores zerados e propriedade própria/terceiro estão claros. A tela já usa lista local paginada. |
@@ -45,6 +45,18 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Pendente | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `lib/sienge-update-runner.ts` | Conferir atualização por área, força de atualização, histórico e status após job. É a tela central do novo padrão e precisa ser a referência das integrações. |
 
 ## Achados transversais
+
+### 0. Etapa 1 revisada - navegação e fluxo
+
+Revisado nesta etapa:
+
+- Menu lateral em `components/ui/app-shell.tsx`: está alinhado ao fluxo atual, sem `Início` e sem `Novo lançamento` como item de menu.
+- Tela inicial `/`: continua sem carga pesada e serve como abertura rápida.
+- Central financeira `/financeiro`: removido o atalho direto para `Novo lançamento`, mantendo a operação dentro do contexto de Contas a pagar.
+
+Pendência mantida:
+
+- `/lancamentos/novo` continua existindo como operação transacional direta no Sienge e será revisada na etapa financeira operacional.
 
 ### 1. Listas cortadas antes da paginação
 
