@@ -83,6 +83,16 @@ function installmentLabel(item: ReceivableInstallment, total?: number) {
   return `Parcela ${text || item.installmentId}`;
 }
 
+function dueStatus(item: ReceivableInstallment) {
+  if ((item.receipts || []).length > 0) return "paid";
+  if (!item.dueDate) return "future";
+  const due = new Date(`${item.dueDate.slice(0, 10)}T00:00:00`);
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!Number.isNaN(due.getTime()) && due < todayOnly) return "late";
+  return "future";
+}
+
 export function AdvancedReceivablesSearch() {
   const [filters, setFilters] = useState({
     startDate: initialStart,
@@ -253,6 +263,11 @@ export function AdvancedReceivablesSearch() {
                           <small>Parcela</small>
                           <strong>{installmentLabel(item, installmentTotals.get(item.billId)).replace(/^Parcela\s*/i, "")}</strong>
                         </span>
+                        <span className="title-installment-connector" aria-hidden="true" />
+                        <span className={`due-pill ${dueStatus(item)}`}>
+                          <small>Vencimento</small>
+                          <strong>{formatOptionalDate(item.dueDate)}</strong>
+                        </span>
                       </span>
                       <strong>{documentLabel(item)}</strong>
                     </span>
@@ -261,7 +276,6 @@ export function AdvancedReceivablesSearch() {
                       <small>{item.companyName || `Empresa #${item.companyId || "não informada"}`}</small>
                       <small>{item.projectName || item.businessAreaName || item.mainUnit || "Projeto não informado"}</small>
                     </span>
-                    <span><strong>{formatOptionalDate(item.dueDate)}</strong><small>Vencimento</small></span>
                     <span><strong>{formatCurrency(item.originalAmount || 0)}</strong><small>Original</small></span>
                     <span><strong>{formatCurrency(openAmount(item))}</strong><small>Saldo</small></span>
                     <span><strong>{formatCurrency(received)}</strong><small>Recebido</small></span>

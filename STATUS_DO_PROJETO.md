@@ -12,7 +12,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A busca avançada de contas a receber permite consultar por vencimento, emissão, competência ou data de recebimento, filtrando por situação do recebimento, empresa, projeto, área de negócio e cliente.
 - Nas buscas avançadas de contas a pagar e contas a receber, pesquisar com `#385` filtra exatamente o título 385.
 - A listagem de recebimentos passou a mostrar o vencimento diretamente na linha principal, sem precisar expandir o detalhe, mantendo a data de integração dentro do detalhe expandido para não pesar o layout.
-- Na listagem de recebimentos, título e parcela aparecem conectados lado a lado para facilitar conferência; o número do título copia pelo próprio botão compacto e o vencimento aparece antes dos valores.
+- Na listagem de recebimentos, título, parcela e vencimento aparecem conectados lado a lado para facilitar conferência; o número do título copia pelo próprio botão compacto e o vencimento fica colorido em verde claro quando recebido, vermelho quando vencido e branco quando ainda não venceu.
 - A consulta por código do título a receber mostra parcelas, saldo, recebimentos registrados, movimentos vinculados, cliente, projeto e data de integração.
 - A tela foi adicionada ao menu de Operações, à Central financeira e como ação da tela de Contas a receber.
 - As telas `/compras`, `/contas-receber` e `/sales` foram otimizadas para reduzir o HTML inicial enviado pelo Next.js.
