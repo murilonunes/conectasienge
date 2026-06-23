@@ -6,6 +6,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A Etapa 4 da revisão foi concluída para `/conciliacao`.
+- O Portal de conciliação deixou de iniciar carregamento client-side ao abrir; a primeira leitura local agora é renderizada no servidor a partir do SQLite.
+- O painel de progresso da conciliação ficou restrito ao botão `Recarregar dados salvos`, mantendo a abertura normal mais direta.
 - A Etapa 3 da revisão foi concluída para `/contratos` e `/configuracoes`.
 - A contagem de `Áreas prontas` em Configurações passou a considerar somente áreas atualizáveis pelos botões da tela.
 - O runner de atualização agora trata falhas em subcargas em lote como erro real da etapa, evitando status de sucesso quando parte da carga falhou.

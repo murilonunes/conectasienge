@@ -22,7 +22,7 @@ type SiengeErrorDetails = {
   occurredAt: string;
 };
 
-type ReconciliationPayload = {
+export type ReconciliationPayload = {
   movements: BankMovement[];
   totalCount: number;
   summary: ReconciliationSummary;
@@ -179,12 +179,12 @@ function buildAccountRanking(movements: BankMovement[]) {
   return Array.from(accounts.values()).sort((left, right) => Math.abs(right.value) - Math.abs(left.value)).slice(0, 8);
 }
 
-function LoadingPanel({ progress, elapsed, hasPayload }: { progress?: ServerProgress; elapsed: number; hasPayload?: boolean }) {
+function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?: ServerProgress; elapsed: number; hasPayload?: boolean; refreshing?: boolean }) {
   if (hasPayload) {
     return (
       <section className="card reconciliation-loaded-note" aria-live="polite">
-        <strong>Leitura concluída</strong>
-        <span>{progress?.completedAt ? `Concluída às ${new Date(progress.completedAt).toLocaleTimeString("pt-BR")}` : "Dados carregados"}</span>
+        <strong>{refreshing ? "Recarregando leitura" : "Leitura local pronta"}</strong>
+        <span>{progress?.completedAt ? `Concluída às ${new Date(progress.completedAt).toLocaleTimeString("pt-BR")}` : "Dados carregados do SQLite local"}</span>
       </section>
     );
   }
@@ -311,17 +311,29 @@ function configuredAccountsLabel(accounts: string[]) {
   return `${accounts.length} contas selecionadas`;
 }
 
-export function ReconciliationPortal({ configuredAccountNumbers = "" }: { configuredAccountNumbers?: string }) {
-  const [payload, setPayload] = useState<ReconciliationPayload>();
-  const [error, setError] = useState<SiengeErrorDetails>();
+export function ReconciliationPortal({
+  configuredAccountNumbers = "",
+  initialPayload
+}: {
+  configuredAccountNumbers?: string;
+  initialPayload: ReconciliationPayload;
+}) {
+  const [payload, setPayload] = useState<ReconciliationPayload>(initialPayload);
+  const [error, setError] = useState<SiengeErrorDetails | undefined>(initialPayload.error);
   const [progress, setProgress] = useState<ServerProgress>();
   const [elapsed, setElapsed] = useState(0);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  function reloadLocalRead() {
+    if (refreshing) return;
     let active = true;
     const id = crypto.randomUUID();
     const startedAt = Date.now();
+    setRefreshing(true);
+    setElapsed(0);
+    setError(undefined);
+    setProgress({ active: true, stage: "start", message: "Recarregando dados salvos.", updatedAt: new Date().toISOString() });
     const timer = window.setInterval(() => {
       if (!active) return;
       setElapsed(Math.floor((Date.now() - startedAt) / 1000));
@@ -350,13 +362,17 @@ export function ReconciliationPortal({ configuredAccountNumbers = "" }: { config
         setProgress({ active: false, stage: "done", message: "Não foi possível carregar a conciliação.", completedAt: new Date().toISOString() });
         setError(caught);
       })
-      .finally(() => window.clearInterval(timer));
+      .finally(() => {
+        window.clearInterval(timer);
+        if (active) setRefreshing(false);
+      });
 
     return () => {
       active = false;
       window.clearInterval(timer);
+      setRefreshing(false);
     };
-  }, []);
+  }
 
   const summary = payload?.summary;
   const selectedAccounts = useMemo(() => configuredAccounts(configuredAccountNumbers), [configuredAccountNumbers]);
@@ -394,7 +410,7 @@ export function ReconciliationPortal({ configuredAccountNumbers = "" }: { config
   if (error && !payload?.movements.length) {
     return (
       <>
-        <LoadingPanel progress={progress} elapsed={elapsed} hasPayload={Boolean(payload)} />
+        <LoadingPanel progress={progress} elapsed={elapsed} hasPayload={Boolean(payload)} refreshing={refreshing} />
         <ErrorPanel error={error} />
       </>
     );
@@ -411,7 +427,11 @@ export function ReconciliationPortal({ configuredAccountNumbers = "" }: { config
 
   return (
     <>
-      <LoadingPanel progress={progress} elapsed={elapsed} hasPayload />
+      {refreshing ? (
+        <LoadingPanel progress={progress} elapsed={elapsed} />
+      ) : (
+        <LoadingPanel progress={progress} elapsed={elapsed} hasPayload />
+      )}
       <div className="card data-notice">
         <strong>Dados carregados</strong>
         <span>{loadedMessage} Conta em análise: {accountLabel}. Para trocar, ajuste em Configurações.</span>
@@ -428,6 +448,9 @@ export function ReconciliationPortal({ configuredAccountNumbers = "" }: { config
           <span>Progresso</span>
           <strong>{monthDonePercent}% conciliado</strong>
         </div>
+        <button className="button secondary" type="button" onClick={reloadLocalRead} disabled={refreshing}>
+          {refreshing ? "Recarregando..." : "Recarregar dados salvos"}
+        </button>
       </div>
 
       <div className="stats">

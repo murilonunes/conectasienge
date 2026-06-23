@@ -33,7 +33,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
 | Pendente | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx` | Conferir se valores zerados e propriedade própria/terceiro estão claros. A tela já usa lista local paginada. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
-| Pendente | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | A tela abre fazendo fetch interno para uma rota API, mesmo lendo local por padrão. Melhorar para renderizar a primeira leitura local no servidor e deixar progresso só para atualização/recarga quando necessário. |
+| Revisado | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | Revisado: a primeira leitura local é renderizada no servidor; a rota client-side com progresso ficou apenas para recarga explícita dos dados salvos. |
 | Pendente | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Conferir se agenda, valores corrigidos, juros/multa e abuso usam a mesma base local e se a navegação para busca avançada está clara. |
 | Revisado | Alta | `/contas-receber` | `app/contas-receber/page.tsx`, `components/tables/receivables-forecast-table.tsx` | Corrigida a listagem principal: deixou de receber só 200 parcelas e passou a buscar páginas filtradas em `/api/receivables/forecast`, lendo somente o SQLite local. |
 | Pendente | Média | `/lancamentos/baixa` | `app/lancamentos/baixa/page.tsx`, `components/forms/advanced-payables-search.tsx`, `components/forms/installment-settlement.tsx` | Busca avançada e consulta de parcelas leem rotas locais, mas a atualização de dados Pix ainda faz PATCH no Sienge. Decidir se esta operação continua permitida ou se deve sair da tela. |
@@ -88,9 +88,15 @@ Telas/rotas afetadas:
 
 Decisão de produto pendente: essas operações são transacionais, então podem ser exceções ao padrão local. Mas precisam ficar muito explícitas na interface ou sair do fluxo.
 
-### 3. Conciliação ainda depende de carregamento client-side
+### 3. Etapa 4 revisada - Conciliação
 
-Mesmo lendo SQLite por padrão, `/conciliacao` sempre inicia uma chamada para `/api/sienge/reconciliation` ao abrir. Isso explica a sensação de tela carregando. A melhoria é entregar a primeira visão local já renderizada pelo servidor e usar chamada client-side só para recarregar/progresso.
+Revisado nesta etapa:
+
+- `/conciliacao`: deixou de iniciar `fetch` automático para `/api/sienge/reconciliation` ao abrir.
+- `app/conciliacao/page.tsx`: passou a montar a primeira leitura no servidor, usando `loadReconciliationMovements()` e `analyzeReconciliation()`.
+- `components/reconciliation/reconciliation-portal.tsx`: passou a receber `initialPayload`, preservar seleção de contas e visão mensal, e usar progresso apenas no botão `Recarregar dados salvos`.
+
+Resultado: a abertura normal da conciliação usa diretamente o SQLite local renderizado pelo servidor. O painel de etapas continua disponível, mas apenas quando o usuário pede uma recarga explícita.
 
 ### 4. Relatórios ainda não são relatórios exportáveis
 
