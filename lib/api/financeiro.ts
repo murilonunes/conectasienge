@@ -17,8 +17,6 @@ export const contasPagarApi = {
     siengeRequest<SiengePage<T>>(`/v1/bills/${billId}/installments`),
   create: <T>(payload: unknown) =>
     siengeRequest<T>("/v1/bills", {}, { method: "POST", body: payload }),
-  updatePaymentInformation: <T>(billId: number, installmentId: number, type: string, payload: unknown) =>
-    siengeRequest<T>(`/v1/bills/${billId}/installments/${installmentId}/payment-information/${type}`, {}, { method: "PATCH", body: payload }),
   advancedSearch: <T>(filters: SiengeListFilters, forceRefresh = false, forceReplaceFinalized = false) =>
     siengeRequest<T>("/bulk-data/v1/outcome", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
   budgetCategories: <T>(billId: number) =>

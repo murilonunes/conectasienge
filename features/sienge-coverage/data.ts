@@ -207,7 +207,7 @@ const modules: ModuleDefinition[] = [
     gaps: ["Baixa efetiva indisponível na especificação pública usada", "Lançamento ainda precisa validação operacional completa"],
     endpoints: [
       { label: "Criar título", endpoint: "/v1/bills", database: "settings", implemented: false, role: "Escrita operacional" },
-      { label: "Informação de pagamento", endpoint: "/v1/bills/:id/installments/:id/payment-information", database: "settings", implemented: true, role: "Consulta/ajuste quando permitido" }
+      { label: "Informação de pagamento", endpoint: "/v1/bills/:id/installments/:id/payment-information", database: "settings", implemented: false, role: "Escrita operacional bloqueada no fluxo atual" }
     ]
   }
 ];

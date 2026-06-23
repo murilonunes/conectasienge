@@ -1,7 +1,6 @@
 import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
-import Link from "next/link";
 import { PayablesAgenda } from "@/components/payables/payables-agenda";
 import { PayablesCalendarChart } from "@/components/payables/payables-calendar-chart";
 import { loadPayablesSchedule } from "@/features/payables-schedule/data";
@@ -30,9 +29,6 @@ export default async function ContasPagarPage() {
         action="Busca avançada"
         actionHref="/lancamentos/baixa"
       />
-      <div className="page-actions">
-        <Link className="button secondary" href="/lancamentos/novo">Novo lançamento</Link>
-      </div>
       <div className="stats">
         <StatCard label="Programado para hoje" value={formatCurrency(today?.amount || 0)} delta={`${today?.items.length || 0} parcelas vencem hoje`} icon="H" />
         <StatCard label="Mês atual" value={formatCompactCurrency(monthAmount)} delta="Hoje, semana e restante do mês" icon="M" />

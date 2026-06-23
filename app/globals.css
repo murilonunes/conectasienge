@@ -494,9 +494,6 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .settlement-notice { padding: 18px 20px; border-color: #ead3ad; background: #fffaf1; }
 .settlement-notice strong { color: #80591f; font-size: 12px; }
 .settlement-notice p { color: var(--muted); font-size: 10px; line-height: 1.55; margin: 7px 0 0; }
-.pix-form { padding: 20px; margin-bottom: 18px; border-color: #bad7c8; }
-.pix-form select { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 11px 12px; color: var(--ink); }
-.pix-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
 .bill-overview { padding: 20px; margin-bottom: 18px; }
 .bill-overview-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
 .bill-overview-head h2 { margin: 0 0 6px; font-size: 18px; }

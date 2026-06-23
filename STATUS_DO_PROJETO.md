@@ -6,6 +6,12 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A Etapa 5 da revisão foi concluída para o financeiro operacional.
+- `/contas-pagar` deixou de exibir atalho direto para `Novo lançamento`, mantendo a tela como agenda e consulta local.
+- `/lancamentos/baixa` deixou de fazer PATCH de instrução Pix no Sienge; agora é somente conferência de parcelas, baixas registradas e cobranças abusivas.
+- A rota backend de Pix em `/api/sienge/bills/[billId]/installments/[installmentId]/payment-information/pix` foi removida.
+- `/lancamentos/baixa-receber` foi reforçada como consulta de recebimentos, sem promessa de baixa efetiva pela API.
+- `/lancamentos/novo` foi mantida como exceção transacional explícita, com aviso visível antes do formulário.
 - A Etapa 4 da revisão foi concluída para `/conciliacao`.
 - O Portal de conciliação deixou de iniciar carregamento client-side ao abrir; a primeira leitura local agora é renderizada no servidor a partir do SQLite.
 - O painel de progresso da conciliação ficou restrito ao botão `Recarregar dados salvos`, mantendo a abertura normal mais direta.

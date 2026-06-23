@@ -34,11 +34,11 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Pendente | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx` | Conferir se valores zerados e propriedade própria/terceiro estão claros. A tela já usa lista local paginada. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
 | Revisado | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | Revisado: a primeira leitura local é renderizada no servidor; a rota client-side com progresso ficou apenas para recarga explícita dos dados salvos. |
-| Pendente | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Conferir se agenda, valores corrigidos, juros/multa e abuso usam a mesma base local e se a navegação para busca avançada está clara. |
+| Revisado | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Revisado: agenda segue lendo SQLite local e o atalho direto para `Novo lançamento` foi removido para não misturar consulta com escrita no Sienge. |
 | Revisado | Alta | `/contas-receber` | `app/contas-receber/page.tsx`, `components/tables/receivables-forecast-table.tsx` | Corrigida a listagem principal: deixou de receber só 200 parcelas e passou a buscar páginas filtradas em `/api/receivables/forecast`, lendo somente o SQLite local. |
-| Pendente | Média | `/lancamentos/baixa` | `app/lancamentos/baixa/page.tsx`, `components/forms/advanced-payables-search.tsx`, `components/forms/installment-settlement.tsx` | Busca avançada e consulta de parcelas leem rotas locais, mas a atualização de dados Pix ainda faz PATCH no Sienge. Decidir se esta operação continua permitida ou se deve sair da tela. |
-| Pendente | Média | `/lancamentos/baixa-receber` | `app/lancamentos/baixa-receber/page.tsx`, `components/forms/advanced-receivables-search.tsx`, `components/forms/receivable-settlement.tsx` | Revisar espelhamento visual com contas a pagar e remover qualquer texto que pareça prometer baixa efetiva quando a API pública não confirmou esse endpoint. |
-| Pendente | Alta | `/lancamentos/novo` | `app/lancamentos/novo/page.tsx`, `components/forms/bill-entry-form.tsx`, `app/api/sienge/bills/route.ts` | Esta tela cria título direto no Sienge. Precisa decisão: manter como operação transacional explícita, mover para área separada ou remover do fluxo atual. |
+| Revisado | Média | `/lancamentos/baixa` | `app/lancamentos/baixa/page.tsx`, `components/forms/advanced-payables-search.tsx`, `components/forms/installment-settlement.tsx` | Revisado: busca avançada e consulta de parcelas ficam como conferência local; removida a escrita Pix/PATCH no Sienge. |
+| Revisado | Média | `/lancamentos/baixa-receber` | `app/lancamentos/baixa-receber/page.tsx`, `components/forms/advanced-receivables-search.tsx`, `components/forms/receivable-settlement.tsx` | Revisado: tela renomeada como consulta de recebimentos e mantém aviso de que baixa efetiva precisa ser feita no Sienge. |
+| Revisado | Alta | `/lancamentos/novo` | `app/lancamentos/novo/page.tsx`, `components/forms/bill-entry-form.tsx`, `app/api/sienge/bills/route.ts` | Revisado: mantido como única operação transacional explícita, com aviso visível antes do formulário e confirmação final antes do envio. |
 | Pendente | Média | `/relatorios` | `app/relatorios/page.tsx` | A central está diferente do dashboard, mas carrega dashboard, DRE e contratos na abertura. Revisar custo da tela e transformar cards em relatórios realmente geráveis/exportáveis. |
 | Pendente | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisar cálculo POC com base na documentação oficial e separar melhor estimativa gerencial, caixa realizado, contratos sem vínculo e base de avanço. |
 | Pendente | Média | `/sienge` | `app/sienge/page.tsx`, `features/sienge-coverage/data.ts` | Revisar se o mapa operacional mostra corretamente o que está em uso, parcial ou não usado. Validar contagens por arquivo SQLite e endpoints. |
@@ -79,14 +79,17 @@ Revisado nesta etapa:
 
 Resultado: a tela de Configurações fica mais fiel ao estado real da integração, e uma falha parcial de carga não fica escondida como sucesso.
 
-### 2. Operações diretas no Sienge fora de Configurações
+### 2. Etapa 5 revisada - Financeiro operacional
 
-Telas/rotas afetadas:
+Revisado nesta etapa:
 
-- `/lancamentos/novo`: cria título em `POST /api/sienge/bills`.
-- `/lancamentos/baixa`: atualização Pix usa `PATCH /api/sienge/bills/[billId]/installments/[installmentId]/payment-information/pix`.
+- `/contas-pagar`: removido o botão direto para `Novo lançamento`, mantendo a tela como agenda/consulta local.
+- `/lancamentos/baixa`: removida a escrita de instrução Pix e a rota PATCH correspondente. A tela virou conferência de parcelas, baixas registradas e cobranças abusivas.
+- `/lancamentos/baixa-receber`: reforçada como consulta de recebimentos já registrados, sem promessa de baixa pela API.
+- `/lancamentos/novo`: mantida como exceção transacional explícita, com aviso visível de que cria título diretamente no Sienge.
+- `features/sienge-coverage/data.ts`: o mapa Sienge passou a marcar `payment-information` como escrita bloqueada no fluxo atual.
 
-Decisão de produto pendente: essas operações são transacionais, então podem ser exceções ao padrão local. Mas precisam ficar muito explícitas na interface ou sair do fluxo.
+Resultado: as telas de consulta operacional não fazem escrita no Sienge. A única escrita ainda exposta é criação de título em `/lancamentos/novo`, separada e sinalizada como operação real.
 
 ### 3. Etapa 4 revisada - Conciliação
 

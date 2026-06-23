@@ -62,9 +62,6 @@ export function InstallmentSettlement() {
   const [allocations, setAllocations] = useState<{ budgetCategories: NamedAllocation[]; buildingsCost: NamedAllocation[]; departmentsCost: NamedAllocation[]; attachments: unknown[] }>({ budgetCategories: [], buildingsCost: [], departmentsCost: [], attachments: [] });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selected, setSelected] = useState<number>();
-  const [pix, setPix] = useState({ paymentTypeId: "", keyPixType: "C", keyPix: "", isUsingCreditorData: "S", notes: "Pagamento via Pix" });
-  const [saving, setSaving] = useState(false);
 
   async function search(event: FormEvent) {
     event.preventDefault();
@@ -84,28 +81,6 @@ export function InstallmentSettlement() {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function savePix(event: FormEvent) {
-    event.preventDefault();
-    if (!selected) return;
-    setSaving(true);
-    setMessage("");
-    try {
-      const response = await fetch(`/api/sienge/bills/${billId}/installments/${selected}/payment-information/pix`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pix)
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.suggestion || body.apiMessage || body.message || body.title || "Não foi possível cadastrar a instrução.");
-      setMessage(body.message);
-      setSelected(undefined);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -161,23 +136,11 @@ export function InstallmentSettlement() {
                 <div><dt>Integração</dt><dd><IntegrationStamp record={installment} /></dd></div>
               </dl>
               <PayableChargeReviewButton item={installment} title={`Título #${bill?.id || billId} / Parcela ${installment.installmentNumber}`} />
-              <button className="button secondary" type="button" onClick={() => setSelected(installment.installmentNumber)}>Cadastrar pagamento Pix</button>
             </article>
           );
         })}
       </section>
-      {selected && <form className="card pix-form" onSubmit={savePix}>
-        <div className="form-section-head"><span>PIX</span><div><h2>Instrução de pagamento da parcela {selected}</h2><p>Este cadastro prepara os dados de pagamento no Sienge. Ele não efetiva a baixa.</p></div></div>
-        <div className="form-grid">
-          <label><span>Código do tipo de pagamento *</span><input required type="number" min="1" value={pix.paymentTypeId} onChange={(e) => setPix({ ...pix, paymentTypeId: e.target.value })} /></label>
-          <label><span>Usar dados Pix do credor</span><select value={pix.isUsingCreditorData} onChange={(e) => setPix({ ...pix, isUsingCreditorData: e.target.value })}><option value="S">Sim</option><option value="N">Não</option></select></label>
-          <label><span>Tipo da chave Pix *</span><select value={pix.keyPixType} onChange={(e) => setPix({ ...pix, keyPixType: e.target.value })}><option value="C">CPF/CNPJ</option><option value="E">E-mail</option><option value="T">Telefone</option><option value="A">Aleatória</option></select></label>
-          <label><span>Chave Pix</span><input value={pix.keyPix} onChange={(e) => setPix({ ...pix, keyPix: e.target.value })} placeholder="Opcional ao usar dados do credor" /></label>
-          <label className="full-field"><span>Observação</span><input value={pix.notes} onChange={(e) => setPix({ ...pix, notes: e.target.value })} /></label>
-        </div>
-        <div className="pix-actions"><button type="button" className="button secondary" onClick={() => setSelected(undefined)}>Cancelar</button><button className="button" disabled={saving}>{saving ? "Cadastrando..." : "Cadastrar instrução Pix"}</button></div>
-      </form>}
-      <div className="card settlement-notice"><strong>Baixa financeira</strong><p>É possível cadastrar instruções de pagamento por Pix, transferência, boleto e tributos. A baixa financeira, que marca a parcela como paga, ainda precisa ser efetivada no Sienge.</p></div>
+      <div className="card settlement-notice"><strong>Consulta operacional</strong><p>Esta tela confere parcelas, vencimentos, valores, integrações e baixas já registradas no banco local. Alterações de instrução de pagamento e baixa financeira devem ser feitas diretamente no Sienge.</p></div>
     </>
   );
 }

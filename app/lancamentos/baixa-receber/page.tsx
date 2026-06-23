@@ -7,8 +7,8 @@ export default function BaixaReceberPage() {
     <>
       <PageHeading
         eyebrow="Contas a receber"
-        title="Recebimentos e baixa"
-        subtitle="Busque recebimentos por período ou consulte diretamente um título a receber."
+        title="Consulta de recebimentos"
+        subtitle="Confira parcelas e recebimentos já registrados usando os dados salvos localmente."
       />
       <AdvancedReceivablesSearch />
       <div className="section-divider"><span>ou consulte pelo código do título a receber</span></div>
