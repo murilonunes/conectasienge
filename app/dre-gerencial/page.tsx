@@ -208,14 +208,14 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
             <small>{cashPositive ? "Entrou mais dinheiro do que saiu." : "Saiu mais dinheiro do que entrou."}</small>
           </div>
           <div>
-            <span>A receber acumulado</span>
+            <span>A receber até o ano</span>
             <strong>{formatCompactCurrency(dre.openReceivables)}</strong>
-            <small>{dre.openReceivablesCount} parcelas com saldo salvo</small>
+            <small>{dre.openReceivablesCount} parcelas abertas com vencimento até {selectedYear}</small>
           </div>
           <div>
-            <span>A pagar acumulado</span>
+            <span>A pagar até o ano</span>
             <strong className={dre.openPayables > 0 ? "negative" : ""}>{formatCompactCurrency(dre.openPayables)}</strong>
-            <small>{dre.openPayablesCount} parcelas com saldo salvo</small>
+            <small>{dre.openPayablesCount} parcelas abertas com vencimento até {selectedYear}</small>
           </div>
         </div>
       </section>
@@ -223,6 +223,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       <div className="stats dre-stats">
         <StatCard label="Receita POC" value={formatCompactCurrency(dre.pocRevenue)} delta={`${dre.pocMatchedCount} contratos vinculados ao avanço`} icon="R$" />
         <StatCard label="Vendas contratadas" value={formatCompactCurrency(dre.contractedRevenue)} delta={`${dre.contractCount} contratos no ano`} icon="V" />
+        <StatCard label="Margem POC estimada" value={formatPercent(dre.margin)} delta="Resultado POC sobre receita líquida" warn={dre.margin < 0} icon="%" />
         <StatCard label="POC médio" value={formatPercent(dre.averagePoc * 100)} delta={`${dre.pocUnmatchedCount} contratos sem vínculo de obra`} warn={dre.pocUnmatchedCount > 0} icon="%" />
         <StatCard label="Base de avanço" value={formatPercent(dre.pocSourceAveragePercent * 100)} delta={`${dre.pocSourceContractCount} contratos medidos`} warn={dre.pocSourceContractCount === 0} icon="B" />
         <StatCard label="Cancelamentos POC" value={formatCompactCurrency(dre.cancellations)} delta={`${dre.cancelledContractCount} contratos cancelados/distratados`} warn={dre.cancellations > 0} icon="-" />

@@ -6,6 +6,13 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A Etapa 6 da revisão foi concluída para análise gerencial.
+- `/relatorios` deixou de montar a DRE completa e a lista completa de contratos na abertura; agora usa resumos locais leves e abre o relatório detalhado somente quando o usuário entra no portal correspondente.
+- Foi criado `features/reports/data.ts` para concentrar resumos leves de relatórios, como contratos e base disponível da DRE.
+- `/dre-gerencial` deixou de carregar compras, porque esses dados não eram usados no cálculo da DRE POC.
+- A DRE POC passou a exibir margem POC estimada e ajustou os cards de saldos para indicar que são valores acumulados até o fim do exercício selecionado.
+- `/dashboard` foi revisado contra o padrão atual e permanece lendo resumos locais por período, separando passado, futuro, previsto, realizado e pendente.
+- `/sienge` foi revisado como mapa de cobertura operacional local, mantendo detalhes de fontes por ser uma tela de auditoria do uso do Sienge.
 - A Etapa 5 da revisão foi concluída para o financeiro operacional.
 - `/contas-pagar` deixou de exibir atalho direto para `Novo lançamento`, mantendo a tela como agenda e consulta local.
 - `/lancamentos/baixa` deixou de fazer PATCH de instrução Pix no Sienge; agora é somente conferência de parcelas, baixas registradas e cobranças abusivas.
@@ -270,6 +277,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A Central de relatórios possui um painel para atualizar em segundo plano os dados que alimentam os relatórios.
 - A atualização "Todos os relatórios" carrega financeiro, contas a receber, vendas, contratos, estoque e compras sem puxar conciliação junto.
 - A Central de relatórios passou a incluir o relatório de DRE POC estimada, com atalho para análise de lucro/prejuízo e caixa realizado.
+- A Central de relatórios não monta mais a DRE completa nem a listagem completa de contratos ao abrir; ela usa resumos locais leves e delega o relatório completo para cada tela.
 
 ## DRE POC estimada
 
@@ -289,6 +297,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A tela apresenta cards executivos, gráficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mês a mês.
 - A tela exibe resumo de integração por área usada na DRE, indicando registros salvos e data de integração quando disponível.
 - A metodologia informa que, sem histórico mensal de medições e sem apropriação por unidade vendida, a receita POC é uma estimativa anual baseada na última medição salva.
+- A DRE deixou de carregar compras na abertura, porque compras não entram diretamente no cálculo exibido; custos e despesas continuam vindo de contas a pagar.
+- Os saldos a receber e a pagar foram renomeados para deixar claro que são acumulados até o fim do exercício selecionado, não apenas movimentos do ano.
+- A tela passou a exibir margem POC estimada como indicador próprio.
 
 ## Estoque, patrimonio e unidades imobiliarias
 

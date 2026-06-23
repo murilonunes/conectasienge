@@ -39,14 +39,6 @@ type SalesContract = {
   cancellationDate?: string;
 };
 
-type PurchaseOrder = {
-  id?: number;
-  date?: string;
-  status?: string;
-  totalAmount?: number;
-  supplierId?: number;
-};
-
 type SupplyContract = {
   companyName?: string;
   buildingName?: string;
@@ -82,7 +74,6 @@ const dbFiles = {
   payables: path.join(dataDir, "finance-payables.sqlite"),
   receivables: path.join(dataDir, "finance-receivables.sqlite"),
   sales: path.join(dataDir, "commercial-sales.sqlite"),
-  purchases: path.join(dataDir, "purchases.sqlite"),
   contracts: path.join(dataDir, "contracts-supply.sqlite")
 };
 
@@ -428,34 +419,6 @@ function loadSales(start: string, end: string, pocProgress: Map<string, PocProgr
   };
 }
 
-function loadPurchases(start: string, end: string) {
-  const database = openDatabase(dbFiles.purchases);
-  let purchasedAmount = 0;
-  let orderCount = 0;
-  let pendingCount = 0;
-  let unavailable = false;
-
-  if (!database) unavailable = true;
-  try {
-    if (!database || !tableExists(database, "sienge_records")) unavailable = true;
-    const rows = database && tableExists(database, "sienge_records")
-      ? database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/purchase-orders'").all() as JsonRow[]
-      : [];
-    rows.forEach((row) => {
-      const order = safeJson<PurchaseOrder>(row.raw_json);
-      if (!order || !inRange(normalizeDate(order.date), start, end) || order.status === "CANCELED") return;
-      const amount = money(order.totalAmount);
-      purchasedAmount += amount;
-      orderCount += 1;
-      if (order.status === "PENDING" || order.status === "PARTIALLY_DELIVERED") pendingCount += 1;
-    });
-  } finally {
-    database?.close();
-  }
-
-  return { purchasedAmount, orderCount, pendingCount, unavailable };
-}
-
 function loadPayables(start: string, end: string) {
   const database = openDatabase(dbFiles.payables);
   const empty = {
@@ -661,7 +624,6 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
   const sales = loadSales(start, end, poc.progress);
   const payables = loadPayables(start, end);
   const receivables = loadReceivables(start, end);
-  const purchases = loadPurchases(start, end);
   const monthly = buildMonthly({ sales, payables, receivables });
   const netResult = sales.netRevenue - payables.costs;
   const cashResult = receivables.received - payables.paid;
@@ -674,7 +636,6 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
       sales.unavailable ? "vendas" : undefined,
       payables.unavailable ? "contas a pagar" : undefined,
       receivables.unavailable ? "contas a receber" : undefined,
-      purchases.unavailable ? "compras" : undefined,
       poc.unavailable ? "contratos de fornecimento para POC" : undefined
     ].filter(Boolean) as string[],
     contractedRevenue: sales.contractedRevenue,
@@ -694,9 +655,6 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
     openReceivablesCount: receivables.openReceivablesCount,
     openPayables: payables.openPayables,
     openPayablesCount: payables.openPayablesCount,
-    purchasedAmount: purchases.purchasedAmount,
-    purchaseOrderCount: purchases.orderCount,
-    pendingPurchaseCount: purchases.pendingCount,
     contractCount: sales.contractCount,
     cancelledContractCount: sales.cancelledCount,
     pocMatchedCount: sales.pocMatchedCount,
@@ -716,7 +674,6 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
       sourceStatus(dbFiles.sales, "sienge_records", "Vendas", "/v1/sales-contracts"),
       sourceStatus(dbFiles.receivables, "bulk_income_installments", "Contas a receber"),
       sourceStatus(dbFiles.payables, "bulk_outcome_installments", "Contas a pagar"),
-      sourceStatus(dbFiles.purchases, "sienge_records", "Compras", "/v1/purchase-orders"),
       sourceStatus(dbFiles.contracts, "sienge_records", "Contratos para POC", "/v1/supply-contracts/all")
     ]
   };

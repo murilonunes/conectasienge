@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { SiengeUpdateControls } from "@/components/settings/sienge-update-controls";
 import { PageHeading } from "@/components/ui/page-heading";
-import { analyzeContracts, loadSupplyContracts } from "@/features/contracts/data";
 import {
   DASHBOARD_PERIOD_OPTIONS,
   loadDashboardOverview,
   normalizeDashboardDays,
   normalizeDashboardDirection
 } from "@/features/dashboard/data";
-import { loadDreGerencial, loadDreYearOptions, normalizeDreYear } from "@/features/dre/data";
+import { loadContractsReportSummary, loadDreReportSummary } from "@/features/reports/data";
 import { getSiengeScreenUpdateHistory } from "@/lib/api/sienge-history";
 import { formatCompactCurrency } from "@/lib/formatters";
 import { reportUpdateAreas } from "@/lib/sienge-update-areas";
@@ -57,16 +56,15 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
   const days = selectedDays(searchParams?.dias);
   const direction = selectedDirection(searchParams?.periodo);
   const overview = await loadDashboardOverview(days, direction, "period");
-  const contracts = await loadSupplyContracts();
-  const dreYear = normalizeDreYear(undefined, loadDreYearOptions());
-  const dre = await loadDreGerencial(dreYear);
+  const contracts = loadContractsReportSummary();
+  const dre = loadDreReportSummary();
   const history = getSiengeScreenUpdateHistory();
   const updateStatuses = buildUpdateAreaStatuses(history, reportUpdateAreas);
-  const contractSummary = analyzeContracts(contracts.contracts);
   const isPast = direction === "past";
   const unavailable = [
     ...overview.unavailable,
-    contracts.error && !contracts.contracts.length ? "contratos" : undefined
+    contracts.totalCount === 0 ? "contratos" : undefined,
+    dre.baseCount === 0 ? "base da DRE" : undefined
   ].filter(Boolean) as string[];
 
   const receivablePending = isPast ? overview.receivableSummary.periodOpenAmount : overview.receivableSummary.totalOpen;
@@ -89,13 +87,13 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
     {
       icon: "=",
       title: "DRE POC estimada",
-      description: "Estima receita pelo avanço da obra, compara custos e separa o caixa realizado.",
-      href: `/dre-gerencial?ano=${dreYear}`,
-      scope: `Resultado ${dreYear}`,
-      primaryMetric: formatCompactCurrency(dre.netResult),
-      primaryLabel: dre.netResult >= 0 ? "lucro POC estimado" : "prejuízo POC estimado",
-      secondaryMetric: formatCompactCurrency(dre.cashResult),
-      secondaryLabel: "caixa realizado"
+      description: "Abre a apuração anual por avanço da obra, custos e caixa realizado.",
+      href: `/dre-gerencial?ano=${dre.year}`,
+      scope: `Exercício ${dre.year}`,
+      primaryMetric: String(dre.availableYears.length),
+      primaryLabel: dre.availableYears.length === 1 ? "ano com base salva" : "anos com base salva",
+      secondaryMetric: String(dre.baseCount),
+      secondaryLabel: "registros para apuração"
     },
     {
       icon: "P",
@@ -147,10 +145,10 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
       description: "Resume contratos de fornecimento, situação, valores contratados e saldo estimado.",
       href: "/contratos",
       scope: "Contratos",
-      primaryMetric: formatCompactCurrency(contractSummary.totalValue),
+      primaryMetric: formatCompactCurrency(contracts.totalValue),
       primaryLabel: "valor contratado",
-      secondaryMetric: countLabel(contractSummary.activeCount, "contrato ativo", "contratos ativos"),
-      secondaryLabel: `${contracts.contracts.length} integrados`
+      secondaryMetric: countLabel(contracts.activeCount, "contrato ativo", "contratos ativos"),
+      secondaryLabel: `${contracts.totalCount} integrados`
     },
     {
       icon: "E",
@@ -212,8 +210,8 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
           <span>Como usar</span>
           <h2>Abra o relatório certo para cada análise</h2>
           <p>
-            Cada cartão abaixo leva para a tela detalhada correspondente, já seguindo o período escolhido quando fizer sentido.
-            Exportação em PDF e Excel fica preparada como próxima etapa, sem misturar essa central com o dashboard.
+            Cada cartão abre a tela detalhada correspondente e usa apenas um resumo salvo para orientar a escolha.
+            O relatório completo é montado só quando você entra na análise, mantendo esta central rápida.
           </p>
         </div>
         <div className="reports-intro-grid">

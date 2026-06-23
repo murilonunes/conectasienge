@@ -27,7 +27,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Status | Prioridade | Rota | Evidência no código | O que precisa arrumar |
 | --- | --- | --- | --- | --- |
 | Revisado | Média | `/` | `app/page.tsx` | Tela inicial confirmada como abertura rápida: não carrega dados pesados e mantém atalhos para os portais principais. |
-| Pendente | Média | `/dashboard` | `app/dashboard/page.tsx`, `features/dashboard/data.ts` | Auditar card a card contra as consultas SQL resumidas. A tela está local e otimizada, mas é a mais sensível a inconsistência de fórmula. |
+| Revisado | Média | `/dashboard` | `app/dashboard/page.tsx`, `features/dashboard/data.ts` | Revisado: a tela segue local, usa consultas resumidas por período e separa corretamente visão passada, futura, previsto, realizado e pendente. |
 | Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |
 | Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
@@ -39,9 +39,9 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/lancamentos/baixa` | `app/lancamentos/baixa/page.tsx`, `components/forms/advanced-payables-search.tsx`, `components/forms/installment-settlement.tsx` | Revisado: busca avançada e consulta de parcelas ficam como conferência local; removida a escrita Pix/PATCH no Sienge. |
 | Revisado | Média | `/lancamentos/baixa-receber` | `app/lancamentos/baixa-receber/page.tsx`, `components/forms/advanced-receivables-search.tsx`, `components/forms/receivable-settlement.tsx` | Revisado: tela renomeada como consulta de recebimentos e mantém aviso de que baixa efetiva precisa ser feita no Sienge. |
 | Revisado | Alta | `/lancamentos/novo` | `app/lancamentos/novo/page.tsx`, `components/forms/bill-entry-form.tsx`, `app/api/sienge/bills/route.ts` | Revisado: mantido como única operação transacional explícita, com aviso visível antes do formulário e confirmação final antes do envio. |
-| Pendente | Média | `/relatorios` | `app/relatorios/page.tsx` | A central está diferente do dashboard, mas carrega dashboard, DRE e contratos na abertura. Revisar custo da tela e transformar cards em relatórios realmente geráveis/exportáveis. |
-| Pendente | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisar cálculo POC com base na documentação oficial e separar melhor estimativa gerencial, caixa realizado, contratos sem vínculo e base de avanço. |
-| Pendente | Média | `/sienge` | `app/sienge/page.tsx`, `features/sienge-coverage/data.ts` | Revisar se o mapa operacional mostra corretamente o que está em uso, parcial ou não usado. Validar contagens por arquivo SQLite e endpoints. |
+| Revisado | Média | `/relatorios` | `app/relatorios/page.tsx`, `features/reports/data.ts` | Revisado: a central deixou de montar DRE completa e lista completa de contratos na abertura; usa resumos locais leves e abre o relatório completo só no portal correspondente. |
+| Revisado | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisado: retirada carga de compras não usada, reforçada leitura de margem POC e separados saldos acumulados até o exercício do resultado anual. |
+| Revisado | Média | `/sienge` | `app/sienge/page.tsx`, `features/sienge-coverage/data.ts` | Revisado: mapa operacional confirmado como leitura local dos bancos e contagens por fonte, mantendo detalhe técnico apenas por ser uma tela de cobertura do Sienge. |
 | Revisado | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `lib/sienge-update-runner.ts` | Revisado: status conta somente áreas atualizáveis, job mostra falhas retornadas por loaders e também falhas de subcargas em lote. |
 
 ## Achados transversais
@@ -101,13 +101,19 @@ Revisado nesta etapa:
 
 Resultado: a abertura normal da conciliação usa diretamente o SQLite local renderizado pelo servidor. O painel de etapas continua disponível, mas apenas quando o usuário pede uma recarga explícita.
 
-### 4. Relatórios ainda não são relatórios exportáveis
+### Etapa 6 revisada - Análise gerencial
 
-`/relatorios` virou catálogo e está melhor separado do dashboard, mas ainda abre cards de navegação. Falta a etapa de relatório gerável com filtros próprios e exportação futura.
+Revisado nesta etapa:
 
-### 5. DRE POC precisa nova rodada específica
+- `/dashboard`: conferida a separação entre período passado e futuro, previsto, realizado e pendente. A tela continua usando consultas resumidas no SQLite.
+- `/relatorios`: removida a montagem pesada da DRE completa e da lista completa de contratos na abertura. A central agora usa resumos locais leves para orientar a escolha do relatório.
+- `/dre-gerencial`: removida a carga de compras que não era usada no cálculo, adicionada margem POC estimada e ajustados os cards de saldos para deixar claro que são acumulados até o fim do exercício.
+- `/sienge`: confirmado como mapa operacional local, com contagens por fonte e detalhamento técnico mantido apenas porque a tela serve para auditoria de cobertura.
 
-A DRE já avisa que é estimativa, mas o cálculo é sensível. Precisa revisão dedicada usando a documentação oficial do Sienge/POC e dados reais disponíveis no SQLite.
+Pendências mantidas:
+
+- Exportação PDF/Excel dos relatórios ainda está sinalizada como próxima etapa, sem implementação.
+- A DRE POC continua sendo estimativa gerencial: para virar apuração contábil completa, ainda precisa apropriação histórica por unidade vendida e medição mensal detalhada.
 
 ## Plano por etapas
 
@@ -141,7 +147,7 @@ A DRE já avisa que é estimativa, mas o cálculo é sensível. Precisa revisão
 - Separar consulta local de operação real no Sienge.
 - Padronizar avisos, datas de integração e filtros.
 
-### Etapa 6 - Análise gerencial
+### Etapa 6 - Análise gerencial concluída
 
 - Revisar `/dashboard` card a card.
 - Revisar `/dre-gerencial` com foco em POC.
