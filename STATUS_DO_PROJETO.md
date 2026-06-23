@@ -6,6 +6,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A Etapa 3 da revisão foi concluída para `/contratos` e `/configuracoes`.
+- A contagem de `Áreas prontas` em Configurações passou a considerar somente áreas atualizáveis pelos botões da tela.
+- O runner de atualização agora trata falhas em subcargas em lote como erro real da etapa, evitando status de sucesso quando parte da carga falhou.
 - A etapa de revisão de listas grandes foi concluída para `/compras`, `/contas-receber` e `/sales`.
 - A aba Registros de `/compras` deixou de receber só 500 itens e passou a paginar/filtrar toda a base local por `/api/purchases/records`.
 - A listagem principal de `/contas-receber` deixou de receber só 200 parcelas e passou a paginar/filtrar toda a base local por `/api/receivables/forecast`.

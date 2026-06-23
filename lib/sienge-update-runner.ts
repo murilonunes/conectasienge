@@ -83,16 +83,41 @@ function updateStep(job: SiengeUpdateJob, key: string, status: SiengeUpdateJobSt
   if (status === "completed" || status === "failed") step.finishedAt = now();
 }
 
+function taskErrorMessage(result: unknown): string | undefined {
+  if (Array.isArray(result)) {
+    const messages = result
+      .map((item) => {
+        if (!item || typeof item !== "object") return undefined;
+        if ("status" in item && item.status === "rejected") {
+          const reason = (item as PromiseRejectedResult).reason;
+          return reason instanceof Error ? reason.message : String(reason || "Falha na atualização.");
+        }
+        if ("status" in item && item.status === "fulfilled") {
+          return taskErrorMessage((item as PromiseFulfilledResult<unknown>).value);
+        }
+        return taskErrorMessage(item);
+      })
+      .filter(Boolean);
+    return messages.length ? messages.join(" ") : undefined;
+  }
+
+  const returnedError = result && typeof result === "object" && "error" in result
+    ? (result as { error?: { title?: string; explanation?: string; suggestion?: string } }).error
+    : undefined;
+
+  return returnedError
+    ? [returnedError.title, returnedError.explanation, returnedError.suggestion].filter(Boolean).join(" ")
+    : undefined;
+}
+
 async function runStep(job: SiengeUpdateJob, key: RunnableArea, task: () => Promise<unknown>) {
   updateStep(job, key, "running", "Consultando o Sienge e gravando os dados salvos.");
   job.message = `Atualizando ${updateAreaLabel(key)}.`;
   try {
     const result = await task();
-    const returnedError = result && typeof result === "object" && "error" in result
-      ? (result as { error?: { title?: string; explanation?: string; suggestion?: string } }).error
-      : undefined;
-    if (returnedError) {
-      throw new Error([returnedError.title, returnedError.explanation, returnedError.suggestion].filter(Boolean).join(" "));
+    const message = taskErrorMessage(result);
+    if (message) {
+      throw new Error(message);
     }
     updateStep(job, key, "completed", "Dados atualizados e gravados.");
   } catch (error) {

@@ -78,14 +78,16 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
     .filter(Boolean);
   const missingReconciliationAccounts = selectedReconciliationAccounts
     .filter((selected) => !reconciliationAccounts.some((account) => account.accountNumber === selected));
-  const updatedScreens = history.filter((item) => item.status === "updated").length;
-  const warningScreens = history.filter((item) => item.status === "warning").length;
+  const updateStatuses = buildUpdateAreaStatuses(history, updateAreas);
+  const trackedUpdateAreas = updateAreas.filter((area) => area.historyKey);
+  const trackedStatuses = trackedUpdateAreas.map((area) => updateStatuses[area.key]);
+  const updatedScreens = trackedStatuses.filter((item) => item.status === "updated").length;
+  const warningScreens = trackedStatuses.filter((item) => item.status === "warning").length;
   const totalDatabaseSize = databaseFiles.reduce((sum, file) => sum + file.sizeBytes, 0);
   const sizeLabel = totalDatabaseSize >= 1024 * 1024
     ? `${(totalDatabaseSize / 1024 / 1024).toFixed(1)} MB`
     : `${(totalDatabaseSize / 1024).toFixed(1)} KB`;
   const lastUpdatedAt = history.map((item) => item.lastUpdatedAt).filter(Boolean).sort().at(-1);
-  const updateStatuses = buildUpdateAreaStatuses(history, updateAreas);
 
   return (
     <>
@@ -103,7 +105,7 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
       )}
 
       <div className="stats">
-        <StatCard label="Áreas prontas" value={`${updatedScreens}/${history.length}`} delta="Com dados salvos" icon="OK" />
+        <StatCard label="Áreas prontas" value={`${updatedScreens}/${trackedUpdateAreas.length}`} delta="Com dados salvos" icon="OK" />
         <StatCard label="Avisos" value={String(warningScreens)} delta="Últimas tentativas com erro ou limite" warn={warningScreens > 0} icon="!" />
         <StatCard label="Última integração" value={lastUpdatedAt ? formatDate(lastUpdatedAt).split(" ")[0] : "Nunca"} delta={lastUpdatedAt ? formatDate(lastUpdatedAt) : "Sem histórico"} icon="S" />
         <StatCard label="Dados salvos" value={sizeLabel} delta={`${databaseFiles.length} arquivo(s) de dados`} icon="DB" />

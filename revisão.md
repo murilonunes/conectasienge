@@ -32,7 +32,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
 | Pendente | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx` | Conferir se valores zerados e propriedade própria/terceiro estão claros. A tela já usa lista local paginada. |
-| Pendente | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Validar atualização via Configurações e estado vazio. A abertura lê SQLite, mas precisa confirmar em uso real se o job grava contratos e se o card muda depois da carga. |
+| Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
 | Pendente | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | A tela abre fazendo fetch interno para uma rota API, mesmo lendo local por padrão. Melhorar para renderizar a primeira leitura local no servidor e deixar progresso só para atualização/recarga quando necessário. |
 | Pendente | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Conferir se agenda, valores corrigidos, juros/multa e abuso usam a mesma base local e se a navegação para busca avançada está clara. |
 | Revisado | Alta | `/contas-receber` | `app/contas-receber/page.tsx`, `components/tables/receivables-forecast-table.tsx` | Corrigida a listagem principal: deixou de receber só 200 parcelas e passou a buscar páginas filtradas em `/api/receivables/forecast`, lendo somente o SQLite local. |
@@ -42,7 +42,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Pendente | Média | `/relatorios` | `app/relatorios/page.tsx` | A central está diferente do dashboard, mas carrega dashboard, DRE e contratos na abertura. Revisar custo da tela e transformar cards em relatórios realmente geráveis/exportáveis. |
 | Pendente | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisar cálculo POC com base na documentação oficial e separar melhor estimativa gerencial, caixa realizado, contratos sem vínculo e base de avanço. |
 | Pendente | Média | `/sienge` | `app/sienge/page.tsx`, `features/sienge-coverage/data.ts` | Revisar se o mapa operacional mostra corretamente o que está em uso, parcial ou não usado. Validar contagens por arquivo SQLite e endpoints. |
-| Pendente | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `lib/sienge-update-runner.ts` | Conferir atualização por área, força de atualização, histórico e status após job. É a tela central do novo padrão e precisa ser a referência das integrações. |
+| Revisado | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `lib/sienge-update-runner.ts` | Revisado: status conta somente áreas atualizáveis, job mostra falhas retornadas por loaders e também falhas de subcargas em lote. |
 
 ## Achados transversais
 
@@ -67,6 +67,17 @@ Revisado nesta etapa:
 - `/sales`: revisado o fluxo atual; contratos são enviados de forma enxuta por recorte e paginados na tela. Não recebeu mudança nesta etapa.
 
 Resultado: as listas que escondiam registros salvos deixaram de depender de amostra inicial. A busca passa a considerar toda a base local sem consultar o Sienge.
+
+### Etapa 3 revisada - Integração e Configurações
+
+Revisado nesta etapa:
+
+- `/contratos`: confirmada abertura somente pelo SQLite local, sem consulta direta ao Sienge na tela.
+- `features/contracts/data.ts`: atualização de contratos segue pelo job, usando `/v1/supply-contracts/all` e período salvo em Configurações.
+- `/configuracoes`: a contagem de áreas prontas passou a considerar somente áreas atualizáveis pelos botões da própria tela.
+- `lib/sienge-update-runner.ts`: falhas retornadas por loaders e subcargas em lote agora derrubam a etapa correspondente, em vez de aparecerem como atualização concluída.
+
+Resultado: a tela de Configurações fica mais fiel ao estado real da integração, e uma falha parcial de carga não fica escondida como sucesso.
 
 ### 2. Operações diretas no Sienge fora de Configurações
 
