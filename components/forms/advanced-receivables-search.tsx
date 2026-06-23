@@ -241,23 +241,30 @@ export function AdvancedReceivablesSearch() {
                 const received = receipts.reduce((sum, receipt) => sum + receiptValue(receipt), 0);
                 return <article className="card advanced-result" key={key}>
                   <button className="advanced-result-main receivable-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
-                    <span>
-                      <span className="advanced-title-id" onClick={(event) => copyBillId(event, item.billId)} title="Copiar número do título">
-                        Título #{item.billId}
-                        <span className="copy-title-icon" aria-label="Copiar título">{copiedBillId === item.billId ? "OK" : "⧉"}</span>
+                    <span className="title-installment-block">
+                      <span className="title-installment-row">
+                        <span className="advanced-title-id" onClick={(event) => copyBillId(event, item.billId)} title="Copiar número do título">
+                          <small>Título</small>
+                          <strong>#{item.billId}</strong>
+                          <span className="copy-title-icon" aria-label="Copiar título">{copiedBillId === item.billId ? "OK" : "⧉"}</span>
+                        </span>
+                        <span className="title-installment-connector" aria-hidden="true" />
+                        <span className="installment-pill">
+                          <small>Parcela</small>
+                          <strong>{installmentLabel(item, installmentTotals.get(item.billId)).replace(/^Parcela\s*/i, "")}</strong>
+                        </span>
                       </span>
                       <strong>{documentLabel(item)}</strong>
-                      <small className="installment-conference">{installmentLabel(item, installmentTotals.get(item.billId))}</small>
                     </span>
                     <span>
                       <strong>{item.clientName || `Cliente #${item.clientId || "não informado"}`}</strong>
                       <small>{item.companyName || `Empresa #${item.companyId || "não informada"}`}</small>
                       <small>{item.projectName || item.businessAreaName || item.mainUnit || "Projeto não informado"}</small>
                     </span>
+                    <span><strong>{formatOptionalDate(item.dueDate)}</strong><small>Vencimento</small></span>
                     <span><strong>{formatCurrency(item.originalAmount || 0)}</strong><small>Original</small></span>
                     <span><strong>{formatCurrency(openAmount(item))}</strong><small>Saldo</small></span>
                     <span><strong>{formatCurrency(received)}</strong><small>Recebido</small></span>
-                    <span><strong>{formatOptionalDate(item.dueDate)}</strong><small>Vencimento</small></span>
                     <span className={`badge ${receipts.length ? "" : "pending"}`}>{receipts.length ? `${receipts.length} recebimento(s)` : "Sem recebimento"}</span>
                     <span className="sales-expand">{expanded === key ? "-" : "+"}</span>
                   </button>
