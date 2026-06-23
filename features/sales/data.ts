@@ -18,6 +18,27 @@ export type SalesResult = {
   error?: SiengeErrorDetails;
 };
 
+export type SalesPeriodDirection = "future" | "past";
+export type SalesPeriodRange = {
+  days: number;
+  direction: SalesPeriodDirection;
+  start: string;
+  end: string;
+  label: string;
+};
+
+export const SALES_PERIOD_OPTIONS = [
+  { days: 1, label: "Hoje" },
+  { days: 7, label: "7 dias" },
+  { days: 15, label: "15 dias" },
+  { days: 30, label: "30 dias" },
+  { days: 60, label: "60 dias" },
+  { days: 90, label: "90 dias" },
+  { days: 180, label: "6 meses" },
+  { days: 365, label: "12 meses" },
+  { days: 730, label: "24 meses" }
+] as const;
+
 type SqlRow = {
   raw_json: string;
   source_day?: string;
@@ -62,6 +83,55 @@ function annotate(row: SqlRow): SalesContract | undefined {
 
 function saleDate(contract: SalesContract) {
   return contract.issueDate || contract.contractDate || "";
+}
+
+function iso(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function salesPeriodLabel(days: number) {
+  if (days === 1) return "hoje";
+  if (days < 30) return `${days} dias`;
+  if (days === 30) return "30 dias";
+  const months = Math.round(days / 30);
+  return `${months} mês${months > 1 ? "es" : ""}`;
+}
+
+export function normalizeSalesDays(value: unknown) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const days = Number(rawValue);
+  return SALES_PERIOD_OPTIONS.some((option) => option.days === days) ? days : 365;
+}
+
+export function normalizeSalesDirection(value: unknown): SalesPeriodDirection {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  return rawValue === "future" ? "future" : "past";
+}
+
+export function salesPeriodRange(days: number, direction: SalesPeriodDirection): SalesPeriodRange {
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const current = iso(today);
+  return {
+    days,
+    direction,
+    start: direction === "past" ? iso(addDays(today, -(days - 1))) : current,
+    end: direction === "past" ? current : iso(addDays(today, days - 1)),
+    label: salesPeriodLabel(days)
+  };
+}
+
+export function filterSalesContractsByPeriod(contracts: SalesContract[], range: SalesPeriodRange) {
+  return contracts.filter((contract) => {
+    const date = saleDate(contract).slice(0, 10);
+    return date >= range.start && date <= range.end;
+  });
 }
 
 function readLocalSales(): SalesResult {

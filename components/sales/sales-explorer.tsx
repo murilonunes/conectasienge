@@ -110,11 +110,14 @@ export function SalesExplorer({
                       <h3>Condições de pagamento</h3>
                       {conditions.map((condition, index) => {
                         const exchangeCondition = isExchangeCondition(condition);
+                        const conditionAmount = exchangeCondition
+                          ? condition.totalValueInterest || condition.totalValue || condition.outstandingBalance || 0
+                          : condition.outstandingBalance || 0;
                         return (
                           <div key={`${condition.conditionTypeName}-${index}`} className={exchangeCondition ? "exchange" : ""}>
                             <span>{condition.conditionTypeName || "Condição"}</span>
                             <strong>{exchangeCondition ? "Permuta abatida da carteira líquida" : `${condition.openInstallmentsNumber || 0} de ${condition.installmentsNumber || 0} parcelas abertas`}</strong>
-                            <span>{formatCurrency(condition.outstandingBalance || condition.totalValue || 0)} {exchangeCondition ? "em permuta" : "em aberto"}</span>
+                            <span>{formatCurrency(conditionAmount)} {exchangeCondition ? "em permuta" : "em aberto"}</span>
                           </div>
                         );
                       })}

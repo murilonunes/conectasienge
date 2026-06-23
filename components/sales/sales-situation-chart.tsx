@@ -13,7 +13,7 @@ export function SalesSituationChart({ data }: { data: ChartItem[] }) {
   }).join(", ");
   return (
     <section className="card panel">
-      <div className="panel-head"><div><h2 className="panel-title">Situação dos contratos</h2><span className="panel-note">Quantidade e valor por situação comercial</span></div></div>
+      <div className="panel-head"><div><h2 className="panel-title">Situação dos contratos</h2><span className="panel-note">Quantidade e valor líquido por situação comercial</span></div></div>
       <div className="sales-situation-layout">
         <div className="sales-situation-donut" style={{ background: `conic-gradient(${gradient || "#edf1ee 0 100%"})` }}><div><strong>{total}</strong><span>contratos</span></div></div>
         <div className="sales-situation-legend">{data.map((item, index) => <div key={item.label}><i style={{ background: colors[index % colors.length] }} /><span>{item.label}</span><strong>{item.count}</strong><small>{formatCompactCurrency(item.value)}</small></div>)}</div>

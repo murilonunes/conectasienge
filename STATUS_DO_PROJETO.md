@@ -6,6 +6,10 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A rota `/sales` ganhou seletor de período no mesmo padrão visual do Dashboard, com Hoje, 7, 15, 30, 60, 90 dias, 6, 12 e 24 meses, além de visão passada ou futura.
+- Cards, gráfico mensal, ranking, situação dos contratos e listagem de `/sales` agora respeitam o recorte selecionado.
+- O padrão inicial de `/sales` ficou em 12 meses passados para manter a abertura comercial útil, sem perder a troca rápida de período na própria tela.
+- A listagem enxuta de `/sales` passou a preservar `conditionTypeId`, `totalValue` e `totalValueInterest`, garantindo que permutas continuem sendo identificadas corretamente no detalhe.
 - A rota `/sales` foi revisada para separar valor bruto contratado, permutas e carteira líquida comercial.
 - Condições de pagamento do tipo `PE` ou com nome de permuta deixam de inflar os indicadores comerciais, evitando contar duas vezes bens dados em outros negócios.
 - Os cards, gráfico mensal, ranking por empreendimento/situação e listagem de contratos de vendas agora usam valor líquido comercial; o detalhe do contrato mostra bruto, permuta abatida e valor líquido para conferência.
