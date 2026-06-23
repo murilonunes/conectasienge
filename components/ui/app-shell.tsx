@@ -16,7 +16,8 @@ const operationNavigation = [
   ["Contas a pagar", "/contas-pagar", "P"],
   ["Contas a receber", "/contas-receber", "R"],
   ["Novo lançamento", "/lancamentos/novo", "+"],
-  ["Baixa de parcela", "/lancamentos/baixa", "B"]
+  ["Baixa a pagar", "/lancamentos/baixa", "BP"],
+  ["Baixa a receber", "/lancamentos/baixa-receber", "BR"]
 ] as const;
 
 const analysisNavigation = [

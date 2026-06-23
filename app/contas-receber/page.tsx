@@ -49,6 +49,8 @@ export default async function ContasReceberPage() {
         eyebrow="Previsão financeira"
         title="Contas a receber"
         subtitle="Previsão do que a empresa tem para receber, usando parcelas abertas por data de vencimento."
+        action="Consultar recebimentos"
+        actionHref="/lancamentos/baixa-receber"
       />
 
       <div className="stats">

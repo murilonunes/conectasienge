@@ -30,7 +30,12 @@ const mainShortcuts = [
   {
     title: "Baixa de parcela",
     href: "/lancamentos/baixa",
-    note: "Consulte título, parcelas, pagamentos e instruções vinculadas."
+    note: "Consulte título a pagar, parcelas, pagamentos e instruções vinculadas."
+  },
+  {
+    title: "Baixa a receber",
+    href: "/lancamentos/baixa-receber",
+    note: "Consulte títulos a receber, parcelas e recebimentos já registrados."
   }
 ];
 

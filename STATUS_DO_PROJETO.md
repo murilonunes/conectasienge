@@ -6,6 +6,12 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- Foi criada a tela `/lancamentos/baixa-receber` para consultar recebimentos e baixas de contas a receber.
+- A especificação pública disponível foi revisada e não foi encontrado endpoint seguro para efetivar baixa de contas a receber; a tela informa essa limitação e não promete uma operação que não seria gravada.
+- A nova tela lê somente o banco local `finance-receivables.sqlite`, usando as tabelas estruturadas de parcelas e recebimentos do espelho `/bulk-data/v1/income`.
+- A busca avançada de contas a receber permite consultar por vencimento, emissão, competência ou data de recebimento, filtrando por situação do recebimento, empresa, projeto, área de negócio e cliente.
+- A consulta por código do título a receber mostra parcelas, saldo, recebimentos registrados, movimentos vinculados, cliente, projeto e data de integração.
+- A tela foi adicionada ao menu de Operações, à Central financeira e como ação da tela de Contas a receber.
 - As telas `/compras`, `/contas-receber` e `/sales` foram otimizadas para reduzir o HTML inicial enviado pelo Next.js.
 - Os cards, gráficos e indicadores continuam sendo calculados com todos os dados salvos no SQLite local.
 - As listagens client-side dessas telas passam a receber apenas uma amostra inicial para consulta rápida, mostrando ao usuário quantos registros existem no total.
@@ -187,6 +193,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A baixa efetiva pela API publica permanece bloqueada quando nao existe endpoint publico seguro para registrar a operacao.
 - A tela evita prometer uma operacao que nao seria realmente gravada no Sienge.
 - A consulta de informacoes de pagamento continua sendo usada quando a API permite leitura.
+- Foi criada uma tela separada de baixa a receber, em `/lancamentos/baixa-receber`.
+- A tela de baixa a receber consulta parcelas e recebimentos já registrados no banco local, mas mantém a efetivação da baixa bloqueada porque a especificação pública disponível não expõe endpoint de gravação para essa operação.
 
 ## Contas a receber
 
