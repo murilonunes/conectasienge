@@ -11,7 +11,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A integração de Estoque e patrimônio passou a incluir novas fontes oficiais do Sienge: tabelas de preço, mapa imobiliário consolidado, reservas de insumos e insumos em estoque por centro de custo.
 - Configurações ganhou o campo `Centros de custo para estoque avançado`, usado pelas consultas que exigem centro de custo.
 - A lista de estoque ganhou filtro para separar itens com valor informado e sem valor informado.
-- A visão inicial do estoque passou a focar somente itens ainda em carteira; vendidos, locados, transferidos e terceiros deixam de compor cards e gráficos iniciais e ficam acessíveis pela listagem.
+- A visão principal do estoque passou a focar a carteira comercial ativa; negócios concluídos e itens de terceiros continuam disponíveis no histórico da listagem.
 - O Mapa Sienge e o histórico de integração por portal passaram a reconhecer as novas fontes de estoque.
 - A Etapa 6 da revisão foi concluída para análise gerencial.
 - `/relatorios` deixou de montar a DRE completa e a lista completa de contratos na abertura; agora usa resumos locais leves e abre o relatório detalhado somente quando o usuário entra no portal correspondente.
@@ -327,7 +327,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A consulta deve trazer todos os registros possiveis usando o banco local.
 - A abertura do portal passou a ler unidades imobiliárias, bens móveis e bens imóveis salvos em `inventory-assets.sqlite`, sem consultar o Sienge automaticamente.
 - A tela passou a priorizar uma visão estratégica antes da lista: estoque precificado, unidades disponíveis, reservas/propostas, itens sem valor, propriedade, mapa imobiliário e insumos.
-- Cards, gráficos e rankings iniciais do estoque consideram a carteira ainda não vendida; vendidos/locados/transferidos/terceiros aparecem apenas na listagem ao trocar o filtro para "Todos, incluindo vendidos".
+- Cards, gráficos e rankings principais do estoque consideram a carteira comercial ativa; vendidos, locados, transferidos e terceiros aparecem na listagem ao trocar o filtro para "Histórico completo".
 - Valores zerados agora são tratados como ausência de valor informado quando não existe incorporação, valor contábil, avaliação, tabela especial, fração de VGV ou terreno.
 - A classificação próprio/terceiro usa proprietário anterior, origem contábil, indicador de uso e estoque comercial quando esses campos vêm do Sienge.
 - Mapa imobiliário e insumos por centro de custo dependem do campo `Centros de custo para estoque avançado` em Configurações.

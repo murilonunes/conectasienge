@@ -38,20 +38,20 @@ export default async function InventoryPage() {
   const portfolioUnitCount = portfolioAssets.filter((asset) => asset.kind === "unit").length;
   const commercialCoverage = portfolioUnitCount ? Math.round((summary.saleableUnitCount / portfolioUnitCount) * 100) : 0;
   const mapStockValue = summary.mapStockValue || summary.saleableUnitValue || summary.totalValue;
-  const soldHiddenCount = summary.soldOrThirdPartyUnitCount;
+  const completedBusinessCount = summary.soldOrThirdPartyUnitCount;
 
   return (
     <>
       <PageHeading
         eyebrow="Portal de estoque"
         title="Visão estratégica de estoque"
-        subtitle={`${summary.portfolioCount} itens em carteira. Vendidos, locados, transferidos e terceiros ficam fora da visão inicial e aparecem na listagem quando você filtrar.`}
+        subtitle={`${summary.portfolioCount} itens em carteira comercial para análise de venda, reserva, preço e propriedade.`}
       />
       <div className="stats">
-        <StatCard label="Carteira precificada" value={formatCompactCurrency(summary.portfolioPricedValue || summary.portfolioValue)} delta={`${summary.portfolioPricedCount} de ${summary.portfolioCount} itens em carteira com valor`} warn={summary.portfolioNoValueCount > 0} icon="R$" />
-        <StatCard label="Disponível para venda" value={String(summary.saleableUnitCount)} delta={`${commercialCoverage}% das unidades em carteira`} icon="D" />
+        <StatCard label="Carteira comercial" value={formatCompactCurrency(summary.portfolioPricedValue || summary.portfolioValue)} delta={`${summary.portfolioPricedCount} de ${summary.portfolioCount} itens com valor`} warn={summary.portfolioNoValueCount > 0} icon="R$" />
+        <StatCard label="Disponível para venda" value={String(summary.saleableUnitCount)} delta={`${commercialCoverage}% das unidades comerciais`} icon="D" />
         <StatCard label="Reservas e propostas" value={String(summary.reservedUnitCount)} delta={formatCompactCurrency(summary.reservedUnitValue)} warn={summary.reservedUnitCount > 0} icon="R" />
-        <StatCard label="Fora da visão inicial" value={String(soldHiddenCount)} delta="Vendidos, locados, transferidos ou terceiros" icon="V" />
+        <StatCard label="Negócios concluídos" value={String(completedBusinessCount)} delta="Vendidos, locados, transferidos ou de terceiros" icon="V" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
         {result.warning && <div className="card data-notice"><strong>Dados parciais</strong><span>{result.warning}</span></div>}
@@ -66,7 +66,7 @@ export default async function InventoryPage() {
           <div>
             <span>Carteira disponível</span>
             <strong>{formatCompactCurrency(summary.saleableUnitValue || mapStockValue)}</strong>
-            <small>{summary.saleableUnitCount} unidades disponíveis e {summary.portfolioPrivateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} m² privativos em carteira.</small>
+            <small>{summary.saleableUnitCount} unidades disponíveis e {summary.portfolioPrivateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} m² privativos comerciais.</small>
           </div>
           <div>
             <span>Mapa imobiliário</span>
@@ -81,7 +81,7 @@ export default async function InventoryPage() {
           <div>
             <span>Propriedade</span>
             <strong>{portfolioSummary.ownCount} próprios</strong>
-            <small>{portfolioSummary.thirdPartyCount} terceiros em carteira. Vendidos ficam só na listagem.</small>
+            <small>{portfolioSummary.thirdPartyCount} itens de terceiros na carteira comercial.</small>
           </div>
         </section>
 
@@ -96,13 +96,13 @@ export default async function InventoryPage() {
         </div>
 
         <div className="grid-main equal-grid">
-          <PercentPieChart title="Carteira por situação" note="Somente unidades ainda em carteira" data={portfolioSummary.byStock} centerLabel="unidades" />
-          <RankingChart title="Valor por empreendimento" note="Somente unidades ainda em carteira" data={portfolioSummary.byEnterprise} countLabel="unidade" />
+          <PercentPieChart title="Carteira por situação" note="Unidades comerciais por status" data={portfolioSummary.byStock} centerLabel="unidades" />
+          <RankingChart title="Valor por empreendimento" note="Carteira comercial com valor informado" data={portfolioSummary.byEnterprise} countLabel="unidade" />
         </div>
 
         <div className="grid-main equal-grid">
-          <RankingChart title="Distribuição por tipo de bem" note="Somente itens em carteira" data={portfolioSummary.byKind} countLabel="bem" />
-          <RankingChart title="Próprio x terceiros" note="Somente itens em carteira" data={portfolioSummary.byOwnership} countLabel="item" />
+          <RankingChart title="Distribuição por tipo de bem" note="Carteira comercial e patrimônio disponível" data={portfolioSummary.byKind} countLabel="bem" />
+          <RankingChart title="Próprio x terceiros" note="Origem dos itens em análise comercial" data={portfolioSummary.byOwnership} countLabel="item" />
         </div>
 
         <section className="card panel inventory-stock-panel">

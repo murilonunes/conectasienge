@@ -60,8 +60,8 @@ export function InventoryExplorer({ assets, initialScope = "portfolio" }: { asse
       <div className="card inventory-filters">
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar patrimônio, unidade, matrícula, placa ou código" />
         <select value={scope} onChange={(event) => setScope(event.target.value as "portfolio" | "all")}>
-          <option value="portfolio">Em carteira</option>
-          <option value="all">Todos, incluindo vendidos</option>
+          <option value="portfolio">Carteira comercial</option>
+          <option value="all">Histórico completo</option>
         </select>
         <select value={type} onChange={(event) => setType(event.target.value)}>
           <option value="">Todos os tipos</option>
