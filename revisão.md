@@ -121,6 +121,7 @@ Revisado nesta etapa:
 
 - `/estoque`: deixou de ser apenas uma lista de bens e passou a abrir com visão estratégica de estoque.
 - Foram adicionados cards e blocos para estoque precificado, unidades disponíveis para venda, reservas/propostas, itens sem valor informado, mapa imobiliário, insumos em estoque e propriedade própria/terceiro.
+- A visão inicial passou a considerar apenas itens ainda em carteira; vendidos, locados, transferidos e terceiros ficam fora dos cards/gráficos e aparecem na lista quando o filtro `Todos, incluindo vendidos` é selecionado.
 - A integração de Estoque em Configurações passou a buscar também tabelas de preço, reservas de insumos e, quando houver centros de custo configurados, mapa imobiliário consolidado e insumos por centro de custo.
 - A lista operacional ganhou filtro para separar itens com valor informado e sem valor informado.
 - O mapa Sienge e o histórico por portal passaram a considerar as novas fontes de estoque.

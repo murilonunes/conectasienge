@@ -569,7 +569,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .inventory-quality-grid div { display: grid; gap: 7px; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; min-width: 0; }
 .inventory-quality-grid strong { font-family: Georgia, serif; font-size: 24px; font-weight: 500; }
 .inventory-quality-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.inventory-filters { padding: 14px; display: grid; grid-template-columns: minmax(220px, 1fr) 170px 170px 160px 170px auto; gap: 10px; align-items: center; margin-bottom: 16px; }
+.inventory-filters { padding: 14px; display: grid; grid-template-columns: minmax(220px, 1fr) 180px 150px 160px 150px 160px auto; gap: 10px; align-items: center; margin-bottom: 16px; }
 .inventory-filters input, .inventory-filters select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 12px; color: var(--muted); outline: none; }
 .inventory-filters > div { display: flex; gap: 7px; align-items: baseline; white-space: nowrap; color: var(--muted); font-size: 10px; }
 .inventory-filters > div strong { color: var(--ink); font-size: 12px; }

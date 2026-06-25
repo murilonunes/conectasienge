@@ -151,6 +151,12 @@ export type RawPatrimonyAsset = Omit<InventoryAsset, "kind" | "id" | "unitId">;
 export type InventorySummary = {
   totalValue: number;
   pricedValue: number;
+  portfolioValue: number;
+  portfolioPricedValue: number;
+  portfolioCount: number;
+  portfolioPricedCount: number;
+  portfolioNoValueCount: number;
+  portfolioPrivateArea: number;
   mapStockValue: number;
   mapVgv: number;
   mapGrossProfit: number;

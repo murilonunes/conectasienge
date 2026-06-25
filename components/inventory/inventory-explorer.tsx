@@ -9,8 +9,13 @@ import { formatCurrency, formatDate } from "@/lib/formatters";
 
 const TYPES: InventoryAssetKind[] = ["unit", "movable", "fixed"];
 
-export function InventoryExplorer({ assets }: { assets: InventoryAsset[] }) {
+function isSoldOrOut(asset: InventoryAsset) {
+  return asset.kind === "unit" && ["V", "G", "T", "L"].includes(asset.commercialStock || "");
+}
+
+export function InventoryExplorer({ assets, initialScope = "portfolio" }: { assets: InventoryAsset[]; initialScope?: "portfolio" | "all" }) {
   const [search, setSearch] = useState("");
+  const [scope, setScope] = useState(initialScope);
   const [type, setType] = useState("");
   const [ownership, setOwnership] = useState("");
   const [situation, setSituation] = useState("");
@@ -41,18 +46,23 @@ export function InventoryExplorer({ assets }: { assets: InventoryAsset[] }) {
         asset.city
       ].filter(Boolean).join(" ").toLowerCase();
       const matchesText = text.includes(search.toLowerCase());
+      const matchesScope = scope === "all" || !isSoldOrOut(asset);
       const matchesType = !type || asset.kind === type;
       const matchesOwnership = !ownership || ownershipLabel(asset) === ownership;
       const matchesSituation = !situation || situationLabel(asset) === situation;
       const value = assetValue(asset).value;
       const matchesValue = !valueStatus || (valueStatus === "priced" ? value > 0 : value <= 0);
-      return matchesText && matchesType && matchesOwnership && matchesSituation && matchesValue;
-    }), [assets, search, type, ownership, situation, valueStatus]);
+      return matchesText && matchesScope && matchesType && matchesOwnership && matchesSituation && matchesValue;
+    }), [assets, search, scope, type, ownership, situation, valueStatus]);
 
   return (
     <section>
       <div className="card inventory-filters">
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar patrimônio, unidade, matrícula, placa ou código" />
+        <select value={scope} onChange={(event) => setScope(event.target.value as "portfolio" | "all")}>
+          <option value="portfolio">Em carteira</option>
+          <option value="all">Todos, incluindo vendidos</option>
+        </select>
         <select value={type} onChange={(event) => setType(event.target.value)}>
           <option value="">Todos os tipos</option>
           {TYPES.map((item) => <option value={item} key={item}>{assetKindLabel(item)}</option>)}
@@ -77,7 +87,7 @@ export function InventoryExplorer({ assets }: { assets: InventoryAsset[] }) {
       <LocalDataList
         items={filtered}
         itemLabel="bens"
-        resetKey={`${search}|${type}|${ownership}|${situation}|${valueStatus}`}
+        resetKey={`${search}|${scope}|${type}|${ownership}|${situation}|${valueStatus}`}
         emptyMessage="Nenhum bem em estoque encontrado."
         renderItems={(pageItems) => (
           <div className="card table-card">

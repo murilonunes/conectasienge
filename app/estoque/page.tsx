@@ -21,28 +21,37 @@ function sourceDelta(source?: InventorySourceStat) {
 
 export default async function InventoryPage() {
   const result = await loadInventoryAssets();
+  const portfolioAssets = result.assets.filter((asset) => !(asset.kind === "unit" && ["V", "G", "T", "L"].includes(asset.commercialStock || "")));
   const summary = analyzeInventory(result.assets, {
     realEstateMap: result.realEstateMap,
     priceTables: result.priceTables,
     stockReservations: result.stockReservations,
     stockItems: result.stockItems
   });
-  const pricingCoverage = result.assets.length ? Math.round((summary.pricedCount / result.assets.length) * 100) : 0;
-  const commercialCoverage = summary.unitCount ? Math.round((summary.saleableUnitCount / summary.unitCount) * 100) : 0;
+  const portfolioSummary = analyzeInventory(portfolioAssets, {
+    realEstateMap: result.realEstateMap,
+    priceTables: result.priceTables,
+    stockReservations: result.stockReservations,
+    stockItems: result.stockItems
+  });
+  const pricingCoverage = summary.portfolioCount ? Math.round((summary.portfolioPricedCount / summary.portfolioCount) * 100) : 0;
+  const portfolioUnitCount = portfolioAssets.filter((asset) => asset.kind === "unit").length;
+  const commercialCoverage = portfolioUnitCount ? Math.round((summary.saleableUnitCount / portfolioUnitCount) * 100) : 0;
   const mapStockValue = summary.mapStockValue || summary.saleableUnitValue || summary.totalValue;
+  const soldHiddenCount = summary.soldOrThirdPartyUnitCount;
 
   return (
     <>
       <PageHeading
         eyebrow="Portal de estoque"
         title="Visão estratégica de estoque"
-        subtitle={`${result.totalCount} bens e unidades salvos. A tela lê apenas dados integrados e destaca carteira vendável, reservas, valores não informados e fontes avançadas.`}
+        subtitle={`${summary.portfolioCount} itens em carteira. Vendidos, locados, transferidos e terceiros ficam fora da visão inicial e aparecem na listagem quando você filtrar.`}
       />
       <div className="stats">
-        <StatCard label="Estoque precificado" value={formatCompactCurrency(summary.pricedValue || summary.totalValue)} delta={`${summary.pricedCount} de ${result.totalCount} itens com valor informado`} warn={summary.noValueCount > 0} icon="R$" />
-        <StatCard label="Disponível para venda" value={String(summary.saleableUnitCount)} delta={`${commercialCoverage}% das unidades imobiliárias`} icon="D" />
+        <StatCard label="Carteira precificada" value={formatCompactCurrency(summary.portfolioPricedValue || summary.portfolioValue)} delta={`${summary.portfolioPricedCount} de ${summary.portfolioCount} itens em carteira com valor`} warn={summary.portfolioNoValueCount > 0} icon="R$" />
+        <StatCard label="Disponível para venda" value={String(summary.saleableUnitCount)} delta={`${commercialCoverage}% das unidades em carteira`} icon="D" />
         <StatCard label="Reservas e propostas" value={String(summary.reservedUnitCount)} delta={formatCompactCurrency(summary.reservedUnitValue)} warn={summary.reservedUnitCount > 0} icon="R" />
-        <StatCard label="Sem valor informado" value={String(summary.noValueCount)} delta={`${pricingCoverage}% da base tem preço`} warn={summary.noValueCount > 0} icon="!" />
+        <StatCard label="Fora da visão inicial" value={String(soldHiddenCount)} delta="Vendidos, locados, transferidos ou terceiros" icon="V" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
         {result.warning && <div className="card data-notice"><strong>Dados parciais</strong><span>{result.warning}</span></div>}
@@ -57,7 +66,7 @@ export default async function InventoryPage() {
           <div>
             <span>Carteira disponível</span>
             <strong>{formatCompactCurrency(summary.saleableUnitValue || mapStockValue)}</strong>
-            <small>{summary.saleableUnitCount} unidades disponíveis e {summary.privateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} m² privativos mapeados.</small>
+            <small>{summary.saleableUnitCount} unidades disponíveis e {summary.portfolioPrivateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} m² privativos em carteira.</small>
           </div>
           <div>
             <span>Mapa imobiliário</span>
@@ -71,8 +80,8 @@ export default async function InventoryPage() {
           </div>
           <div>
             <span>Propriedade</span>
-            <strong>{summary.ownCount} próprios</strong>
-            <small>{summary.thirdPartyCount} terceiros ou vendidos para terceiros.</small>
+            <strong>{portfolioSummary.ownCount} próprios</strong>
+            <small>{portfolioSummary.thirdPartyCount} terceiros em carteira. Vendidos ficam só na listagem.</small>
           </div>
         </section>
 
@@ -87,13 +96,13 @@ export default async function InventoryPage() {
         </div>
 
         <div className="grid-main equal-grid">
-          <PercentPieChart title="Carteira por situação" note="Distribuição comercial das unidades imobiliárias" data={summary.byStock} centerLabel="unidades" />
-          <RankingChart title="Valor por empreendimento" note="Unidades com maior valor informado" data={summary.byEnterprise} countLabel="unidade" />
+          <PercentPieChart title="Carteira por situação" note="Somente unidades ainda em carteira" data={portfolioSummary.byStock} centerLabel="unidades" />
+          <RankingChart title="Valor por empreendimento" note="Somente unidades ainda em carteira" data={portfolioSummary.byEnterprise} countLabel="unidade" />
         </div>
 
         <div className="grid-main equal-grid">
-          <RankingChart title="Distribuição por tipo de bem" note="Quantidade e valor por origem patrimonial" data={summary.byKind} countLabel="bem" />
-          <RankingChart title="Próprio x terceiros" note="Classificação por evidência retornada pelo Sienge" data={summary.byOwnership} countLabel="item" />
+          <RankingChart title="Distribuição por tipo de bem" note="Somente itens em carteira" data={portfolioSummary.byKind} countLabel="bem" />
+          <RankingChart title="Próprio x terceiros" note="Somente itens em carteira" data={portfolioSummary.byOwnership} countLabel="item" />
         </div>
 
         <section className="card panel inventory-stock-panel">
@@ -104,8 +113,8 @@ export default async function InventoryPage() {
             </div>
           </div>
           <div className="inventory-quality-grid">
-            <div><span>Com valor</span><strong>{summary.pricedCount}</strong><small>{formatCompactCurrency(summary.pricedValue)}</small></div>
-            <div><span>Sem valor</span><strong>{summary.noValueCount}</strong><small>Revisar cadastro, avaliação ou tabela</small></div>
+            <div><span>Com valor</span><strong>{summary.portfolioPricedCount}</strong><small>{formatCompactCurrency(summary.portfolioPricedValue)}</small></div>
+            <div><span>Sem valor</span><strong>{summary.portfolioNoValueCount}</strong><small>Revisar cadastro, avaliação ou tabela</small></div>
             <div><span>Tabelas ativas</span><strong>{summary.activePriceTableCount}</strong><small>{result.priceTables.length} tabela(s) salvas</small></div>
             <div><span>Margem no mapa</span><strong>{(summary.averageMapMargin * 100).toFixed(1).replace(".", ",")}%</strong><small>{formatCompactCurrency(summary.mapGrossProfit)} lucro bruto</small></div>
           </div>
@@ -134,7 +143,7 @@ export default async function InventoryPage() {
           <span>Próprio/terceiro usa proprietário anterior, origem contábil, indicador de uso e estoque comercial quando esses campos existem. Valor informado usa incorporação, valor contábil, avaliação, tabela especial, fração de VGV ou terreno; quando nada vem da API, aparece como sem valor.</span>
         </div>
 
-        <InventoryExplorer assets={result.assets} />
+        <InventoryExplorer assets={result.assets} initialScope="portfolio" />
       </>}
     </>
   );

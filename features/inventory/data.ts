@@ -455,6 +455,10 @@ function isSoldOrThirdPartyUnit(asset: InventoryAsset) {
   return asset.kind === "unit" && ["V", "G", "T", "L"].includes(asset.commercialStock || "");
 }
 
+function isInitialPortfolioAsset(asset: InventoryAsset) {
+  return asset.kind !== "unit" || !isSoldOrThirdPartyUnit(asset);
+}
+
 function stockItemValue(item: InventoryStockItem) {
   return money(item.quantity) * money(item.averagePrice);
 }
@@ -498,6 +502,8 @@ export function analyzeInventory(
   const reservedUnits = assets.filter(isReservedUnit);
   const soldOrThirdPartyUnits = assets.filter(isSoldOrThirdPartyUnit);
   const pricedAssets = assets.filter((asset) => assetValue(asset).value > 0);
+  const portfolioAssets = assets.filter(isInitialPortfolioAsset);
+  const portfolioPricedAssets = portfolioAssets.filter((asset) => assetValue(asset).value > 0);
   const mapStockValue = realEstateMap.reduce((sum, item) => sum + money(item.corporateCost?.stock), 0);
   const mapVgv = realEstateMap.reduce((sum, item) => sum + money(item.vgvData?.vgv), 0);
   const mapGrossProfit = realEstateMap.reduce((sum, item) => sum + money(item.margin?.grossProfit), 0);
@@ -506,6 +512,12 @@ export function analyzeInventory(
   return {
     totalValue: assets.reduce((sum, asset) => sum + assetValue(asset).value, 0),
     pricedValue: pricedAssets.reduce((sum, asset) => sum + assetValue(asset).value, 0),
+    portfolioValue: portfolioAssets.reduce((sum, asset) => sum + assetValue(asset).value, 0),
+    portfolioPricedValue: portfolioPricedAssets.reduce((sum, asset) => sum + assetValue(asset).value, 0),
+    portfolioCount: portfolioAssets.length,
+    portfolioPricedCount: portfolioPricedAssets.length,
+    portfolioNoValueCount: portfolioAssets.filter((asset) => assetValue(asset).value <= 0).length,
+    portfolioPrivateArea: portfolioAssets.reduce((sum, asset) => sum + money(asset.privateArea), 0),
     mapStockValue,
     mapVgv,
     mapGrossProfit,
