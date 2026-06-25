@@ -8,7 +8,7 @@ export const updateAreas: UpdateAreaDefinition[] = [
   { key: "receivables", label: "Contas a receber", note: "Previsão de recebimentos e parcelas em aberto.", historyKey: "receivables" },
   { key: "sales", label: "Vendas", note: "Contratos de vendas e gráficos comerciais.", historyKey: "sales" },
   { key: "contracts", label: "Contratos", note: "Contratos de fornecimento, saldos e medições.", historyKey: "contracts" },
-  { key: "inventory", label: "Estoque e patrimônio", note: "Unidades imobiliárias, bens móveis e bens imóveis.", historyKey: "inventory" },
+  { key: "inventory", label: "Estoque e patrimônio", note: "Unidades, patrimônio, tabelas de preço, mapa imobiliário, reservas e insumos.", historyKey: "inventory" },
   { key: "purchases", label: "Compras", note: "Solicitações, cotações, pedidos e notas.", historyKey: "purchases" },
   { key: "reconciliation", label: "Conciliação", note: "Movimentos bancários e itens a conciliar.", historyKey: "reconciliation" }
 ];

@@ -41,6 +41,7 @@ async function saveSettingsAction(formData: FormData) {
     siengeEndDate: asText(formData.get("siengeEndDate"), current.siengeEndDate),
     payablesFutureMonths: asNumber(formData.get("payablesFutureMonths"), current.payablesFutureMonths),
     reconciliationAccountNumbers: selectedValues(formData, "reconciliationAccountNumbers"),
+    inventoryCostCenterIds: asText(formData.get("inventoryCostCenterIds"), current.inventoryCostCenterIds),
     showUpdateWarnings: formData.get("showUpdateWarnings") === "on"
   };
 
@@ -197,6 +198,11 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
               <select name="payablesFutureMonths" defaultValue={settings.payablesFutureMonths}>
                 {[1, 2, 3, 4, 5, 6].map((months) => <option key={months} value={months}>{months} meses</option>)}
               </select>
+            </label>
+            <label>
+              Centros de custo para estoque avançado
+              <input name="inventoryCostCenterIds" defaultValue={settings.inventoryCostCenterIds} placeholder="Ex.: 1, 2, 15" />
+              <small>Usado para consultar mapa imobiliário consolidado e insumos em estoque quando o Sienge exigir centro de custo.</small>
             </label>
             <ReconciliationAccountPicker
               accounts={reconciliationAccounts}

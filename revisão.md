@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-06-23
+Atualizado em: 2026-06-25
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -31,7 +31,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |
 | Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
-| Pendente | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx` | Conferir se valores zerados e propriedade própria/terceiro estão claros. A tela já usa lista local paginada. |
+| Revisado | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx`, `features/inventory/data.ts` | Revisado e ampliado: tela virou visão estratégica de estoque, com carteira vendável, reservas/propostas, qualidade da base de valores, propriedade, mapa imobiliário e insumos quando configurados. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
 | Revisado | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | Revisado: a primeira leitura local é renderizada no servidor; a rota client-side com progresso ficou apenas para recarga explícita dos dados salvos. |
 | Revisado | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Revisado: agenda segue lendo SQLite local e o atalho direto para `Novo lançamento` foi removido para não misturar consulta com escrita no Sienge. |
@@ -114,6 +114,20 @@ Pendências mantidas:
 
 - Exportação PDF/Excel dos relatórios ainda está sinalizada como próxima etapa, sem implementação.
 - A DRE POC continua sendo estimativa gerencial: para virar apuração contábil completa, ainda precisa apropriação histórica por unidade vendida e medição mensal detalhada.
+
+### Etapa 7 revisada - Estoque e patrimônio
+
+Revisado nesta etapa:
+
+- `/estoque`: deixou de ser apenas uma lista de bens e passou a abrir com visão estratégica de estoque.
+- Foram adicionados cards e blocos para estoque precificado, unidades disponíveis para venda, reservas/propostas, itens sem valor informado, mapa imobiliário, insumos em estoque e propriedade própria/terceiro.
+- A integração de Estoque em Configurações passou a buscar também tabelas de preço, reservas de insumos e, quando houver centros de custo configurados, mapa imobiliário consolidado e insumos por centro de custo.
+- A lista operacional ganhou filtro para separar itens com valor informado e sem valor informado.
+- O mapa Sienge e o histórico por portal passaram a considerar as novas fontes de estoque.
+
+Pendência mantida:
+
+- Mapa imobiliário e insumos por centro de custo dependem do preenchimento de centros de custo em Configurações e de permissão no Sienge para esses endpoints.
 
 ## Plano por etapas
 

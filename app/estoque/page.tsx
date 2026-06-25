@@ -2,6 +2,8 @@ import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { InventoryExplorer } from "@/components/inventory/inventory-explorer";
+import { PercentPieChart } from "@/components/charts/percent-pie-chart";
+import { RankingChart } from "@/components/charts/ranking-chart";
 import { analyzeInventory, loadInventoryAssets } from "@/features/inventory/data";
 import type { InventorySourceStat } from "@/features/inventory/types";
 import { formatCompactCurrency } from "@/lib/formatters";
@@ -13,28 +15,67 @@ function sourceDelta(source?: InventorySourceStat) {
   if (source.status === "error") return "Não foi possível carregar";
   if (source.status === "empty") return "Sem itens nessa origem";
   if (source.status === "partial") return `${source.loadedCount} exibido(s) de ${source.apiCount} informado(s)`;
+  if (source.status === "not_configured") return "Configure centros de custo";
   return `${source.loadedCount} item(ns) carregado(s)`;
 }
 
 export default async function InventoryPage() {
   const result = await loadInventoryAssets();
-  const summary = analyzeInventory(result.assets);
+  const summary = analyzeInventory(result.assets, {
+    realEstateMap: result.realEstateMap,
+    priceTables: result.priceTables,
+    stockReservations: result.stockReservations,
+    stockItems: result.stockItems
+  });
+  const pricingCoverage = result.assets.length ? Math.round((summary.pricedCount / result.assets.length) * 100) : 0;
+  const commercialCoverage = summary.unitCount ? Math.round((summary.saleableUnitCount / summary.unitCount) * 100) : 0;
+  const mapStockValue = summary.mapStockValue || summary.saleableUnitValue || summary.totalValue;
 
   return (
     <>
       <PageHeading
         eyebrow="Portal de estoque"
-        title="Bens em estoque"
-        subtitle={`${result.totalCount} itens exibidos a partir dos dados integrados.`}
+        title="Visão estratégica de estoque"
+        subtitle={`${result.totalCount} bens e unidades salvos. A tela lê apenas dados integrados e destaca carteira vendável, reservas, valores não informados e fontes avançadas.`}
       />
       <div className="stats">
-        <StatCard label="Valor em estoque" value={formatCompactCurrency(summary.totalValue)} delta="Valores de incorporação, avaliação ou venda" icon="R$" />
-        <StatCard label="Unidades imobiliárias" value={String(summary.unitCount)} delta={sourceDelta(result.sourceStats[0])} icon="U" />
-        <StatCard label="Bens móveis" value={String(summary.movableCount)} delta={sourceDelta(result.sourceStats[1])} warn={result.sourceStats[1]?.status !== "ok"} icon="M" />
-        <StatCard label="Bens imóveis" value={String(summary.fixedCount)} delta={sourceDelta(result.sourceStats[2])} warn={result.sourceStats[2]?.status !== "ok"} icon="I" />
+        <StatCard label="Estoque precificado" value={formatCompactCurrency(summary.pricedValue || summary.totalValue)} delta={`${summary.pricedCount} de ${result.totalCount} itens com valor informado`} warn={summary.noValueCount > 0} icon="R$" />
+        <StatCard label="Disponível para venda" value={String(summary.saleableUnitCount)} delta={`${commercialCoverage}% das unidades imobiliárias`} icon="D" />
+        <StatCard label="Reservas e propostas" value={String(summary.reservedUnitCount)} delta={formatCompactCurrency(summary.reservedUnitValue)} warn={summary.reservedUnitCount > 0} icon="R" />
+        <StatCard label="Sem valor informado" value={String(summary.noValueCount)} delta={`${pricingCoverage}% da base tem preço`} warn={summary.noValueCount > 0} icon="!" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
         {result.warning && <div className="card data-notice"><strong>Dados parciais</strong><span>{result.warning}</span></div>}
+        {result.sourceStats.some((source) => source.status === "not_configured") && (
+          <div className="card data-notice">
+            <strong>Estoque avançado opcional</strong>
+            <span>Para consultar mapa imobiliário consolidado e insumos por centro de custo, informe os centros em Configurações e atualize Estoque e patrimônio.</span>
+          </div>
+        )}
+
+        <section className="card inventory-executive">
+          <div>
+            <span>Carteira disponível</span>
+            <strong>{formatCompactCurrency(summary.saleableUnitValue || mapStockValue)}</strong>
+            <small>{summary.saleableUnitCount} unidades disponíveis e {summary.privateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} m² privativos mapeados.</small>
+          </div>
+          <div>
+            <span>Mapa imobiliário</span>
+            <strong>{formatCompactCurrency(summary.mapVgv)}</strong>
+            <small>{result.realEstateMap.length ? `${result.realEstateMap.length} registros de mapa consolidado` : "Configure centros de custo para enriquecer esta visão."}</small>
+          </div>
+          <div>
+            <span>Insumos em estoque</span>
+            <strong>{formatCompactCurrency(summary.stockInputValue)}</strong>
+            <small>{summary.stockInputCount} itens de insumo salvos.</small>
+          </div>
+          <div>
+            <span>Propriedade</span>
+            <strong>{summary.ownCount} próprios</strong>
+            <small>{summary.thirdPartyCount} terceiros ou vendidos para terceiros.</small>
+          </div>
+        </section>
+
         <div className="card inventory-source-panel">
           {result.sourceStats.map((source) => (
             <div key={source.endpoint}>
@@ -44,19 +85,55 @@ export default async function InventoryPage() {
             </div>
           ))}
         </div>
+
+        <div className="grid-main equal-grid">
+          <PercentPieChart title="Carteira por situação" note="Distribuição comercial das unidades imobiliárias" data={summary.byStock} centerLabel="unidades" />
+          <RankingChart title="Valor por empreendimento" note="Unidades com maior valor informado" data={summary.byEnterprise} countLabel="unidade" />
+        </div>
+
+        <div className="grid-main equal-grid">
+          <RankingChart title="Distribuição por tipo de bem" note="Quantidade e valor por origem patrimonial" data={summary.byKind} countLabel="bem" />
+          <RankingChart title="Próprio x terceiros" note="Classificação por evidência retornada pelo Sienge" data={summary.byOwnership} countLabel="item" />
+        </div>
+
         <section className="card panel inventory-stock-panel">
-          <div className="panel-head"><div><h2 className="panel-title">Distribuição por tipo de bem</h2><span className="panel-note">Quantidade e valor por tipo de estoque</span></div></div>
-          <div className="ranking-list">
-            {summary.byKind.map((item) => {
-              const max = Math.max(...summary.byKind.map((kind) => kind.count), 1);
-              return <div className="ranking-row" key={item.label}><div><span>{item.label}</span><strong>{item.count} bem(ns)</strong></div><div className="ranking-track"><i style={{ width: `${Math.max(4, (item.count / max) * 100)}%` }} /></div><small>{formatCompactCurrency(item.value)}</small></div>;
-            })}
+          <div className="panel-head">
+            <div>
+              <h2 className="panel-title">Qualidade da base de valores</h2>
+              <span className="panel-note">Ajuda a separar estoque sem preço de estoque realmente avaliado.</span>
+            </div>
+          </div>
+          <div className="inventory-quality-grid">
+            <div><span>Com valor</span><strong>{summary.pricedCount}</strong><small>{formatCompactCurrency(summary.pricedValue)}</small></div>
+            <div><span>Sem valor</span><strong>{summary.noValueCount}</strong><small>Revisar cadastro, avaliação ou tabela</small></div>
+            <div><span>Tabelas ativas</span><strong>{summary.activePriceTableCount}</strong><small>{result.priceTables.length} tabela(s) salvas</small></div>
+            <div><span>Margem no mapa</span><strong>{(summary.averageMapMargin * 100).toFixed(1).replace(".", ",")}%</strong><small>{formatCompactCurrency(summary.mapGrossProfit)} lucro bruto</small></div>
           </div>
         </section>
-        <div className="card data-notice">
-          <strong>Propriedade</strong>
-          <span>A marcação como próprio ou terceiro usa as informações de origem e proprietário quando elas existem.</span>
+
+        <div className="grid-main equal-grid">
+          <RankingChart title="Insumos com maior valor" note="Quantidade x preço médio por insumo salvo" data={summary.stockItemsTop} countLabel="item" />
+          <section className="card panel">
+            <div className="panel-head">
+              <div>
+                <h2 className="panel-title">Reservas de insumos</h2>
+                <span className="panel-note">Reservas salvas no Sienge que podem indicar compromisso operacional.</span>
+              </div>
+            </div>
+            <div className="inventory-quality-grid compact">
+              <div><span>Pendentes</span><strong>{summary.pendingReservationCount}</strong><small>Reservas aguardando movimentação</small></div>
+              <div><span>Total salvo</span><strong>{result.stockReservations.length}</strong><small>Reservas integradas</small></div>
+              <div><span>Fontes avançadas</span><strong>{result.sourceStats.filter((source) => source.status === "ok").length}</strong><small>Consultas com dados locais</small></div>
+              <div><span>Mapa imobiliário</span><strong>{result.realEstateMap.length}</strong><small>{formatCompactCurrency(summary.mapStockValue)} em estoque no mapa</small></div>
+            </div>
+          </section>
         </div>
+
+        <div className="card data-notice">
+          <strong>Como ler propriedade e valores</strong>
+          <span>Próprio/terceiro usa proprietário anterior, origem contábil, indicador de uso e estoque comercial quando esses campos existem. Valor informado usa incorporação, valor contábil, avaliação, tabela especial, fração de VGV ou terreno; quando nada vem da API, aparece como sem valor.</span>
+        </div>
+
         <InventoryExplorer assets={result.assets} />
       </>}
     </>

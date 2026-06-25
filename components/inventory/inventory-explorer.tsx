@@ -14,6 +14,7 @@ export function InventoryExplorer({ assets }: { assets: InventoryAsset[] }) {
   const [type, setType] = useState("");
   const [ownership, setOwnership] = useState("");
   const [situation, setSituation] = useState("");
+  const [valueStatus, setValueStatus] = useState("");
   const situations = useMemo(() => Array.from(new Set(assets.map(situationLabel))).sort(), [assets]);
 
   const filtered = useMemo(() => assets
@@ -43,8 +44,10 @@ export function InventoryExplorer({ assets }: { assets: InventoryAsset[] }) {
       const matchesType = !type || asset.kind === type;
       const matchesOwnership = !ownership || ownershipLabel(asset) === ownership;
       const matchesSituation = !situation || situationLabel(asset) === situation;
-      return matchesText && matchesType && matchesOwnership && matchesSituation;
-    }), [assets, search, type, ownership, situation]);
+      const value = assetValue(asset).value;
+      const matchesValue = !valueStatus || (valueStatus === "priced" ? value > 0 : value <= 0);
+      return matchesText && matchesType && matchesOwnership && matchesSituation && matchesValue;
+    }), [assets, search, type, ownership, situation, valueStatus]);
 
   return (
     <section>
@@ -63,13 +66,18 @@ export function InventoryExplorer({ assets }: { assets: InventoryAsset[] }) {
           <option>Próprio</option>
           <option>Terceiro</option>
         </select>
+        <select value={valueStatus} onChange={(event) => setValueStatus(event.target.value)}>
+          <option value="">Com e sem valor</option>
+          <option value="priced">Com valor informado</option>
+          <option value="missing">Sem valor informado</option>
+        </select>
         <div><strong>{filtered.length}</strong><span>bens</span></div>
       </div>
 
       <LocalDataList
         items={filtered}
         itemLabel="bens"
-        resetKey={`${search}|${type}|${ownership}|${situation}`}
+        resetKey={`${search}|${type}|${ownership}|${situation}|${valueStatus}`}
         emptyMessage="Nenhum bem em estoque encontrado."
         renderItems={(pageItems) => (
           <div className="card table-card">

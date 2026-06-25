@@ -554,13 +554,22 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .sales-value-bar { background: linear-gradient(to top, var(--green), #4c9878); }
 .sales-count-bar { background: #d6a04e; }
 .sales-count-bar b { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #9b641d; font-size: 8px; }
-.inventory-source-panel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 18px; background: var(--line); }
+.inventory-executive { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 18px; padding: 0; background: var(--line); }
+.inventory-executive div { display: grid; gap: 7px; padding: 18px; background: #fff; min-width: 0; }
+.inventory-executive span, .inventory-quality-grid span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.inventory-executive strong { font-family: Georgia, serif; font-size: 25px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inventory-executive small, .inventory-quality-grid small { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.inventory-source-panel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 18px; background: var(--line); }
 .inventory-source-panel div { display: grid; gap: 5px; padding: 15px 17px; background: #fff; }
 .inventory-source-panel strong { font-size: 12px; text-transform: capitalize; }
 .inventory-source-panel span { color: var(--green); font-size: 10px; font-weight: 800; }
 .inventory-source-panel small { color: var(--muted); font-size: 10px; }
 .inventory-stock-panel { margin-bottom: 18px; }
-.inventory-filters { padding: 14px; display: grid; grid-template-columns: 1fr 190px 180px 180px auto; gap: 10px; align-items: center; margin-bottom: 16px; }
+.inventory-quality-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.inventory-quality-grid div { display: grid; gap: 7px; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; min-width: 0; }
+.inventory-quality-grid strong { font-family: Georgia, serif; font-size: 24px; font-weight: 500; }
+.inventory-quality-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.inventory-filters { padding: 14px; display: grid; grid-template-columns: minmax(220px, 1fr) 170px 170px 160px 170px auto; gap: 10px; align-items: center; margin-bottom: 16px; }
 .inventory-filters input, .inventory-filters select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 12px; color: var(--muted); outline: none; }
 .inventory-filters > div { display: flex; gap: 7px; align-items: baseline; white-space: nowrap; color: var(--muted); font-size: 10px; }
 .inventory-filters > div strong { color: var(--ink); font-size: 12px; }
@@ -809,7 +818,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .bill-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .payables-agenda { grid-template-columns: 1fr; }
   .payables-period:last-child { grid-column: auto; }
-  .inventory-source-panel { grid-template-columns: 1fr; }
+  .inventory-executive, .inventory-source-panel, .inventory-quality-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .purchases-source-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .purchase-periods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .purchase-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -855,6 +864,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .settlement-grid { grid-template-columns: 1fr; }
   .settlement-search form { align-items: stretch; flex-direction: column; }
   .sales-filters { grid-template-columns: 1fr; }
+  .inventory-executive, .inventory-source-panel, .inventory-quality-grid, .inventory-quality-grid.compact { grid-template-columns: 1fr; }
   .inventory-filters { grid-template-columns: 1fr; }
   .contracts-filters { grid-template-columns: 1fr; }
   .purchases-filters { grid-template-columns: 1fr; }

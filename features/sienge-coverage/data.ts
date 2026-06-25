@@ -170,13 +170,17 @@ const modules: ModuleDefinition[] = [
     route: "/estoque",
     bestUse: "Saber o que está em estoque, disponível, próprio/de terceiros e com valor informado.",
     systemUse: "Portal de estoque, dashboard e relatórios.",
-    nextStep: "Melhorar avaliação de valor de estoque e situação comercial por unidade.",
-    strengths: ["Unidades imobiliárias", "Bens móveis", "Bens imóveis", "Situação comercial"],
-    gaps: ["Valores retornados pela API podem vir zerados", "Ainda não há curva de giro de estoque"],
+    nextStep: "Configurar centros de custo para enriquecer mapa imobiliário e insumos em estoque.",
+    strengths: ["Unidades imobiliárias", "Bens móveis", "Bens imóveis", "Situação comercial", "Mapa imobiliário", "Insumos e reservas"],
+    gaps: ["Valores retornados pela API podem vir zerados", "Mapa e insumos dependem de centro de custo configurado"],
     endpoints: [
       { label: "Unidades imobiliárias", endpoint: "/v1/units", database: "inventory", implemented: true, role: "Estoque comercial" },
       { label: "Bens móveis", endpoint: "/v1/patrimony/movable", database: "inventory", implemented: true, role: "Patrimônio móvel" },
-      { label: "Bens imóveis", endpoint: "/v1/patrimony/fixed", database: "inventory", implemented: true, role: "Patrimônio fixo" }
+      { label: "Bens imóveis", endpoint: "/v1/patrimony/fixed", database: "inventory", implemented: true, role: "Patrimônio fixo" },
+      { label: "Tabelas de preço", endpoint: "/v1/price-tables", database: "inventory", implemented: true, role: "Base de preço comercial" },
+      { label: "Mapa imobiliário", endpoint: "/v1/real-estate-map", database: "inventory", implemented: true, role: "VGV, estoque e margem por empreendimento" },
+      { label: "Reservas de insumos", endpoint: "/v1/stock-reservations", database: "inventory", implemented: true, role: "Compromissos operacionais de estoque" },
+      { label: "Insumos em estoque", endpoint: "/v1/stock-inventories", database: "inventory", implemented: true, role: "Quantidade e valor médio por insumo" }
     ]
   },
   {
@@ -236,11 +240,13 @@ function tableCount(database: DatabaseSync, table: string) {
 
 function endpointCount(database: DatabaseSync, endpoint: string) {
   if (!tableExists(database, "sienge_records")) return { count: 0, lastUpdatedAt: undefined as string | undefined, lastDay: undefined as string | undefined };
+  const operator = endpoint === "/v1/stock-inventories" ? "LIKE" : "=";
+  const value = endpoint === "/v1/stock-inventories" ? `${endpoint}/%` : endpoint;
   const row = database.prepare(`
     SELECT COUNT(*) AS count, MAX(saved_at) AS lastUpdatedAt, MAX(source_day) AS lastDay
     FROM sienge_records
-    WHERE endpoint = ?
-  `).get(endpoint) as Row;
+    WHERE endpoint ${operator} ?
+  `).get(value) as Row;
   return {
     count: Number(row.count || 0),
     lastUpdatedAt: row.lastUpdatedAt ? String(row.lastUpdatedAt) : undefined,

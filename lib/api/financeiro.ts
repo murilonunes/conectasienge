@@ -65,7 +65,15 @@ export const estoqueApi = {
   movable: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
     siengeRequest<SiengePage<T>>("/v1/patrimony/movable", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
   fixed: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
-    siengeRequest<SiengePage<T>>("/v1/patrimony/fixed", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized })
+    siengeRequest<SiengePage<T>>("/v1/patrimony/fixed", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
+  priceTables: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
+    siengeRequest<SiengePage<T>>("/v1/price-tables", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
+  realEstateMap: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
+    siengeRequest<SiengePage<T>>("/v1/real-estate-map", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
+  stockReservations: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
+    siengeRequest<SiengePage<T>>("/v1/stock-reservations", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
+  stockInventoryItems: <T>(costCenterId: number, filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
+    siengeRequest<SiengePage<T>>(`/v1/stock-inventories/${costCenterId}/items`, filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized })
 };
 
 export const comprasApi = {

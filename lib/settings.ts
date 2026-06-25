@@ -12,6 +12,7 @@ export type AppSettings = {
   siengeEndDate: string;
   payablesFutureMonths: number;
   reconciliationAccountNumbers: string;
+  inventoryCostCenterIds: string;
   showUpdateWarnings: boolean;
 };
 
@@ -39,6 +40,7 @@ function defaults(): AppSettings {
     siengeEndDate: defaultSiengeEndDate(),
     payablesFutureMonths: 2,
     reconciliationAccountNumbers: "",
+    inventoryCostCenterIds: "",
     showUpdateWarnings: true
   };
 }
@@ -128,6 +130,7 @@ export function getAppSettings(): AppSettings {
     siengeEndDate: integrationRange.endDate,
     payablesFutureMonths: toNumber(values.get("payablesFutureMonths"), currentDefaults.payablesFutureMonths, 1, 6),
     reconciliationAccountNumbers: values.get("reconciliationAccountNumbers") || values.get("reconciliationAccountNumber") || currentDefaults.reconciliationAccountNumbers,
+    inventoryCostCenterIds: values.get("inventoryCostCenterIds") || currentDefaults.inventoryCostCenterIds,
     showUpdateWarnings: values.get("showUpdateWarnings") !== "false"
   };
 }

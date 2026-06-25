@@ -6,6 +6,12 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A revisão de `/estoque` foi concluída.
+- O portal de estoque virou uma visão estratégica: mostra estoque precificado, unidades disponíveis para venda, reservas/propostas, itens sem valor informado, propriedade própria/terceiro, mapa imobiliário e insumos quando esses dados estiverem integrados.
+- A integração de Estoque e patrimônio passou a incluir novas fontes oficiais do Sienge: tabelas de preço, mapa imobiliário consolidado, reservas de insumos e insumos em estoque por centro de custo.
+- Configurações ganhou o campo `Centros de custo para estoque avançado`, usado pelas consultas que exigem centro de custo.
+- A lista de estoque ganhou filtro para separar itens com valor informado e sem valor informado.
+- O Mapa Sienge e o histórico de integração por portal passaram a reconhecer as novas fontes de estoque.
 - A Etapa 6 da revisão foi concluída para análise gerencial.
 - `/relatorios` deixou de montar a DRE completa e a lista completa de contratos na abertura; agora usa resumos locais leves e abre o relatório detalhado somente quando o usuário entra no portal correspondente.
 - Foi criado `features/reports/data.ts` para concentrar resumos leves de relatórios, como contratos e base disponível da DRE.
@@ -312,9 +318,17 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
   - `/v1/units`
   - `/v1/patrimony/movable`
   - `/v1/patrimony/fixed`
+  - `/v1/price-tables`
+  - `/v1/real-estate-map`
+  - `/v1/stock-reservations`
+  - `/v1/stock-inventories/{costCenterId}/items`
 - A tela considera datas de entrada, valores e origem quando a API retorna esses campos.
 - A consulta deve trazer todos os registros possiveis usando o banco local.
 - A abertura do portal passou a ler unidades imobiliárias, bens móveis e bens imóveis salvos em `inventory-assets.sqlite`, sem consultar o Sienge automaticamente.
+- A tela passou a priorizar uma visão estratégica antes da lista: estoque precificado, unidades disponíveis, reservas/propostas, itens sem valor, propriedade, mapa imobiliário e insumos.
+- Valores zerados agora são tratados como ausência de valor informado quando não existe incorporação, valor contábil, avaliação, tabela especial, fração de VGV ou terreno.
+- A classificação próprio/terceiro usa proprietário anterior, origem contábil, indicador de uso e estoque comercial quando esses campos vêm do Sienge.
+- Mapa imobiliário e insumos por centro de custo dependem do campo `Centros de custo para estoque avançado` em Configurações.
 
 ## Conciliacao
 

@@ -1,4 +1,5 @@
 export type InventoryAssetKind = "unit" | "movable" | "fixed";
+export type InventorySourceKey = InventoryAssetKind | "price-table" | "real-estate-map" | "stock-reservation" | "stock-inventory";
 
 export type UnitEvaluation = {
   id?: number;
@@ -73,6 +74,74 @@ export type InventoryAsset = {
   accountancyUsageIndicator?: string;
 };
 
+export type InventoryRealEstateMap = {
+  enterpriseData?: {
+    companyId?: number;
+    companyName?: string;
+    enterpriseId?: number;
+    enterpriseName?: string;
+    units?: number;
+    monthYear?: string;
+  };
+  vgvData?: {
+    vgv?: number;
+    vgvVariation?: number;
+    poc?: number;
+    variationPoc?: number;
+  };
+  corporateCost?: {
+    stock?: number;
+    guarantee?: number;
+    commission?: number;
+  };
+  margin?: {
+    grossProfit?: number;
+    grossMarginPercentage?: number;
+  };
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
+};
+
+export type InventoryPriceTable = {
+  id?: number;
+  version?: number;
+  companyId?: number;
+  enterpriseId?: number;
+  name?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
+};
+
+export type InventoryStockReservation = {
+  id?: number;
+  reservationDate?: string;
+  status?: string;
+  notes?: string;
+  sourceCostCenter?: { id?: number; description?: string };
+  destinationCostCenter?: { id?: number; description?: string };
+  movementType?: { id?: number; description?: string };
+  responsible?: { id?: number; name?: string };
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
+};
+
+export type InventoryStockItem = {
+  itemId?: number;
+  resourceId?: number;
+  resourceDescription?: string;
+  detailDescription?: string;
+  trademarkDescription?: string;
+  quantity?: number;
+  unitOfMeasure?: string;
+  averagePrice?: number;
+  costCenterId?: number;
+  __siengeIntegrationDay?: string;
+  __siengeIntegratedAt?: string;
+};
+
 export type RawInventoryUnit = Omit<InventoryAsset, "kind" | "id" | "unitId"> & {
   id: number;
 };
@@ -81,21 +150,43 @@ export type RawPatrimonyAsset = Omit<InventoryAsset, "kind" | "id" | "unitId">;
 
 export type InventorySummary = {
   totalValue: number;
+  pricedValue: number;
+  mapStockValue: number;
+  mapVgv: number;
+  mapGrossProfit: number;
+  averageMapMargin: number;
+  stockInputValue: number;
   ownCount: number;
   thirdPartyCount: number;
   unitCount: number;
   movableCount: number;
   fixedCount: number;
+  saleableUnitCount: number;
+  saleableUnitValue: number;
+  reservedUnitCount: number;
+  reservedUnitValue: number;
+  soldOrThirdPartyUnitCount: number;
+  unavailableUnitCount: number;
+  noValueCount: number;
+  pricedCount: number;
+  activePriceTableCount: number;
+  pendingReservationCount: number;
+  stockInputCount: number;
+  privateArea: number;
   activeCount: number;
   writtenOffCount: number;
   byKind: { label: string; count: number; value: number }[];
+  byStock: { label: string; count: number; value: number }[];
+  byOwnership: { label: string; count: number; value: number }[];
+  byEnterprise: { label: string; count: number; value: number }[];
+  stockItemsTop: { label: string; count: number; value: number }[];
 };
 
 export type InventorySourceStat = {
-  key: InventoryAssetKind;
+  key: InventorySourceKey;
   label: string;
   endpoint: string;
   apiCount: number;
   loadedCount: number;
-  status: "ok" | "empty" | "partial" | "error";
+  status: "ok" | "empty" | "partial" | "error" | "not_configured";
 };

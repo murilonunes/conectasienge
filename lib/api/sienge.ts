@@ -146,7 +146,14 @@ function sqliteResponsibilityForEndpoint(endpoint: string): SqliteResponsibility
   if (endpoint === "/bulk-data/v1/outcome" || endpoint.startsWith("/v1/bills")) return "payables";
   if (endpoint === "/bulk-data/v1/income" || endpoint.startsWith("/v1/accounts-receivable")) return "receivables";
   if (endpoint === "/bulk-data/v1/bank-movement" || endpoint.startsWith("/v1/accounts-statements")) return "reconciliation";
-  if (endpoint.startsWith("/v1/units") || endpoint.startsWith("/v1/patrimony")) return "inventory";
+  if (
+    endpoint.startsWith("/v1/units") ||
+    endpoint.startsWith("/v1/patrimony") ||
+    endpoint.startsWith("/v1/real-estate-map") ||
+    endpoint.startsWith("/v1/price-tables") ||
+    endpoint.startsWith("/v1/stock-inventories") ||
+    endpoint.startsWith("/v1/stock-reservations")
+  ) return "inventory";
   if (endpoint.startsWith("/v1/purchase-") || endpoint === "/bulk-data/v1/purchase-quotations") return "purchases";
   if (endpoint.startsWith("/v1/sales-contracts")) return "sales";
   if (endpoint.startsWith("/v1/supply-contracts")) return "contracts";

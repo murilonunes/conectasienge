@@ -63,8 +63,8 @@ const screenDefinitions = [
   {
     key: "inventory",
     label: "Estoque e patrimônio",
-    description: "Unidades imobiliárias, bens móveis e bens imóveis.",
-    endpoints: ["/v1/units", "/v1/patrimony"]
+    description: "Unidades, patrimônio, mapa imobiliário, tabelas de preço, reservas e insumos.",
+    endpoints: ["/v1/units", "/v1/patrimony", "/v1/price-tables", "/v1/real-estate-map", "/v1/stock-reservations", "/v1/stock-inventories"]
   },
   {
     key: "reconciliation",
