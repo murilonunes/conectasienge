@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import type { InventoryAsset, InventoryAssetKind } from "@/features/inventory/types";
 import { assetKindLabel, assetLocation, assetSubtitle, assetTitle, assetValue, entryDate, ownershipLabel, situationLabel } from "@/features/inventory/utils";
@@ -92,7 +91,7 @@ export function InventoryExplorer({ assets, initialScope = "portfolio" }: { asse
         renderItems={(pageItems) => (
           <div className="card table-card">
             <table>
-              <thead><tr><th>Bem</th><th>Tipo</th><th>Entrada</th><th>Valor</th><th>Propriedade</th><th>Situação</th><th>Localização / identificação</th><th>Integração</th></tr></thead>
+              <thead><tr><th>Bem</th><th>Tipo</th><th>Valor</th><th>Propriedade</th><th>Situação</th><th>Localização / identificação</th><th>Data de entrada no estoque</th></tr></thead>
               <tbody>
                 {pageItems.map((asset) => {
                   const value = assetValue(asset);
@@ -102,12 +101,11 @@ export function InventoryExplorer({ assets, initialScope = "portfolio" }: { asse
                     <tr key={asset.id}>
                       <td><strong>{assetTitle(asset)}</strong><br /><span className="table-muted">{assetSubtitle(asset)}</span></td>
                       <td>{assetKindLabel(asset.kind)}</td>
-                      <td>{date ? formatDate(date) : "Não informada"}</td>
                       <td><strong>{value.value ? formatCurrency(value.value) : "Não informado"}</strong><br /><span className="table-muted">{value.source}</span></td>
                       <td>{ownershipLabel(asset)}</td>
                       <td><span className={`badge ${isWarning ? "pending" : ""}`}>{situationLabel(asset)}</span></td>
                       <td>{assetLocation(asset)}<br /><span className="table-muted">{asset.privateArea ? `${asset.privateArea} m² priv.` : asset.plateId ? `Placa ${asset.plateId}` : asset.barCode ? `Código ${asset.barCode}` : ""}</span></td>
-                      <td><IntegrationStamp record={asset} /></td>
+                      <td>{date ? formatDate(date) : "Não informada"}</td>
                     </tr>
                   );
                 })}
