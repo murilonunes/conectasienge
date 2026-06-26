@@ -55,6 +55,27 @@ type ReceivableInstallment = {
   __siengeIntegratedAt?: string;
 };
 
+type ReceivableCsvRow = {
+  billId: number;
+  installment: string;
+  document: string;
+  client: string;
+  company: string;
+  project: string;
+  dueDate?: string;
+  issueDate?: string;
+  billDate?: string;
+  originalAmount: number;
+  openAmount: number;
+  receivedAmount: number;
+  receiptDate?: string;
+  receiptType?: string;
+  receiptSequence?: number;
+  settlementRegisteredAt?: string;
+  settlementRegisteredBy?: string;
+  integrationDay?: string;
+};
+
 const today = new Date().toISOString().slice(0, 10);
 const initialStart = new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().slice(0, 10);
 
@@ -109,6 +130,42 @@ function formatDateTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);
+}
+
+function csvDateTime(value?: string) {
+  return formatDateTime(value) || "";
+}
+
+function buildReceivableCsvRows(items: ReceivableInstallment[], totalsByBill: Map<number, number>): ReceivableCsvRow[] {
+  return items.flatMap((item) => {
+    const receipts = item.receipts || [];
+    const base = {
+      billId: item.billId,
+      installment: installmentLabel(item, totalsByBill.get(item.billId)).replace(/^Parcela\s*/i, ""),
+      document: documentLabel(item),
+      client: item.clientName || `Cliente #${item.clientId || "nao informado"}`,
+      company: item.companyName || `Empresa #${item.companyId || "nao informada"}`,
+      project: item.projectName || item.businessAreaName || item.mainUnit || "",
+      dueDate: item.dueDate,
+      issueDate: item.issueDate,
+      billDate: item.billDate,
+      originalAmount: item.originalAmount || 0,
+      openAmount: openAmount(item),
+      integrationDay: item.__siengeIntegrationDay
+    };
+    if (!receipts.length) {
+      return [{ ...base, receivedAmount: 0 }];
+    }
+    return receipts.map((receipt) => ({
+      ...base,
+      receivedAmount: receiptValue(receipt),
+      receiptDate: receipt.paymentDate,
+      receiptType: receipt.operationTypeName,
+      receiptSequence: receipt.sequencialNumber,
+      settlementRegisteredAt: receipt.registeredAt,
+      settlementRegisteredBy: receipt.registeredUserName
+    }));
+  });
 }
 
 export function AdvancedReceivablesSearch() {
@@ -263,6 +320,31 @@ export function AdvancedReceivablesSearch() {
           items={filtered}
           itemLabel="parcelas"
           resetKey={`${textFilter}|${receiptStatus}|${results.length}`}
+          csvExport={{
+            fileName: `contas-receber-${today}.csv`,
+            buttonLabel: "Exportar CSV",
+            rows: (items) => buildReceivableCsvRows(items, installmentTotals),
+            columns: [
+              { header: "Titulo", value: (row) => (row as ReceivableCsvRow).billId },
+              { header: "Parcela", value: (row) => (row as ReceivableCsvRow).installment },
+              { header: "Documento", value: (row) => (row as ReceivableCsvRow).document },
+              { header: "Cliente", value: (row) => (row as ReceivableCsvRow).client },
+              { header: "Empresa", value: (row) => (row as ReceivableCsvRow).company },
+              { header: "Projeto", value: (row) => (row as ReceivableCsvRow).project },
+              { header: "Vencimento", value: (row) => (row as ReceivableCsvRow).dueDate },
+              { header: "Emissao", value: (row) => (row as ReceivableCsvRow).issueDate },
+              { header: "Competencia", value: (row) => (row as ReceivableCsvRow).billDate },
+              { header: "Valor original", value: (row) => (row as ReceivableCsvRow).originalAmount },
+              { header: "Saldo", value: (row) => (row as ReceivableCsvRow).openAmount },
+              { header: "Recebido", value: (row) => (row as ReceivableCsvRow).receivedAmount },
+              { header: "Data recebimento", value: (row) => (row as ReceivableCsvRow).receiptDate },
+              { header: "Tipo recebimento", value: (row) => (row as ReceivableCsvRow).receiptType },
+              { header: "Sequencia baixa", value: (row) => (row as ReceivableCsvRow).receiptSequence },
+              { header: "Cadastro da baixa", value: (row) => csvDateTime((row as ReceivableCsvRow).settlementRegisteredAt) },
+              { header: "Usuario da baixa", value: (row) => (row as ReceivableCsvRow).settlementRegisteredBy },
+              { header: "Integrado em", value: (row) => (row as ReceivableCsvRow).integrationDay }
+            ]
+          }}
           emptyMessage="Nenhuma parcela encontrada após o filtro."
           renderItems={(pageItems) => (
             <div className="advanced-results">

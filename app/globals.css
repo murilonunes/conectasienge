@@ -668,6 +668,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .local-list-controls > div:first-child small { color: var(--green); font-weight: 800; }
 .local-list-controls label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 10px; font-weight: 800; }
 .local-list-controls select { border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); padding: 7px 9px; outline: none; }
+.local-list-export { border: 1px solid var(--green); border-radius: 8px; background: var(--green); color: #fff; padding: 7px 10px; cursor: pointer; font-size: 10px; font-weight: 800; }
+.local-list-export:hover { filter: brightness(.96); }
 .local-list-pages { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 10px; font-weight: 800; }
 .local-list-pages button { border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--green); padding: 7px 9px; cursor: pointer; font-size: 10px; font-weight: 800; }
 .local-list-pages button:disabled { cursor: not-allowed; opacity: .45; }

@@ -3,6 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
+type CsvValue = string | number | boolean | null | undefined;
+
+type CsvExportConfig<T> = {
+  fileName: string;
+  buttonLabel?: string;
+  columns: Array<{
+    header: string;
+    value: (item: unknown) => CsvValue;
+  }>;
+  rows?: (items: T[]) => unknown[];
+};
+
 type LocalDataListProps<T> = {
   items: T[];
   itemLabel?: string;
@@ -10,6 +22,7 @@ type LocalDataListProps<T> = {
   pageSizeOptions?: number[];
   resetKey?: string;
   emptyMessage?: string;
+  csvExport?: CsvExportConfig<T>;
   renderItems: (items: T[]) => ReactNode;
 };
 
@@ -23,6 +36,7 @@ export function LocalDataList<T>({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   resetKey,
   emptyMessage = "Nenhum registro encontrado.",
+  csvExport,
   renderItems
 }: LocalDataListProps<T>) {
   const normalizedOptions = useMemo(() => {
@@ -50,6 +64,28 @@ export function LocalDataList<T>({
     if (Number.isFinite(parsed) && parsed > 0) setPageSize(parsed);
   }
 
+  function csvCell(value: CsvValue) {
+    const text = value === undefined || value === null ? "" : String(value);
+    return `"${text.replace(/"/g, "\"\"").replace(/\r?\n/g, " ")}"`;
+  }
+
+  function exportCsv() {
+    if (!csvExport) return;
+    const rows: unknown[] = csvExport.rows ? csvExport.rows(items) : items;
+    const header = csvExport.columns.map((column) => csvCell(column.header)).join(";");
+    const body = rows.map((row) => csvExport.columns.map((column) => csvCell(column.value(row))).join(";"));
+    const csv = `\uFEFF${[header, ...body].join("\r\n")}`;
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = csvExport.fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   function controls(position: "top" | "bottom") {
     if (!items.length) return null;
     return (
@@ -65,6 +101,11 @@ export function LocalDataList<T>({
             {normalizedOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
         </label>
+        {csvExport && (
+          <button className="local-list-export" type="button" onClick={exportCsv}>
+            {csvExport.buttonLabel || "Exportar CSV"}
+          </button>
+        )}
         <div className="local-list-pages">
           <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={currentPage <= 1}>
             Anterior
