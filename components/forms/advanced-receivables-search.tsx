@@ -21,6 +21,11 @@ type Receipt = {
   paymentDate?: string;
   calculationDate?: string;
   sequencialNumber?: number;
+  registeredUserName?: string;
+  registeredAt?: string;
+  changedUserName?: string;
+  changedAt?: string;
+  auditSource?: string;
   bankMovements?: BankMovement[];
 };
 
@@ -93,6 +98,19 @@ function dueStatus(item: ReceivableInstallment) {
   return "future";
 }
 
+function formatDateTime(value?: string) {
+  if (!value) return undefined;
+  const date = new Date(value.includes("T") ? value : value.replace(" ", "T"));
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
 export function AdvancedReceivablesSearch() {
   const [filters, setFilters] = useState({
     startDate: initialStart,
@@ -129,7 +147,8 @@ export function AdvancedReceivablesSearch() {
       item.companyName,
       item.projectName,
       item.businessAreaName,
-      item.mainUnit
+      item.mainUnit,
+      ...(item.receipts || []).flatMap((receipt) => [receipt.registeredUserName, receipt.registeredAt])
     ].filter(Boolean).join(" ").toLowerCase();
     const hasReceipt = (item.receipts || []).length > 0;
     const matchesStatus = receiptStatus === "all" || (receiptStatus === "received" ? hasReceipt : !hasReceipt);
@@ -159,12 +178,12 @@ export function AdvancedReceivablesSearch() {
 
   function setSelectionType(value: string) {
     set("selectionType", value);
-    if (value === "R") setReceiptStatus("received");
+    if (value === "R" || value === "C") setReceiptStatus("received");
   }
 
   function setStatus(value: "all" | "open" | "received") {
     setReceiptStatus(value);
-    if (value === "open" && filters.selectionType === "R") set("selectionType", "D");
+    if (value === "open" && (filters.selectionType === "R" || filters.selectionType === "C")) set("selectionType", "D");
   }
 
   async function search(event: FormEvent) {
@@ -208,15 +227,17 @@ export function AdvancedReceivablesSearch() {
         <div className="advanced-filter-grid">
           <label><span>Data inicial *</span><input required type="date" value={filters.startDate} onChange={(event) => set("startDate", event.target.value)} /></label>
           <label><span>Data final *</span><input required type="date" value={filters.endDate} onChange={(event) => set("endDate", event.target.value)} /></label>
-          <label><span>Pesquisar período por *</span><select value={filters.selectionType} onChange={(event) => setSelectionType(event.target.value)}><option value="D">Data de vencimento</option><option value="I">Data de emissão</option><option value="B">Data de competência</option><option value="R">Data de recebimento</option></select></label>
+          <label><span>Pesquisar período por *</span><select value={filters.selectionType} onChange={(event) => setSelectionType(event.target.value)}><option value="D">Data de vencimento</option><option value="I">Data de emissão</option><option value="B">Data de competência</option><option value="R">Data de recebimento</option><option value="C">Data de registro da baixa</option></select></label>
           <label><span>Situação do recebimento</span><select value={receiptStatus} onChange={(event) => setStatus(event.target.value as "all" | "open" | "received")}><option value="all">Todas as parcelas</option><option value="open">Somente sem recebimento</option><option value="received">Somente com recebimento</option></select></label>
           <label><span>Empresa</span><input type="number" min="1" value={filters.companyId} onChange={(event) => set("companyId", event.target.value)} placeholder="Todas" /></label>
           <label><span>Projeto</span><input type="number" min="1" value={filters.projectId} onChange={(event) => set("projectId", event.target.value)} placeholder="Todos" /></label>
           <label><span>Área de negócio</span><input type="number" min="1" value={filters.businessAreaId} onChange={(event) => set("businessAreaId", event.target.value)} placeholder="Todas" /></label>
           <label><span>Cliente</span><input type="number" min="1" value={filters.clientId} onChange={(event) => set("clientId", event.target.value)} placeholder="Todos" /></label>
         </div>
-        <div className={`advanced-search-hint ${filters.selectionType === "R" ? "warn" : ""}`}>
-          {filters.selectionType === "R"
+        <div className={`advanced-search-hint ${filters.selectionType === "R" || filters.selectionType === "C" ? "warn" : ""}`}>
+          {filters.selectionType === "C"
+            ? "Data de registro da baixa usa o banco extraído do Sienge para mostrar quando e por quem a baixa foi cadastrada."
+            : filters.selectionType === "R"
             ? "Data de recebimento retorna somente parcelas com baixa registrada, pois parcelas abertas não possuem essa data."
             : "A consulta pelo período selecionado retorna parcelas com e sem recebimento. Use Situação do recebimento para filtrar os resultados."}
         </div>
@@ -297,7 +318,11 @@ export function AdvancedReceivablesSearch() {
                           <span>{receipt.paymentDate ? formatDate(receipt.paymentDate) : "Sem data"}</span>
                           <strong>{formatCurrency(receiptValue(receipt))}</strong>
                           <span>{receipt.operationTypeName || "Operação não informada"}</span>
-                          <small>{receipt.bankMovements?.length || 0} movimento(s) bancário(s)</small>
+                          <small>
+                            {receipt.registeredAt
+                              ? `Registrada em ${formatDateTime(receipt.registeredAt)}${receipt.registeredUserName ? ` por ${receipt.registeredUserName}` : ""}`
+                              : `${receipt.bankMovements?.length || 0} movimento(s) bancário(s)`}
+                          </small>
                         </div>
                       )) : <p>Nenhum recebimento retornado para esta parcela.</p>}
                     </div>

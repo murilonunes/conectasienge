@@ -30,14 +30,37 @@ type ReceivableInstallment = {
   [key: string]: unknown;
 };
 
+type Receipt = {
+  paymentDate?: string;
+  sequencialNumber?: number;
+  registeredUserName?: string;
+  registeredAt?: string;
+  changedUserName?: string;
+  changedAt?: string;
+  auditSource?: string;
+  [key: string]: unknown;
+};
+
 type SqlRow = {
   raw_json: string;
   source_day?: string;
   saved_at?: string;
 };
 
+type ReceiptAuditRow = {
+  nutitulo?: string | number;
+  nuparcela?: string | number;
+  dtrecto?: string;
+  nuseqbaixa?: string | number;
+  nmusuariocad?: string;
+  dtusuariocad?: string;
+  nmusuarioalt?: string;
+  dtusuarioalt?: string;
+};
+
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const receivablesDatabasePath = path.join(dataDir, "finance-receivables.sqlite");
+const dumpDatabasePath = path.join(dataDir, "sienge-dump.sqlite");
 let indexesChecked = false;
 
 function currentDay() {
@@ -52,6 +75,49 @@ function openDatabase() {
 
 function tableExists(database: DatabaseSync, table: string) {
   return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+function tableExistsInSchema(database: DatabaseSync, schema: string, table: string) {
+  return Boolean(database.prepare(`SELECT name FROM ${schema}.sqlite_master WHERE type = 'table' AND name = ?`).get(table));
+}
+
+function receiptAuditKey(billId?: number, installmentId?: number, paymentDate?: string, sequencialNumber?: number) {
+  return [billId, installmentId, paymentDate || "", sequencialNumber || 0].join("|");
+}
+
+function readReceiptAudit() {
+  if (!existsSync(dumpDatabasePath)) return new Map<string, ReceiptAuditRow>();
+  const database = new DatabaseSync(dumpDatabasePath);
+  try {
+    if (!tableExists(database, "ecrcbaixa")) return new Map<string, ReceiptAuditRow>();
+    const rows = database.prepare(`
+      SELECT nutitulo, nuparcela, dtrecto, nuseqbaixa, nmusuariocad, dtusuariocad, nmusuarioalt, dtusuarioalt
+      FROM ecrcbaixa
+    `).all() as ReceiptAuditRow[];
+    return new Map(rows.map((row) => [
+      receiptAuditKey(Number(row.nutitulo), Number(row.nuparcela), row.dtrecto, Number(row.nuseqbaixa)),
+      row
+    ]));
+  } finally {
+    database.close();
+  }
+}
+
+function enrichReceipts(item: ReceivableInstallment, audits: Map<string, ReceiptAuditRow>) {
+  if (!Array.isArray(item.receipts) || !audits.size) return item;
+  const receipts = (item.receipts as Receipt[]).map((receipt) => {
+    const audit = audits.get(receiptAuditKey(item.billId, item.installmentId, receipt.paymentDate, receipt.sequencialNumber));
+    if (!audit) return receipt;
+    return {
+      ...receipt,
+      registeredUserName: audit.nmusuariocad || undefined,
+      registeredAt: audit.dtusuariocad || undefined,
+      changedUserName: audit.nmusuarioalt || undefined,
+      changedAt: audit.dtusuarioalt || undefined,
+      auditSource: "dump-sienge"
+    };
+  });
+  return { ...item, receipts };
 }
 
 function ensureIndexes(database: DatabaseSync) {
@@ -108,12 +174,26 @@ function buildWhere(params: URLSearchParams, selectionType: string, startDate: s
         AND r.paymentDate BETWEEN ? AND ?
     )`);
     values.push(startDate, endDate);
+  } else if (selectionType === "C") {
+    clauses.push(`EXISTS (
+      SELECT 1 FROM bulk_income_receipts r
+      INNER JOIN dump.ecrcbaixa b
+        ON CAST(b.nutitulo AS INTEGER) = r.billId
+       AND CAST(b.nuparcela AS INTEGER) = r.installmentId
+       AND b.dtrecto = r.paymentDate
+       AND CAST(b.nuseqbaixa AS INTEGER) = r.sequencialNumber
+      WHERE r.tenant = i.tenant
+        AND r.billId = i.billId
+        AND r.installmentId = i.installmentId
+        AND DATE(b.dtusuariocad) BETWEEN ? AND ?
+    )`);
+    values.push(startDate, endDate);
   } else {
     clauses.push(`${dateColumn(selectionType)} BETWEEN ? AND ?`);
     values.push(startDate, endDate);
   }
 
-  if (receiptStatus === "received" && selectionType !== "R") {
+  if (receiptStatus === "received" && selectionType !== "R" && selectionType !== "C") {
     clauses.push(`EXISTS (
       SELECT 1 FROM bulk_income_receipts r
       WHERE r.tenant = i.tenant
@@ -148,6 +228,16 @@ function annotate(row: SqlRow): ReceivableInstallment {
   };
 }
 
+function attachDump(database: DatabaseSync) {
+  if (!existsSync(dumpDatabasePath)) return false;
+  try {
+    database.prepare("ATTACH DATABASE ? AS dump").run(dumpDatabasePath);
+    return tableExistsInSchema(database, "dump", "ecrcbaixa");
+  } catch {
+    return false;
+  }
+}
+
 function searchLocalReceivables(params: URLSearchParams, selectionType: string, startDate: string, endDate: string) {
   if (!existsSync(receivablesDatabasePath)) {
     return { error: "Os dados de contas a receber ainda não foram atualizados. Atualize Contas a receber em Configurações." };
@@ -158,17 +248,22 @@ function searchLocalReceivables(params: URLSearchParams, selectionType: string, 
     if (!tableExists(database, "bulk_income_installments")) {
       return { error: "As parcelas de contas a receber ainda não estão disponíveis. Atualize Contas a receber em Configurações." };
     }
+    const hasDumpAudit = attachDump(database);
+    if (selectionType === "C" && !hasDumpAudit) {
+      return { error: "A data de registro da baixa nao veio na API publica e o banco extraido do Sienge nao foi encontrado. Importe o dump para consultar esse filtro." };
+    }
     ensureIndexes(database);
     const where = buildWhere(params, selectionType, startDate, endDate);
     const rows = database.prepare(`
       SELECT i.raw_json, i.source_day, i.saved_at
       FROM bulk_income_installments i
       WHERE ${where.sql}
-      ORDER BY ${selectionType === "R" ? "i.dueDate" : dateColumn(selectionType)} ASC, i.billId ASC, i.installmentId ASC
+      ORDER BY ${selectionType === "R" || selectionType === "C" ? "i.dueDate" : dateColumn(selectionType)} ASC, i.billId ASC, i.installmentId ASC
     `).all(...where.values) as SqlRow[];
-    const data = rows.map(annotate);
+    const audits = readReceiptAudit();
+    const data = rows.map(annotate).map((item) => enrichReceipts(item, audits));
     const savedAt = rows.map((row) => row.saved_at).filter(Boolean).sort().at(-1) || new Date().toISOString();
-    return { data, savedAt };
+    return { data, savedAt, hasDumpAudit };
   } finally {
     database.close();
   }
@@ -180,7 +275,7 @@ export async function GET(request: NextRequest) {
   const endDate = params.get("endDate");
   const selectionType = params.get("selectionType");
 
-  if (!startDate || !endDate || !["I", "D", "R", "B"].includes(selectionType || "")) {
+  if (!startDate || !endDate || !["I", "D", "R", "B", "C"].includes(selectionType || "")) {
     return NextResponse.json({ message: "Informe período e tipo de data válidos." }, { status: 400 });
   }
 
@@ -194,7 +289,8 @@ export async function GET(request: NextRequest) {
         source: "sqlite",
         savedAt: local.savedAt,
         day: currentDay(),
-        queryMode: "structured-local"
+        queryMode: "structured-local",
+        receiptAudit: local.hasDumpAudit ? "dump-sienge" : "api-publica"
       }
     });
   } catch (error) {

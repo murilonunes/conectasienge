@@ -39,7 +39,29 @@ type RawInstallment = {
   [key: string]: unknown;
 };
 
+type Receipt = {
+  paymentDate?: string;
+  sequencialNumber?: number;
+  registeredUserName?: string;
+  registeredAt?: string;
+  changedUserName?: string;
+  changedAt?: string;
+  auditSource?: string;
+  [key: string]: unknown;
+};
+
+type ReceiptAuditRow = {
+  nuparcela?: string | number;
+  dtrecto?: string;
+  nuseqbaixa?: string | number;
+  nmusuariocad?: string;
+  dtusuariocad?: string;
+  nmusuarioalt?: string;
+  dtusuarioalt?: string;
+};
+
 const receivablesDatabasePath = path.join(process.cwd(), ".sienge-data", "finance-receivables.sqlite");
+const dumpDatabasePath = path.join(process.cwd(), ".sienge-data", "sienge-dump.sqlite");
 
 function openDatabase() {
   const database = new DatabaseSync(receivablesDatabasePath);
@@ -49,6 +71,45 @@ function openDatabase() {
 
 function tableExists(database: DatabaseSync, table: string) {
   return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+function receiptAuditKey(installmentId?: number, paymentDate?: string, sequencialNumber?: number) {
+  return [installmentId, paymentDate || "", sequencialNumber || 0].join("|");
+}
+
+function readReceiptAudit(billId: number) {
+  if (!existsSync(dumpDatabasePath)) return new Map<string, ReceiptAuditRow>();
+  const database = new DatabaseSync(dumpDatabasePath);
+  try {
+    if (!tableExists(database, "ecrcbaixa")) return new Map<string, ReceiptAuditRow>();
+    const rows = database.prepare(`
+      SELECT nuparcela, dtrecto, nuseqbaixa, nmusuariocad, dtusuariocad, nmusuarioalt, dtusuarioalt
+      FROM ecrcbaixa
+      WHERE CAST(nutitulo AS INTEGER) = ?
+    `).all(billId) as ReceiptAuditRow[];
+    return new Map(rows.map((row) => [
+      receiptAuditKey(Number(row.nuparcela), row.dtrecto, Number(row.nuseqbaixa)),
+      row
+    ]));
+  } finally {
+    database.close();
+  }
+}
+
+function enrichReceipts(installmentId: number, receipts: unknown[], audits: Map<string, ReceiptAuditRow>) {
+  if (!audits.size) return receipts;
+  return (receipts as Receipt[]).map((receipt) => {
+    const audit = audits.get(receiptAuditKey(installmentId, receipt.paymentDate, receipt.sequencialNumber));
+    if (!audit) return receipt;
+    return {
+      ...receipt,
+      registeredUserName: audit.nmusuariocad || undefined,
+      registeredAt: audit.dtusuariocad || undefined,
+      changedUserName: audit.nmusuarioalt || undefined,
+      changedAt: audit.dtusuarioalt || undefined,
+      auditSource: "dump-sienge"
+    };
+  });
 }
 
 function parseRows(rows: SqlRow[]) {
@@ -127,13 +188,15 @@ export async function GET(_: Request, { params }: { params: { billId: string } }
       __siengeIntegratedAt: integratedAt
     };
 
+    const audits = readReceiptAudit(billId);
     const installments = parsed.map((item) => {
       const raw = item.raw;
       const receipts = Array.isArray(raw.receipts) ? raw.receipts : [];
       const open = Number(raw.balanceAmount ?? raw.correctedBalanceAmount ?? raw.originalAmount ?? 0);
+      const installmentId = raw.installmentId || 0;
       return {
         installmentNumber: raw.installmentNumber || raw.installmentId || 0,
-        installmentId: raw.installmentId || 0,
+        installmentId,
         dueDate: raw.dueDate,
         baseDate: raw.installmentBaseDate,
         billDate: raw.billDate,
@@ -146,7 +209,7 @@ export async function GET(_: Request, { params }: { params: { billId: string } }
         taxAmount: raw.taxAmount,
         documentForecast: raw.documentForecast,
         bearerId: raw.bearerId,
-        receipts,
+        receipts: enrichReceipts(installmentId, receipts, audits),
         situation: receipts.length ? "Com recebimento" : open <= 0 ? "Recebida" : "Em aberto",
         __siengeIntegrationDay: item.sourceDay,
         __siengeIntegratedAt: item.savedAt
@@ -161,7 +224,8 @@ export async function GET(_: Request, { params }: { params: { billId: string } }
       cacheInfo: {
         source: "sqlite",
         savedAt: integratedAt,
-        queryMode: "structured-local"
+        queryMode: "structured-local",
+        receiptAudit: audits.size ? "dump-sienge" : "api-publica"
       }
     });
   } catch (error) {

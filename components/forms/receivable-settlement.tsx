@@ -11,6 +11,11 @@ type Receipt = {
   calculationDate?: string;
   operationTypeName?: string;
   sequencialNumber?: number;
+  registeredUserName?: string;
+  registeredAt?: string;
+  changedUserName?: string;
+  changedAt?: string;
+  auditSource?: string;
 };
 
 type Installment = {
@@ -63,6 +68,19 @@ function openAmount(installment: Installment) {
   if (typeof installment.correctedBalanceAmount === "number") return installment.correctedBalanceAmount;
   if (typeof installment.balanceAmount === "number") return installment.balanceAmount;
   return installment.originalAmount || installment.amount || 0;
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return undefined;
+  const date = new Date(value.includes("T") ? value : value.replace(" ", "T"));
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 export function ReceivableSettlement() {
@@ -160,7 +178,11 @@ export function ReceivableSettlement() {
                     <span>{receipt.paymentDate ? formatDate(receipt.paymentDate) : "Sem data"}</span>
                     <strong>{formatCurrency(receiptValue(receipt))}</strong>
                     <span>{receipt.operationTypeName || "Operação não informada"}</span>
-                    <small>{receipt.calculationDate ? `Cálculo em ${formatDate(receipt.calculationDate)}` : "Data de cálculo não informada"}</small>
+                    <small>
+                      {receipt.registeredAt
+                        ? `Registrada em ${formatDateTime(receipt.registeredAt)}${receipt.registeredUserName ? ` por ${receipt.registeredUserName}` : ""}`
+                        : receipt.calculationDate ? `Cálculo em ${formatDate(receipt.calculationDate)}` : "Data de cálculo não informada"}
+                    </small>
                   </div>
                 )) : <p>Nenhum recebimento retornado para esta parcela.</p>}
               </div>
