@@ -749,6 +749,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .payments-list > div { display: grid; grid-template-columns: 100px 120px 1fr auto; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
 .payments-list strong { color: var(--ink); }
 .payments-list p { margin: 0; color: var(--muted); font-size: 10px; }
+.receipt-audit { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--green-soft); color: var(--green); font-size: 10px; }
+.receipt-audit span { font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.receipt-audit strong { color: var(--green); text-align: right; }
+.receipt-audit.muted { background: #f7f7f4; color: var(--muted); }
+.receipt-audit.muted strong { color: var(--muted); }
 .section-divider { display: flex; align-items: center; gap: 12px; margin: 27px 0 20px; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
 .section-divider::before, .section-divider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
 .payables-calendar-chart { margin-bottom: 20px; }

@@ -199,7 +199,7 @@ export function AdvancedReceivablesSearch() {
     query.set("receiptStatus", receiptStatus);
     try {
       const startedAt = performance.now();
-      const response = await fetch(`/api/sienge/receivables/search?${query}`);
+      const response = await fetch(`/api/sienge/receivables/search?${query}`, { cache: "no-store" });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message || body.title || "Busca não concluída.");
       setResults(body.data || []);
@@ -318,11 +318,15 @@ export function AdvancedReceivablesSearch() {
                           <span>{receipt.paymentDate ? formatDate(receipt.paymentDate) : "Sem data"}</span>
                           <strong>{formatCurrency(receiptValue(receipt))}</strong>
                           <span>{receipt.operationTypeName || "Operação não informada"}</span>
-                          <small>
-                            {receipt.registeredAt
-                              ? `Registrada em ${formatDateTime(receipt.registeredAt)}${receipt.registeredUserName ? ` por ${receipt.registeredUserName}` : ""}`
-                              : `${receipt.bankMovements?.length || 0} movimento(s) bancário(s)`}
-                          </small>
+                          <small>{receipt.bankMovements?.length || 0} movimento(s) bancário(s)</small>
+                          <div className={receipt.registeredAt ? "receipt-audit" : "receipt-audit muted"}>
+                            <span>Cadastro da baixa</span>
+                            <strong>
+                              {receipt.registeredAt
+                                ? `${formatDateTime(receipt.registeredAt)}${receipt.registeredUserName ? ` por ${receipt.registeredUserName}` : ""}`
+                                : "Não disponível na API pública"}
+                            </strong>
+                          </div>
                         </div>
                       )) : <p>Nenhum recebimento retornado para esta parcela.</p>}
                     </div>

@@ -99,7 +99,7 @@ export function ReceivableSettlement() {
     setBill(undefined);
     setMetadata({ receiptsCategories: 0, bankMovements: 0 });
     try {
-      const response = await fetch(`/api/sienge/receivable-bills/${billId}/installments`);
+      const response = await fetch(`/api/sienge/receivable-bills/${billId}/installments`, { cache: "no-store" });
       const body = await response.json();
       if (!response.ok) throw new Error(body.suggestion || body.apiMessage || body.message || body.title || "Consulta não concluída.");
       setInstallments(body.installments || []);
@@ -178,11 +178,15 @@ export function ReceivableSettlement() {
                     <span>{receipt.paymentDate ? formatDate(receipt.paymentDate) : "Sem data"}</span>
                     <strong>{formatCurrency(receiptValue(receipt))}</strong>
                     <span>{receipt.operationTypeName || "Operação não informada"}</span>
-                    <small>
-                      {receipt.registeredAt
-                        ? `Registrada em ${formatDateTime(receipt.registeredAt)}${receipt.registeredUserName ? ` por ${receipt.registeredUserName}` : ""}`
-                        : receipt.calculationDate ? `Cálculo em ${formatDate(receipt.calculationDate)}` : "Data de cálculo não informada"}
-                    </small>
+                    <small>{receipt.calculationDate ? `Cálculo em ${formatDate(receipt.calculationDate)}` : "Data de cálculo não informada"}</small>
+                    <div className={receipt.registeredAt ? "receipt-audit" : "receipt-audit muted"}>
+                      <span>Cadastro da baixa</span>
+                      <strong>
+                        {receipt.registeredAt
+                          ? `${formatDateTime(receipt.registeredAt)}${receipt.registeredUserName ? ` por ${receipt.registeredUserName}` : ""}`
+                          : "Não disponível na API pública"}
+                      </strong>
+                    </div>
                   </div>
                 )) : <p>Nenhum recebimento retornado para esta parcela.</p>}
               </div>
