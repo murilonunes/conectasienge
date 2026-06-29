@@ -1,11 +1,19 @@
 # Status do projeto Brasin
 
-Atualizado em: 23/06/2026
+Atualizado em: 29/06/2026
 
 Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A ideia e manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
+- O dump `sie5204-24062026-diario3.dmpc` foi restaurado e convertido para `frontend/.sienge-data/sienge-dump.sqlite`, ficando como fonte local complementar para campos internos que a API pública não entrega.
+- A conversão do dump gerou um SQLite auxiliar com 2.150 tabelas e 1.040.331 linhas validadas, mantendo os artefatos em `.sienge-data`, fora do Git.
+- A tela `/lancamentos/baixa-receber` passou a enriquecer os recebimentos da API com a tabela interna `ecrcbaixa` do dump quando ela estiver disponível.
+- A baixa a receber agora mostra `Cadastro da baixa`, com data/hora real do cadastro (`dtusuariocad`) e usuário responsável (`nmusuariocad`), além da data financeira do recebimento.
+- A busca avançada de contas a receber ganhou o filtro `Data de registro da baixa`, que filtra pela data em que o usuário cadastrou a baixa no Sienge quando o dump auxiliar existe.
+- O detalhe de recebimentos passou a destacar visualmente `Cadastro da baixa`; quando o dump não estiver disponível, a tela informa que essa data não veio na API pública.
+- O componente padrão `LocalDataList` ganhou exportação CSV opcional para listas paginadas.
+- A busca avançada de contas a receber passou a exportar CSV com todos os registros filtrados, em uma linha por recebimento/baixa, incluindo título, parcela, cliente, valores, data de recebimento, cadastro da baixa, usuário da baixa e data de integração.
 - A revisão de `/estoque` foi concluída.
 - O portal de estoque virou uma visão estratégica: mostra estoque precificado, unidades disponíveis para venda, reservas/propostas, itens sem valor informado, propriedade própria/terceiro, mapa imobiliário e insumos quando esses dados estiverem integrados.
 - A integração de Estoque e patrimônio passou a incluir novas fontes oficiais do Sienge: tabelas de preço, mapa imobiliário consolidado, reservas de insumos e insumos em estoque por centro de custo.
@@ -126,7 +134,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Atualizacao normal deve preservar dados pagos, baixados, recebidos, cancelados ou finalizados quando forem identificados.
 - Atualizacao com forca pode substituir tambem dados finalizados.
 - Toda lista exibida ao usuario deve mostrar a data de integracao com o Sienge quando o registro tiver essa informacao.
-- Listas grandes devem usar o componente padrao de listagem local com paginacao inicial de 100 registros e opcao de troca.
+- Listas grandes devem usar o componente padrao de listagem local com paginacao inicial de 100 registros, opcao de troca e, quando fizer sentido operacional, exportacao CSV.
 - Textos visiveis fora de Configuracoes devem ser comerciais e claros, evitando termos tecnicos como endpoint, bulk, SQLite e detalhes internos.
 - Configuracoes pode concentrar linguagem mais administrativa, historico de integracao, periodo de atualizacao, tamanho dos bancos e acoes de carga.
 - Dashboard abre por padrao em 7 dias e permite trocar periodo e passado/futuro na propria tela.
@@ -152,6 +160,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
   - vendas comerciais
 - Cada banco de responsabilidade possui tabela de espelho da API e historico de integracao.
 - As respostas da API sao armazenadas em tabelas mantendo o padrao dos dados retornados, com chave de registro para evitar repeticao sempre que possivel.
+- Dumps oficiais extraidos do Sienge podem ser mantidos como fonte auxiliar em `.sienge-data`, fora do Git, para complementar campos internos que a API publica nao entrega.
+- O dump convertido em `sienge-dump.sqlite` e usado hoje para enriquecer recebimentos com usuario e data/hora real de cadastro da baixa.
 - As consultas bulk devem usar o maior periodo util possivel e gravar o resultado localmente, para manter um banco paralelo consultavel.
 - Ao atualizar dados comuns, registros que parecem pagos, baixados, recebidos, cancelados ou finalizados sao preservados.
 - A opcao "atualizar com forca" em Configuracoes permite substituir tambem dados finalizados.
@@ -247,6 +257,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A consulta de informacoes de pagamento continua sendo usada quando a API permite leitura.
 - Foi criada uma tela separada de baixa a receber, em `/lancamentos/baixa-receber`.
 - A tela de baixa a receber consulta parcelas e recebimentos já registrados no banco local, mas mantém a efetivação da baixa bloqueada porque a especificação pública disponível não expõe endpoint de gravação para essa operação.
+- Quando o dump auxiliar `sienge-dump.sqlite` estiver disponível, a baixa a receber cruza os recebimentos com `ecrcbaixa` para mostrar quando a baixa foi cadastrada no Sienge e por qual usuário.
+- A busca avançada de baixa a receber possui filtro por `Data de registro da baixa`, diferente da data financeira de recebimento.
+- A busca avançada de baixa a receber exporta CSV com todos os registros filtrados, em uma linha por recebimento.
 
 ## Contas a receber
 
@@ -256,6 +269,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A tela de contas a receber foi revisada para abrir lendo apenas o SQLite local; consulta ao Sienge fica restrita a atualizacao em Configuracoes.
 - A previsao passou a ler a tabela local `bulk_income_installments`, considerando saldo corrigido, saldo em aberto ou valor original quando necessario.
 - Os rankings e graficos foram padronizados para usar "parcela" como unidade, e a listagem mostra titulo, cliente, vencimento, projeto/unidade, valor em aberto, recebido, situacao e data de integracao.
+- A busca avançada de contas a receber pode filtrar por vencimento, emissão, competência, data de recebimento ou data real de cadastro da baixa, quando o dump auxiliar estiver disponível.
+- O detalhe do recebimento mostra data financeira, tipo de recebimento, cadastro da baixa e usuário responsável quando esses dados existem.
+- A busca avançada de contas a receber exporta CSV pelos dados filtrados, incluindo dados de baixa e integração.
 
 ## Portal comercial / vendas
 

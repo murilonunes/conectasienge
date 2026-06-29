@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-06-25
+Atualizado em: 2026-06-29
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -14,6 +14,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 - Clareza comercial: texto da tela deve falar com usuário de negócio, não com detalhe técnico.
 - Estado vazio/erro: deve explicar o que falta fazer sem parecer falha invisível.
 - Integração: registros de lista devem indicar data de integração quando fizer sentido.
+- Exportação: listas operacionais com conferência ou auditoria devem oferecer CSV quando a informação precisar sair da tela.
 - Consistência visual: cards, filtros, rankings e listas devem seguir o padrão do projeto.
 
 ## Prioridade
@@ -37,7 +38,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/contas-pagar` | `app/contas-pagar/page.tsx`, `features/payables-schedule/data.ts` | Revisado: agenda segue lendo SQLite local e o atalho direto para `Novo lançamento` foi removido para não misturar consulta com escrita no Sienge. |
 | Revisado | Alta | `/contas-receber` | `app/contas-receber/page.tsx`, `components/tables/receivables-forecast-table.tsx` | Corrigida a listagem principal: deixou de receber só 200 parcelas e passou a buscar páginas filtradas em `/api/receivables/forecast`, lendo somente o SQLite local. |
 | Revisado | Média | `/lancamentos/baixa` | `app/lancamentos/baixa/page.tsx`, `components/forms/advanced-payables-search.tsx`, `components/forms/installment-settlement.tsx` | Revisado: busca avançada e consulta de parcelas ficam como conferência local; removida a escrita Pix/PATCH no Sienge. |
-| Revisado | Média | `/lancamentos/baixa-receber` | `app/lancamentos/baixa-receber/page.tsx`, `components/forms/advanced-receivables-search.tsx`, `components/forms/receivable-settlement.tsx` | Revisado: tela renomeada como consulta de recebimentos e mantém aviso de que baixa efetiva precisa ser feita no Sienge. |
+| Revisado | Média | `/lancamentos/baixa-receber` | `app/lancamentos/baixa-receber/page.tsx`, `components/forms/advanced-receivables-search.tsx`, `components/forms/receivable-settlement.tsx`, `app/api/sienge/receivables/search/route.ts`, `app/api/sienge/receivable-bills/[billId]/installments/route.ts` | Revisado: consulta recebimentos locais, mostra cadastro real da baixa quando o dump auxiliar existe, filtra por data de registro da baixa e exporta CSV pela paginação. |
 | Revisado | Alta | `/lancamentos/novo` | `app/lancamentos/novo/page.tsx`, `components/forms/bill-entry-form.tsx`, `app/api/sienge/bills/route.ts` | Revisado: mantido como única operação transacional explícita, com aviso visível antes do formulário e confirmação final antes do envio. |
 | Revisado | Média | `/relatorios` | `app/relatorios/page.tsx`, `features/reports/data.ts` | Revisado: a central deixou de montar DRE completa e lista completa de contratos na abertura; usa resumos locais leves e abre o relatório completo só no portal correspondente. |
 | Revisado | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisado: retirada carga de compras não usada, reforçada leitura de margem POC e separados saldos acumulados até o exercício do resultado anual. |
@@ -67,6 +68,24 @@ Revisado nesta etapa:
 - `/sales`: revisado o fluxo atual; contratos são enviados de forma enxuta por recorte e paginados na tela. Não recebeu mudança nesta etapa.
 
 Resultado: as listas que escondiam registros salvos deixaram de depender de amostra inicial. A busca passa a considerar toda a base local sem consultar o Sienge.
+
+### Etapa 8 revisada - Baixa a receber, dump auxiliar e CSV
+
+Revisado nesta etapa:
+
+- O dump `sie5204-24062026-diario3.dmpc` foi restaurado, convertido para `sienge-dump.sqlite` e mantido em `.sienge-data`, fora do Git.
+- A tabela interna `ecrcbaixa` do dump passou a complementar a consulta de baixa a receber com `dtusuariocad` e `nmusuariocad`.
+- `/lancamentos/baixa-receber` passou a exibir `Cadastro da baixa` em linha própria dentro de cada recebimento.
+- A busca avançada de contas a receber ganhou o filtro `Data de registro da baixa`, usando a data real de cadastro no Sienge quando o dump auxiliar existe.
+- O componente `LocalDataList` ganhou exportação CSV opcional, preservando a paginação padrão sem obrigar todas as telas a exibirem o botão.
+- A busca avançada de contas a receber passou a exportar todos os registros filtrados, com uma linha por recebimento/baixa e campos de auditoria da baixa.
+
+Resultado: a tela passou a separar três conceitos que antes ficavam misturados: vencimento da parcela, data financeira do recebimento e data/hora em que o usuário registrou a baixa no Sienge.
+
+Pendência mantida:
+
+- Formalizar a importação/atualização do dump auxiliar dentro do fluxo de Configurações, para não depender apenas do arquivo já convertido em `.sienge-data`.
+- Levar a exportação CSV para outras listagens operacionais quando houver necessidade real de conferência fora da tela.
 
 ### Etapa 3 revisada - Integração e Configurações
 
@@ -168,6 +187,19 @@ Pendência mantida:
 - Revisar `/dre-gerencial` com foco em POC.
 - Revisar `/relatorios` para virar central de relatórios geráveis.
 - Revisar `/sienge` como mapa de cobertura operacional.
+
+### Etapa 7 - Estoque e patrimônio concluída
+
+- Revisar `/estoque` como visão estratégica comercial.
+- Incluir novas fontes de estoque, mapa imobiliário e insumos quando configurados.
+- Separar carteira ativa, histórico e itens sem valor informado.
+
+### Etapa 8 - Baixa a receber, dump auxiliar e CSV concluída
+
+- Usar o dump convertido para complementar dados que a API pública não entrega.
+- Mostrar data/hora e usuário de cadastro da baixa a receber.
+- Filtrar recebimentos por data de registro da baixa.
+- Exportar a busca avançada de contas a receber em CSV pelo componente padrão de paginação.
 
 ## Como atualizar este arquivo
 
