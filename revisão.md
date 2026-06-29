@@ -43,7 +43,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/relatorios` | `app/relatorios/page.tsx`, `features/reports/data.ts` | Revisado: a central deixou de montar DRE completa e lista completa de contratos na abertura; usa resumos locais leves e abre o relatório completo só no portal correspondente. |
 | Revisado | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisado: retirada carga de compras não usada, reforçada leitura de margem POC e separados saldos acumulados até o exercício do resultado anual. |
 | Revisado | Média | `/sienge` | `app/sienge/page.tsx`, `features/sienge-coverage/data.ts` | Revisado: mapa operacional confirmado como leitura local dos bancos e contagens por fonte, mantendo detalhe técnico apenas por ser uma tela de cobertura do Sienge. |
-| Revisado | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `lib/sienge-update-runner.ts` | Revisado: status conta somente áreas atualizáveis, job mostra falhas retornadas por loaders e também falhas de subcargas em lote. |
+| Revisado | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `components/settings/sienge-dump-import-control.tsx`, `lib/sienge-update-runner.ts`, `lib/sienge-dump-import.ts` | Revisado: status conta somente áreas atualizáveis, job mostra falhas de loaders e subcargas em lote, e a tela agora importa dump `.dmpc` para SQLite com progresso em etapas. |
 
 ## Achados transversais
 
@@ -84,8 +84,18 @@ Resultado: a tela passou a separar três conceitos que antes ficavam misturados:
 
 Pendência mantida:
 
-- Formalizar a importação/atualização do dump auxiliar dentro do fluxo de Configurações, para não depender apenas do arquivo já convertido em `.sienge-data`.
 - Levar a exportação CSV para outras listagens operacionais quando houver necessidade real de conferência fora da tela.
+
+### Etapa 9 revisada - Importação do dump em Configurações
+
+Revisado nesta etapa:
+
+- `/configuracoes` ganhou o bloco `Importar dump do Sienge`, com seleção do arquivo `.dmpc` e acompanhamento visual.
+- `/api/sienge/dump-import` foi criada para receber o arquivo, salvar em `.sienge-data/imports` e iniciar a conversão em segundo plano.
+- `scripts/import-sienge-dump.py` passou a formalizar o fluxo local: validar `PGDMP`, subir PostgreSQL temporário, restaurar o dump, gerar catálogos, converter para SQLite e publicar `sienge-dump.sqlite`.
+- O status da importação fica salvo em `.sienge-data/dump-import-status.json`, permitindo reabrir Configurações e continuar vendo a última etapa conhecida.
+
+Resultado: o dump auxiliar deixou de depender de conversão manual fora do sistema. A atualização continua local, fora do Git, e passa a alimentar o SQLite complementar usado pelas telas.
 
 ### Etapa 3 revisada - Integração e Configurações
 

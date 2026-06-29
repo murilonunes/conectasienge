@@ -1,11 +1,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ReconciliationAccountPicker } from "@/components/settings/reconciliation-account-picker";
+import { SiengeDumpImportControl } from "@/components/settings/sienge-dump-import-control";
 import { SiengeUpdateControls } from "@/components/settings/sienge-update-controls";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { loadReconciliationAccounts } from "@/features/reconciliation/data";
 import { getLocalDatabaseFiles, getSiengeScreenUpdateHistory, type ScreenUpdateHistory } from "@/lib/api/sienge-history";
+import { getDumpImportStatus, getDumpSqliteInfo } from "@/lib/sienge-dump-import";
 import { getAppSettings, saveAppSettings, type AppSettings } from "@/lib/settings";
 import { updateAreas } from "@/lib/sienge-update-areas";
 import { buildUpdateAreaStatuses } from "@/lib/sienge-update-status";
@@ -72,6 +74,8 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
   const settings = getAppSettings();
   const history = getSiengeScreenUpdateHistory();
   const databaseFiles = getLocalDatabaseFiles();
+  const dumpImportStatus = getDumpImportStatus();
+  const dumpSqliteInfo = getDumpSqliteInfo();
   const reconciliationAccounts = loadReconciliationAccounts();
   const selectedReconciliationAccounts = settings.reconciliationAccountNumbers
     .split(",")
@@ -240,6 +244,16 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="card panel">
+        <div className="panel-head">
+          <div>
+            <h2 className="panel-title">Importar dump do Sienge</h2>
+            <span className="panel-note">Use quando receber um arquivo .dmpc. Ele Ã© convertido para SQLite e passa a complementar os dados do sistema.</span>
+          </div>
+        </div>
+        <SiengeDumpImportControl initialStatus={{ job: dumpImportStatus, sqlite: dumpSqliteInfo }} />
       </section>
 
       <section className="card panel">

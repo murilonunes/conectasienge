@@ -6,6 +6,10 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Atualização mais recente
 
+- A tela `/configuracoes` ganhou a opção `Importar dump do Sienge`, permitindo selecionar um arquivo `.dmpc` local e iniciar a conversão em segundo plano.
+- A importação do dump agora valida o arquivo `PGDMP`, restaura em PostgreSQL local temporário, gera catálogos, converte as tabelas para `frontend/.sienge-data/sienge-dump.sqlite` e publica o SQLite de forma atômica.
+- O progresso da importação aparece por etapas reais: validar arquivo, preparar ferramentas locais, restaurar dump, ler catálogo, gerar SQLite e publicar dados.
+- A rota `/api/sienge/dump-import` foi criada para iniciar a carga e consultar o status salvo em `.sienge-data/dump-import-status.json`.
 - O dump `sie5204-24062026-diario3.dmpc` foi restaurado e convertido para `frontend/.sienge-data/sienge-dump.sqlite`, ficando como fonte local complementar para campos internos que a API pública não entrega.
 - A conversão do dump gerou um SQLite auxiliar com 2.150 tabelas e 1.040.331 linhas validadas, mantendo os artefatos em `.sienge-data`, fora do Git.
 - A tela `/lancamentos/baixa-receber` passou a enriquecer os recebimentos da API com a tabela interna `ecrcbaixa` do dump quando ela estiver disponível.
