@@ -3,7 +3,7 @@ import { recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 
-type QuotationAction = "create" | "attach-items" | "add-supplier";
+type QuotationAction = "create" | "attach-items" | "add-supplier" | "add-item" | "send-negotiation";
 
 type PurchaseRequestPayload = {
   purchaseRequestId: number;
@@ -12,6 +12,48 @@ type PurchaseRequestPayload = {
     purchaseRequestItemNumber: number;
     deliveryRequirementNumber: number;
   }>;
+};
+
+type QuotationItemInsertPayload = {
+  buildingId?: number;
+  productId?: number;
+  detailId?: number;
+  trademarkId?: number;
+  quantity?: number;
+  unitySymbol?: string;
+  notes?: string;
+  deliveryRequirements?: Array<{
+    requirementDate: string;
+    requirementQuantity: number;
+  }>;
+};
+
+type NegotiationItemInput = {
+  quotationItemNumber: number;
+  quotedQuantity?: number;
+  negotiatedQuantity?: number;
+  unitPrice?: number;
+  selected?: boolean;
+  supplierNotes?: string;
+};
+
+type NegotiationInput = {
+  negotiationNumber?: number;
+  supplierAnswerDate?: string;
+  validity?: string;
+  seller?: string;
+  discount?: number;
+  freightType?: "NONE" | "INCLUDED" | "PAID";
+  freightPrice?: number;
+  internalNotes?: string;
+  supplierNotes?: string;
+  paymentTerms?: Array<{
+    description?: string;
+    selected?: boolean;
+    paymentTerms: Array<{ numberOfdays: number; percentage: number }>;
+  }>;
+  items?: NegotiationItemInput[];
+  authorize?: boolean;
 };
 
 type QuotationCreateRequest = {
@@ -24,6 +66,8 @@ type QuotationCreateRequest = {
   purchaseQuotationItemNumber?: number;
   supplierId?: number;
   request?: PurchaseRequestPayload;
+  item?: QuotationItemInsertPayload;
+  negotiation?: NegotiationInput;
 };
 
 type SiengePostResult =
@@ -107,6 +151,56 @@ function supplierPayload(purchaseQuotationId: number, purchaseQuotationItemNumbe
   };
 }
 
+function negotiationUpdatePayload(negotiation: NegotiationInput) {
+  return {
+    supplierAnswerDate: negotiation.supplierAnswerDate || todayIso(),
+    validity: negotiation.validity || undefined,
+    seller: negotiation.seller || undefined,
+    discount: Number(negotiation.discount) || 0,
+    freightType: negotiation.freightType || "NONE",
+    freightPrice: Number(negotiation.freightPrice) || 0,
+    valueOtherExpenses: 0,
+    applyIpiFreight: false,
+    internalNotes: negotiation.internalNotes || undefined,
+    supplierNotes: negotiation.supplierNotes || undefined,
+    paymentTerms: negotiation.paymentTerms?.length ? negotiation.paymentTerms : undefined
+  };
+}
+
+function negotiationItemPayload(item: NegotiationItemInput) {
+  const quotedQuantity = Number(item.quotedQuantity) || Number(item.negotiatedQuantity) || 0;
+  return {
+    quotedQuantity,
+    negotiatedQuantity: Number(item.negotiatedQuantity) || quotedQuantity,
+    unitPrice: Number(item.unitPrice) || 0,
+    discount: 0,
+    discountPercentage: 0,
+    increasePercentage: 0,
+    ipiTaxPercentage: 0,
+    issTaxPercentage: 0,
+    icmsTaxPercentage: 0,
+    freightUnitPrice: 0,
+    selectedOption: item.selected === true,
+    supplierNotes: item.supplierNotes?.slice(0, 4000) || undefined
+  };
+}
+
+function validNegotiationItems(negotiation?: NegotiationInput) {
+  return (negotiation?.items || []).filter((item) => Number.isFinite(item.quotationItemNumber) && item.quotationItemNumber > 0);
+}
+
+async function findLatestNegotiationNumber(tenant: string, username: string, password: string, purchaseQuotationId: number, supplierId: number) {
+  const result = await callSienge(tenant, username, password, "GET", `/v1/purchase-quotations/all/negotiations?quotationNumber=${purchaseQuotationId}`);
+  if (!result.ok || !result.body || typeof result.body !== "object") return undefined;
+  const results = (result.body as { results?: Array<{ suppliers?: Array<{ supplierId?: number; latestNegotiation?: Array<{ negotiationId?: number }> }> }> }).results || [];
+  for (const quotation of results) {
+    const supplier = quotation.suppliers?.find((current) => Number(current.supplierId) === supplierId);
+    const negotiationId = Number(supplier?.latestNegotiation?.[0]?.negotiationId);
+    if (Number.isFinite(negotiationId) && negotiationId > 0) return negotiationId;
+  }
+  return undefined;
+}
+
 function dryRunResponse(body: QuotationCreateRequest, payload: Record<string, unknown>) {
   return NextResponse.json({
     mode: "dry-run",
@@ -116,19 +210,19 @@ function dryRunResponse(body: QuotationCreateRequest, payload: Record<string, un
   });
 }
 
-async function postSienge(tenant: string, username: string, password: string, endpoint: string, body: unknown): Promise<SiengePostResult> {
+async function callSienge(tenant: string, username: string, password: string, method: "POST" | "PUT" | "PATCH" | "GET", endpoint: string, body?: unknown): Promise<SiengePostResult> {
   const url = `https://api.sienge.com.br/${tenant}/public/api${endpoint}`;
   const response = await fetch(url, {
-    method: "POST",
+    method,
     headers: authHeaders(username, password),
-    body: JSON.stringify(body),
+    body: method === "GET" ? undefined : JSON.stringify(body ?? {}),
     cache: "no-store"
   });
 
   if (!response.ok) {
     return {
       ok: false,
-      endpoint,
+      endpoint: `${method} ${endpoint}`,
       status: response.status,
       apiMessage: await parseSiengeResponse(response)
     };
@@ -136,11 +230,15 @@ async function postSienge(tenant: string, username: string, password: string, en
 
   return {
     ok: true,
-    endpoint,
+    endpoint: `${method} ${endpoint}`,
     status: response.status,
     location: response.headers.get("location"),
     body: await parseSiengeResponse(response)
   };
+}
+
+function postSienge(tenant: string, username: string, password: string, endpoint: string, body: unknown): Promise<SiengePostResult> {
+  return callSienge(tenant, username, password, "POST", endpoint, body);
 }
 
 function isIsoDate(value: string) {
@@ -166,6 +264,38 @@ function parseIdFromResult(result: SiengePostResult) {
     if (Number.isFinite(directId) && directId > 0) return directId;
   }
   return undefined;
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type") || "negotiations";
+  const quotationId = Number(searchParams.get("quotationId"));
+
+  if (!Number.isFinite(quotationId) || quotationId <= 0) {
+    return NextResponse.json({ message: "Informe uma cotacao valida." }, { status: 400 });
+  }
+
+  const config = siengeConfig();
+  if ("error" in config) {
+    return NextResponse.json({ message: config.error }, { status: 400 });
+  }
+
+  if (type === "comparison-map") {
+    const result = await callSienge(config.tenant, config.username, config.password, "GET", `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId=${quotationId}`);
+    if (!result.ok) {
+      return NextResponse.json({ message: "O Sienge nao retornou o mapa comparativo desta cotacao.", result }, { status: result.status });
+    }
+    const urls = ((result.body as { results?: Array<{ urlReport?: string }> })?.results || [])
+      .map((item) => item.urlReport)
+      .filter((url): url is string => Boolean(url));
+    return NextResponse.json({ urls, result: result.body });
+  }
+
+  const result = await callSienge(config.tenant, config.username, config.password, "GET", `/v1/purchase-quotations/all/negotiations?quotationNumber=${quotationId}`);
+  if (!result.ok) {
+    return NextResponse.json({ message: "O Sienge nao retornou as negociacoes desta cotacao.", result }, { status: result.status });
+  }
+  return NextResponse.json({ negotiations: result.body });
 }
 
 export async function POST(request: NextRequest) {
@@ -198,7 +328,7 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
   }
 
-  if ((action === "attach-items" || action === "add-supplier") && !body.purchaseQuotationId) {
+  if (action !== "create" && !body.purchaseQuotationId) {
     return NextResponse.json({
       message: "Informe o ID da cotacao do Sienge."
     }, { status: 400 });
@@ -300,6 +430,160 @@ export async function POST(request: NextRequest) {
       message: "Fornecedor incluido no item da cotacao no Sienge.",
       result
     }, { status: 201 });
+  }
+
+  if (action === "add-item") {
+    const purchaseQuotationId = Number(body.purchaseQuotationId);
+    const item = body.item;
+    const deliveries = (item?.deliveryRequirements || []).filter((delivery) => isIsoDate(delivery.requirementDate) && Number(delivery.requirementQuantity) > 0);
+    if (!purchaseQuotationId || !item || !Number(item.buildingId) || !Number(item.productId) || !Number(item.quantity) || !item.unitySymbol?.trim() || !deliveries.length) {
+      return NextResponse.json({
+        message: "Informe obra, insumo, quantidade, unidade e ao menos uma entrega com data e quantidade."
+      }, { status: 400 });
+    }
+
+    const payload = {
+      endpoint: `/v1/purchase-quotations/${purchaseQuotationId}/items`,
+      body: {
+        buildingId: Number(item.buildingId),
+        productId: Number(item.productId),
+        detailId: Number(item.detailId) || undefined,
+        trademarkId: Number(item.trademarkId) || undefined,
+        quantity: Number(item.quantity),
+        unitySymbol: item.unitySymbol.trim(),
+        notes: item.notes?.slice(0, 4000) || undefined,
+        deliveryRequirements: deliveries.map((delivery) => ({
+          requirementDate: delivery.requirementDate,
+          requirementQuantity: Number(delivery.requirementQuantity)
+        }))
+      }
+    };
+
+    if (body.dryRun !== false || !body.confirm) {
+      return dryRunResponse(body, { endpoint: payload.endpoint, itemPayload: payload.body });
+    }
+
+    const config = siengeConfig();
+    if ("error" in config) {
+      recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+      return NextResponse.json({ message: config.error }, { status: 400 });
+    }
+
+    const result = await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body);
+    if (!result.ok) {
+      recordIntegrationEvent("integration_error", "Erro ao criar insumo na cotacao", "O Sienge nao aceitou o insumo direto nesta cotacao.", { result });
+      return NextResponse.json({
+        message: "O Sienge nao aceitou o insumo direto nesta cotacao.",
+        result
+      }, { status: result.status });
+    }
+
+    recordIntegrationEvent("sienge_created", "Insumo criado na cotacao", "Insumo criado direto na cotacao, sem solicitacao de compra.", {
+      endpoint: payload.endpoint,
+      productId: payload.body.productId
+    });
+    return NextResponse.json({
+      message: "Insumo criado na cotacao do Sienge.",
+      result
+    }, { status: 201 });
+  }
+
+  if (action === "send-negotiation") {
+    const purchaseQuotationId = Number(body.purchaseQuotationId);
+    const supplierId = Number(body.supplierId);
+    const negotiation = body.negotiation;
+    const items = validNegotiationItems(negotiation);
+    if (!purchaseQuotationId || !supplierId || !negotiation) {
+      return NextResponse.json({
+        message: "Informe a cotacao, o fornecedor do Sienge e os dados da negociacao."
+      }, { status: 400 });
+    }
+
+    const basePath = `/v1/purchase-quotations/${purchaseQuotationId}/suppliers/${supplierId}/negotiations`;
+    const plannedSteps = {
+      createNegotiation: negotiation.negotiationNumber ? undefined : { endpoint: basePath, body: {} },
+      updateNegotiation: {
+        endpoint: `${basePath}/{negotiationNumber}`,
+        body: negotiationUpdatePayload(negotiation)
+      },
+      itemUpdates: items.map((item) => ({
+        endpoint: `${basePath}/{negotiationNumber}/items/${item.quotationItemNumber}`,
+        body: negotiationItemPayload(item)
+      })),
+      authorize: negotiation.authorize ? { endpoint: `${basePath}/latest/authorize` } : undefined
+    };
+
+    if (body.dryRun !== false || !body.confirm) {
+      return dryRunResponse(body, {
+        note: "Ao confirmar, a rota cria/atualiza a negociacao do fornecedor com os valores informados e, se solicitado, autoriza a ultima negociacao.",
+        ...plannedSteps
+      });
+    }
+
+    const config = siengeConfig();
+    if ("error" in config) {
+      recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+      return NextResponse.json({ message: config.error }, { status: 400 });
+    }
+
+    const steps: SiengePostResult[] = [];
+    let negotiationNumber = Number(negotiation.negotiationNumber) || undefined;
+
+    if (!negotiationNumber) {
+      const created = await postSienge(config.tenant, config.username, config.password, basePath, {});
+      steps.push(created);
+      if (!created.ok) {
+        recordIntegrationEvent("integration_error", "Erro ao criar negociacao no Sienge", "O Sienge nao aceitou a criacao da negociacao para o fornecedor.", { steps });
+        return NextResponse.json({ message: "O Sienge nao aceitou a criacao da negociacao.", steps }, { status: created.status });
+      }
+      negotiationNumber = parseIdFromLocation(created.location)
+        || await findLatestNegotiationNumber(config.tenant, config.username, config.password, purchaseQuotationId, supplierId);
+      if (!negotiationNumber) {
+        recordIntegrationEvent("integration_error", "Negociacao criada sem numero identificado", "A negociacao foi criada, mas o numero nao pode ser identificado para gravar os valores.", { steps });
+        return NextResponse.json({
+          message: "Negociacao criada, mas o numero nao pode ser identificado. Atualize os dados e tente gravar os valores novamente.",
+          steps
+        }, { status: 502 });
+      }
+    }
+
+    const updated = await callSienge(config.tenant, config.username, config.password, "PUT", `${basePath}/${negotiationNumber}`, negotiationUpdatePayload(negotiation));
+    steps.push(updated);
+
+    for (const item of items) {
+      steps.push(await callSienge(
+        config.tenant,
+        config.username,
+        config.password,
+        "PUT",
+        `${basePath}/${negotiationNumber}/items/${item.quotationItemNumber}`,
+        negotiationItemPayload(item)
+      ));
+    }
+
+    let authorized: SiengePostResult | undefined;
+    const failedStep = steps.find((step) => !step.ok);
+    if (negotiation.authorize && !failedStep) {
+      authorized = await callSienge(config.tenant, config.username, config.password, "PATCH", `${basePath}/latest/authorize`);
+      steps.push(authorized);
+    }
+
+    const failed = steps.find((step) => !step.ok);
+    if (failed) {
+      recordIntegrationEvent("integration_error", "Erro ao gravar negociacao no Sienge", "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge.", { negotiationNumber, steps });
+    } else {
+      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociacao gravada e autorizada no Sienge" : "Negociacao gravada no Sienge", `Negociacao ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { negotiationNumber, supplierId, authorized: Boolean(negotiation.authorize) });
+    }
+
+    return NextResponse.json({
+      message: failed
+        ? "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge."
+        : negotiation.authorize
+          ? "Negociacao gravada e autorizada no Sienge."
+          : "Negociacao gravada no Sienge.",
+      negotiationNumber,
+      steps
+    }, { status: failed ? failed.status : 200 });
   }
 
   const config = siengeConfig();
