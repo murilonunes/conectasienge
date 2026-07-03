@@ -235,6 +235,14 @@ function database() {
   } catch {
     // Coluna já existe em bancos criados depois desta versão.
   }
+  try {
+    // Cada link aceita uma única proposta; reenvio pelo mesmo token é bloqueado
+    // na aplicação, e este índice é a garantia contra o caso de duas gravações
+    // concorrentes com o mesmo link.
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_supplier_quote_responses_unique_token ON supplier_quote_responses(token_hash)");
+  } catch {
+    // Já existem respostas duplicadas para o mesmo token em um banco anterior a esta versão; mantém a validação apenas na aplicação.
+  }
   return db;
 }
 
@@ -379,6 +387,21 @@ export function verifyActiveSupplierQuoteToken(token: string): SupplierQuoteToke
   return payload;
 }
 
+// Cada link aceita uma única proposta. Para enviar uma revisão, a equipe de
+// compras gera um novo link (o botão "Regerar" já revoga o anterior).
+export function hasSupplierQuoteResponse(token: string): boolean {
+  if (!supplierQuoteDatabaseExists()) return false;
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT id FROM supplier_quote_responses WHERE token_hash = ? LIMIT 1
+    `).get(hashToken(token));
+    return Boolean(row);
+  } finally {
+    db.close();
+  }
+}
+
 export function revokeSupplierQuoteInvitation(quotationId: number, invitationId: number): SupplierQuoteInvitationSummary[] {
   const db = database();
   try {
@@ -420,24 +443,32 @@ export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, pay
   try {
     const createdAt = new Date().toISOString();
     const document = input.document.replace(/\D/g, "");
-    const result = db.prepare(`
-      INSERT INTO supplier_quote_responses (
-        token_hash, quotation_id, supplier_id, supplier_name, document, email, phone,
-        registration_json, items_json, created_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      hashToken(input.token),
-      payload.quotationId,
-      payload.supplierId ?? null,
-      input.supplierName.trim(),
-      document,
-      input.email?.trim() || null,
-      input.phone?.trim() || null,
-      input.registration ? JSON.stringify(input.registration) : null,
-      JSON.stringify(input.items),
-      createdAt
-    );
+    let result: { lastInsertRowid: number | bigint };
+    try {
+      result = db.prepare(`
+        INSERT INTO supplier_quote_responses (
+          token_hash, quotation_id, supplier_id, supplier_name, document, email, phone,
+          registration_json, items_json, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        hashToken(input.token),
+        payload.quotationId,
+        payload.supplierId ?? null,
+        input.supplierName.trim(),
+        document,
+        input.email?.trim() || null,
+        input.phone?.trim() || null,
+        input.registration ? JSON.stringify(input.registration) : null,
+        JSON.stringify(input.items),
+        createdAt
+      );
+    } catch (error) {
+      if (error instanceof Error && /UNIQUE constraint failed/i.test(error.message)) {
+        throw new Error("Este link já foi utilizado para enviar uma proposta. Solicite um novo link ao comprador para enviar uma revisão.");
+      }
+      throw error;
+    }
     insertSupplierQuoteEvent(db, {
       quotationId: payload.quotationId,
       type: "response_received",

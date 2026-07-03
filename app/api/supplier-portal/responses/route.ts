@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveSupplierQuoteResponse, verifyActiveSupplierQuoteToken, type SupplierQuoteResponseInput } from "@/lib/supplier-quote-portal";
+import { hasSupplierQuoteResponse, saveSupplierQuoteResponse, verifyActiveSupplierQuoteToken, type SupplierQuoteResponseInput } from "@/lib/supplier-quote-portal";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
 import { loadQuotationDetail } from "@/features/quotations/data";
 import { clientIp, rateLimited } from "@/lib/rate-limit";
@@ -33,6 +33,10 @@ export async function POST(request: Request) {
     const payload = verifyActiveSupplierQuoteToken(input.token || "");
     if (!payload) {
       return NextResponse.json({ message: "Link inválido, expirado ou revogado." }, { status: 401 });
+    }
+
+    if (hasSupplierQuoteResponse(input.token || "")) {
+      return NextResponse.json({ message: "Este link já foi utilizado para enviar uma proposta. Solicite um novo link ao comprador para enviar uma revisão." }, { status: 409 });
     }
 
     const document = String(input.document || "").replace(/\D/g, "");
@@ -101,8 +105,7 @@ export async function POST(request: Request) {
       registrationPending: !localSupplier
     }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({
-      message: error instanceof Error ? error.message : "Não foi possível salvar a proposta."
-    }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Não foi possível salvar a proposta.";
+    return NextResponse.json({ message }, { status: message.includes("já foi utilizado") ? 409 : 500 });
   }
 }
