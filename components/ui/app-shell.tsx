@@ -12,6 +12,8 @@ const overviewNavigation = [
 const operationNavigation = [
   ["Contratos", "/contratos", "C"],
   ["Conciliação", "/conciliacao", "CC"],
+  ["Solicitações de compra", "/solicitacoes-compra", "SC"],
+  ["Cotações", "/cotacoes", "CT"],
   ["Contas a pagar", "/contas-pagar", "P"],
   ["Contas a receber", "/contas-receber", "R"],
   ["Baixa a pagar", "/lancamentos/baixa", "BP"],
@@ -60,6 +62,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div><strong>Sienge</strong><br /><span className="panel-note">Integração</span></div>
             <div><strong>{settings.responsibleName}</strong><br /><span className="panel-note">{settings.responsibleRole}</span></div>
             <div className="avatar">{settings.responsibleInitials}</div>
+            <form action="/api/auth/logout" method="post">
+              <button className="logout-button" type="submit">Sair</button>
+            </form>
           </div>
         </header>
         <div className="content">{children}</div>

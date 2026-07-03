@@ -7,6 +7,7 @@ import { loadReceivablesForecast } from "@/features/receivables-forecast/sienge-
 import { loadReconciliationMovements } from "@/features/reconciliation/data";
 import { loadSalesContracts } from "@/features/sales/data";
 import { loadSupplyContracts } from "@/features/contracts/data";
+import { refreshSupplierDirectory } from "@/features/suppliers/data";
 import { getSiengeIntegrationRange } from "@/lib/settings";
 import { updateAreaLabel, type UpdateArea } from "@/lib/sienge-update-areas";
 
@@ -58,6 +59,7 @@ function stepsFor(area: UpdateArea): SiengeUpdateJobStep[] {
     { key: "contracts", label: "Contratos" },
     { key: "inventory", label: "Estoque e patrimônio" },
     { key: "purchases", label: "Compras" },
+    { key: "suppliers", label: "Fornecedores" },
     { key: "reconciliation", label: "Conciliação" }
   ];
   return keys
@@ -151,6 +153,9 @@ async function runSiengeUpdateJob(job: SiengeUpdateJob) {
     }
     if (job.area === "purchases" || job.area === "all" || job.area === "reports") {
       await runStep(job, "purchases", () => loadPurchases(true, force, integrationRange));
+    }
+    if (job.area === "suppliers" || job.area === "all" || job.area === "reports") {
+      await runStep(job, "suppliers", () => refreshSupplierDirectory(force));
     }
     if (job.area === "reconciliation" || job.area === "all") {
       await runStep(job, "reconciliation", () => loadReconciliationMovements(undefined, true, force, integrationRange));

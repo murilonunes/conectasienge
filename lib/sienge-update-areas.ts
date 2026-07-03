@@ -1,4 +1,4 @@
-export type UpdateArea = "all" | "reports" | "payables" | "receivables" | "sales" | "inventory" | "purchases" | "reconciliation" | "contracts";
+export type UpdateArea = "all" | "reports" | "payables" | "receivables" | "sales" | "inventory" | "purchases" | "suppliers" | "reconciliation" | "contracts";
 
 export type UpdateAreaDefinition = { key: UpdateArea; label: string; note: string; historyKey?: string };
 
@@ -10,12 +10,13 @@ export const updateAreas: UpdateAreaDefinition[] = [
   { key: "contracts", label: "Contratos", note: "Contratos de fornecimento, saldos e medições.", historyKey: "contracts" },
   { key: "inventory", label: "Estoque e patrimônio", note: "Unidades, patrimônio, tabelas de preço, mapa imobiliário, reservas e insumos.", historyKey: "inventory" },
   { key: "purchases", label: "Compras", note: "Solicitações, cotações, pedidos e notas.", historyKey: "purchases" },
+  { key: "suppliers", label: "Fornecedores", note: "Credores usados para localizar e vincular fornecedores nas operações do Sienge.", historyKey: "parties" },
   { key: "reconciliation", label: "Conciliação", note: "Movimentos bancários e itens a conciliar.", historyKey: "reconciliation" }
 ];
 
 export const reportUpdateAreas: UpdateAreaDefinition[] = [
   { key: "reports", label: "Todos os relatórios", note: "Atualiza os dados usados pela Central de relatórios." },
-  ...updateAreas.filter((area) => ["payables", "receivables", "sales", "contracts", "inventory", "purchases"].includes(area.key))
+  ...updateAreas.filter((area) => ["payables", "receivables", "sales", "contracts", "inventory", "purchases", "suppliers"].includes(area.key))
 ];
 
 export function isUpdateArea(value: unknown): value is UpdateArea {

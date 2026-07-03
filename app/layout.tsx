@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { AppShell } from "@/components/ui/app-shell";
 
@@ -8,9 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const path = headers().get("x-current-path") || "";
+  const publicExperience = path.startsWith("/portal-cotacao") || path.startsWith("/login");
+
   return (
     <html lang="pt-BR">
-      <body><AppShell>{children}</AppShell></body>
+      <body>{publicExperience ? children : <AppShell>{children}</AppShell>}</body>
     </html>
   );
 }

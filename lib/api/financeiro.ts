@@ -33,7 +33,9 @@ export const credoresApi = {
   list: <T>(filters: SiengeListFilters = {}, forceRefresh = false, forceReplaceFinalized = false) =>
     siengeRequest<SiengePage<T>>("/v1/creditors", filters, { cache: forceRefresh ? "refresh" : "daily", forceReplaceFinalized }),
   get: <T>(creditorId: number) =>
-    siengeRequest<T>(`/v1/creditors/${creditorId}`)
+    siengeRequest<T>(`/v1/creditors/${creditorId}`),
+  create: <T>(payload: unknown) =>
+    siengeRequest<T>("/v1/creditors", {}, { method: "POST", body: payload })
 };
 
 export const contasReceberApi = {

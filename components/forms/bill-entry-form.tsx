@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 type FormData = {
@@ -68,7 +69,7 @@ export function BillEntryForm() {
         <div className="form-section-head"><span>01</span><div><h2>Identificação do título</h2><p>Códigos conforme cadastrados no Sienge.</p></div></div>
         <div className="form-grid">
           <label><span>Empresa devedora *</span><input required type="number" min="1" value={data.debtorId} onChange={(e) => update("debtorId", e.target.value)} placeholder="Código da empresa" /></label>
-          <label><span>Credor *</span><input required type="number" min="1" value={data.creditorId} onChange={(e) => update("creditorId", e.target.value)} placeholder="Código do credor" /></label>
+          <SiengeSupplierPicker value={data.creditorId} onChange={(next) => update("creditorId", next)} label="Credor" required compact />
           <label><span>Código do documento *</span><input required value={data.documentIdentificationId} onChange={(e) => update("documentIdentificationId", e.target.value.toUpperCase())} placeholder="NF" /></label>
           <label><span>Número do documento *</span><input required value={data.documentNumber} onChange={(e) => update("documentNumber", e.target.value)} placeholder="Ex.: 2026-0042" /></label>
         </div>
