@@ -86,6 +86,7 @@ function registrationText(registration: Record<string, unknown> | undefined, fie
 function eventTypeLabel(type: SupplierQuoteEventSummary["type"]) {
   const labels: Record<SupplierQuoteEventSummary["type"], string> = {
     link_sent: "Link enviado",
+    link_revoked: "Link revogado",
     response_received: "Resposta recebida",
     supplier_approved: "Fornecedor aprovado",
     integration_error: "Erro de integração",
@@ -95,7 +96,7 @@ function eventTypeLabel(type: SupplierQuoteEventSummary["type"]) {
 }
 
 function eventTypeClass(type: SupplierQuoteEventSummary["type"]) {
-  if (type === "integration_error") return "late";
+  if (type === "integration_error" || type === "link_revoked") return "late";
   if (type === "link_sent") return "warn";
   return "";
 }
@@ -401,6 +402,27 @@ export function QuotationDetail({
       setLinkMessage(message);
       setOperationResult(JSON.stringify({ message }, null, 2));
       return undefined;
+    } finally {
+      setLoadingAction(null);
+    }
+  }
+
+  async function revokeInvitation(invitationId: number) {
+    setLoadingAction("revoke-link");
+    setLinkMessage("");
+    try {
+      const response = await fetch("/api/supplier-portal/invitations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotationId: quotation.id, invitationId })
+      });
+      const json = await response.json() as { invitations?: SupplierQuoteInvitationSummary[]; message?: string };
+      if (!response.ok) throw new Error(json.message || "Não foi possível revogar o link.");
+      if (json.invitations) setInvitations(json.invitations);
+      setLinkMessage("Link revogado. O fornecedor não consegue mais enviar propostas por ele.");
+      void refreshEvents();
+    } catch (error) {
+      setLinkMessage(error instanceof Error ? error.message : "Erro inesperado ao revogar o link.");
     } finally {
       setLoadingAction(null);
     }
@@ -835,8 +857,8 @@ export function QuotationDetail({
                         <h3>{invitation.supplierName || (invitation.document ? formatDocument(invitation.document) : "Fornecedor não informado")}</h3>
                         <small>Criado em {formatOptionalDate(invitation.createdAt)} - válido até {formatOptionalDate(invitation.expiresAt)}</small>
                       </div>
-                      <i className={`badge ${invitation.status === "expired" ? "late" : invitation.status === "pending" ? "warn" : ""}`}>
-                        {invitation.status === "answered" ? "Respondido" : invitation.status === "expired" ? "Vencido" : "Aguardando"}
+                      <i className={`badge ${invitation.status === "expired" || invitation.status === "revoked" ? "late" : invitation.status === "pending" ? "warn" : ""}`}>
+                        {invitation.status === "answered" ? "Respondido" : invitation.status === "expired" ? "Vencido" : invitation.status === "revoked" ? "Revogado" : "Aguardando"}
                       </i>
                     </div>
 
@@ -867,6 +889,16 @@ export function QuotationDetail({
                       >
                         {loadingAction === "supplier-link" ? "Gerando..." : "Regerar"}
                       </button>
+                      {invitation.status !== "revoked" && invitation.status !== "expired" && (
+                        <button
+                          className="button secondary"
+                          type="button"
+                          disabled={loadingAction !== null}
+                          onClick={() => revokeInvitation(invitation.id)}
+                        >
+                          {loadingAction === "revoke-link" ? "Revogando..." : "Revogar"}
+                        </button>
+                      )}
                     </div>
                   </article>
                 ))}

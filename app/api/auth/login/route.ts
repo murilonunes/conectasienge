@@ -9,6 +9,11 @@ const sessionMaxAge = 60 * 60 * 12;
 const attempts = new Map<string, { count: number; resetAt: number }>();
 const maxAttempts = 8;
 const windowMs = 15 * 60 * 1000;
+// Teto global independente do IP: o cabeçalho x-forwarded-for pode ser
+// falsificado quando não há proxy confiável na frente, então um limite
+// só por chave não impede força bruta com IPs forjados.
+const globalKey = "__global__";
+const maxGlobalAttempts = 40;
 
 function configuredPassword() {
   return process.env.APP_ACCESS_PASSWORD || "";
@@ -45,21 +50,35 @@ function clientKey(request: NextRequest) {
     || "local";
 }
 
-function tooManyAttempts(key: string) {
+function bucketFull(key: string, max: number) {
   const now = Date.now();
   const current = attempts.get(key);
   if (!current || current.resetAt < now) return false;
-  return current.count >= maxAttempts;
+  return current.count >= max;
 }
 
-function registerFailedAttempt(key: string) {
+function tooManyAttempts(key: string) {
+  return bucketFull(key, maxAttempts) || bucketFull(globalKey, maxGlobalAttempts);
+}
+
+function countFailure(key: string) {
   const now = Date.now();
+  if (attempts.size > 1000) {
+    attempts.forEach((bucket, staleKey) => {
+      if (bucket.resetAt < now) attempts.delete(staleKey);
+    });
+  }
   const current = attempts.get(key);
   if (!current || current.resetAt < now) {
     attempts.set(key, { count: 1, resetAt: now + windowMs });
     return;
   }
   attempts.set(key, { ...current, count: current.count + 1 });
+}
+
+function registerFailedAttempt(key: string) {
+  countFailure(key);
+  countFailure(globalKey);
 }
 
 function clearAttempts(key: string) {

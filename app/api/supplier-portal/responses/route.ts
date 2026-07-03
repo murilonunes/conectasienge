@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { saveSupplierQuoteResponse, verifySupplierQuoteToken, type SupplierQuoteResponseInput } from "@/lib/supplier-quote-portal";
+import { saveSupplierQuoteResponse, verifyActiveSupplierQuoteToken, type SupplierQuoteResponseInput } from "@/lib/supplier-quote-portal";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
 import { loadQuotationDetail } from "@/features/quotations/data";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,15 +19,20 @@ function validDocument(value: string) {
 
 export async function POST(request: Request) {
   try {
+    if (rateLimited(`supplier-responses:${clientIp(request)}`, 20, 10 * 60 * 1000)
+      || rateLimited("supplier-responses:global", 200, 10 * 60 * 1000)) {
+      return NextResponse.json({ message: "Muitos envios em sequência. Aguarde alguns minutos." }, { status: 429 });
+    }
+
     const contentLength = Number(request.headers.get("content-length") || 0);
     if (contentLength > maxBodyBytes) {
       return NextResponse.json({ message: "Payload muito grande." }, { status: 413 });
     }
 
     const input = await request.json().catch(() => ({})) as SupplierQuoteResponseInput;
-    const payload = verifySupplierQuoteToken(input.token || "");
+    const payload = verifyActiveSupplierQuoteToken(input.token || "");
     if (!payload) {
-      return NextResponse.json({ message: "Link inválido ou expirado." }, { status: 401 });
+      return NextResponse.json({ message: "Link inválido, expirado ou revogado." }, { status: 401 });
     }
 
     const document = String(input.document || "").replace(/\D/g, "");

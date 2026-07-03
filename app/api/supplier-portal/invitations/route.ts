@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSupplierQuoteToken, loadSupplierQuoteInvitations, saveSupplierQuoteInvitation, verifySupplierQuoteToken } from "@/lib/supplier-quote-portal";
+import { createSupplierQuoteToken, loadSupplierQuoteInvitations, revokeSupplierQuoteInvitation, saveSupplierQuoteInvitation, verifySupplierQuoteToken } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -64,6 +64,25 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json({
       message: error instanceof Error ? error.message : "Não foi possível gerar o link."
+    }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const input = await request.json().catch(() => ({})) as { quotationId?: number; invitationId?: number };
+    const quotationId = Number(input.quotationId);
+    const invitationId = Number(input.invitationId);
+
+    if (!Number.isFinite(quotationId) || quotationId <= 0 || !Number.isFinite(invitationId) || invitationId <= 0) {
+      return NextResponse.json({ message: "Informe a cotação e o link a revogar." }, { status: 400 });
+    }
+
+    const invitations = revokeSupplierQuoteInvitation(quotationId, invitationId);
+    return NextResponse.json({ ok: true, invitations });
+  } catch (error) {
+    return NextResponse.json({
+      message: error instanceof Error ? error.message : "Não foi possível revogar o link."
     }, { status: 500 });
   }
 }

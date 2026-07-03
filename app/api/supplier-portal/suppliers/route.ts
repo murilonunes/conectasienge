@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
-import { verifySupplierQuoteToken } from "@/lib/supplier-quote-portal";
+import { verifyActiveSupplierQuoteToken } from "@/lib/supplier-quote-portal";
+import { clientIp, rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
+  if (rateLimited(`supplier-lookup:${clientIp(request)}`, 30, 10 * 60 * 1000)
+    || rateLimited("supplier-lookup:global", 300, 10 * 60 * 1000)) {
+    return NextResponse.json({ message: "Muitas consultas em sequência. Aguarde alguns minutos." }, { status: 429 });
+  }
+
   const url = new URL(request.url);
   const token = url.searchParams.get("token") || "";
-  const payload = verifySupplierQuoteToken(token);
+  const payload = verifyActiveSupplierQuoteToken(token);
   if (!payload) {
-    return NextResponse.json({ message: "Token inválido ou expirado." }, { status: 401 });
+    return NextResponse.json({ message: "Link inválido, expirado ou revogado." }, { status: 401 });
   }
 
   const requestedSearch = url.searchParams.get("q") || "";

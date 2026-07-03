@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation";
 import { SupplierQuoteResponseForm } from "@/components/suppliers/supplier-quote-response-form";
 import { loadQuotationDetail } from "@/features/quotations/data";
-import { verifySupplierQuoteToken } from "@/lib/supplier-quote-portal";
+import { verifyActiveSupplierQuoteToken } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 
 export default async function SupplierQuotePortalPage({ params }: { params: { token: string } }) {
   let payload;
   try {
-    payload = verifySupplierQuoteToken(params.token);
+    payload = verifyActiveSupplierQuoteToken(params.token);
   } catch (error) {
     return (
       <section className="supplier-public-shell">

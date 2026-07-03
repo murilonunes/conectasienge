@@ -86,11 +86,13 @@ export type SupplierQuoteInvitationSummary = {
   createdAt: string;
   responseCount: number;
   lastResponseAt?: string;
-  status: "answered" | "pending" | "expired";
+  revokedAt?: string;
+  status: "answered" | "pending" | "expired" | "revoked";
 };
 
 export type SupplierQuoteEventType =
   | "link_sent"
+  | "link_revoked"
   | "response_received"
   | "supplier_approved"
   | "integration_error"
@@ -128,8 +130,16 @@ function secret() {
   }
 
   const localValue = randomBytes(48).toString("base64url");
-  writeFileSync(localSecretPath, `${localValue}\n`, { encoding: "utf8", mode: 0o600 });
-  return localValue;
+  try {
+    // "wx" falha se o arquivo já existir: garante que dois processos concorrentes
+    // não gravem segredos diferentes e invalidem os links um do outro.
+    writeFileSync(localSecretPath, `${localValue}\n`, { encoding: "utf8", mode: 0o600, flag: "wx" });
+    return localValue;
+  } catch {
+    const existingValue = readFileSync(localSecretPath, "utf8").trim();
+    if (existingValue.length >= 32) return existingValue;
+    throw new Error("Não foi possível preparar o segredo do portal de fornecedores.");
+  }
 }
 
 function base64url(value: string | Buffer) {
@@ -220,6 +230,11 @@ function database() {
     );
     CREATE INDEX IF NOT EXISTS idx_supplier_quote_events_quotation ON supplier_quote_events(quotation_id);
   `);
+  try {
+    db.exec("ALTER TABLE supplier_quote_invitations ADD COLUMN revoked_at TEXT");
+  } catch {
+    // Coluna já existe em bancos criados depois desta versão.
+  }
   return db;
 }
 
@@ -342,6 +357,64 @@ export function verifySupplierQuoteToken(token: string): SupplierQuoteTokenPaylo
   }
 }
 
+function tokenRevoked(token: string) {
+  if (!supplierQuoteDatabaseExists()) return false;
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT revoked_at FROM supplier_quote_invitations WHERE token_hash = ? AND revoked_at IS NOT NULL LIMIT 1
+    `).get(hashToken(token)) as { revoked_at: string } | undefined;
+    return Boolean(row);
+  } finally {
+    db.close();
+  }
+}
+
+// Verificação usada pelas rotas públicas do portal: além da assinatura e da
+// validade, o link não pode ter sido revogado pela equipe de compras.
+export function verifyActiveSupplierQuoteToken(token: string): SupplierQuoteTokenPayload | undefined {
+  const payload = verifySupplierQuoteToken(token);
+  if (!payload) return undefined;
+  if (tokenRevoked(token)) return undefined;
+  return payload;
+}
+
+export function revokeSupplierQuoteInvitation(quotationId: number, invitationId: number): SupplierQuoteInvitationSummary[] {
+  const db = database();
+  try {
+    const invitation = db.prepare(`
+      SELECT id, supplier_name, document, revoked_at
+      FROM supplier_quote_invitations
+      WHERE id = ? AND quotation_id = ?
+    `).get(invitationId, quotationId) as {
+      id: number;
+      supplier_name: string | null;
+      document: string | null;
+      revoked_at: string | null;
+    } | undefined;
+
+    if (!invitation) throw new Error("Link não encontrado para esta cotação.");
+
+    if (!invitation.revoked_at) {
+      const revokedAt = new Date().toISOString();
+      db.prepare("UPDATE supplier_quote_invitations SET revoked_at = ? WHERE id = ?").run(revokedAt, invitationId);
+      insertSupplierQuoteEvent(db, {
+        quotationId,
+        type: "link_revoked",
+        title: "Link do fornecedor revogado",
+        description: "O link deixou de aceitar novas propostas.",
+        supplierName: invitation.supplier_name || undefined,
+        document: invitation.document || undefined,
+        metadata: { invitationId }
+      });
+    }
+  } finally {
+    db.close();
+  }
+
+  return loadSupplierQuoteInvitations(quotationId);
+}
+
 export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, payload: SupplierQuoteTokenPayload) {
   const db = database();
   try {
@@ -462,6 +535,7 @@ export function loadSupplierQuoteInvitations(quotationId: number): SupplierQuote
         invitation.url,
         invitation.expires_at,
         invitation.created_at,
+        invitation.revoked_at,
         COUNT(response.id) AS response_count,
         MAX(response.created_at) AS last_response_at
       FROM supplier_quote_invitations invitation
@@ -476,7 +550,8 @@ export function loadSupplierQuoteInvitations(quotationId: number): SupplierQuote
         invitation.token,
         invitation.url,
         invitation.expires_at,
-        invitation.created_at
+        invitation.created_at,
+        invitation.revoked_at
       ORDER BY datetime(invitation.created_at) DESC, invitation.id DESC
     `).all(quotationId) as Array<{
       id: number;
@@ -488,6 +563,7 @@ export function loadSupplierQuoteInvitations(quotationId: number): SupplierQuote
       url: string;
       expires_at: string;
       created_at: string;
+      revoked_at: string | null;
       response_count: number;
       last_response_at: string | null;
     }>;
@@ -505,9 +581,10 @@ export function loadSupplierQuoteInvitations(quotationId: number): SupplierQuote
         url: row.url,
         expiresAt: row.expires_at,
         createdAt: row.created_at,
+        revokedAt: row.revoked_at ?? undefined,
         responseCount,
         lastResponseAt: row.last_response_at ?? undefined,
-        status: responseCount > 0 ? "answered" : expired ? "expired" : "pending"
+        status: row.revoked_at ? "revoked" : responseCount > 0 ? "answered" : expired ? "expired" : "pending"
       };
     });
   } finally {
