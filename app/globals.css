@@ -1344,9 +1344,17 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-approval-layout { gap: 14px; }
 .quotation-operation-sections { display: grid; gap: 12px; }
 .quotation-operation-block { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.quotation-operation-block.focused { min-height: 260px; align-content: start; background: #fff; }
 .quotation-operation-block-head { display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: center; }
 .quotation-operation-block-head span { width: fit-content; padding: 5px 7px; border-radius: 999px; background: #eef1ef; color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
 .quotation-operation-block-head h3 { margin: 0; font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0; }
+.quotation-operation-topic-panel { order: -1; }
+.quotation-operation-topic-list { display: grid; gap: 8px; }
+.quotation-operation-topic-list button { display: grid; gap: 4px; width: 100%; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); padding: 10px; cursor: pointer; text-align: left; }
+.quotation-operation-topic-list button.active { border-color: #cfe1d7; background: #f8fbf9; box-shadow: inset 3px 0 0 var(--green); }
+.quotation-operation-topic-list span { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.quotation-operation-topic-list strong { font-family: var(--font-display); font-size: 12px; font-weight: 700; letter-spacing: 0; }
+.quotation-operation-topic-list small { color: var(--muted); font-size: 10px; font-weight: 800; }
 .quotation-operation-grid { gap: 10px; margin-top: 0; }
 .quotation-operation-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .quotation-operation-grid label,

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import { formatOptionalDate } from "@/lib/formatters";
 import { OperationResultPanel, type OperationResultKind } from "../../operation-result-panel";
@@ -17,6 +20,8 @@ type SiengeFormState = {
   directItemUnity: string;
   directItemNeedDate: string;
 };
+
+type SiengeTopic = "quotation" | "requestItem" | "supplier" | "directItem";
 
 export function SiengeTab({
   quotationId,
@@ -47,25 +52,82 @@ export function SiengeTab({
   generatedSupplierLink?: GeneratedSupplierLink;
   onCopyLink: (url: string) => void;
 }) {
+  const [activeTopic, setActiveTopic] = useState<SiengeTopic>("quotation");
   const directItemDisabled = !form.directItemBuildingId || !form.directItemProductId || !form.directItemQuantity || !form.directItemUnity.trim() || loadingAction !== null;
+  const requestItemReady = Boolean(form.purchaseRequestId && form.purchaseRequestItemNumber);
+  const supplierReady = Boolean(form.supplierId && form.purchaseRequestItemNumber);
+  const directItemReady = !directItemDisabled || loadingAction !== null;
+
+  const topics: Array<{ key: SiengeTopic; label: string; title: string; description: string; status: string }> = [
+    {
+      key: "quotation",
+      label: "Cotação",
+      title: "Cotação no Sienge",
+      description: "Crie ou confira a cotação principal antes de vincular itens e fornecedores.",
+      status: form.buyerId.trim() ? "Pronto" : "Informe comprador"
+    },
+    {
+      key: "requestItem",
+      label: "Item",
+      title: "Item da solicitação",
+      description: "Vincule um item de solicitação de compra a esta cotação.",
+      status: requestItemReady ? "Pronto" : "Informe solicitação"
+    },
+    {
+      key: "supplier",
+      label: "Fornecedor",
+      title: "Fornecedor e link",
+      description: "Inclua fornecedor no item e gere o link do portal público.",
+      status: supplierReady ? "Pronto" : "Escolha fornecedor"
+    },
+    {
+      key: "directItem",
+      label: "Insumo direto",
+      title: "Insumo direto",
+      description: "Use somente quando o item não veio de uma solicitação de compra.",
+      status: directItemReady ? "Pronto" : "Opcional"
+    }
+  ];
+  const selectedTopic = topics.find((topic) => topic.key === activeTopic) || topics[0];
 
   return (
     <section className="quotation-operation-layout">
-      <div className="card panel quotation-operation-main">
+      <aside className="card panel quotation-operation-side quotation-operation-topic-panel">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Operação Sienge</h2>
-            <span className="panel-note">Ações diretas separadas por tipo de gravação</span>
+            <h2 className="panel-title">Temas Sienge</h2>
+            <span className="panel-note">Escolha uma operação por vez</span>
           </div>
           <i className="badge">ID {quotationId}</i>
         </div>
+        <div className="quotation-operation-topic-list">
+          {topics.map((topic) => (
+            <button
+              className={activeTopic === topic.key ? "active" : ""}
+              key={topic.key}
+              type="button"
+              onClick={() => setActiveTopic(topic.key)}
+            >
+              <span>{topic.label}</span>
+              <strong>{topic.title}</strong>
+              <small>{topic.status}</small>
+            </button>
+          ))}
+        </div>
+        <p className="quotation-sienge-legend"><i /> Botões amarelos gravam direto no Sienge quando confirmados.</p>
+      </aside>
 
-        <div className="quotation-operation-sections">
-          <article className="quotation-operation-block">
-            <div className="quotation-operation-block-head">
-              <span>Etapa 1</span>
-              <h3>Cotação no Sienge</h3>
-            </div>
+      <div className="card panel quotation-operation-main">
+        <div className="panel-head">
+          <div>
+            <h2 className="panel-title">{selectedTopic.title}</h2>
+            <span className="panel-note">{selectedTopic.description}</span>
+          </div>
+          <i className="badge">{selectedTopic.label}</i>
+        </div>
+
+        {activeTopic === "quotation" && (
+          <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid two">
               <label>
                 <span>Comprador Sienge</span>
@@ -96,12 +158,10 @@ export function SiengeTab({
               </button>
             </div>
           </article>
+        )}
 
-          <article className="quotation-operation-block">
-            <div className="quotation-operation-block-head">
-              <span>Etapa 2</span>
-              <h3>Item da solicitação</h3>
-            </div>
+        {activeTopic === "requestItem" && (
+          <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid">
               <label>
                 <span>Solicitação de compra</span>
@@ -117,20 +177,18 @@ export function SiengeTab({
               </label>
             </div>
             <div className="quotation-operation-actions">
-              <button className="button secondary" type="button" onClick={() => onRunAction("attach-items", false)} disabled={!form.purchaseRequestId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+              <button className="button secondary" type="button" onClick={() => onRunAction("attach-items", false)} disabled={!requestItemReady || loadingAction !== null}>
                 Preparar item
               </button>
-              <button className="button sienge-write" type="button" onClick={() => onRunAction("attach-items", true)} disabled={!form.purchaseRequestId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+              <button className="button sienge-write" type="button" onClick={() => onRunAction("attach-items", true)} disabled={!requestItemReady || loadingAction !== null}>
                 {loadingAction === "attach-items-confirm" ? "Vinculando..." : "Vincular item"}
               </button>
             </div>
           </article>
+        )}
 
-          <article className="quotation-operation-block">
-            <div className="quotation-operation-block-head">
-              <span>Etapa 3</span>
-              <h3>Fornecedor e link</h3>
-            </div>
+        {activeTopic === "supplier" && (
+          <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid two">
               <SiengeSupplierPicker
                 value={form.supplierId}
@@ -143,10 +201,10 @@ export function SiengeTab({
               </label>
             </div>
             <div className="quotation-operation-actions">
-              <button className="button secondary" type="button" onClick={() => onRunAction("add-supplier", false)} disabled={!form.supplierId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+              <button className="button secondary" type="button" onClick={() => onRunAction("add-supplier", false)} disabled={!supplierReady || loadingAction !== null}>
                 Preparar fornecedor
               </button>
-              <button className="button sienge-write" type="button" onClick={() => onRunAction("add-supplier", true)} disabled={!form.supplierId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+              <button className="button sienge-write" type="button" onClick={() => onRunAction("add-supplier", true)} disabled={!supplierReady || loadingAction !== null}>
                 {loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"}
               </button>
               <button className="button secondary" type="button" onClick={onGenerateLink} disabled={loadingAction !== null}>
@@ -154,12 +212,10 @@ export function SiengeTab({
               </button>
             </div>
           </article>
+        )}
 
-          <article className="quotation-operation-block">
-            <div className="quotation-operation-block-head">
-              <span>Opcional</span>
-              <h3>Insumo direto</h3>
-            </div>
+        {activeTopic === "directItem" && (
+          <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid">
               <label>
                 <span>Obra</span>
@@ -191,30 +247,8 @@ export function SiengeTab({
               </button>
             </div>
           </article>
-        </div>
+        )}
       </div>
-
-      <aside className="card panel quotation-operation-side">
-        <div className="panel-head">
-          <div>
-            <h2 className="panel-title">Operações disponíveis</h2>
-            <span className="panel-note">O que esta tela grava no Sienge</span>
-          </div>
-        </div>
-        <div className="quotation-endpoint-list">
-          <span><strong>Criar</strong>Cotação de preço</span>
-          <span><strong>Vincular</strong>Item da solicitação de compra</span>
-          <span><strong>Criar</strong>Insumo direto na cotação</span>
-          <span><strong>Incluir</strong>Fornecedor no item da cotação</span>
-          <span><strong>Gravar</strong>Negociação com valores da proposta</span>
-          <span><strong>Autorizar</strong>Negociação do fornecedor vencedor</span>
-          <span><strong>Gerar</strong>Link do portal do fornecedor</span>
-        </div>
-        <p className="quotation-sienge-legend"><i /> Botões nesta cor gravam direto no Sienge em produção assim que confirmados; os brancos apenas preparam o payload ou consultam dados, sem gravar nada.</p>
-        <div className="advanced-search-hint warn">
-          O fornecedor entra no Sienge por item da cotação. As propostas recebidas pelo link protegido podem ser gravadas como negociação na aba Respostas, e a decisão é registrada e autorizada pela aba Aprovação.
-        </div>
-      </aside>
 
       <OperationResultPanel title={operationTitle} kind={operationKind} json={operationResult} />
       {generatedSupplierLink && (
