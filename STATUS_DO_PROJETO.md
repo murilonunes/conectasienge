@@ -1,6 +1,6 @@
 # Status do projeto Brasin
 
-Atualizado em: 03/07/2026
+Atualizado em: 04/07/2026
 
 Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A ideia e manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
@@ -8,6 +8,8 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 - O sistema passou a exigir senha para acesso: todas as telas e rotas internas ficam atrás de login, com exceção explícita do portal público do fornecedor.
 - Foi criado o fluxo completo de cotações de compra: tela de solicitações (`/solicitacoes-compra`), portal de cotações (`/cotacoes`), detalhe da cotação (`/cotacoes/[id]`) e portal público do fornecedor (`/portal-cotacao/[token]`).
+- A tela `/cotacoes` foi revisada e separada em componentes por responsabilidade: filtros, origem/criação no Sienge, estatísticas, abas rápidas de status, lista/exportação e helpers.
+- O detalhe da cotação mantém cada aba em arquivo próprio dentro de `components/purchases/quotation-detail/tabs`, com os tipos e a ordem centralizados em `components/purchases/quotation-detail/types.ts`.
 - O fornecedor recebe um link assinado com validade padrão de 7 dias e responde a cotação sem precisar de conta; a resposta fica salva no banco local `supplier-quotations.sqlite`.
 - Links do fornecedor podem ser revogados a qualquer momento pela aba Links da cotação; link revogado deixa de abrir o portal e de aceitar propostas.
 - As rotas públicas do portal ganharam limite de requisições por IP e limite global, para conter abuso sem login.
@@ -36,13 +38,17 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Cotações e portal do fornecedor
 
-- A tela `/cotacoes` lista as cotações do espelho local com filtros por status, comprador, pesquisa e origem, cards de resumo (abertas, em decisão, total) e exportação CSV.
-- O detalhe `/cotacoes/[id]` organiza a operação em abas: resumo, operação no Sienge, insumos, fornecedores, links, respostas, aprovação e eventos.
+- A tela `/cotacoes` lista as cotações do espelho local com filtros por status, comprador, pesquisa e origem, cards de resumo (abertas, em decisão, total), abas rápidas por status e exportação CSV.
+- A implementação da tela `/cotacoes` fica separada em `components/purchases/quotations`: `filters-bar.tsx`, `request-bridge.tsx`, `summary-stats.tsx`, `status-tabs.tsx`, `quotations-list.tsx` e `helpers.ts`.
+- O detalhe `/cotacoes/[id]` organiza a operação em abas: Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico.
+- As abas do detalhe ficam separadas em arquivos próprios em `components/purchases/quotation-detail/tabs`, enquanto `index.tsx` coordena estado, chamadas e navegação entre abas.
 - A aba de fornecedores permite escolher um credor do Sienge (busca local com criação quando necessário) e gerar o link público de resposta.
 - Cada link é um token assinado (HMAC) com validade padrão de 7 dias, vinculado à cotação e, quando informado, ao documento do fornecedor.
 - A aba Links mostra validade, status (aguardando, respondido, vencido, revogado), contagem de respostas e ações de copiar, regerar e revogar.
 - Revogar um link registra o evento e bloqueia imediatamente o portal público e o envio de propostas por aquele token.
-- O portal público `/portal-cotacao/[token]` permite ao fornecedor informar, item a item: se atende, preço unitário, quantidade, prazo e observação; preço zero informado é tratado como valor válido.
+- O portal público `/portal-cotacao/[token]` permite ao fornecedor informar, item a item: se atende, preço unitário, quantidade, prazo diferente do pedido e observação; preço zero informado é tratado como valor válido.
+- Itens parciais usam quantidade menor que a solicitada e destaque amarelo. Itens que o fornecedor não cotou aparecem separados no detalhe final/impressão, também com fundo amarelo.
+- Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF e, quando permitido, solicitar novo link. A proposta enviada não fica editável.
 - Quando o documento do fornecedor não existe na base local, a resposta entra com cadastro pendente para revisão (nome fantasia, cidade e estado), e a equipe pode preparar a criação do credor no Sienge.
 - O comparativo por item marca o melhor preço entre as respostas recebidas e alimenta a aba de aprovação.
 - A aprovação registra vencedor por cotação inteira ou por item, com justificativa obrigatória, salva no banco local.
@@ -277,6 +283,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - A camada `lib/api` centraliza chamadas ao Sienge, espelho local e persistencia.
 - `lib/supplier-quote-portal.ts` concentra tokens, respostas, convites, aprovacoes e eventos do portal do fornecedor; `lib/rate-limit.ts` concentra o limite de requisicoes das rotas publicas.
 - `features/quotations` e `features/suppliers` concentram as leituras locais de cotacoes e fornecedores; `features/reports/data.ts` concentra resumos leves de relatorios.
+- `components/purchases/quotations` concentra os blocos da tela `/cotacoes`; `components/purchases/quotation-detail/tabs` concentra as abas do detalhe da cotação.
 - As listas principais exibem `Integrado em ...` por registro, padronizado no componente `IntegrationStamp`; a formatacao de datas opcionais esta centralizada em `formatOptionalDate`.
 - Separadores especiais foram trocados por hifen simples para evitar caracteres quebrados em Windows/terminal.
 - As telas `/compras`, `/contas-receber` e `/sales` foram otimizadas para reduzir o HTML inicial enviado pelo Next.js: em medicao local, `/compras` caiu de ~9,5 MB para 253 KB, `/contas-receber` de ~6,9 MB para 232 KB e `/sales` de ~1 MB para 255 KB, mantendo cards e graficos calculados com todos os dados do SQLite.
@@ -292,7 +299,7 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Validacoes recentes
 
-- TypeScript passou com `tsc --noEmit` e a build passou com `next build` apos as mudancas de autenticacao, cotacoes e seguranca.
+- TypeScript passou com `tsc --noEmit` e a build passou com `next build` apos as mudancas de autenticacao, cotacoes, seguranca, portal do fornecedor e separacao dos componentes de abas/blocos de cotacao.
 - O fluxo do portal do fornecedor foi testado de ponta a ponta: link ativo abre o portal, link revogado retorna 404 no portal e 401 no envio de proposta.
 - Os limites de requisicao foram testados: a consulta publica bloqueia com 429 apos o limite por IP, e o login bloqueia forca bruta mesmo com IP forjado diferente a cada tentativa.
 - O aviso de SQLite experimental do Node pode aparecer, mas nao impede a build.

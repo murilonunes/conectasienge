@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-06-29
+Atualizado em: 2026-07-04
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -32,6 +32,9 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |
 | Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
+| Revisado | Alta | `/cotacoes` | `app/cotacoes/page.tsx`, `components/purchases/quotations-portal.tsx`, `components/purchases/quotations/*` | Revisado: a tela lê o espelho local, mantém filtros/status/exportação CSV e agora está separada em arquivos por bloco: filtros, origem/criação no Sienge, estatísticas, status rápidos, lista e helpers. |
+| Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*` | Revisado: o detalhe mantém 10 abas separadas por arquivo (Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico), com tipos e ordem centralizados em `types.ts`. |
+| Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão e proposta enviada apenas para consulta. |
 | Revisado | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx`, `features/inventory/data.ts` | Revisado e ampliado: tela virou visão estratégica de estoque, com carteira vendável, reservas/propostas, qualidade da base de valores, propriedade, mapa imobiliário e insumos quando configurados. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
 | Revisado | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | Revisado: a primeira leitura local é renderizada no servidor; a rota client-side com progresso ficou apenas para recarga explícita dos dados salvos. |
@@ -85,6 +88,18 @@ Resultado: a tela passou a separar três conceitos que antes ficavam misturados:
 Pendência mantida:
 
 - Levar a exportação CSV para outras listagens operacionais quando houver necessidade real de conferência fora da tela.
+
+### Etapa 10 revisada - Cotações, abas e portal do fornecedor
+
+Revisado nesta etapa:
+
+- `/cotacoes` foi separado em componentes por bloco visual e responsabilidade: `filters-bar`, `request-bridge`, `summary-stats`, `status-tabs`, `quotations-list` e `helpers`.
+- `/cotacoes/[id]` foi conferido contra a declaração de abas em `types.ts`; as abas atuais são Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico.
+- As abas do detalhe continuam em arquivos próprios dentro de `components/purchases/quotation-detail/tabs`, com `index.tsx` apenas coordenando estado, ações e navegação.
+- O portal público do fornecedor foi revisado no fluxo final: após enviar proposta, o link reabre em modo somente consulta, com opção de imprimir/salvar PDF e solicitação de novo link quando aplicável.
+- Itens parciais e itens não cotados foram padronizados como atenção amarela; itens não cotados aparecem em card separado no detalhe final e na impressão.
+
+Resultado: o fluxo de cotações ficou documentado de ponta a ponta e os códigos das áreas principais ficaram separados por arquivo, reduzindo acoplamento visual dentro dos componentes maiores.
 
 ### Etapa 9 revisada - Importação do dump em Configurações
 
@@ -210,6 +225,13 @@ Pendência mantida:
 - Mostrar data/hora e usuário de cadastro da baixa a receber.
 - Filtrar recebimentos por data de registro da baixa.
 - Exportar a busca avançada de contas a receber em CSV pelo componente padrão de paginação.
+
+### Etapa 10 - Cotações e portal do fornecedor concluída
+
+- Revisar `/cotacoes`, `/cotacoes/[id]` e `/portal-cotacao/[token]`.
+- Confirmar que as abas do detalhe estão separadas por arquivo e documentadas.
+- Separar a tela principal de cotações em componentes por bloco.
+- Conferir o detalhe final/impressão do fornecedor para itens parciais e não cotados.
 
 ## Como atualizar este arquivo
 
