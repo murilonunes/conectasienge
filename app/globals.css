@@ -1196,6 +1196,24 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-comparison { padding: 20px; }
 .quotation-map-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .34fr); gap: 16px; align-items: start; }
 .quotation-item-map { min-width: 0; }
+.quotation-map-intelligence { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.quotation-map-intelligence article { display: grid; gap: 5px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfb; }
+.quotation-map-intelligence article.warn { border-color: #ead3ad; background: #fffaf1; }
+.quotation-map-intelligence span, .quotation-map-analysis-card > div > span { color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.quotation-map-intelligence strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-size: 19px; font-weight: 700; letter-spacing: 0; }
+.quotation-map-intelligence small { color: var(--muted); font-size: 10px; font-weight: 750; }
+.quotation-map-analysis-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); gap: 12px; margin-bottom: 14px; }
+.quotation-map-analysis-card { display: grid; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.quotation-map-analysis-card h3 { margin: 3px 0 0; font-family: var(--font-display); font-size: 14px; font-weight: 700; letter-spacing: 0; }
+.quotation-map-findings, .quotation-map-saving-list { display: grid; gap: 8px; }
+.quotation-map-findings span, .quotation-map-saving-list span { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font-size: 11px; line-height: 1.45; }
+.quotation-map-findings strong, .quotation-map-saving-list strong { color: var(--green); font-size: 10px; font-weight: 850; }
+.quotation-supplier-analysis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.quotation-supplier-analysis article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: #fff; }
+.quotation-supplier-analysis article > div { display: grid; gap: 4px; min-width: 0; }
+.quotation-supplier-analysis span { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.quotation-supplier-analysis strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.quotation-supplier-analysis small { color: var(--muted); font-size: 9px; font-weight: 800; text-align: right; }
 .quotation-item-comparison-list { display: grid; gap: 14px; }
 .quotation-item-comparison-card { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
 .quotation-item-comparison-head { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
@@ -1484,6 +1502,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-operation-layout, .quotation-map-layout, .quotation-approval-layout { grid-template-columns: 1fr; }
   .quotation-operation-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quotation-create-box { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quotation-map-intelligence,
+  .quotation-map-analysis-grid,
+  .quotation-supplier-analysis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quotation-supplier-grid, .quotation-comparison-grid, .quotation-response-contact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quotation-best-price-panel, .quotation-approval-side { position: static; }
   .quotation-approval-form, .quotation-approval-items article { grid-template-columns: 1fr; }
@@ -1606,6 +1627,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-create-box,
   .quotation-detail-hero,
   .quotation-detail-stats,
+  .quotation-map-intelligence,
+  .quotation-map-analysis-grid,
+  .quotation-supplier-analysis,
   .quotation-operation-grid,
   .quotation-supplier-grid,
   .quotation-response-contact { grid-template-columns: 1fr; }
