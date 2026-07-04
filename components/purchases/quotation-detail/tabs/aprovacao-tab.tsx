@@ -1,6 +1,6 @@
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteAwardSummary, SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
-import { formatDocument } from "../helpers";
+import { formatDocument, plural } from "../helpers";
 import type { ApprovalMode, ItemComparisonOffer, ItemComparisonRow } from "../types";
 
 type SupplierDecisionMetrics = {
@@ -108,9 +108,9 @@ export function AprovacaoTab({
   const readinessDetail = !supplierResponses.length
     ? "Receba respostas dos fornecedores antes de registrar a decisão."
     : rowsWithoutPrice.length
-      ? `${rowsWithoutPrice.length} item(ns) ainda não têm preço válido.`
+      ? `${plural(rowsWithoutPrice.length, "item ainda não tem", "itens ainda não têm")} preço válido.`
       : partialBestRows.length
-        ? `${partialBestRows.length} melhor(es) preço(s) atendem quantidade parcial.`
+        ? `${plural(partialBestRows.length, "melhor preço atende", "melhores preços atendem")} quantidade parcial.`
         : "A melhor cesta tem preço para todos os itens comparados.";
 
   return (
@@ -129,7 +129,7 @@ export function AprovacaoTab({
           <article>
             <span>Melhor cesta</span>
             <strong>{formatCurrency(bestBasketTotal)}</strong>
-            <small>{rowsWithBest.length} de {itemComparison.length} item(ns) com vencedor sugerido</small>
+            <small>{rowsWithBest.length} de {plural(itemComparison.length, "item", "itens")} com vencedor sugerido</small>
           </article>
           <article className={rowsWithoutPrice.length ? "warn" : ""}>
             <span>Pendências</span>
@@ -139,12 +139,12 @@ export function AprovacaoTab({
           <article>
             <span>Recomendação</span>
             <strong>{recommendedSupplier?.response.supplierName || "-"}</strong>
-            <small>{recommendedSupplier ? `${recommendedSupplier.bestCount} melhor(es) item(ns), ${recommendedSupplier.coverage}% cobertura` : "Sem resposta elegível"}</small>
+            <small>{recommendedSupplier ? `${plural(recommendedSupplier.bestCount, "melhor item", "melhores itens")}, ${recommendedSupplier.coverage}% cobertura` : "Sem resposta elegível"}</small>
           </article>
           <article>
             <span>Salvo</span>
             <strong>{savedCoverage}%</strong>
-            <small>{awards.length ? `${awards.length} decisão(ões) registradas` : "Nenhuma decisão salva"}</small>
+            <small>{awards.length ? `${plural(awards.length, "decisão registrada", "decisões registradas")}` : "Nenhuma decisão salva"}</small>
           </article>
         </div>
 
@@ -209,9 +209,9 @@ export function AprovacaoTab({
                     <p>{row.best ? `Sugestão: ${row.best.supplierName} por ${formatCurrency(row.best.unitPrice)}.` : "Sem preço válido para recomendação automática."}</p>
                   </div>
                   <div className="quotation-approval-item-score">
-                    <span>{validOffers.length} oferta(s)</span>
+                    <span>{plural(validOffers.length, "oferta", "ofertas")}</span>
                     <strong>{selectedOffer?.attends ? formatCurrency(selectedOffer.unitPrice) : "-"}</strong>
-                    <small>{selectedOffer?.attends ? `${selectedOffer.quantity} atendido(s) - ${selectedOffer.deadlineDays || 0} dia(s)` : "Escolha uma proposta"}</small>
+                    <small>{selectedOffer?.attends ? `${plural(selectedOffer.quantity, "atendido", "atendidos")} - ${plural(selectedOffer.deadlineDays || 0, "dia", "dias")}` : "Escolha uma proposta"}</small>
                     {selectedOffer?.partial && <i className="badge warn">Parcial</i>}
                   </div>
                   <select className="field" value={selectedResponseId} onChange={(event) => onItemAwardChange(row.itemNumber, event.target.value)}>
@@ -264,7 +264,7 @@ export function AprovacaoTab({
           </div>
         </div>
         <div className="quotation-approval-status">
-          <span><strong>{awards.length}</strong><small>Registro(s)</small></span>
+          <span><strong>{awards.length}</strong><small>{awards.length === 1 ? "Registro" : "Registros"}</small></span>
           <span><strong>{savedCoverage}%</strong><small>Cobertura salva</small></span>
           <span><strong>{loadingAction ? "Em envio" : awards.length ? "Pronto" : "Pendente"}</strong><small>Sienge</small></span>
         </div>

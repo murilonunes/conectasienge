@@ -1,7 +1,7 @@
 import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
-import { exportSupplierResponses, formatDocument, freightSummary, paymentSummary } from "../helpers";
+import { exportSupplierResponses, formatDocument, freightSummary, paymentSummary, plural } from "../helpers";
 
 export function RespostasTab({
   quotation,
@@ -105,7 +105,7 @@ export function RespostasTab({
                             <td>{item.attends ? item.quantity || 0 : "-"}</td>
                             <td>{item.attends ? formatCurrency(item.unitPrice || 0) : "-"}</td>
                             <td>{item.attends ? formatCurrency(total) : "-"}</td>
-                            <td>{item.attends && item.deadlineDays ? `${item.deadlineDays} dia(s)` : "-"}</td>
+                            <td>{item.attends && item.deadlineDays ? plural(item.deadlineDays, "dia", "dias") : "-"}</td>
                             <td>{item.notes || "Sem observação"}</td>
                           </tr>
                         );
@@ -122,7 +122,7 @@ export function RespostasTab({
 
         {responseStats.pendingRegistrations > 0 && (
           <div className="advanced-search-hint warn">
-            {responseStats.pendingRegistrations} fornecedor(es) responderam sem cadastro local confirmado. Valide o cadastro antes de integrar qualquer decisão ao Sienge.
+            {plural(responseStats.pendingRegistrations, "fornecedor respondeu", "fornecedores responderam")} sem cadastro local confirmado. Valide o cadastro antes de integrar qualquer decisão ao Sienge.
           </div>
         )}
       </section>

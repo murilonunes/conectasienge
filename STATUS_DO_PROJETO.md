@@ -2,7 +2,7 @@
 
 Atualizado em: 04/07/2026
 
-Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A ideia e manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
+Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
@@ -18,6 +18,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - O segredo local do portal do fornecedor é gravado de forma atômica, evitando que dois processos concorrentes invalidem os links um do outro.
 - A decisão da cotação pode ser aprovada por cotação inteira ou item a item, com justificativa registrada e comparativo de melhor preço por insumo.
 - A criação da cotação no Sienge usa dry-run antes de confirmar, com eventos de integração registrados na timeline da cotação.
+- A aba Mapa ganhou análise de decisão com melhor cesta, cobertura, parciais, economias relevantes e ranking de fornecedores.
+- A aba Aprovar virou uma central de decisão com recomendação automática, status de prontidão, análise do fornecedor escolhido, checklist e layout responsivo.
+- Textos das telas de cotação foram revisados para remover plurais técnicos como `item(ns)` e padronizar mensagens comerciais; o CSS das abas Mapa/Aprovar foi revisado para evitar sobrescritas antigas em telas médias.
 
 ## Acesso e autenticação
 
@@ -51,7 +54,9 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 - Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF e, quando permitido, solicitar novo link. A proposta enviada não fica editável.
 - Quando o documento do fornecedor não existe na base local, a resposta entra com cadastro pendente para revisão (nome fantasia, cidade e estado), e a equipe pode preparar a criação do credor no Sienge.
 - O comparativo por item marca o melhor preço entre as respostas recebidas e alimenta a aba de aprovação.
+- A aba Mapa mostra leitura gerencial da cotação: melhor cesta por item, cobertura de preços, itens parciais, maiores economias e ranking por fornecedor.
 - A aprovação registra vencedor por cotação inteira ou por item, com justificativa obrigatória, salva no banco local.
+- A aba Aprovar mostra prontidão da decisão, recomendação automática, cobertura salva, checklist e análise do fornecedor selecionado antes de enviar a decisão ao Sienge.
 - A timeline de eventos registra: link enviado, link revogado, resposta recebida, fornecedor aprovado, erro de integração e criação no Sienge.
 - Respostas, convites, aprovações, revisões de cadastro e eventos ficam em `supplier-quotations.sqlite`, dentro de `.sienge-data`.
 - O segredo de assinatura vem de `SUPPLIER_PORTAL_SECRET` ou é gerado localmente uma única vez, com gravação atômica para evitar corrida entre processos.
@@ -62,23 +67,23 @@ Este arquivo resume o que foi feito neste chat e ainda esta valendo no codigo. A
 
 ## Estado geral
 
-- O projeto principal esta em `frontend`, usando Next.js 14, React 18 e TypeScript.
-- As credenciais do Sienge e a senha de acesso ficam em `.env` para uso local. Esse arquivo nao entra no Git.
-- Os dados consultados no Sienge sao gravados em SQLite local como um espelho da API.
-- Bancos locais, `.env`, `node_modules`, builds e arquivos temporarios estao ignorados no Git.
+- O projeto principal está em `frontend`, usando Next.js 14, React 18 e TypeScript.
+- As credenciais do Sienge e a senha de acesso ficam em `.env` para uso local. Esse arquivo não entra no Git.
+- Os dados consultados no Sienge são gravados em SQLite local como um espelho da API.
+- Bancos locais, `.env`, `node_modules`, builds e arquivos temporários estão ignorados no Git.
 - O histórico de etapas concluídas fica registrado em commits pequenos e descritivos no Git.
 
-## Padrao atual do projeto
+## Padrão atual do projeto
 
-- Telas comuns nao devem consultar o Sienge ao abrir.
+- Telas comuns não devem consultar o Sienge ao abrir.
 - Toda tela operacional deve ler os dados salvos no SQLite local.
 - A consulta ao Sienge deve ficar concentrada em `/configuracoes`, nos botoes de atualizacao.
-- Quando uma tela nao encontrar dado local, deve orientar o usuario a atualizar a area em Configuracoes.
+- Quando uma tela não encontrar dado local, deve orientar o usuário a atualizar a área em Configurações.
 - Atualizacao normal deve preservar dados pagos, baixados, recebidos, cancelados ou finalizados quando forem identificados.
 - Atualizacao com forca pode substituir tambem dados finalizados.
 - Toda lista exibida ao usuario deve mostrar a data de integracao com o Sienge quando o registro tiver essa informacao.
 - Listas grandes devem usar o componente padrao de listagem local com paginacao inicial de 100 registros, opcao de troca e, quando fizer sentido operacional, exportacao CSV.
-- Textos visiveis fora de Configuracoes devem ser comerciais e claros, evitando termos tecnicos como endpoint, bulk, SQLite e detalhes internos.
+- Textos visíveis fora de Configurações devem ser comerciais e claros, evitando termos técnicos como endpoint, bulk, SQLite e detalhes internos.
 - Configuracoes pode concentrar linguagem mais administrativa, historico de integracao, periodo de atualizacao, tamanho dos bancos e acoes de carga.
 - Rotas acessiveis sem login sao excecao explicita e precisam constar na lista de rotas publicas do middleware; rotas publicas que recebem dados de fora devem ter limite de requisicoes e validacao de tamanho/conteudo.
 - Operacoes de escrita no Sienge devem oferecer dry-run de conferencia antes de confirmar a gravacao.

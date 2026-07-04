@@ -5,7 +5,7 @@ import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteAwardSummary, SupplierQuoteEventSummary, SupplierQuoteInvitationSummary, SupplierQuoteResponseSummary, SupplierRegistrationReview } from "@/lib/supplier-quote-portal";
 import type { OperationResultKind } from "../operation-result-panel";
-import { confirmSiengeWrite, exportComparison, exportItemComparison, numberOrUndefined, registrationText, siengeActionQuestions } from "./helpers";
+import { confirmSiengeWrite, exportComparison, exportItemComparison, numberOrUndefined, plural, registrationText, siengeActionQuestions } from "./helpers";
 import { AprovacaoTab } from "./tabs/aprovacao-tab";
 import { CadastrosTab } from "./tabs/cadastros-tab";
 import { FornecedoresTab } from "./tabs/fornecedores-tab";
@@ -338,7 +338,7 @@ export function QuotationDetail({
     if (confirm) {
       const suppliers = dispatches.map((dispatch) => dispatch.response.supplierName).join(", ");
       const question = dispatches.length > 1
-        ? `Gravar e autorizar a negociação de ${dispatches.length} fornecedor(es) (${suppliers}) no Sienge agora?`
+        ? `Gravar e autorizar a negociação de ${plural(dispatches.length, "fornecedor", "fornecedores")} (${suppliers}) no Sienge agora?`
         : `Gravar a negociação de ${suppliers} no Sienge agora?`;
       if (!confirmSiengeWrite(question)) return;
     }

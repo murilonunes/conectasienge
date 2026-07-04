@@ -49,6 +49,10 @@ export function numberOrUndefined(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+export function plural(value: number, singular: string, pluralLabel: string) {
+  return `${value} ${value === 1 ? singular : pluralLabel}`;
+}
+
 export const siengeActionQuestions: Record<SiengeAction, string> = {
   create: "Criar esta cotação no Sienge agora?",
   "attach-items": "Vincular este item da solicitação de compra à cotação no Sienge agora?",
@@ -81,7 +85,7 @@ export function freightSummary(terms: SupplierQuoteCommercialTerms) {
     : terms.freightType === "PAID"
       ? `A pagar - ${formatCurrency(terms.freightPrice)}`
       : "Sem frete";
-  return terms.deliveryDays > 0 ? `${freight} | Entrega em ${terms.deliveryDays} dia(s)` : freight;
+  return terms.deliveryDays > 0 ? `${freight} | Entrega em ${plural(terms.deliveryDays, "dia", "dias")}` : freight;
 }
 
 export function formatDocument(value: string) {

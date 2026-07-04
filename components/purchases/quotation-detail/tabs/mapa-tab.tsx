@@ -1,7 +1,7 @@
 import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
 import type { SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
-import { exportItemComparison, formatDocument, paymentSummary } from "../helpers";
+import { exportItemComparison, formatDocument, paymentSummary, plural } from "../helpers";
 import type { ItemComparisonRow } from "../types";
 
 export function MapaTab({
@@ -102,7 +102,7 @@ export function MapaTab({
               <article>
                 <span>Mais competitivo</span>
                 <strong>{leader?.response.supplierName || "-"}</strong>
-                <small>{leader ? `${leader.bestCount} melhor(es) item(ns)` : "Sem líder definido"}</small>
+                <small>{leader ? plural(leader.bestCount, "melhor item", "melhores itens") : "Sem líder definido"}</small>
               </article>
             </div>
 
@@ -113,9 +113,9 @@ export function MapaTab({
                   <h3>{decisionStatus}</h3>
                 </div>
                 <div className="quotation-map-findings">
-                  <span><strong>Menor custo por item</strong>{leader ? `${leader.response.supplierName} lidera ${leader.bestCount} item(ns), somando ${formatCurrency(leader.bestTotal)} na cesta vencedora.` : "Ainda não há líder por preço."}</span>
-                  <span><strong>Prazo</strong>{fastest ? `${fastest.response.supplierName} tem melhor prazo médio informado: ${fastest.averageDeadline || 0} dia(s).` : "Sem prazo informado nas propostas."}</span>
-                  <span><strong>Risco de fechamento</strong>{rowsWithoutPrice.length || partialBestRows.length ? `${rowsWithoutPrice.length} item(ns) sem preço e ${partialBestRows.length} parcial(is) na melhor cesta.` : "Sem bloqueio aparente por preço ou quantidade parcial."}</span>
+                  <span><strong>Menor custo por item</strong>{leader ? `${leader.response.supplierName} lidera ${plural(leader.bestCount, "item", "itens")}, somando ${formatCurrency(leader.bestTotal)} na cesta vencedora.` : "Ainda não há líder por preço."}</span>
+                  <span><strong>Prazo</strong>{fastest ? `${fastest.response.supplierName} tem melhor prazo médio informado: ${plural(fastest.averageDeadline || 0, "dia", "dias")}.` : "Sem prazo informado nas propostas."}</span>
+                  <span><strong>Risco de fechamento</strong>{rowsWithoutPrice.length || partialBestRows.length ? `${plural(rowsWithoutPrice.length, "item sem preço", "itens sem preço")} e ${plural(partialBestRows.length, "parcial", "parciais")} na melhor cesta.` : "Sem bloqueio aparente por preço ou quantidade parcial."}</span>
                 </div>
               </article>
 
@@ -144,9 +144,9 @@ export function MapaTab({
                     <strong>{analysis.response.supplierName}</strong>
                   </div>
                   <div>
-                    <small>{analysis.bestCount} melhor(es)</small>
-                    <small>{analysis.partialCount} parcial(is)</small>
-                    <small>{analysis.averageDeadline || 0} dia(s)</small>
+                    <small>{plural(analysis.bestCount, "melhor", "melhores")}</small>
+                    <small>{plural(analysis.partialCount, "parcial", "parciais")}</small>
+                    <small>{plural(analysis.averageDeadline || 0, "dia", "dias")}</small>
                     <small>{formatCurrency(analysis.quotedTotal)}</small>
                   </div>
                 </article>
@@ -209,7 +209,7 @@ export function MapaTab({
                               <td>{offer.attends ? formatCurrency(offer.unitPrice) : "-"}</td>
                               <td>{offer.attends ? offer.quantity : "-"}</td>
                               <td>{offer.attends ? formatCurrency(offer.total) : "-"}</td>
-                              <td>{offer.attends && offer.deadlineDays ? `${offer.deadlineDays} dia(s)` : "-"}</td>
+                              <td>{offer.attends && offer.deadlineDays ? plural(offer.deadlineDays, "dia", "dias") : "-"}</td>
                               <td>{offer.attends && sourceResponse ? paymentSummary(sourceResponse.commercialTerms) : "-"}</td>
                               <td>{offer.notes || "Sem observação"}</td>
                             </tr>
@@ -239,7 +239,7 @@ export function MapaTab({
             <article key={row.itemNumber}>
               <span>{row.item?.name || `Item ${row.itemNumber}`}</span>
               <strong>{formatCurrency(row.best?.unitPrice || 0)}</strong>
-              <small>{row.best?.supplierName} - qtd. {row.best?.quantity || 0} - {row.best?.deadlineDays || 0} dia(s)</small>
+              <small>{row.best?.supplierName} - qtd. {row.best?.quantity || 0} - {plural(row.best?.deadlineDays || 0, "dia", "dias")}</small>
               {row.best?.partial && <p>Atendimento parcial</p>}
               {row.best?.notes && <p>{row.best.notes}</p>}
             </article>

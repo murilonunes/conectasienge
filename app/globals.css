@@ -1481,11 +1481,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-approval-side { top: 82px; padding: 16px; }
 .quotation-best-price-list article,
 .quotation-award-list article { border-radius: 10px; background: #fff; }
-.quotation-approval-mode { margin: 0 0 14px; border-radius: 10px; }
-.quotation-approval-mode button { border-radius: 7px; font-size: 10px; }
+.quotation-approval-mode { margin: 0 0 14px; }
+.quotation-approval-mode button { border-radius: 12px; }
 .quotation-approval-form,
 .quotation-approval-items article { gap: 10px; }
-.quotation-approval-items article { border-radius: 11px; background: #fbfcfb; }
+.quotation-approval-items article { border-radius: 12px; }
 .quotation-pending-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quotation-link-url { border-radius: 10px; background: #fff; font-size: 9px; }
   .quotation-timeline-body { border-radius: 11px; background: #fbfcfb; }
@@ -1555,7 +1555,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-supplier-analysis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quotation-supplier-grid, .quotation-comparison-grid, .quotation-response-contact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .quotation-best-price-panel, .quotation-approval-side { position: static; }
-  .quotation-approval-form, .quotation-approval-items article { grid-template-columns: 1fr; }
+  .quotation-approval-form { grid-template-columns: 1fr; }
   .quotation-pending-list { grid-template-columns: 1fr; }
   .quotation-pending-grid, .quotation-link-meta, .quotation-timeline-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .inventory-executive, .inventory-source-panel, .inventory-quality-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1694,6 +1694,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-response-head > div:last-child { justify-items: start; }
   .quotation-item-comparison-head { grid-template-columns: 1fr; }
   .quotation-item-comparison-head > div:last-child { justify-items: start; }
+  .quotation-approval-items article { grid-template-columns: 1fr; }
   .quotation-pending-head, .quotation-pending-grid, .quotation-link-head, .quotation-link-meta, .quotation-timeline-head, .quotation-timeline-meta { grid-template-columns: 1fr; }
 }
 

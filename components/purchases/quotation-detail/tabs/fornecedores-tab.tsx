@@ -1,6 +1,7 @@
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
+import { plural } from "../helpers";
 import type { DetailTab } from "../types";
 
 export function FornecedoresTab({
@@ -55,7 +56,7 @@ export function FornecedoresTab({
             </div>
             <strong>{formatCurrency(supplier.totalValue)}</strong>
             <div className="quotation-supplier-meta">
-              <span>{supplier.negotiationCount} negociação(ões)</span>
+              <span>{plural(supplier.negotiationCount, "negociação", "negociações")}</span>
               <span>{supplier.discount ? `${formatCurrency(supplier.discount)} desconto` : "Sem desconto"}</span>
               <span>{supplier.freight ? `${formatCurrency(supplier.freight)} frete` : "Sem frete"}</span>
             </div>

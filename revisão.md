@@ -33,7 +33,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
 | Revisado | Alta | `/cotacoes` | `app/cotacoes/page.tsx`, `components/purchases/quotations-portal.tsx`, `components/purchases/quotations/*` | Revisado: a tela lê o espelho local, mantém filtros/status/exportação CSV e agora está separada em arquivos por bloco: filtros, origem/criação no Sienge, estatísticas, status rápidos, lista e helpers. |
-| Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*` | Revisado: o detalhe mantém 10 abas separadas por arquivo (Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico), com tipos e ordem centralizados em `types.ts`. |
+| Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*`, `app/globals.css` | Revisado: o detalhe mantém 10 abas separadas por arquivo (Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico), com Mapa/Aprovar em layout de decisão, textos revisados e CSS responsivo sem sobrescritas antigas. |
 | Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão e proposta enviada apenas para consulta. |
 | Revisado | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx`, `features/inventory/data.ts` | Revisado e ampliado: tela virou visão estratégica de estoque, com carteira vendável, reservas/propostas, qualidade da base de valores, propriedade, mapa imobiliário e insumos quando configurados. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
@@ -100,6 +100,18 @@ Revisado nesta etapa:
 - Itens parciais e itens não cotados foram padronizados como atenção amarela; itens não cotados aparecem em card separado no detalhe final e na impressão.
 
 Resultado: o fluxo de cotações ficou documentado de ponta a ponta e os códigos das áreas principais ficaram separados por arquivo, reduzindo acoplamento visual dentro dos componentes maiores.
+
+### Etapa 11 revisada - Textos, CSS e experiência das abas de decisão
+
+Revisado nesta etapa:
+
+- As abas Mapa e Aprovar do detalhe da cotação foram conferidas como experiência de decisão, não apenas como formulários.
+- Mapa passou a destacar melhor cesta, cobertura, parciais, economia relevante, risco de fechamento e ranking de fornecedores.
+- Aprovar passou a mostrar central de decisão, recomendação automática, análise do fornecedor selecionado, checklist, cobertura salva e ações de integração em barra fixa.
+- Textos visíveis de cotação foram limpos para trocar plurais técnicos como `item(ns)`, `dia(s)` e `fornecedor(es)` por frases naturais.
+- O CSS das abas de decisão foi revisado para impedir que regras antigas sobrescrevam cards, colunas e estados amarelos em telas médias.
+
+Resultado: as abas de decisão ficaram mais consistentes com o padrão visual do projeto e mais claras para quem precisa escolher fornecedor, validar parciais e registrar decisão no Sienge.
 
 ### Etapa 9 revisada - Importação do dump em Configurações
 
