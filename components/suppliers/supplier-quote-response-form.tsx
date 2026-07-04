@@ -26,6 +26,20 @@ type SupplierQuoteResponseFormProps = {
   initialDocument?: string;
 };
 
+function validEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function validPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+function validDocument(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length === 11 || digits.length === 14;
+}
+
 export function SupplierQuoteResponseForm({ token, quotationCode, items, initialDocument = "" }: SupplierQuoteResponseFormProps) {
   const [supplierName, setSupplierName] = useState("");
   const [document, setDocument] = useState(initialDocument);
@@ -87,7 +101,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     )));
   }
 
-  const identityValid = Boolean(supplierName.trim()) && document.replace(/\D/g, "").length >= 11;
+  const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
   const itemsValid = quotedCount > 0 && missingQuotedValues === 0;
   const paymentValid = (offersCash || offersTerm) && (!offersTerm || installmentsTotalValid);
   const freightValid = freightType !== "PAID" || Number(freightPrice) > 0;
@@ -102,7 +116,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   };
 
   const stepMessages: Record<WizardStep, string> = {
-    1: "Informe o CPF/CNPJ e a razão social ou nome do fornecedor para continuar.",
+    1: "Informe CPF/CNPJ válido, razão social ou nome, e-mail válido e telefone com DDD para continuar.",
     2: "Marque ao menos um item e preencha valor e quantidade dele para continuar.",
     3: offersTerm && !installmentsTotalValid
       ? "As parcelas do pagamento a prazo devem somar 100% do valor."
@@ -169,7 +183,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
   async function submit() {
     if (!canSubmit) {
-      setMessage("Preencha fornecedor, CPF/CNPJ e valor dos itens marcados.");
+      setMessage("Revise fornecedor, CPF/CNPJ, e-mail, telefone e valores dos itens marcados.");
       return;
     }
     setSubmitting(true);

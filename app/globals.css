@@ -806,7 +806,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-portal-grid input:focus,
 .supplier-portal-grid select:focus,
 .supplier-item-values input:focus { border-color: #b8d5c7; box-shadow: 0 0 0 3px rgba(31,107,79,.09); }
-.supplier-document-status { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; margin-top: 12px; padding: 10px 12px; border: 1px solid #ead3ad; border-radius: 10px; background: #fffaf1; color: #80591f; }
+.supplier-document-status { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; margin: 0 0 12px; padding: 10px 12px; border: 1px solid #ead3ad; border-radius: 10px; background: #fffaf1; color: #80591f; }
 .supplier-document-status.found { border-color: #cfe1d7; background: #f8fbf9; color: var(--green); }
 .supplier-document-status strong { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
 .supplier-document-status span { color: inherit; font-size: 11px; font-weight: 700; }

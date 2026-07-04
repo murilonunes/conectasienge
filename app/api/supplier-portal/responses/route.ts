@@ -17,6 +17,15 @@ function validDocument(value: string) {
   return value.length === 11 || value.length === 14;
 }
 
+function validEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function validPhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15;
+}
+
 export async function POST(request: Request) {
   try {
     if (rateLimited(`supplier-responses:${clientIp(request)}`, 20, 10 * 60 * 1000)
@@ -40,9 +49,15 @@ export async function POST(request: Request) {
     }
 
     const document = String(input.document || "").replace(/\D/g, "");
+    const email = text(input.email, 160);
+    const phone = text(input.phone, 40);
     const tokenDocument = payload.document?.replace(/\D/g, "") || "";
     if (!text(input.supplierName) || !validDocument(document)) {
       return NextResponse.json({ message: "Informe nome e CPF/CNPJ válido para enviar a proposta." }, { status: 400 });
+    }
+
+    if (!validEmail(email) || !validPhone(phone)) {
+      return NextResponse.json({ message: "Informe e-mail válido e telefone com DDD para enviar a proposta." }, { status: 400 });
     }
 
     if (tokenDocument && tokenDocument !== document) {
@@ -81,8 +96,8 @@ export async function POST(request: Request) {
       ...input,
       supplierName: text(input.supplierName),
       document,
-      email: text(input.email, 160),
-      phone: text(input.phone, 40),
+      email,
+      phone,
       registration: localSupplier ? undefined : input.registration
         ? {
             tradeName: text(input.registration.tradeName, 160),
