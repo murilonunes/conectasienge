@@ -813,12 +813,18 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-quote-items { gap: 10px; margin-top: 0; }
 .supplier-quote-items article { gap: 12px; padding: 14px; border-radius: 12px; background: #fff; transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
 .supplier-quote-items article.active { border-color: #cfe1d7; background: #f8fbf9; box-shadow: inset 3px 0 0 var(--green); }
+.supplier-quote-items article.partial { border-color: #ead3ad; background: #fffaf1; box-shadow: inset 3px 0 0 var(--amber); }
 .supplier-item-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
 .supplier-item-check { grid-template-columns: 22px 1fr; align-items: center; gap: 12px; }
 .supplier-item-check input { width: 18px; height: 18px; accent-color: var(--green); }
 .supplier-item-check strong { font-family: var(--font-display); font-size: 14px; font-weight: 750; }
 .supplier-item-check small { font-size: 10px; line-height: 1.4; }
+.supplier-item-side { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.supplier-item-partial { display: inline-flex; align-items: center; gap: 6px; color: #80591f; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+.supplier-item-partial input { width: 16px; height: 16px; accent-color: var(--amber); }
+.supplier-item-partial input:disabled + span { color: var(--muted); opacity: .62; }
 .supplier-item-total { color: var(--green); font-family: var(--font-display); font-size: 16px; font-weight: 750; white-space: nowrap; }
+.supplier-quote-items article.partial .supplier-item-total { color: #80591f; }
 .supplier-item-values { grid-template-columns: 130px 120px 155px minmax(180px, 1fr); gap: 9px; }
 .supplier-item-values input:disabled { background: #f4f6f5; color: #a2aba6; opacity: 1; }
 .supplier-card-note { margin: 2px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
@@ -922,6 +928,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .supplier-public-hero-metrics .amount { font-size: 13px; }
   .supplier-public-hero-metrics small { font-size: 8px; letter-spacing: .04em; }
   .supplier-item-top { grid-template-columns: 1fr; }
+  .supplier-item-side { justify-content: flex-start; flex-wrap: wrap; }
   .supplier-item-total { justify-self: start; }
   .supplier-payment-fields { grid-template-columns: 1fr; }
   .supplier-installment-row { grid-template-columns: 1fr 1fr; }

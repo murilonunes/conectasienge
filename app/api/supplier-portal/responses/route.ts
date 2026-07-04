@@ -88,13 +88,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Cotação não encontrada." }, { status: 404 });
     }
 
+    const quotationItems = new Map(quotation.items.map((item) => [item.itemNumber, item]));
     const allowedItems = new Set(quotation.items.map((item) => item.itemNumber));
+    const invalidQuantityItem = (input.items || []).find((item) => {
+      if (!item.attends) return false;
+      const quotationItem = quotationItems.get(item.itemNumber);
+      const requestedQuantity = Number(quotationItem?.quantity || 0);
+      const quantity = Number(item.quantity || 0);
+      if (requestedQuantity <= 0 || quantity <= 0) return true;
+      if (quantity > requestedQuantity) return true;
+      if (item.partial === true) return quantity >= requestedQuantity;
+      return quantity !== requestedQuantity;
+    });
+    if (invalidQuantityItem) {
+      return NextResponse.json({
+        message: "A quantidade informada deve ser igual à solicitada ou menor apenas quando o item estiver marcado como parcial."
+      }, { status: 400 });
+    }
+
     const safeItems = (input.items || [])
       .filter((item) => allowedItems.has(item.itemNumber))
       .slice(0, quotation.items.length)
       .map((item) => ({
         itemNumber: item.itemNumber,
         attends: item.attends === true,
+        partial: item.partial === true,
         unitPrice: Math.max(0, Math.min(999999999, Number(item.unitPrice || 0))),
         quantity: Math.max(0, Math.min(999999999, Number(item.quantity || 0))),
         deadlineDays: Math.max(0, Math.min(3650, Math.round(Number(item.deadlineDays || 0)))),

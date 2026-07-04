@@ -75,8 +75,16 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
   const quotedCount = useMemo(() => responseItems.filter((item) => item.attends).length, [responseItems]);
   const quotedTotal = useMemo(() => responseItems.reduce((sum, item) => sum + itemTotal(item), 0), [responseItems]);
-  const completedQuotedCount = useMemo(() => responseItems.filter((item) => item.attends && Number(item.unitPrice) > 0 && Number(item.quantity) > 0).length, [responseItems]);
-  const missingQuotedValues = quotedCount - completedQuotedCount;
+  const invalidQuotedCount = useMemo(() => responseItems.filter((item) => {
+    if (!item.attends) return false;
+    const original = items.find((current) => current.itemNumber === item.itemNumber);
+    const requestedQuantity = Number(original?.quantity || 0);
+    const quantity = Number(item.quantity || 0);
+    if (Number(item.unitPrice) <= 0 || quantity <= 0 || requestedQuantity <= 0) return true;
+    if (quantity > requestedQuantity) return true;
+    if (item.partial) return quantity >= requestedQuantity;
+    return quantity !== requestedQuantity;
+  }).length, [items, responseItems]);
 
   const installmentsTotalPercentage = useMemo(
     () => Math.round(installments.reduce((sum, installment) => sum + (Number(installment.percentage) || 0), 0) * 100) / 100,
@@ -103,7 +111,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   }
 
   const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
-  const itemsValid = quotedCount > 0 && missingQuotedValues === 0;
+  const itemsValid = quotedCount > 0 && invalidQuotedCount === 0;
   const paymentValid = (offersCash || offersTerm) && (!offersTerm || installmentsTotalValid);
   const freightValid = Boolean(freightType) && Number(deliveryDays) > 0 && (freightType !== "PAID" || Number(freightPrice) > 0);
   const canSubmit = identityValid && itemsValid && paymentValid && freightValid;
@@ -118,7 +126,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
   const stepMessages: Record<WizardStep, string> = {
     1: "Informe CPF/CNPJ válido, razão social ou nome, e-mail válido e telefone com DDD para continuar.",
-    2: "Marque ao menos um item e preencha valor e quantidade dele para continuar.",
+    2: "Marque ao menos um item, informe valor e use Parcial quando a quantidade for menor que a solicitada.",
     3: offersTerm && !installmentsTotalValid
       ? "As parcelas do pagamento a prazo devem somar 100% do valor."
       : "Marque ao menos uma forma de pagamento: à vista, a prazo ou as duas.",
@@ -178,8 +186,37 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
   function updateItem(itemNumber: number, field: keyof ResponseItem, value: string | boolean) {
     setResponseItems((current) => current.map((item) => (
-      item.itemNumber === itemNumber ? { ...item, [field]: value } : item
+      item.itemNumber === itemNumber ? nextResponseItem(item, field, value) : item
     )));
+  }
+
+  function nextResponseItem(item: ResponseItem, field: keyof ResponseItem, value: string | boolean): ResponseItem {
+    const original = items.find((current) => current.itemNumber === item.itemNumber);
+    const requestedQuantity = String(original?.quantity || "");
+    if (field === "attends") {
+      return {
+        ...item,
+        attends: value === true,
+        partial: false,
+        quantity: value === true ? requestedQuantity : item.quantity
+      };
+    }
+    if (field === "partial") {
+      const partial = value === true;
+      return {
+        ...item,
+        partial,
+        quantity: partial
+          ? (Number(item.quantity) >= Number(requestedQuantity) ? "" : item.quantity)
+          : requestedQuantity
+      };
+    }
+    if (field === "quantity") {
+      const requested = Number(requestedQuantity) || 0;
+      const quantity = Math.max(0, Math.min(requested, Number(value) || 0));
+      return { ...item, quantity: value === "" ? "" : String(quantity) };
+    }
+    return { ...item, [field]: value };
   }
 
   async function submit() {
@@ -200,6 +237,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         items: responseItems.map((item) => ({
           itemNumber: item.itemNumber,
           attends: item.attends,
+          partial: item.partial,
           unitPrice: Number(item.unitPrice || 0),
           quantity: Number(item.quantity || 0),
           deadlineDays: Number(item.deadlineDays || 0),

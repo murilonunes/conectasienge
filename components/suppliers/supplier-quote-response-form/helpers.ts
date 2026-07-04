@@ -10,6 +10,7 @@ export function initialItems(items: QuotationItemSummary[]): ResponseItem[] {
   return items.map((item) => ({
     itemNumber: item.itemNumber,
     attends: false,
+    partial: false,
     unitPrice: "",
     quantity: String(item.quantity || ""),
     deadlineDays: "",

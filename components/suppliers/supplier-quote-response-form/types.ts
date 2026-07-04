@@ -1,6 +1,7 @@
 export type ResponseItem = {
   itemNumber: number;
   attends: boolean;
+  partial: boolean;
   unitPrice: string;
   quantity: string;
   deadlineDays: string;

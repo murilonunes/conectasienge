@@ -44,6 +44,7 @@ export type SupplierQuoteResponseInput = {
   items: Array<{
     itemNumber: number;
     attends: boolean;
+    partial?: boolean;
     unitPrice?: number;
     quantity?: number;
     deadlineDays?: number;
