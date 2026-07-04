@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
-import type { SupplierQuoteAwardSummary, SupplierQuoteEventSummary, SupplierQuoteInvitationSummary, SupplierQuoteResponseSummary, SupplierRegistrationReview } from "@/lib/supplier-quote-portal";
+import type { SupplierQuoteAwardSummary, SupplierQuoteCommercialTerms, SupplierQuoteEventSummary, SupplierQuoteInvitationSummary, SupplierQuoteResponseSummary, SupplierRegistrationReview } from "@/lib/supplier-quote-portal";
 
 type DetailTab = "resumo" | "sienge" | "insumos" | "fornecedores" | "links" | "respostas" | "mapa" | "aprovacao" | "cadastros" | "historico";
 type SiengeAction = "create" | "attach-items" | "add-supplier" | "add-item";
@@ -77,6 +77,32 @@ function numberOrUndefined(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+const siengeActionQuestions: Record<SiengeAction, string> = {
+  create: "Criar esta cotação no Sienge agora?",
+  "attach-items": "Vincular este item da solicitação de compra à cotação no Sienge agora?",
+  "add-supplier": "Incluir este fornecedor no item da cotação no Sienge agora?",
+  "add-item": "Criar este insumo direto na cotação no Sienge agora?"
+};
+
+function confirmSiengeWrite(question: string) {
+  return window.confirm(`${question}\n\nEsta ação grava direto no Sienge em produção e não pode ser desfeita por aqui.`);
+}
+
+function paymentSummary(terms: SupplierQuoteCommercialTerms) {
+  if (terms.paymentType === "cash") {
+    return terms.cashDiscountPercentage > 0 ? `À vista, ${terms.cashDiscountPercentage}% de desconto` : "À vista";
+  }
+  return terms.installments
+    .map((installment) => `${installment.percentage}% em ${installment.days}d`)
+    .join(" + ");
+}
+
+function freightSummary(terms: SupplierQuoteCommercialTerms) {
+  if (terms.freightType === "INCLUDED") return "Incluso no preço";
+  if (terms.freightType === "PAID") return `A pagar - ${formatCurrency(terms.freightPrice)}`;
+  return "Sem frete";
+}
+
 function formatDocument(value: string) {
   const clean = value.replace(/\D/g, "");
   if (clean.length === 11) return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
@@ -109,7 +135,7 @@ function eventTypeClass(type: SupplierQuoteEventSummary["type"]) {
 
 function exportSupplierResponses(quotation: QuotationSummary, responses: SupplierQuoteResponseSummary[]) {
   const rows = [
-    ["Cotação", "Resposta", "Fornecedor", "Documento", "Cadastro pendente", "Item", "Atende", "Quantidade", "Valor unitário", "Total item", "Prazo dias", "Observação"],
+    ["Cotação", "Resposta", "Fornecedor", "Documento", "Cadastro pendente", "Pagamento", "Frete", "Observação geral", "Item", "Atende", "Quantidade", "Valor unitário", "Total item", "Prazo dias", "Observação"],
     ...responses.flatMap((response) => response.items.map((item) => {
       const quotationItem = quotation.items.find((current) => current.itemNumber === item.itemNumber);
       const total = item.attends ? (item.unitPrice || 0) * (item.quantity || 0) : 0;
@@ -119,6 +145,9 @@ function exportSupplierResponses(quotation: QuotationSummary, responses: Supplie
         response.supplierName,
         response.document,
         response.registrationPending ? "Sim" : "Não",
+        paymentSummary(response.commercialTerms),
+        freightSummary(response.commercialTerms),
+        response.commercialTerms.generalNotes || "",
         quotationItem?.name || `Item ${item.itemNumber}`,
         item.attends ? "Sim" : "Não",
         item.quantity || 0,
@@ -155,7 +184,7 @@ function exportItemComparison(quotation: QuotationSummary, responses: SupplierQu
   });
 
   const rows = [
-    ["Cotação", "Item", "Fornecedor", "Documento", "Atende", "Qtd. solicitada", "Qtd. atendida", "Unidade", "Valor unitário", "Total item", "Prazo dias", "Observação", "Melhor preço"],
+    ["Cotação", "Item", "Fornecedor", "Documento", "Atende", "Qtd. solicitada", "Qtd. atendida", "Unidade", "Valor unitário", "Total item", "Prazo dias", "Observação", "Melhor preço", "Pagamento", "Frete"],
     ...responses.flatMap((response) => response.items.map((item) => {
       const quotationItem = quotation.items.find((current) => current.itemNumber === item.itemNumber);
       const total = item.attends ? (item.unitPrice || 0) * (item.quantity || 0) : 0;
@@ -173,7 +202,9 @@ function exportItemComparison(quotation: QuotationSummary, responses: SupplierQu
         total,
         item.deadlineDays || 0,
         item.notes || "",
-        best?.responseId === response.id ? "Sim" : "Não"
+        best?.responseId === response.id ? "Sim" : "Não",
+        paymentSummary(response.commercialTerms),
+        freightSummary(response.commercialTerms)
       ];
     }))
   ];
@@ -195,7 +226,8 @@ export function QuotationDetail({
   supplierAwards = [],
   supplierInvitations = [],
   supplierEvents = [],
-  supplierReviews = {}
+  supplierReviews = {},
+  knownBuyerIds = []
 }: {
   quotation: QuotationSummary;
   supplierResponses?: SupplierQuoteResponseSummary[];
@@ -203,6 +235,7 @@ export function QuotationDetail({
   supplierInvitations?: SupplierQuoteInvitationSummary[];
   supplierEvents?: SupplierQuoteEventSummary[];
   supplierReviews?: Record<string, SupplierRegistrationReview>;
+  knownBuyerIds?: string[];
 }) {
   const [tab, setTab] = useState<DetailTab>("resumo");
   const [buyerId, setBuyerId] = useState(quotation.buyerId === "Não informado" ? "" : quotation.buyerId);
@@ -333,6 +366,7 @@ export function QuotationDetail({
   }
 
   async function runSiengeAction(action: SiengeAction, confirm: boolean) {
+    if (confirm && !confirmSiengeWrite(siengeActionQuestions[action])) return;
     setLoadingAction(`${action}-${confirm ? "confirm" : "preview"}`);
     setOperationTitle(confirm ? "Retorno do Sienge" : "Payload preparado");
     setOperationResult("");
@@ -432,9 +466,28 @@ export function QuotationDetail({
 
   function negotiationPayloadFromResponse(dispatch: NegotiationDispatch) {
     const selected = new Set(dispatch.selectedItems || []);
+    const terms = dispatch.response.commercialTerms;
+    const discountValue = terms.paymentType === "cash"
+      ? Math.round(dispatch.response.totalValue * (terms.cashDiscountPercentage / 100) * 100) / 100
+      : 0;
+    const paymentDescription = terms.paymentType === "cash"
+      ? (terms.cashDiscountPercentage > 0 ? `À vista com ${terms.cashDiscountPercentage}% de desconto` : "À vista")
+      : "A prazo";
+
     return {
       supplierAnswerDate: dispatch.response.createdAt.slice(0, 10),
       internalNotes: `Resposta #${dispatch.response.id} recebida pelo portal do fornecedor em ${dispatch.response.createdAt.slice(0, 10)}.`,
+      supplierNotes: terms.generalNotes || undefined,
+      discount: discountValue,
+      freightType: terms.freightType,
+      freightPrice: terms.freightPrice,
+      paymentTerms: [{
+        description: paymentDescription,
+        selected: true,
+        paymentTerms: terms.paymentType === "cash"
+          ? [{ numberOfdays: 0, percentage: 100 }]
+          : terms.installments.map((installment) => ({ numberOfdays: installment.days, percentage: installment.percentage }))
+      }],
       authorize: dispatch.authorize === true,
       items: dispatch.response.items
         .filter((item) => item.attends)
@@ -453,6 +506,13 @@ export function QuotationDetail({
   }
 
   async function runNegotiationAction(dispatches: NegotiationDispatch[], confirm: boolean, title: string) {
+    if (confirm) {
+      const suppliers = dispatches.map((dispatch) => dispatch.response.supplierName).join(", ");
+      const question = dispatches.length > 1
+        ? `Gravar e autorizar a negociação de ${dispatches.length} fornecedor(es) (${suppliers}) no Sienge agora?`
+        : `Gravar a negociação de ${suppliers} no Sienge agora?`;
+      if (!confirmSiengeWrite(question)) return;
+    }
     setLoadingAction(confirm ? "negotiation-confirm" : "negotiation-preview");
     setOperationTitle(confirm ? title : `${title} (conferência)`);
     setOperationResult("");
@@ -659,6 +719,7 @@ export function QuotationDetail({
   }
 
   async function submitPendingSupplier(response: SupplierQuoteResponseSummary, confirm: boolean) {
+    if (confirm && !confirmSiengeWrite(`Criar o fornecedor ${response.supplierName} no Sienge agora?`)) return;
     const document = response.document.replace(/\D/g, "");
     const isCompany = document.length > 11;
     const payload = {
@@ -783,7 +844,18 @@ export function QuotationDetail({
             <div className="quotation-operation-grid">
               <label>
                 <span>Comprador Sienge</span>
-                <input value={buyerId} onChange={(event) => setBuyerId(event.target.value)} placeholder="Ex.: comprador01" />
+                <input
+                  value={buyerId}
+                  onChange={(event) => setBuyerId(event.target.value)}
+                  placeholder="Login do usuário no Sienge, ex.: MURILO"
+                  list="quotation-known-buyer-ids"
+                />
+                {knownBuyerIds.length > 0 && (
+                  <datalist id="quotation-known-buyer-ids">
+                    {knownBuyerIds.map((id) => <option value={id} key={id} />)}
+                  </datalist>
+                )}
+                <small className="table-muted">Use o login do usuário comprador no Sienge, não o nome de exibição.</small>
               </label>
               <label>
                 <span>Data da cotação</span>
@@ -816,19 +888,19 @@ export function QuotationDetail({
               <button className="button secondary" type="button" onClick={() => runSiengeAction("create", false)} disabled={!buyerId.trim() || loadingAction !== null}>
                 Preparar criação
               </button>
-              <button className="button" type="button" onClick={() => runSiengeAction("create", true)} disabled={!buyerId.trim() || loadingAction !== null}>
+              <button className="button sienge-write" type="button" onClick={() => runSiengeAction("create", true)} disabled={!buyerId.trim() || loadingAction !== null}>
                 {loadingAction === "create-confirm" ? "Gravando..." : "Criar cotação"}
               </button>
               <button className="button secondary" type="button" onClick={() => runSiengeAction("attach-items", false)} disabled={!purchaseRequestId || !purchaseRequestItemNumber || loadingAction !== null}>
                 Preparar item
               </button>
-              <button className="button" type="button" onClick={() => runSiengeAction("attach-items", true)} disabled={!purchaseRequestId || !purchaseRequestItemNumber || loadingAction !== null}>
+              <button className="button sienge-write" type="button" onClick={() => runSiengeAction("attach-items", true)} disabled={!purchaseRequestId || !purchaseRequestItemNumber || loadingAction !== null}>
                 {loadingAction === "attach-items-confirm" ? "Vinculando..." : "Vincular item"}
               </button>
               <button className="button secondary" type="button" onClick={() => runSiengeAction("add-supplier", false)} disabled={!supplierId || !purchaseRequestItemNumber || loadingAction !== null}>
                 Preparar fornecedor
               </button>
-              <button className="button" type="button" onClick={() => runSiengeAction("add-supplier", true)} disabled={!supplierId || !purchaseRequestItemNumber || loadingAction !== null}>
+              <button className="button sienge-write" type="button" onClick={() => runSiengeAction("add-supplier", true)} disabled={!supplierId || !purchaseRequestItemNumber || loadingAction !== null}>
                 {loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"}
               </button>
               <button className="button secondary" type="button" onClick={() => generateSupplierPortalLink()} disabled={loadingAction !== null}>
@@ -868,7 +940,7 @@ export function QuotationDetail({
               <button className="button secondary" type="button" onClick={() => runSiengeAction("add-item", false)} disabled={!directItemBuildingId || !directItemProductId || !directItemQuantity || !directItemUnity.trim() || loadingAction !== null}>
                 Preparar insumo
               </button>
-              <button className="button" type="button" onClick={() => runSiengeAction("add-item", true)} disabled={!directItemBuildingId || !directItemProductId || !directItemQuantity || !directItemUnity.trim() || loadingAction !== null}>
+              <button className="button sienge-write" type="button" onClick={() => runSiengeAction("add-item", true)} disabled={!directItemBuildingId || !directItemProductId || !directItemQuantity || !directItemUnity.trim() || loadingAction !== null}>
                 {loadingAction === "add-item-confirm" ? "Criando..." : "Criar insumo direto"}
               </button>
             </div>
@@ -890,6 +962,7 @@ export function QuotationDetail({
               <span><strong>Autorizar</strong>Negociação do fornecedor vencedor</span>
               <span><strong>Gerar</strong>Link do portal do fornecedor</span>
             </div>
+            <p className="quotation-sienge-legend"><i /> Botões nesta cor gravam direto no Sienge em produção assim que confirmados; os brancos apenas preparam o payload ou consultam dados, sem gravar nada.</p>
             <div className="advanced-search-hint warn">
               O fornecedor entra no Sienge por item da cotação. As propostas recebidas pelo link protegido podem ser gravadas como negociação na aba Respostas, e a decisão é registrada e autorizada pela aba Aprovação.
             </div>
@@ -1133,7 +1206,12 @@ export function QuotationDetail({
                       <span><strong>E-mail</strong>{response.email || "Não informado"}</span>
                       <span><strong>Telefone</strong>{response.phone || "Não informado"}</span>
                       <span><strong>Itens atendidos</strong>{response.attendedCount} de {response.items.length}</span>
+                      <span><strong>Pagamento</strong>{paymentSummary(response.commercialTerms)}</span>
+                      <span><strong>Frete</strong>{freightSummary(response.commercialTerms)}</span>
                     </div>
+                    {response.commercialTerms.generalNotes && (
+                      <p className="quotation-response-notes">{response.commercialTerms.generalNotes}</p>
+                    )}
 
                     <div className="quotation-operation-actions">
                       {response.supplierId ? (
@@ -1141,7 +1219,7 @@ export function QuotationDetail({
                           <button className="button secondary" type="button" disabled={loadingAction !== null} onClick={() => runNegotiationAction([{ response }], false, "Negociação enviada ao Sienge")}>
                             Preparar negociação
                           </button>
-                          <button className="button" type="button" disabled={loadingAction !== null} onClick={() => runNegotiationAction([{ response }], true, "Negociação enviada ao Sienge")}>
+                          <button className="button sienge-write" type="button" disabled={loadingAction !== null} onClick={() => runNegotiationAction([{ response }], true, "Negociação enviada ao Sienge")}>
                             {loadingAction === "negotiation-confirm" ? "Enviando..." : "Enviar negociação ao Sienge"}
                           </button>
                         </>
@@ -1246,12 +1324,14 @@ export function QuotationDetail({
                             <th>Qtd. atendida</th>
                             <th>Total</th>
                             <th>Prazo</th>
+                            <th>Pagamento</th>
                             <th>Observação</th>
                           </tr>
                         </thead>
                         <tbody>
                           {row.offers.map((offer) => {
                             const isBest = row.best?.responseId === offer.responseId;
+                            const sourceResponse = supplierResponses.find((current) => current.id === offer.responseId);
                             return (
                               <tr className={isBest ? "best-row" : ""} key={`${row.itemNumber}-${offer.responseId}`}>
                                 <td>
@@ -1267,6 +1347,7 @@ export function QuotationDetail({
                                 <td>{offer.attends ? offer.quantity : "-"}</td>
                                 <td>{offer.attends ? formatCurrency(offer.total) : "-"}</td>
                                 <td>{offer.attends && offer.deadlineDays ? `${offer.deadlineDays} dia(s)` : "-"}</td>
+                                <td>{offer.attends && sourceResponse ? paymentSummary(sourceResponse.commercialTerms) : "-"}</td>
                                 <td>{offer.notes || "Sem observação"}</td>
                               </tr>
                             );
@@ -1387,7 +1468,7 @@ export function QuotationDetail({
               <button className="button secondary" type="button" disabled={!awards.length || loadingAction !== null} onClick={() => sendAwardsToSienge(false)}>
                 Preparar decisão no Sienge
               </button>
-              <button className="button" type="button" disabled={!awards.length || loadingAction !== null} onClick={() => sendAwardsToSienge(true)}>
+              <button className="button sienge-write" type="button" disabled={!awards.length || loadingAction !== null} onClick={() => sendAwardsToSienge(true)}>
                 {loadingAction === "negotiation-confirm" ? "Registrando..." : "Registrar decisão no Sienge"}
               </button>
               {!supplierResponses.length && <span className="table-muted">Receba respostas de fornecedores antes de aprovar.</span>}
@@ -1471,7 +1552,7 @@ export function QuotationDetail({
                         <button className="button secondary" type="button" disabled={Boolean(pendingSupplierLoading)} onClick={() => submitPendingSupplier(response, false)}>
                           {loadingPreview ? "Preparando..." : "Preparar payload"}
                         </button>
-                        <button className="button" type="button" disabled={Boolean(pendingSupplierLoading) || status === "created"} onClick={() => submitPendingSupplier(response, true)}>
+                        <button className="button sienge-write" type="button" disabled={Boolean(pendingSupplierLoading) || status === "created"} onClick={() => submitPendingSupplier(response, true)}>
                           {loadingConfirm ? "Criando..." : "Criar no Sienge"}
                         </button>
                       </div>

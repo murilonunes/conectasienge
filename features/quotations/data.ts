@@ -229,3 +229,16 @@ export async function loadQuotationDetail(id: number) {
   const data = await loadQuotationPortalData();
   return data.quotations.find((quotation) => quotation.id === id);
 }
+
+// Logins de comprador já usados em cotações reais do Sienge, para sugerir no
+// campo "Comprador Sienge" e evitar digitar um nome que a API vai rejeitar.
+export async function loadKnownBuyerIds(): Promise<string[]> {
+  const purchases = await loadPurchases();
+  if (purchases.error) return [];
+  const ids = new Set(
+    purchases.quotations
+      .map((quotation) => quotation.buyerId?.trim())
+      .filter((buyerId): buyerId is string => Boolean(buyerId))
+  );
+  return Array.from(ids).sort();
+}

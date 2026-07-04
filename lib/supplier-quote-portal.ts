@@ -13,6 +13,24 @@ export type SupplierQuoteTokenPayload = {
   nonce: string;
 };
 
+export type SupplierQuotePaymentType = "cash" | "term";
+
+export type SupplierQuoteInstallment = {
+  days: number;
+  percentage: number;
+};
+
+export type SupplierQuoteFreightType = "NONE" | "INCLUDED" | "PAID";
+
+export type SupplierQuoteCommercialTerms = {
+  paymentType: SupplierQuotePaymentType;
+  cashDiscountPercentage: number;
+  installments: SupplierQuoteInstallment[];
+  freightType: SupplierQuoteFreightType;
+  freightPrice: number;
+  generalNotes: string;
+};
+
 export type SupplierQuoteResponseInput = {
   token: string;
   supplierName: string;
@@ -28,6 +46,7 @@ export type SupplierQuoteResponseInput = {
     deadlineDays?: number;
     notes?: string;
   }>;
+  commercialTerms?: Partial<SupplierQuoteCommercialTerms>;
 };
 
 export type SupplierQuoteResponseItem = SupplierQuoteResponseInput["items"][number];
@@ -45,6 +64,7 @@ export type SupplierQuoteResponseSummary = {
   items: SupplierQuoteResponseItem[];
   attendedCount: number;
   totalValue: number;
+  commercialTerms: SupplierQuoteCommercialTerms;
   createdAt: string;
 };
 
@@ -232,6 +252,11 @@ function database() {
   `);
   try {
     db.exec("ALTER TABLE supplier_quote_invitations ADD COLUMN revoked_at TEXT");
+  } catch {
+    // Coluna já existe em bancos criados depois desta versão.
+  }
+  try {
+    db.exec("ALTER TABLE supplier_quote_responses ADD COLUMN commercial_terms_json TEXT");
   } catch {
     // Coluna já existe em bancos criados depois desta versão.
   }
@@ -438,19 +463,50 @@ export function revokeSupplierQuoteInvitation(quotationId: number, invitationId:
   return loadSupplierQuoteInvitations(quotationId);
 }
 
+export const defaultCommercialTerms: SupplierQuoteCommercialTerms = {
+  paymentType: "cash",
+  cashDiscountPercentage: 0,
+  installments: [{ days: 30, percentage: 100 }],
+  freightType: "NONE",
+  freightPrice: 0,
+  generalNotes: ""
+};
+
+function normalizeCommercialTerms(input?: Partial<SupplierQuoteCommercialTerms>): SupplierQuoteCommercialTerms {
+  const paymentType: SupplierQuotePaymentType = input?.paymentType === "term" ? "term" : "cash";
+  const rawInstallments = Array.isArray(input?.installments) ? input!.installments : [];
+  const installments = rawInstallments
+    .slice(0, 12)
+    .map((installment) => ({
+      days: Math.max(0, Math.min(3650, Math.round(Number(installment.days) || 0))),
+      percentage: Math.max(0, Math.min(100, Number(installment.percentage) || 0))
+    }))
+    .filter((installment) => installment.percentage > 0);
+
+  return {
+    paymentType,
+    cashDiscountPercentage: Math.max(0, Math.min(100, Number(input?.cashDiscountPercentage) || 0)),
+    installments: paymentType === "term" && installments.length ? installments : defaultCommercialTerms.installments,
+    freightType: input?.freightType === "INCLUDED" || input?.freightType === "PAID" ? input.freightType : "NONE",
+    freightPrice: Math.max(0, Math.min(999999999, Number(input?.freightPrice) || 0)),
+    generalNotes: String(input?.generalNotes || "").trim().slice(0, 2000)
+  };
+}
+
 export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, payload: SupplierQuoteTokenPayload) {
   const db = database();
   try {
     const createdAt = new Date().toISOString();
     const document = input.document.replace(/\D/g, "");
+    const commercialTerms = normalizeCommercialTerms(input.commercialTerms);
     let result: { lastInsertRowid: number | bigint };
     try {
       result = db.prepare(`
         INSERT INTO supplier_quote_responses (
           token_hash, quotation_id, supplier_id, supplier_name, document, email, phone,
-          registration_json, items_json, created_at
+          registration_json, items_json, commercial_terms_json, created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         hashToken(input.token),
         payload.quotationId,
@@ -461,6 +517,7 @@ export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, pay
         input.phone?.trim() || null,
         input.registration ? JSON.stringify(input.registration) : null,
         JSON.stringify(input.items),
+        JSON.stringify(commercialTerms),
         createdAt
       );
     } catch (error) {
@@ -509,6 +566,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         phone,
         registration_json,
         items_json,
+        commercial_terms_json,
         created_at
       FROM supplier_quote_responses
       WHERE quotation_id = ?
@@ -523,6 +581,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
       phone: string | null;
       registration_json: string | null;
       items_json: string;
+      commercial_terms_json: string | null;
       created_at: string;
     }>;
 
@@ -542,6 +601,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         items,
         attendedCount: attendedItems.length,
         totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
+        commercialTerms: parseJson<SupplierQuoteCommercialTerms>(row.commercial_terms_json, defaultCommercialTerms),
         createdAt: row.created_at
       };
     });

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QuotationDetail } from "@/components/purchases/quotation-detail";
-import { loadQuotationDetail } from "@/features/quotations/data";
+import { loadKnownBuyerIds, loadQuotationDetail } from "@/features/quotations/data";
 import { loadSupplierQuoteAwards, loadSupplierQuoteEvents, loadSupplierQuoteInvitations, loadSupplierQuoteResponses, loadSupplierRegistrationReviews } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
   const supplierReviews = loadSupplierRegistrationReviews(
     supplierResponses.filter((response) => response.registrationPending).map((response) => response.document)
   );
+  const knownBuyerIds = await loadKnownBuyerIds();
 
   return (
     <>
@@ -33,6 +34,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
         supplierInvitations={supplierInvitations}
         supplierEvents={supplierEvents}
         supplierReviews={supplierReviews}
+        knownBuyerIds={knownBuyerIds}
       />
     </>
   );
