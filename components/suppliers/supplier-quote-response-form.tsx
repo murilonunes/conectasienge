@@ -3,26 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
-
-type ResponseItem = {
-  itemNumber: number;
-  attends: boolean;
-  unitPrice: string;
-  quantity: string;
-  deadlineDays: string;
-  notes: string;
-};
-
-type InstallmentRow = {
-  days: string;
-  percentage: string;
-};
-
-function defaultInstallments(): InstallmentRow[] {
-  return [{ days: "30", percentage: "100" }];
-}
-
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+import { FreightStep } from "./supplier-quote-response-form/freight-step";
+import { IdentityStep } from "./supplier-quote-response-form/identity-step";
+import { ItemsStep } from "./supplier-quote-response-form/items-step";
+import { PaymentStep } from "./supplier-quote-response-form/payment-step";
+import { ReviewStep } from "./supplier-quote-response-form/review-step";
+import { defaultInstallments, initialItems, itemTotal } from "./supplier-quote-response-form/helpers";
+import type { FreightType, InstallmentRow, RegistrationData, ResponseItem, WizardStep } from "./supplier-quote-response-form/types";
 
 const wizardSteps: Array<{ id: WizardStep; label: string }> = [
   { id: 1, label: "Identificação" },
@@ -32,24 +19,6 @@ const wizardSteps: Array<{ id: WizardStep; label: string }> = [
   { id: 5, label: "Revisão" }
 ];
 
-function termSummaryText(installments: InstallmentRow[]) {
-  const parts = installments
-    .filter((installment) => Number(installment.percentage) > 0)
-    .map((installment) => `${Number(installment.percentage) || 0}% em ${Number(installment.days) || 0} dia(s)`);
-  return parts.length ? parts.join(" + ") : "A prazo";
-}
-
-function cashSummaryText(cashDiscountPercentage: string) {
-  const discount = Number(cashDiscountPercentage) || 0;
-  return discount > 0 ? `À vista com ${discount}% de desconto` : "À vista";
-}
-
-function freightSummaryText(freightType: "NONE" | "INCLUDED" | "PAID", freightPrice: string) {
-  if (freightType === "INCLUDED") return "Incluso no preço";
-  if (freightType === "PAID") return `A pagar - ${formatCurrency(Number(freightPrice) || 0)}`;
-  return "Sem frete";
-}
-
 type SupplierQuoteResponseFormProps = {
   token: string;
   quotationCode: string;
@@ -57,41 +26,18 @@ type SupplierQuoteResponseFormProps = {
   initialDocument?: string;
 };
 
-function initialItems(items: QuotationItemSummary[]): ResponseItem[] {
-  return items.map((item) => ({
-    itemNumber: item.itemNumber,
-    attends: false,
-    unitPrice: "",
-    quantity: String(item.quantity || ""),
-    deadlineDays: "",
-    notes: ""
-  }));
-}
-
-function formatDocument(value: string) {
-  const clean = value.replace(/\D/g, "");
-  if (clean.length === 11) return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  if (clean.length === 14) return clean.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-  return value;
-}
-
-function itemTotal(item: ResponseItem) {
-  if (!item.attends) return 0;
-  return Number(item.unitPrice || 0) * Number(item.quantity || 0);
-}
-
 export function SupplierQuoteResponseForm({ token, quotationCode, items, initialDocument = "" }: SupplierQuoteResponseFormProps) {
   const [supplierName, setSupplierName] = useState("");
   const [document, setDocument] = useState(initialDocument);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [registration, setRegistration] = useState({ tradeName: "", city: "", state: "" });
+  const [registration, setRegistration] = useState<RegistrationData>({ tradeName: "", city: "", state: "" });
   const [responseItems, setResponseItems] = useState(() => initialItems(items));
   const [offersCash, setOffersCash] = useState(true);
   const [cashDiscountPercentage, setCashDiscountPercentage] = useState("");
   const [offersTerm, setOffersTerm] = useState(false);
   const [installments, setInstallments] = useState<InstallmentRow[]>(() => defaultInstallments());
-  const [freightType, setFreightType] = useState<"NONE" | "INCLUDED" | "PAID">("NONE");
+  const [freightType, setFreightType] = useState<FreightType>("NONE");
   const [freightPrice, setFreightPrice] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
   const [checkingDocument, setCheckingDocument] = useState(false);
@@ -132,14 +78,15 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   }
 
   function removeInstallment(index: number) {
-    setInstallments((current) => current.filter((_, current_index) => current_index !== index));
+    setInstallments((current) => current.filter((_, currentIndex) => currentIndex !== index));
   }
 
   function updateInstallment(index: number, field: keyof InstallmentRow, value: string) {
-    setInstallments((current) => current.map((installment, current_index) => (
-      current_index === index ? { ...installment, [field]: value } : installment
+    setInstallments((current) => current.map((installment, currentIndex) => (
+      currentIndex === index ? { ...installment, [field]: value } : installment
     )));
   }
+
   const identityValid = Boolean(supplierName.trim()) && document.replace(/\D/g, "").length >= 11;
   const itemsValid = quotedCount > 0 && missingQuotedValues === 0;
   const paymentValid = (offersCash || offersTerm) && (!offersTerm || installmentsTotalValid);
@@ -212,7 +159,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [document, supplierName]);
+  }, [document, supplierName, token]);
 
   function updateItem(itemNumber: number, field: keyof ResponseItem, value: string | boolean) {
     setResponseItems((current) => current.map((item) => (
@@ -320,232 +267,78 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
       <div className="supplier-public-stack">
         {step === 1 && (
-          <section className="card supplier-portal-card supplier-identity-card">
-            <div className="supplier-card-head">
-              <span>Passo 1 de 5</span>
-              <h2>Identificação</h2>
-            </div>
-            <div className="supplier-portal-grid">
-              <label><span>CPF/CNPJ *</span><input value={document} inputMode="numeric" onChange={(event) => setDocument(event.target.value.replace(/\D/g, ""))} placeholder="00000000000000" /></label>
-              <label><span>Razão social / Nome *</span><input value={supplierName} onChange={(event) => setSupplierName(event.target.value)} placeholder="Nome do fornecedor" /></label>
-              <label><span>E-mail</span><input value={email} type="email" onChange={(event) => setEmail(event.target.value)} placeholder="financeiro@empresa.com.br" /></label>
-              <label><span>Telefone</span><input value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="(00) 00000-0000" /></label>
-            </div>
-            <div className={`supplier-document-status ${supplierExists ? "found" : supplierExists === false ? "pending" : ""}`}>
-              <strong>{checkingDocument ? "Consultando" : supplierExists ? "Cadastro localizado" : supplierExists === false ? "Cadastro pendente" : "CPF/CNPJ"}</strong>
-              <span>{checkingDocument ? "Verificando base local" : supplierExists ? formatDocument(document) : supplierExists === false ? "Complete os dados cadastrais" : "Informe o documento"}</span>
-            </div>
-            {supplierExists === false && (
-              <div className="supplier-portal-grid supplier-registration-grid">
-                <label><span>Nome fantasia</span><input value={registration.tradeName} onChange={(event) => setRegistration((current) => ({ ...current, tradeName: event.target.value }))} /></label>
-                <label><span>Cidade</span><input value={registration.city} onChange={(event) => setRegistration((current) => ({ ...current, city: event.target.value }))} /></label>
-                <label><span>UF</span><input maxLength={2} value={registration.state} onChange={(event) => setRegistration((current) => ({ ...current, state: event.target.value.toUpperCase() }))} /></label>
-              </div>
-            )}
-          </section>
+          <IdentityStep
+            document={document}
+            supplierName={supplierName}
+            email={email}
+            phone={phone}
+            registration={registration}
+            checkingDocument={checkingDocument}
+            supplierExists={supplierExists}
+            onDocumentChange={setDocument}
+            onSupplierNameChange={setSupplierName}
+            onEmailChange={setEmail}
+            onPhoneChange={setPhone}
+            onRegistrationChange={setRegistration}
+          />
         )}
 
         {step === 2 && (
-          <section className="card supplier-portal-card">
-            <div className="supplier-card-head">
-              <span>Passo 2 de 5</span>
-              <h2>Itens da cotação</h2>
-            </div>
-            <div className="supplier-quote-items">
-              {items.map((item) => {
-                const current = responseItems.find((row) => row.itemNumber === item.itemNumber);
-                if (!current) return null;
-                const total = itemTotal(current);
-                return (
-                  <article className={current.attends ? "active" : ""} key={item.itemNumber}>
-                    <div className="supplier-item-top">
-                      <label className="supplier-item-check">
-                        <input type="checkbox" checked={current.attends} onChange={(event) => updateItem(item.itemNumber, "attends", event.target.checked)} />
-                        <span>
-                          <strong>{item.name}</strong>
-                          <small>{item.quantity} {item.unit}{item.detail ? ` | ${item.detail}` : ""}</small>
-                        </span>
-                      </label>
-                      <strong className="supplier-item-total">{current.attends ? formatCurrency(total) : "Não atende"}</strong>
-                    </div>
-                    <div className="supplier-item-values">
-                      <label><span>Valor unitário</span><input disabled={!current.attends} value={current.unitPrice} onChange={(event) => updateItem(item.itemNumber, "unitPrice", event.target.value)} type="number" min="0" step="0.01" /></label>
-                      <label><span>Quantidade</span><input disabled={!current.attends} value={current.quantity} onChange={(event) => updateItem(item.itemNumber, "quantity", event.target.value)} type="number" min="0" step="0.01" /></label>
-                      <label><span>Prazo de entrega (dias)</span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => updateItem(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" /></label>
-                      <label><span>Observação</span><input disabled={!current.attends} value={current.notes} onChange={(event) => updateItem(item.itemNumber, "notes", event.target.value)} /></label>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
+          <ItemsStep
+            items={items}
+            responseItems={responseItems}
+            onItemChange={updateItem}
+          />
         )}
 
         {step === 3 && (
-          <section className="card supplier-portal-card">
-            <div className="supplier-card-head">
-              <span>Passo 3 de 5</span>
-              <h2>Formas de pagamento</h2>
-              <p className="supplier-card-note">Marque as formas que você aceita. Pode ser à vista, a prazo ou as duas.</p>
-            </div>
-
-            <div className={`supplier-payment-option ${offersCash ? "enabled" : ""}`}>
-              <label className="supplier-payment-option-head">
-                <input type="checkbox" checked={offersCash} onChange={(event) => setOffersCash(event.target.checked)} />
-                <span>
-                  <strong>À vista</strong>
-                  <small>Pagamento na entrega ou contra apresentação</small>
-                </span>
-              </label>
-              {offersCash && (
-                <div className="supplier-portal-grid">
-                  <label>
-                    <span>Desconto à vista (%)</span>
-                    <input value={cashDiscountPercentage} onChange={(event) => setCashDiscountPercentage(event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="0" />
-                  </label>
-                  <div className="supplier-payment-preview">
-                    <span>Preço à vista</span>
-                    <strong>{formatCurrency(cashPrice)}</strong>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className={`supplier-payment-option ${offersTerm ? "enabled" : ""}`}>
-              <label className="supplier-payment-option-head">
-                <input type="checkbox" checked={offersTerm} onChange={(event) => setOffersTerm(event.target.checked)} />
-                <span>
-                  <strong>A prazo</strong>
-                  <small>Parcelado - informe os dias e o percentual de cada parcela</small>
-                </span>
-              </label>
-              {offersTerm && (
-                <div className="supplier-installments">
-                  {installments.map((installment, index) => (
-                    <div className="supplier-installment-row" key={index}>
-                      <label>
-                        <span>Dias</span>
-                        <input value={installment.days} onChange={(event) => updateInstallment(index, "days", event.target.value)} type="number" min="0" placeholder="30" />
-                      </label>
-                      <label>
-                        <span>% do valor</span>
-                        <input value={installment.percentage} onChange={(event) => updateInstallment(index, "percentage", event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="100" />
-                      </label>
-                      {installments.length > 1 && (
-                        <button type="button" className="supplier-installment-remove" onClick={() => removeInstallment(index)}>Remover</button>
-                      )}
-                    </div>
-                  ))}
-                  <div className="supplier-installment-actions">
-                    <button type="button" className="button secondary" onClick={addInstallment}>Adicionar parcela</button>
-                    <span className={installmentsTotalValid ? "done" : "warn"}>Total: {installmentsTotalPercentage}%{!installmentsTotalValid ? " (deve somar 100%)" : ""}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
+          <PaymentStep
+            offersCash={offersCash}
+            offersTerm={offersTerm}
+            cashDiscountPercentage={cashDiscountPercentage}
+            cashPrice={cashPrice}
+            installments={installments}
+            installmentsTotalPercentage={installmentsTotalPercentage}
+            installmentsTotalValid={installmentsTotalValid}
+            onOffersCashChange={setOffersCash}
+            onOffersTermChange={setOffersTerm}
+            onCashDiscountPercentageChange={setCashDiscountPercentage}
+            onInstallmentChange={updateInstallment}
+            onAddInstallment={addInstallment}
+            onRemoveInstallment={removeInstallment}
+          />
         )}
 
         {step === 4 && (
-          <section className="card supplier-portal-card">
-            <div className="supplier-card-head">
-              <span>Passo 4 de 5</span>
-              <h2>Frete e observações</h2>
-            </div>
-
-            <div className="supplier-portal-grid">
-              <label>
-                <span>Frete</span>
-                <select value={freightType} onChange={(event) => setFreightType(event.target.value as "NONE" | "INCLUDED" | "PAID")}>
-                  <option value="NONE">Sem frete</option>
-                  <option value="INCLUDED">Incluso no preço</option>
-                  <option value="PAID">A pagar à parte</option>
-                </select>
-              </label>
-              {freightType === "PAID" && (
-                <label>
-                  <span>Valor do frete</span>
-                  <input value={freightPrice} onChange={(event) => setFreightPrice(event.target.value)} type="number" min="0" step="0.01" placeholder="0,00" />
-                </label>
-              )}
-              <label className="supplier-general-notes">
-                <span>Observação geral da proposta</span>
-                <textarea value={generalNotes} onChange={(event) => setGeneralNotes(event.target.value)} placeholder="Condições adicionais, validade da proposta, etc." rows={2} />
-              </label>
-            </div>
-          </section>
+          <FreightStep
+            freightType={freightType}
+            freightPrice={freightPrice}
+            generalNotes={generalNotes}
+            onFreightTypeChange={setFreightType}
+            onFreightPriceChange={setFreightPrice}
+            onGeneralNotesChange={setGeneralNotes}
+          />
         )}
 
         {step === 5 && (
-          <section className="card supplier-portal-card">
-            <div className="supplier-card-head">
-              <span>Passo 5 de 5</span>
-              <h2>Confira antes de enviar</h2>
-            </div>
-
-            <div className="supplier-review-section">
-              <div className="supplier-review-section-head">
-                <h3>Identificação</h3>
-                <button type="button" className="supplier-review-edit" onClick={() => goToStep(1)}>Editar</button>
-              </div>
-              <div className="supplier-review-grid">
-                <span><strong>CPF/CNPJ</strong>{document ? formatDocument(document) : "Não informado"}</span>
-                <span><strong>Razão social / Nome</strong>{supplierName || "Não informado"}</span>
-                <span><strong>E-mail</strong>{email || "Não informado"}</span>
-                <span><strong>Telefone</strong>{phone || "Não informado"}</span>
-              </div>
-            </div>
-
-            <div className="supplier-review-section">
-              <div className="supplier-review-section-head">
-                <h3>Itens da cotação</h3>
-                <button type="button" className="supplier-review-edit" onClick={() => goToStep(2)}>Editar</button>
-              </div>
-              {quotedCount ? (
-                <div className="supplier-review-items">
-                  <div className="supplier-review-items-row supplier-review-items-head">
-                    <span>Insumo</span><span>Qtd.</span><span>Valor unit.</span><span>Total</span>
-                  </div>
-                  {responseItems.filter((item) => item.attends).map((item) => {
-                    const original = items.find((current) => current.itemNumber === item.itemNumber);
-                    return (
-                      <div className="supplier-review-items-row" key={item.itemNumber}>
-                        <span>{original?.name || `Item ${item.itemNumber}`}</span>
-                        <span>{item.quantity} {original?.unit || ""}</span>
-                        <span>{formatCurrency(Number(item.unitPrice || 0))}</span>
-                        <strong>{formatCurrency(itemTotal(item))}</strong>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="table-muted">Nenhum item marcado.</p>
-              )}
-            </div>
-
-            <div className="supplier-review-section">
-              <div className="supplier-review-section-head">
-                <h3>Pagamento</h3>
-                <button type="button" className="supplier-review-edit" onClick={() => goToStep(3)}>Editar</button>
-              </div>
-              <div className="supplier-review-grid">
-                {offersCash && <span><strong>À vista</strong>{cashSummaryText(cashDiscountPercentage)} - {formatCurrency(cashPrice)}</span>}
-                {offersTerm && <span><strong>A prazo</strong>{termSummaryText(installments)}</span>}
-                {!offersCash && !offersTerm && <span><strong>Pagamento</strong>Nenhuma forma marcada</span>}
-              </div>
-            </div>
-
-            <div className="supplier-review-section">
-              <div className="supplier-review-section-head">
-                <h3>Frete e observações</h3>
-                <button type="button" className="supplier-review-edit" onClick={() => goToStep(4)}>Editar</button>
-              </div>
-              <div className="supplier-review-grid">
-                <span><strong>Frete</strong>{freightSummaryText(freightType, freightPrice)}</span>
-              </div>
-              {generalNotes && <p className="quotation-response-notes">{generalNotes}</p>}
-            </div>
-          </section>
+          <ReviewStep
+            document={document}
+            supplierName={supplierName}
+            email={email}
+            phone={phone}
+            items={items}
+            responseItems={responseItems}
+            quotedCount={quotedCount}
+            offersCash={offersCash}
+            offersTerm={offersTerm}
+            cashDiscountPercentage={cashDiscountPercentage}
+            cashPrice={cashPrice}
+            installments={installments}
+            freightType={freightType}
+            freightPrice={freightPrice}
+            generalNotes={generalNotes}
+            onEditStep={goToStep}
+          />
         )}
 
         <div className="card supplier-step-nav" ref={stepNavRef}>
