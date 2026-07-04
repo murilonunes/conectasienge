@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
+import type { SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 import { FreightStep } from "./supplier-quote-response-form/freight-step";
 import { IdentityStep } from "./supplier-quote-response-form/identity-step";
 import { ItemsStep } from "./supplier-quote-response-form/items-step";
@@ -10,6 +11,7 @@ import { PaymentStep } from "./supplier-quote-response-form/payment-step";
 import { ReviewStep } from "./supplier-quote-response-form/review-step";
 import { defaultInstallments, initialItems, itemTotal } from "./supplier-quote-response-form/helpers";
 import type { FreightType, InstallmentRow, RegistrationData, ResponseItem, WizardStep } from "./supplier-quote-response-form/types";
+import { SupplierQuoteSubmittedView } from "./supplier-quote-submitted-view";
 
 const wizardSteps: Array<{ id: WizardStep; label: string }> = [
   { id: 1, label: "Identificação" },
@@ -59,6 +61,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [supplierExists, setSupplierExists] = useState<boolean | undefined>();
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submittedResponse, setSubmittedResponse] = useState<SupplierQuoteResponseSummary | undefined>();
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<WizardStep>(1);
   const [maxStepReached, setMaxStepReached] = useState<WizardStep>(1);
@@ -264,6 +267,31 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
       });
       const json = await response.json();
       if (!response.ok) throw new Error(json.message || "Não foi possível enviar a proposta.");
+      const createdAt = String(json.createdAt || new Date().toISOString());
+      setSubmittedResponse({
+        id: Number(json.responseId || 0),
+        quotationId: 0,
+        supplierName,
+        document,
+        email,
+        phone,
+        registration: supplierExists ? undefined : registration,
+        registrationPending: Boolean(json.registrationPending),
+        items: payload.items,
+        attendedCount: payload.items.filter((item) => item.attends).length,
+        totalValue: payload.items.reduce((sum, item) => sum + (item.attends ? item.unitPrice * item.quantity : 0), 0),
+        commercialTerms: {
+          offersCash,
+          cashDiscountPercentage: Number(cashDiscountPercentage || 0),
+          offersTerm,
+          installments: payload.commercialTerms.installments,
+          freightType: freightType || "NONE",
+          freightPrice: Number(freightPrice || 0),
+          deliveryDays: Number(deliveryDays || 0),
+          generalNotes
+        },
+        createdAt
+      });
       setSubmitted(true);
       setMessage(json.registrationPending
         ? "Proposta enviada. Seu cadastro ficou pendente para validação."
@@ -275,19 +303,16 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     }
   }
 
-  if (submitted) {
+  if (submitted && submittedResponse) {
     return (
-      <section className="supplier-public-complete">
-        <div className="card supplier-portal-success">
-          <span>Cotação {quotationCode}</span>
-          <h2>Proposta enviada</h2>
-          <p>{message}</p>
-          <div className="supplier-success-grid">
-            <strong>{quotedCount}<small>Itens atendidos</small></strong>
-            <strong>{formatCurrency(quotedTotal)}<small>Total informado</small></strong>
-          </div>
-        </div>
-      </section>
+      <SupplierQuoteSubmittedView
+        token={token}
+        quotationCode={quotationCode}
+        items={items}
+        response={submittedResponse}
+        message={message}
+        canRequestNewLink={false}
+      />
     );
   }
 

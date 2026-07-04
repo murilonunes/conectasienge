@@ -116,6 +116,7 @@ export type SupplierQuoteInvitationSummary = {
 
 export type SupplierQuoteEventType =
   | "link_sent"
+  | "link_requested"
   | "link_revoked"
   | "response_received"
   | "supplier_approved"
@@ -426,6 +427,65 @@ export function hasSupplierQuoteResponse(token: string): boolean {
       SELECT id FROM supplier_quote_responses WHERE token_hash = ? LIMIT 1
     `).get(hashToken(token));
     return Boolean(row);
+  } finally {
+    db.close();
+  }
+}
+
+export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteResponseSummary | undefined {
+  if (!supplierQuoteDatabaseExists()) return undefined;
+
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT
+        id,
+        quotation_id,
+        supplier_id,
+        supplier_name,
+        document,
+        email,
+        phone,
+        registration_json,
+        items_json,
+        commercial_terms_json,
+        created_at
+      FROM supplier_quote_responses
+      WHERE token_hash = ?
+      LIMIT 1
+    `).get(hashToken(token)) as {
+      id: number;
+      quotation_id: number;
+      supplier_id: number | null;
+      supplier_name: string;
+      document: string;
+      email: string | null;
+      phone: string | null;
+      registration_json: string | null;
+      items_json: string;
+      commercial_terms_json: string | null;
+      created_at: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    const items = parseJson<SupplierQuoteResponseItem[]>(row.items_json, []);
+    const attendedItems = items.filter((item) => item.attends);
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      supplierId: row.supplier_id ?? undefined,
+      supplierName: row.supplier_name,
+      document: row.document,
+      email: row.email ?? undefined,
+      phone: row.phone ?? undefined,
+      registration: parseJson<Record<string, unknown> | undefined>(row.registration_json, undefined),
+      registrationPending: Boolean(row.registration_json),
+      items,
+      attendedCount: attendedItems.length,
+      totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
+      commercialTerms: normalizeCommercialTerms(parseJson<LegacyCommercialTermsInput>(row.commercial_terms_json, defaultCommercialTerms)),
+      createdAt: row.created_at
+    };
   } finally {
     db.close();
   }

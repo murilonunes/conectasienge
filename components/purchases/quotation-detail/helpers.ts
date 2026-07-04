@@ -99,6 +99,7 @@ export function registrationText(registration: Record<string, unknown> | undefin
 export function eventTypeLabel(type: SupplierQuoteEventSummary["type"]) {
   const labels: Record<SupplierQuoteEventSummary["type"], string> = {
     link_sent: "Link enviado",
+    link_requested: "Novo link solicitado",
     link_revoked: "Link revogado",
     response_received: "Resposta recebida",
     supplier_approved: "Fornecedor aprovado",
@@ -110,7 +111,7 @@ export function eventTypeLabel(type: SupplierQuoteEventSummary["type"]) {
 
 export function eventTypeClass(type: SupplierQuoteEventSummary["type"]) {
   if (type === "integration_error" || type === "link_revoked") return "late";
-  if (type === "link_sent") return "warn";
+  if (type === "link_sent" || type === "link_requested") return "warn";
   return "";
 }
 
