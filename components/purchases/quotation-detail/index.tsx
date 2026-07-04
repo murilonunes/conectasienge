@@ -16,7 +16,18 @@ import { MapaTab } from "./tabs/mapa-tab";
 import { ResumoTab } from "./tabs/resumo-tab";
 import { RespostasTab } from "./tabs/respostas-tab";
 import { SiengeTab } from "./tabs/sienge-tab";
-import { tabs, type ApprovalMode, type DetailTab, type GeneratedSupplierLink, type NegotiationDispatch, type SiengeAction } from "./types";
+import { tabs, type ApprovalMode, type DetailTab, type DetailTabGroup, type GeneratedSupplierLink, type NegotiationDispatch, type SiengeAction } from "./types";
+
+type DetailTabConfig = (typeof tabs)[number];
+
+const tabGroups = tabs.reduce<Array<{ group: DetailTabGroup; items: DetailTabConfig[] }>>((groups, item) => {
+  const current = groups.find((group) => group.group === item.group);
+  if (current) {
+    current.items.push(item);
+    return groups;
+  }
+  return [...groups, { group: item.group, items: [item] }];
+}, []);
 
 export function QuotationDetail({
   quotation,
@@ -639,11 +650,18 @@ export function QuotationDetail({
       </section>
 
       <nav className="quotation-detail-tabs">
-        {tabs.map((item) => (
-          <button className={tab === item.key ? "active" : ""} key={item.key} type="button" onClick={() => setTab(item.key)}>
-            {item.label}
-            {tabCounts[item.key] !== undefined && <strong>{tabCounts[item.key]}</strong>}
-          </button>
+        {tabGroups.map((group) => (
+          <div className="quotation-detail-tab-group" key={group.group}>
+            <span>{group.group}</span>
+            <div>
+              {group.items.map((item) => (
+                <button className={tab === item.key ? "active" : ""} key={item.key} type="button" onClick={() => setTab(item.key)}>
+                  {item.label}
+                  {tabCounts[item.key] !== undefined && <strong>{tabCounts[item.key]}</strong>}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 

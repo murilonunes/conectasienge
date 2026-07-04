@@ -43,15 +43,17 @@ export type ItemComparisonRow = {
   best?: ItemComparisonOffer;
 };
 
-export const tabs: Array<{ key: DetailTab; label: string }> = [
-  { key: "resumo", label: "Resumo" },
-  { key: "sienge", label: "Sienge" },
-  { key: "insumos", label: "Insumos" },
-  { key: "fornecedores", label: "Fornecedores" },
-  { key: "links", label: "Links" },
-  { key: "respostas", label: "Respostas" },
-  { key: "mapa", label: "Mapa" },
-  { key: "aprovacao", label: "Aprovar" },
-  { key: "cadastros", label: "Cadastros" },
-  { key: "historico", label: "Histórico" }
+export type DetailTabGroup = "Visão" | "Operação" | "Fornecedor" | "Decisão";
+
+export const tabs: Array<{ key: DetailTab; label: string; group: DetailTabGroup }> = [
+  { key: "resumo", label: "Resumo", group: "Visão" },
+  { key: "insumos", label: "Insumos", group: "Visão" },
+  { key: "sienge", label: "Sienge", group: "Operação" },
+  { key: "fornecedores", label: "Fornecedores", group: "Fornecedor" },
+  { key: "links", label: "Links", group: "Fornecedor" },
+  { key: "respostas", label: "Respostas", group: "Fornecedor" },
+  { key: "cadastros", label: "Cadastros", group: "Fornecedor" },
+  { key: "mapa", label: "Mapa", group: "Decisão" },
+  { key: "aprovacao", label: "Aprovar", group: "Decisão" },
+  { key: "historico", label: "Histórico", group: "Decisão" }
 ];

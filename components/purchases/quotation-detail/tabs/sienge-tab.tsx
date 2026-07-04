@@ -55,109 +55,142 @@ export function SiengeTab({
         <div className="panel-head">
           <div>
             <h2 className="panel-title">Operação Sienge</h2>
-            <span className="panel-note">Criação, vínculo de insumos e inclusão de fornecedores</span>
+            <span className="panel-note">Ações diretas separadas por tipo de gravação</span>
           </div>
           <i className="badge">ID {quotationId}</i>
         </div>
 
-        <div className="quotation-operation-grid">
-          <label>
-            <span>Comprador Sienge</span>
-            <input
-              value={form.buyerId}
-              onChange={(event) => onFormChange("buyerId", event.target.value)}
-              placeholder="Login do usuário no Sienge, ex.: MURILO"
-              list="quotation-known-buyer-ids"
-            />
-            {knownBuyerIds.length > 0 && (
-              <datalist id="quotation-known-buyer-ids">
-                {knownBuyerIds.map((id) => <option value={id} key={id} />)}
-              </datalist>
-            )}
-            <small className="table-muted">Use o login do usuário comprador no Sienge, não o nome de exibição.</small>
-          </label>
-          <label>
-            <span>Data da cotação</span>
-            <input type="date" value={form.quotationDate} onChange={(event) => onFormChange("quotationDate", event.target.value)} />
-          </label>
-          <label>
-            <span>Solicitação de compra</span>
-            <input value={form.purchaseRequestId} onChange={(event) => onFormChange("purchaseRequestId", event.target.value.replace(/\D/g, ""))} placeholder="ID da solicitação" />
-          </label>
-          <label>
-            <span>Item da solicitação</span>
-            <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" />
-          </label>
-          <label>
-            <span>Entrega</span>
-            <input value={form.deliveryRequirementNumber} onChange={(event) => onFormChange("deliveryRequirementNumber", event.target.value.replace(/\D/g, ""))} placeholder="1" />
-          </label>
-          <SiengeSupplierPicker
-            value={form.supplierId}
-            onChange={(next, supplier) => onSupplierChange(next, supplier)}
-            compact
-          />
-        </div>
+        <div className="quotation-operation-sections">
+          <article className="quotation-operation-block">
+            <div className="quotation-operation-block-head">
+              <span>Etapa 1</span>
+              <h3>Cotação no Sienge</h3>
+            </div>
+            <div className="quotation-operation-grid two">
+              <label>
+                <span>Comprador Sienge</span>
+                <input
+                  value={form.buyerId}
+                  onChange={(event) => onFormChange("buyerId", event.target.value)}
+                  placeholder="Login do usuário no Sienge, ex.: MURILO"
+                  list="quotation-known-buyer-ids"
+                />
+                {knownBuyerIds.length > 0 && (
+                  <datalist id="quotation-known-buyer-ids">
+                    {knownBuyerIds.map((id) => <option value={id} key={id} />)}
+                  </datalist>
+                )}
+                <small className="table-muted">Use o login do usuário comprador no Sienge.</small>
+              </label>
+              <label>
+                <span>Data da cotação</span>
+                <input type="date" value={form.quotationDate} onChange={(event) => onFormChange("quotationDate", event.target.value)} />
+              </label>
+            </div>
+            <div className="quotation-operation-actions">
+              <button className="button secondary" type="button" onClick={() => onRunAction("create", false)} disabled={!form.buyerId.trim() || loadingAction !== null}>
+                Preparar criação
+              </button>
+              <button className="button sienge-write" type="button" onClick={() => onRunAction("create", true)} disabled={!form.buyerId.trim() || loadingAction !== null}>
+                {loadingAction === "create-confirm" ? "Gravando..." : "Criar cotação"}
+              </button>
+            </div>
+          </article>
 
-        <div className="quotation-operation-actions">
-          <button className="button secondary" type="button" onClick={() => onRunAction("create", false)} disabled={!form.buyerId.trim() || loadingAction !== null}>
-            Preparar criação
-          </button>
-          <button className="button sienge-write" type="button" onClick={() => onRunAction("create", true)} disabled={!form.buyerId.trim() || loadingAction !== null}>
-            {loadingAction === "create-confirm" ? "Gravando..." : "Criar cotação"}
-          </button>
-          <button className="button secondary" type="button" onClick={() => onRunAction("attach-items", false)} disabled={!form.purchaseRequestId || !form.purchaseRequestItemNumber || loadingAction !== null}>
-            Preparar item
-          </button>
-          <button className="button sienge-write" type="button" onClick={() => onRunAction("attach-items", true)} disabled={!form.purchaseRequestId || !form.purchaseRequestItemNumber || loadingAction !== null}>
-            {loadingAction === "attach-items-confirm" ? "Vinculando..." : "Vincular item"}
-          </button>
-          <button className="button secondary" type="button" onClick={() => onRunAction("add-supplier", false)} disabled={!form.supplierId || !form.purchaseRequestItemNumber || loadingAction !== null}>
-            Preparar fornecedor
-          </button>
-          <button className="button sienge-write" type="button" onClick={() => onRunAction("add-supplier", true)} disabled={!form.supplierId || !form.purchaseRequestItemNumber || loadingAction !== null}>
-            {loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"}
-          </button>
-          <button className="button secondary" type="button" onClick={onGenerateLink} disabled={loadingAction !== null}>
-            {loadingAction === "supplier-link" ? "Gerando..." : "Gerar link fornecedor"}
-          </button>
-        </div>
+          <article className="quotation-operation-block">
+            <div className="quotation-operation-block-head">
+              <span>Etapa 2</span>
+              <h3>Item da solicitação</h3>
+            </div>
+            <div className="quotation-operation-grid">
+              <label>
+                <span>Solicitação de compra</span>
+                <input value={form.purchaseRequestId} onChange={(event) => onFormChange("purchaseRequestId", event.target.value.replace(/\D/g, ""))} placeholder="ID da solicitação" />
+              </label>
+              <label>
+                <span>Item da solicitação</span>
+                <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" />
+              </label>
+              <label>
+                <span>Entrega</span>
+                <input value={form.deliveryRequirementNumber} onChange={(event) => onFormChange("deliveryRequirementNumber", event.target.value.replace(/\D/g, ""))} placeholder="1" />
+              </label>
+            </div>
+            <div className="quotation-operation-actions">
+              <button className="button secondary" type="button" onClick={() => onRunAction("attach-items", false)} disabled={!form.purchaseRequestId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+                Preparar item
+              </button>
+              <button className="button sienge-write" type="button" onClick={() => onRunAction("attach-items", true)} disabled={!form.purchaseRequestId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+                {loadingAction === "attach-items-confirm" ? "Vinculando..." : "Vincular item"}
+              </button>
+            </div>
+          </article>
 
-        <div className="panel-head">
-          <div>
-            <h2 className="panel-title">Insumo direto</h2>
-            <span className="panel-note">Cria um insumo na cotação sem passar por solicitação de compra</span>
-          </div>
-        </div>
-        <div className="quotation-operation-grid">
-          <label>
-            <span>Obra</span>
-            <input value={form.directItemBuildingId} onChange={(event) => onFormChange("directItemBuildingId", event.target.value.replace(/\D/g, ""))} placeholder="Código da obra" />
-          </label>
-          <label>
-            <span>Insumo</span>
-            <input value={form.directItemProductId} onChange={(event) => onFormChange("directItemProductId", event.target.value.replace(/\D/g, ""))} placeholder="Código do insumo" />
-          </label>
-          <label>
-            <span>Quantidade</span>
-            <input value={form.directItemQuantity} onChange={(event) => onFormChange("directItemQuantity", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="0" />
-          </label>
-          <label>
-            <span>Unidade</span>
-            <input value={form.directItemUnity} onChange={(event) => onFormChange("directItemUnity", event.target.value)} placeholder="Ex.: sc, un, m³" />
-          </label>
-          <label>
-            <span>Data de necessidade</span>
-            <input type="date" value={form.directItemNeedDate} onChange={(event) => onFormChange("directItemNeedDate", event.target.value)} />
-          </label>
-        </div>
-        <div className="quotation-operation-actions">
-          <button className="button secondary" type="button" onClick={() => onRunAction("add-item", false)} disabled={directItemDisabled}>
-            Preparar insumo
-          </button>
-          <button className="button sienge-write" type="button" onClick={() => onRunAction("add-item", true)} disabled={directItemDisabled}>
-            {loadingAction === "add-item-confirm" ? "Criando..." : "Criar insumo direto"}
-          </button>
+          <article className="quotation-operation-block">
+            <div className="quotation-operation-block-head">
+              <span>Etapa 3</span>
+              <h3>Fornecedor e link</h3>
+            </div>
+            <div className="quotation-operation-grid two">
+              <SiengeSupplierPicker
+                value={form.supplierId}
+                onChange={(next, supplier) => onSupplierChange(next, supplier)}
+                compact
+              />
+              <label>
+                <span>Item para fornecedor</span>
+                <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" />
+              </label>
+            </div>
+            <div className="quotation-operation-actions">
+              <button className="button secondary" type="button" onClick={() => onRunAction("add-supplier", false)} disabled={!form.supplierId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+                Preparar fornecedor
+              </button>
+              <button className="button sienge-write" type="button" onClick={() => onRunAction("add-supplier", true)} disabled={!form.supplierId || !form.purchaseRequestItemNumber || loadingAction !== null}>
+                {loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"}
+              </button>
+              <button className="button secondary" type="button" onClick={onGenerateLink} disabled={loadingAction !== null}>
+                {loadingAction === "supplier-link" ? "Gerando..." : "Gerar link"}
+              </button>
+            </div>
+          </article>
+
+          <article className="quotation-operation-block">
+            <div className="quotation-operation-block-head">
+              <span>Opcional</span>
+              <h3>Insumo direto</h3>
+            </div>
+            <div className="quotation-operation-grid">
+              <label>
+                <span>Obra</span>
+                <input value={form.directItemBuildingId} onChange={(event) => onFormChange("directItemBuildingId", event.target.value.replace(/\D/g, ""))} placeholder="Código da obra" />
+              </label>
+              <label>
+                <span>Insumo</span>
+                <input value={form.directItemProductId} onChange={(event) => onFormChange("directItemProductId", event.target.value.replace(/\D/g, ""))} placeholder="Código do insumo" />
+              </label>
+              <label>
+                <span>Quantidade</span>
+                <input value={form.directItemQuantity} onChange={(event) => onFormChange("directItemQuantity", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="0" />
+              </label>
+              <label>
+                <span>Unidade</span>
+                <input value={form.directItemUnity} onChange={(event) => onFormChange("directItemUnity", event.target.value)} placeholder="Ex.: sc, un, m3" />
+              </label>
+              <label>
+                <span>Data de necessidade</span>
+                <input type="date" value={form.directItemNeedDate} onChange={(event) => onFormChange("directItemNeedDate", event.target.value)} />
+              </label>
+            </div>
+            <div className="quotation-operation-actions">
+              <button className="button secondary" type="button" onClick={() => onRunAction("add-item", false)} disabled={directItemDisabled}>
+                Preparar insumo
+              </button>
+              <button className="button sienge-write" type="button" onClick={() => onRunAction("add-item", true)} disabled={directItemDisabled}>
+                {loadingAction === "add-item-confirm" ? "Criando..." : "Criar insumo direto"}
+              </button>
+            </div>
+          </article>
         </div>
       </div>
 
