@@ -779,14 +779,15 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-portal-success p { margin: 0; color: var(--muted); }
 .supplier-public-shell { min-height: 100vh; overflow: auto; padding: 30px; background: radial-gradient(circle at 18% 0%, rgba(31,107,79,.14), transparent 28%), linear-gradient(135deg, #f7faf8 0%, #eef4f1 48%, #fffaf2 100%); }
 .supplier-public-shell .card { border-radius: 14px; box-shadow: 0 22px 60px rgba(26, 47, 38, .1); }
-.supplier-portal-form { width: min(960px, 100%); margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 16px; }
-.supplier-public-hero { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(360px, .52fr); gap: 18px; align-items: stretch; padding: 24px; border: 1px solid rgba(31,107,79,.13); border-radius: 18px; background: rgba(255,255,255,.86); box-shadow: 0 22px 60px rgba(26, 47, 38, .09); backdrop-filter: blur(14px); }
-.supplier-public-hero > div:first-child { display: grid; align-content: center; gap: 8px; }
+.supplier-portal-form { width: min(960px, 100%); margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 12px; }
+.supplier-public-hero { display: grid; grid-template-columns: minmax(220px, .9fr) minmax(420px, .74fr); gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid rgba(31,107,79,.13); border-radius: 14px; background: rgba(255,255,255,.9); box-shadow: 0 14px 36px rgba(26, 47, 38, .08); backdrop-filter: blur(14px); }
+.supplier-public-hero > div:first-child { display: grid; align-content: center; gap: 3px; min-width: 0; }
 .supplier-public-hero span,
 .supplier-card-head span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
-.supplier-public-hero h1 { margin: 0; font-family: var(--font-display); font-size: 42px; font-weight: 750; letter-spacing: 0; }
-.supplier-public-hero-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.supplier-public-hero-metrics strong { display: grid; gap: 5px; align-content: center; min-height: 104px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font-family: var(--font-display); font-size: 24px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; }
+.supplier-public-hero h1 { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 750; letter-spacing: 0; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.supplier-public-hero-metrics { display: grid; grid-template-columns: minmax(58px, .72fr) minmax(74px, .9fr) minmax(160px, 1.75fr); gap: 8px; min-width: 0; }
+.supplier-public-hero-metrics strong { display: grid; grid-template-columns: 1fr; gap: 2px; align-content: center; min-height: 56px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font-family: var(--font-display); font-size: 18px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; }
+.supplier-public-hero-metrics .amount { font-size: 16px; line-height: 1.1; overflow-wrap: anywhere; }
 .supplier-public-hero-metrics small { color: var(--muted); font-family: var(--font-sans); font-size: 9px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 .supplier-public-stack { display: grid; gap: 16px; min-width: 0; }
 .supplier-portal-card { padding: 18px; border-radius: 14px; }
@@ -838,10 +839,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-installment-actions span.warn { color: var(--amber); }
 .supplier-general-notes { grid-column: span 2; }
 .supplier-general-notes textarea { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 10px 11px; color: var(--ink); font-size: 12px; font-family: inherit; resize: vertical; }
-.supplier-stepper { display: flex; gap: 8px; margin-bottom: 16px; }
-.supplier-stepper button { flex: 1; display: flex; align-items: center; gap: 9px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 12px 14px; cursor: pointer; text-align: left; }
+.supplier-stepper { display: flex; gap: 8px; margin-bottom: 10px; }
+.supplier-stepper button { flex: 1; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 9px 11px; cursor: pointer; text-align: left; }
 .supplier-stepper button.future { opacity: .55; }
-.supplier-stepper button i { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 999px; background: #eef1ef; color: var(--muted); font-style: normal; font-size: 11px; font-weight: 800; }
+.supplier-stepper button i { display: grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 999px; background: #eef1ef; color: var(--muted); font-style: normal; font-size: 10px; font-weight: 800; }
 .supplier-stepper button span { color: var(--muted); font-size: 11px; font-weight: 800; }
 .supplier-stepper button.done i { background: var(--green-soft); color: var(--green); }
 .supplier-stepper button.done span { color: var(--ink); }
@@ -896,13 +897,16 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 }
 @media (max-width: 760px) {
   .supplier-public-shell { padding: 14px; }
-  .supplier-public-hero { padding: 18px; border-radius: 15px; }
-  .supplier-public-hero h1 { font-size: 32px; }
-  .supplier-public-hero-metrics,
+  .supplier-public-hero { padding: 13px; border-radius: 13px; gap: 10px; }
+  .supplier-public-hero h1 { font-size: 24px; white-space: normal; }
   .supplier-portal-grid,
   .supplier-registration-grid,
   .supplier-item-values,
   .supplier-success-grid { grid-template-columns: 1fr; }
+  .supplier-public-hero-metrics { grid-template-columns: minmax(46px, .7fr) minmax(58px, .85fr) minmax(112px, 1.65fr); gap: 6px; }
+  .supplier-public-hero-metrics strong { min-height: 50px; padding: 8px; font-size: 15px; }
+  .supplier-public-hero-metrics .amount { font-size: 13px; }
+  .supplier-public-hero-metrics small { font-size: 8px; letter-spacing: .04em; }
   .supplier-item-top { grid-template-columns: 1fr; }
   .supplier-item-total { justify-self: start; }
   .supplier-installment-row { grid-template-columns: 1fr 1fr; }

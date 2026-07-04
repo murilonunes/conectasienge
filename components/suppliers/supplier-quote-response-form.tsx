@@ -245,9 +245,9 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           <h1>Cotação #{quotationCode}</h1>
         </div>
         <div className="supplier-public-hero-metrics">
-          <strong>{items.length}<small>Itens</small></strong>
-          <strong>{quotedCount}<small>Marcados</small></strong>
-          <strong>{formatCurrency(quotedTotal)}<small>Total</small></strong>
+          <strong className="count">{items.length}<small>Itens</small></strong>
+          <strong className="count">{quotedCount}<small>Marcados</small></strong>
+          <strong className="amount">{formatCurrency(quotedTotal)}<small>Total</small></strong>
         </div>
       </header>
 
