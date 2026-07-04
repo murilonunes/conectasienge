@@ -269,12 +269,33 @@ export function QuotationDetail({
   function negotiationPayloadFromResponse(dispatch: NegotiationDispatch) {
     const selected = new Set(dispatch.selectedItems || []);
     const terms = dispatch.response.commercialTerms;
-    const discountValue = terms.paymentType === "cash"
+    const discountValue = terms.offersCash
       ? Math.round(dispatch.response.totalValue * (terms.cashDiscountPercentage / 100) * 100) / 100
       : 0;
-    const paymentDescription = terms.paymentType === "cash"
-      ? (terms.cashDiscountPercentage > 0 ? `À vista com ${terms.cashDiscountPercentage}% de desconto` : "À vista")
-      : "A prazo";
+
+    const paymentOptions = [];
+    if (terms.offersCash) {
+      paymentOptions.push({
+        description: terms.cashDiscountPercentage > 0 ? `À vista com ${terms.cashDiscountPercentage}% de desconto` : "À vista",
+        selected: true,
+        paymentTerms: [{ numberOfdays: 0, percentage: 100 }]
+      });
+    }
+    if (terms.offersTerm) {
+      const termInstallments = terms.installments.filter((installment) => installment.percentage > 0);
+      paymentOptions.push({
+        description: termInstallments.length
+          ? `A prazo (${termInstallments.map((installment) => `${installment.percentage}% em ${installment.days}d`).join(" + ")})`
+          : "A prazo",
+        selected: !terms.offersCash,
+        paymentTerms: termInstallments.length
+          ? termInstallments.map((installment) => ({ numberOfdays: installment.days, percentage: installment.percentage }))
+          : [{ numberOfdays: 30, percentage: 100 }]
+      });
+    }
+    if (!paymentOptions.length) {
+      paymentOptions.push({ description: "À vista", selected: true, paymentTerms: [{ numberOfdays: 0, percentage: 100 }] });
+    }
 
     return {
       supplierAnswerDate: dispatch.response.createdAt.slice(0, 10),
@@ -283,13 +304,7 @@ export function QuotationDetail({
       discount: discountValue,
       freightType: terms.freightType,
       freightPrice: terms.freightPrice,
-      paymentTerms: [{
-        description: paymentDescription,
-        selected: true,
-        paymentTerms: terms.paymentType === "cash"
-          ? [{ numberOfdays: 0, percentage: 100 }]
-          : terms.installments.map((installment) => ({ numberOfdays: installment.days, percentage: installment.percentage }))
-      }],
+      paymentTerms: paymentOptions,
       authorize: dispatch.authorize === true,
       items: dispatch.response.items
         .filter((item) => item.attends)

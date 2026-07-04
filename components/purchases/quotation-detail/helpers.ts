@@ -61,12 +61,18 @@ export function confirmSiengeWrite(question: string) {
 }
 
 export function paymentSummary(terms: SupplierQuoteCommercialTerms) {
-  if (terms.paymentType === "cash") {
-    return terms.cashDiscountPercentage > 0 ? `À vista, ${terms.cashDiscountPercentage}% de desconto` : "À vista";
+  const options: string[] = [];
+  if (terms.offersCash) {
+    options.push(terms.cashDiscountPercentage > 0 ? `À vista, ${terms.cashDiscountPercentage}% de desconto` : "À vista");
   }
-  return terms.installments
-    .map((installment) => `${installment.percentage}% em ${installment.days}d`)
-    .join(" + ");
+  if (terms.offersTerm) {
+    const termSummary = terms.installments
+      .filter((installment) => installment.percentage > 0)
+      .map((installment) => `${installment.percentage}% em ${installment.days}d`)
+      .join(" + ");
+    options.push(termSummary || "A prazo");
+  }
+  return options.join(" | ") || "Não informado";
 }
 
 export function freightSummary(terms: SupplierQuoteCommercialTerms) {

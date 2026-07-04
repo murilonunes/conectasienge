@@ -13,8 +13,6 @@ export type SupplierQuoteTokenPayload = {
   nonce: string;
 };
 
-export type SupplierQuotePaymentType = "cash" | "term";
-
 export type SupplierQuoteInstallment = {
   days: number;
   percentage: number;
@@ -23,13 +21,17 @@ export type SupplierQuoteInstallment = {
 export type SupplierQuoteFreightType = "NONE" | "INCLUDED" | "PAID";
 
 export type SupplierQuoteCommercialTerms = {
-  paymentType: SupplierQuotePaymentType;
+  offersCash: boolean;
   cashDiscountPercentage: number;
+  offersTerm: boolean;
   installments: SupplierQuoteInstallment[];
   freightType: SupplierQuoteFreightType;
   freightPrice: number;
   generalNotes: string;
 };
+
+// Formato antigo gravado antes de o portal aceitar as duas formas de pagamento ao mesmo tempo.
+type LegacyCommercialTermsInput = Partial<SupplierQuoteCommercialTerms> & { paymentType?: "cash" | "term" };
 
 export type SupplierQuoteResponseInput = {
   token: string;
@@ -464,16 +466,21 @@ export function revokeSupplierQuoteInvitation(quotationId: number, invitationId:
 }
 
 export const defaultCommercialTerms: SupplierQuoteCommercialTerms = {
-  paymentType: "cash",
+  offersCash: true,
   cashDiscountPercentage: 0,
+  offersTerm: false,
   installments: [{ days: 30, percentage: 100 }],
   freightType: "NONE",
   freightPrice: 0,
   generalNotes: ""
 };
 
-function normalizeCommercialTerms(input?: Partial<SupplierQuoteCommercialTerms>): SupplierQuoteCommercialTerms {
-  const paymentType: SupplierQuotePaymentType = input?.paymentType === "term" ? "term" : "cash";
+export function normalizeCommercialTerms(input?: LegacyCommercialTermsInput): SupplierQuoteCommercialTerms {
+  const legacyType = input?.paymentType === "term" ? "term" : input?.paymentType === "cash" ? "cash" : undefined;
+  let offersCash = typeof input?.offersCash === "boolean" ? input.offersCash : legacyType ? legacyType === "cash" : true;
+  const offersTerm = typeof input?.offersTerm === "boolean" ? input.offersTerm : legacyType === "term";
+  if (!offersCash && !offersTerm) offersCash = true;
+
   const rawInstallments = Array.isArray(input?.installments) ? input!.installments : [];
   const installments = rawInstallments
     .slice(0, 12)
@@ -484,9 +491,10 @@ function normalizeCommercialTerms(input?: Partial<SupplierQuoteCommercialTerms>)
     .filter((installment) => installment.percentage > 0);
 
   return {
-    paymentType,
+    offersCash,
     cashDiscountPercentage: Math.max(0, Math.min(100, Number(input?.cashDiscountPercentage) || 0)),
-    installments: paymentType === "term" && installments.length ? installments : defaultCommercialTerms.installments,
+    offersTerm,
+    installments: offersTerm && installments.length ? installments : defaultCommercialTerms.installments,
     freightType: input?.freightType === "INCLUDED" || input?.freightType === "PAID" ? input.freightType : "NONE",
     freightPrice: Math.max(0, Math.min(999999999, Number(input?.freightPrice) || 0)),
     generalNotes: String(input?.generalNotes || "").trim().slice(0, 2000)
@@ -601,7 +609,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         items,
         attendedCount: attendedItems.length,
         totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
-        commercialTerms: parseJson<SupplierQuoteCommercialTerms>(row.commercial_terms_json, defaultCommercialTerms),
+        commercialTerms: normalizeCommercialTerms(parseJson<LegacyCommercialTermsInput>(row.commercial_terms_json, defaultCommercialTerms)),
         createdAt: row.created_at
       };
     });
