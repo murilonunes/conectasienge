@@ -1,0 +1,130 @@
+import type { QuotationSummary } from "@/features/quotations/data";
+import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
+import type { SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
+import { exportSupplierResponses, formatDocument, freightSummary, paymentSummary } from "../helpers";
+
+export function RespostasTab({
+  quotation,
+  supplierResponses,
+  responseStats,
+  loadingAction,
+  onSendNegotiation
+}: {
+  quotation: QuotationSummary;
+  supplierResponses: SupplierQuoteResponseSummary[];
+  responseStats: { totalValue: number; attendedItems: number; pendingRegistrations: number; suppliers: number };
+  loadingAction: string | null;
+  onSendNegotiation: (response: SupplierQuoteResponseSummary, confirm: boolean) => void;
+}) {
+  return (
+    <section className="quotation-responses">
+      <div className="quotation-detail-stats">
+        <div className="card"><strong>{supplierResponses.length}</strong><span>Respostas recebidas</span></div>
+        <div className="card"><strong>{responseStats.suppliers}</strong><span>Fornecedores únicos</span></div>
+        <div className="card"><strong>{responseStats.attendedItems}</strong><span>Itens atendidos</span></div>
+        <div className="card"><strong>{formatCurrency(responseStats.totalValue)}</strong><span>Total informado</span></div>
+      </div>
+
+      <section className="card quotation-comparison">
+        <div className="panel-head">
+          <div>
+            <h2 className="panel-title">Respostas dos fornecedores</h2>
+            <span className="panel-note">Propostas recebidas pelo link protegido desta cotação</span>
+          </div>
+          <button className="button secondary" type="button" onClick={() => exportSupplierResponses(quotation, supplierResponses)} disabled={!supplierResponses.length}>
+            Exportar respostas
+          </button>
+        </div>
+
+        {supplierResponses.length ? (
+          <div className="quotation-response-list">
+            {supplierResponses.map((response) => (
+              <article className="quotation-response-card" key={response.id}>
+                <div className="quotation-response-head">
+                  <div>
+                    <span>Resposta #{response.id}</span>
+                    <h3>{response.supplierName}</h3>
+                    <small>{formatDocument(response.document)} - {formatOptionalDate(response.createdAt)}</small>
+                  </div>
+                  <div>
+                    <strong>{formatCurrency(response.totalValue)}</strong>
+                    <i className={`badge ${response.registrationPending ? "warn" : ""}`}>
+                      {response.registrationPending ? "Cadastro pendente" : "Cadastro local"}
+                    </i>
+                  </div>
+                </div>
+
+                <div className="quotation-response-contact">
+                  <span><strong>E-mail</strong>{response.email || "Não informado"}</span>
+                  <span><strong>Telefone</strong>{response.phone || "Não informado"}</span>
+                  <span><strong>Itens atendidos</strong>{response.attendedCount} de {response.items.length}</span>
+                  <span><strong>Pagamento</strong>{paymentSummary(response.commercialTerms)}</span>
+                  <span><strong>Frete</strong>{freightSummary(response.commercialTerms)}</span>
+                </div>
+                {response.commercialTerms.generalNotes && (
+                  <p className="quotation-response-notes">{response.commercialTerms.generalNotes}</p>
+                )}
+
+                <div className="quotation-operation-actions">
+                  {response.supplierId ? (
+                    <>
+                      <button className="button secondary" type="button" disabled={loadingAction !== null} onClick={() => onSendNegotiation(response, false)}>
+                        Preparar negociação
+                      </button>
+                      <button className="button sienge-write" type="button" disabled={loadingAction !== null} onClick={() => onSendNegotiation(response, true)}>
+                        {loadingAction === "negotiation-confirm" ? "Enviando..." : "Enviar negociação ao Sienge"}
+                      </button>
+                    </>
+                  ) : (
+                    <span className="table-muted">Crie o cadastro deste fornecedor no Sienge (aba Cadastros) para enviar a negociação.</span>
+                  )}
+                </div>
+
+                <div className="quotation-response-items">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Insumo</th>
+                        <th>Status</th>
+                        <th>Qtd.</th>
+                        <th>Valor unit.</th>
+                        <th>Total</th>
+                        <th>Prazo</th>
+                        <th>Observação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {response.items.map((item) => {
+                        const quotationItem = quotation.items.find((current) => current.itemNumber === item.itemNumber);
+                        const total = item.attends ? (item.unitPrice || 0) * (item.quantity || 0) : 0;
+                        return (
+                          <tr key={`${response.id}-${item.itemNumber}`}>
+                            <td><strong>{quotationItem?.name || `Item ${item.itemNumber}`}</strong><br /><span className="table-muted">#{item.itemNumber}</span></td>
+                            <td><i className={`badge ${item.attends ? "" : "muted"}`}>{item.attends ? "Atende" : "Não atende"}</i></td>
+                            <td>{item.attends ? item.quantity || 0 : "-"}</td>
+                            <td>{item.attends ? formatCurrency(item.unitPrice || 0) : "-"}</td>
+                            <td>{item.attends ? formatCurrency(total) : "-"}</td>
+                            <td>{item.attends && item.deadlineDays ? `${item.deadlineDays} dia(s)` : "-"}</td>
+                            <td>{item.notes || "Sem observação"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">Nenhuma resposta recebida pelo link desta cotação ainda.</div>
+        )}
+
+        {responseStats.pendingRegistrations > 0 && (
+          <div className="advanced-search-hint warn">
+            {responseStats.pendingRegistrations} fornecedor(es) responderam sem cadastro local confirmado. Valide o cadastro antes de integrar qualquer decisão ao Sienge.
+          </div>
+        )}
+      </section>
+    </section>
+  );
+}
