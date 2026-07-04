@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -101,6 +101,15 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [step, setStep] = useState<WizardStep>(1);
   const [maxStepReached, setMaxStepReached] = useState<WizardStep>(1);
   const [stepMessage, setStepMessage] = useState("");
+  const stepNavRef = useRef<HTMLDivElement>(null);
+  const stepperRef = useRef<HTMLElement>(null);
+  const previousStep = useRef<WizardStep>(1);
+
+  useEffect(() => {
+    if (previousStep.current === step) return;
+    previousStep.current = step;
+    stepperRef.current?.scrollIntoView({ block: "start" });
+  }, [step]);
 
   const quotedCount = useMemo(() => responseItems.filter((item) => item.attends).length, [responseItems]);
   const quotedTotal = useMemo(() => responseItems.reduce((sum, item) => sum + itemTotal(item), 0), [responseItems]);
@@ -157,6 +166,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   function goNext() {
     if (!stepValid[step]) {
       setStepMessage(stepMessages[step]);
+      window.setTimeout(() => stepNavRef.current?.scrollIntoView({ block: "nearest" }), 80);
       return;
     }
     setStepMessage("");
@@ -285,14 +295,13 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         </div>
       </header>
 
-      <nav className="supplier-stepper">
+      <nav className="supplier-stepper" ref={stepperRef}>
         {wizardSteps.map((item) => (
           <button
             key={item.id}
             type="button"
-            className={step === item.id ? "active" : step > item.id ? "done" : ""}
-            disabled={item.id > maxStepReached}
-            onClick={() => goToStep(item.id)}
+            className={step === item.id ? "active" : step > item.id ? "done" : item.id > maxStepReached ? "future" : ""}
+            onClick={() => (item.id <= maxStepReached ? goToStep(item.id) : goNext())}
           >
             <i>{step > item.id ? "✓" : item.id}</i>
             <span>{item.label}</span>
@@ -494,6 +503,23 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
               </div>
             </section>
           )}
+
+          <div className="card supplier-step-nav" ref={stepNavRef}>
+            {stepMessage && <div className="settings-inline-message">{stepMessage}</div>}
+            {message && <div className="settings-inline-message">{message}</div>}
+            <div className={`supplier-step-actions ${step === 1 ? "single" : ""}`}>
+              {step > 1 && (
+                <button className="button secondary" type="button" onClick={goBack}>Voltar</button>
+              )}
+              {step < 4 ? (
+                <button className="button" type="button" onClick={goNext}>Continuar</button>
+              ) : (
+                <button className="button" type="button" disabled={submitting || !canSubmit} onClick={submit}>
+                  {submitting ? "Enviando..." : "Enviar proposta"}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <aside className="card supplier-portal-submit">
@@ -506,20 +532,6 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             <span className={document.replace(/\D/g, "").length >= 11 ? "done" : ""}>Documento</span>
             <span className={quotedCount > 0 ? "done" : ""}>Itens</span>
             <span className={missingQuotedValues === 0 && quotedCount > 0 ? "done" : ""}>Valores</span>
-          </div>
-          {stepMessage && <div className="settings-inline-message">{stepMessage}</div>}
-          {message && <div className="settings-inline-message">{message}</div>}
-          <div className={`supplier-step-actions ${step === 1 ? "single" : ""}`}>
-            {step > 1 && (
-              <button className="button secondary" type="button" onClick={goBack}>Voltar</button>
-            )}
-            {step < 4 ? (
-              <button className="button" type="button" onClick={goNext}>Continuar</button>
-            ) : (
-              <button className="button" type="button" disabled={submitting || !canSubmit} onClick={submit}>
-                {submitting ? "Enviando..." : "Enviar proposta"}
-              </button>
-            )}
           </div>
         </aside>
       </div>

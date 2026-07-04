@@ -839,7 +839,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-general-notes textarea { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 10px 11px; color: var(--ink); font-size: 12px; font-family: inherit; resize: vertical; }
 .supplier-stepper { display: flex; gap: 8px; margin-bottom: 16px; }
 .supplier-stepper button { flex: 1; display: flex; align-items: center; gap: 9px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 12px 14px; cursor: pointer; text-align: left; }
-.supplier-stepper button:disabled { cursor: not-allowed; opacity: .5; }
+.supplier-stepper button.future { opacity: .55; }
 .supplier-stepper button i { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 999px; background: #eef1ef; color: var(--muted); font-style: normal; font-size: 11px; font-weight: 800; }
 .supplier-stepper button span { color: var(--muted); font-size: 11px; font-weight: 800; }
 .supplier-stepper button.done i { background: var(--green-soft); color: var(--green); }
@@ -861,8 +861,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-review-items-row:not(.supplier-review-items-head) { border: 1px solid var(--line); background: #fbfcfb; }
 .supplier-review-items-row span, .supplier-review-items-row strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .supplier-review-items-head span { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+.supplier-step-nav { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(31,107,79,.14); border-radius: 14px; }
 .supplier-step-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .supplier-step-actions.single { grid-template-columns: 1fr; }
+.supplier-step-actions .button { width: 100%; min-height: 44px; border-radius: 10px; }
+.supplier-step-actions .button:disabled { cursor: not-allowed; opacity: .48; }
 .supplier-portal-submit { position: sticky; top: 24px; gap: 12px; padding: 18px; border: 1px solid rgba(31,107,79,.14); border-radius: 16px; }
 .supplier-portal-submit strong { font-family: var(--font-display); font-size: 32px; font-weight: 750; letter-spacing: 0; }
 .supplier-submit-progress { height: 8px; border-radius: 999px; background: #edf1ee; overflow: hidden; }
@@ -870,8 +873,6 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-submit-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .supplier-submit-checks span { padding: 8px 9px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .05em; }
 .supplier-submit-checks span.done { border-color: #cfe1d7; background: var(--green-soft); color: var(--green); }
-.supplier-portal-submit .button { width: 100%; min-height: 42px; border-radius: 10px; }
-.supplier-portal-submit .button:disabled { cursor: not-allowed; opacity: .48; }
 .supplier-public-complete { width: min(760px, 100%); min-height: calc(100vh - 60px); margin: 0 auto; display: grid; place-items: center; }
 .supplier-portal-success { width: 100%; padding: 34px; border-radius: 18px; }
 .supplier-portal-success h2 { font-family: var(--font-display); font-size: 38px; font-weight: 750; letter-spacing: 0; }
