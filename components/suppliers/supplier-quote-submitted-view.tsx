@@ -28,6 +28,11 @@ export function SupplierQuoteSubmittedView({
   const terms = response.commercialTerms;
   const attendedItems = response.items.filter((item) => item.attends);
   const responseItemsByNumber = new Map(response.items.map((item) => [item.itemNumber, item]));
+  const quotedItems = items.flatMap((original) => {
+    const item = responseItemsByNumber.get(original.itemNumber);
+    return item?.attends === true ? [{ original, item }] : [];
+  });
+  const missingItems = items.filter((original) => responseItemsByNumber.get(original.itemNumber)?.attends !== true);
 
   async function requestNewLink() {
     if (!token) return;
@@ -108,26 +113,13 @@ export function SupplierQuoteSubmittedView({
       <section className="card supplier-portal-card supplier-print-section">
         <div className="supplier-card-head">
           <span>Itens</span>
-          <h2>Itens da cotação</h2>
+          <h2>Itens cotados</h2>
         </div>
         <div className="supplier-review-items">
           <div className="supplier-review-items-row supplier-review-items-head">
             <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Prazo dif.</span><span>Total</span>
           </div>
-          {items.map((original) => {
-            const item = responseItemsByNumber.get(original.itemNumber);
-            if (item?.attends !== true) {
-              return (
-                <div className="supplier-review-items-row not-quoted" key={original.itemNumber}>
-                  <span>{original.name || `Item ${original.itemNumber}`}</span>
-                  <span>Não cotado</span>
-                  <span>0 de {original.quantity} {original.unit || ""}</span>
-                  <span>-</span>
-                  <strong>-</strong>
-                </div>
-              );
-            }
-
+          {quotedItems.map(({ original, item }) => {
             return (
               <div className={`supplier-review-items-row ${item.partial ? "partial" : ""}`} key={item.itemNumber}>
                 <span>{original.name || `Item ${item.itemNumber}`}</span>
@@ -148,6 +140,29 @@ export function SupplierQuoteSubmittedView({
           })}
         </div>
       </section>
+
+      {missingItems.length > 0 && (
+        <section className="card supplier-portal-card supplier-print-section">
+          <div className="supplier-card-head">
+            <span>Fora da cotação</span>
+            <h2>Itens não cotados pelo fornecedor</h2>
+          </div>
+          <div className="supplier-review-items">
+            <div className="supplier-review-items-row supplier-review-items-head">
+              <span>Insumo</span><span>Valor unit.</span><span>Qtd. solicitada</span><span>Prazo dif.</span><span>Total</span>
+            </div>
+            {missingItems.map((original) => (
+              <div className="supplier-review-items-row not-quoted" key={original.itemNumber}>
+                <span>{original.name || `Item ${original.itemNumber}`}</span>
+                <span>Não cotado</span>
+                <span>{original.quantity} {original.unit || ""}</span>
+                <span>-</span>
+                <strong>-</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   );
 }
