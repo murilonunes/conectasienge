@@ -257,6 +257,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             key={item.id}
             type="button"
             className={step === item.id ? "active" : step > item.id ? "done" : item.id > maxStepReached ? "future" : ""}
+            aria-disabled={item.id > maxStepReached}
             onClick={() => (item.id <= maxStepReached ? goToStep(item.id) : goNext())}
           >
             <i>{step > item.id ? "✓" : item.id}</i>

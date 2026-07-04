@@ -37,7 +37,7 @@ export function IdentityStep({
         <span>Passo 1 de 5</span>
         <h2>Identificação</h2>
       </div>
-      <div className="supplier-portal-grid">
+      <div className="supplier-portal-grid supplier-identity-grid">
         <label><span>CPF/CNPJ *</span><input value={document} inputMode="numeric" onChange={(event) => onDocumentChange(event.target.value.replace(/\D/g, ""))} placeholder="00000000000000" /></label>
         <label><span>Razão social / Nome *</span><input value={supplierName} onChange={(event) => onSupplierNameChange(event.target.value)} placeholder="Nome do fornecedor" /></label>
         <label><span>E-mail</span><input value={email} type="email" onChange={(event) => onEmailChange(event.target.value)} placeholder="financeiro@empresa.com.br" /></label>

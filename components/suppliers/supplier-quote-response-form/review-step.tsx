@@ -68,15 +68,15 @@ export function ReviewStep({
         {quotedCount ? (
           <div className="supplier-review-items">
             <div className="supplier-review-items-row supplier-review-items-head">
-              <span>Insumo</span><span>Qtd.</span><span>Valor unit.</span><span>Total</span>
+              <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Total</span>
             </div>
             {responseItems.filter((item) => item.attends).map((item) => {
               const original = items.find((current) => current.itemNumber === item.itemNumber);
               return (
                 <div className="supplier-review-items-row" key={item.itemNumber}>
                   <span>{original?.name || `Item ${item.itemNumber}`}</span>
-                  <span>{item.quantity} {original?.unit || ""}</span>
                   <span>{formatCurrency(Number(item.unitPrice || 0))}</span>
+                  <span>{item.quantity} {original?.unit || ""}</span>
                   <strong>{formatCurrency(itemTotal(item))}</strong>
                 </div>
               );

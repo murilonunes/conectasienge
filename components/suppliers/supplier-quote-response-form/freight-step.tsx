@@ -24,7 +24,7 @@ export function FreightStep({
         <h2>Frete e observações</h2>
       </div>
 
-      <div className="supplier-portal-grid">
+      <div className="supplier-portal-grid supplier-freight-grid">
         <label>
           <span>Frete</span>
           <select value={freightType} onChange={(event) => onFreightTypeChange(event.target.value as FreightType)}>
