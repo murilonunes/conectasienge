@@ -27,6 +27,7 @@ export function SupplierQuoteSubmittedView({
   const [requestMessage, setRequestMessage] = useState("");
   const terms = response.commercialTerms;
   const attendedItems = response.items.filter((item) => item.attends);
+  const responseItemsByNumber = new Map(response.items.map((item) => [item.itemNumber, item]));
 
   async function requestNewLink() {
     if (!token) return;
@@ -107,19 +108,31 @@ export function SupplierQuoteSubmittedView({
       <section className="card supplier-portal-card supplier-print-section">
         <div className="supplier-card-head">
           <span>Itens</span>
-          <h2>Itens atendidos</h2>
+          <h2>Itens da cotação</h2>
         </div>
         <div className="supplier-review-items">
           <div className="supplier-review-items-row supplier-review-items-head">
             <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Prazo dif.</span><span>Total</span>
           </div>
-          {attendedItems.map((item) => {
-            const original = items.find((current) => current.itemNumber === item.itemNumber);
+          {items.map((original) => {
+            const item = responseItemsByNumber.get(original.itemNumber);
+            if (item?.attends !== true) {
+              return (
+                <div className="supplier-review-items-row not-quoted" key={original.itemNumber}>
+                  <span>{original.name || `Item ${original.itemNumber}`}</span>
+                  <span>Não cotado</span>
+                  <span>0 de {original.quantity} {original.unit || ""}</span>
+                  <span>-</span>
+                  <strong>-</strong>
+                </div>
+              );
+            }
+
             return (
               <div className={`supplier-review-items-row ${item.partial ? "partial" : ""}`} key={item.itemNumber}>
-                <span>{original?.name || `Item ${item.itemNumber}`}</span>
+                <span>{original.name || `Item ${item.itemNumber}`}</span>
                 <span>{formatCurrency(Number(item.unitPrice || 0))}</span>
-                <span>{item.quantity || 0} {original?.unit || ""}{item.partial ? " (parcial)" : ""}</span>
+                <span>{item.quantity || 0} {original.unit || ""}{item.partial ? " (parcial)" : ""}</span>
                 <span>{item.deadlineDays ? `${item.deadlineDays}d` : "-"}</span>
                 <strong>{formatCurrency(itemTotal({
                   itemNumber: item.itemNumber,
