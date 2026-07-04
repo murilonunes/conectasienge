@@ -1,5 +1,6 @@
 import { formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteResponseSummary, SupplierRegistrationReview } from "@/lib/supplier-quote-portal";
+import { OperationResultPanel, type OperationResultKind } from "../../operation-result-panel";
 import { formatDocument, registrationText } from "../helpers";
 
 export function CadastrosTab({
@@ -7,12 +8,14 @@ export function CadastrosTab({
   registrationReviews,
   pendingSupplierLoading,
   pendingSupplierResult,
+  pendingSupplierKind,
   onSubmitPendingSupplier
 }: {
   pendingSuppliers: SupplierQuoteResponseSummary[];
   registrationReviews: Record<string, SupplierRegistrationReview>;
   pendingSupplierLoading: string | null;
   pendingSupplierResult: string;
+  pendingSupplierKind: OperationResultKind;
   onSubmitPendingSupplier: (response: SupplierQuoteResponseSummary, confirm: boolean) => void;
 }) {
   return (
@@ -82,10 +85,8 @@ export function CadastrosTab({
           <div className="empty-state">Nenhum CPF/CNPJ pendente nesta cotação. Os fornecedores que responderam já existem na base local ou ainda não enviaram cadastro.</div>
         )}
 
-        {pendingSupplierResult && (
-          <pre className="quotation-payload-preview">{pendingSupplierResult}</pre>
-        )}
       </section>
+      <OperationResultPanel title="Cadastro de fornecedor" kind={pendingSupplierKind} json={pendingSupplierResult} />
     </section>
   );
 }

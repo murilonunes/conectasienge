@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { PurchaseRequestForQuotation, QuotationPortalData, QuotationStatus, QuotationSummary } from "@/features/quotations/data";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import { formatCompactCurrency, formatCurrency, formatOptionalDate } from "@/lib/formatters";
+import { OperationResultPanel } from "./operation-result-panel";
 
 const statusOrder: QuotationStatus[] = [
   "Registrada",
@@ -48,6 +49,7 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
   const [quotationDate, setQuotationDate] = useState(new Date().toISOString().slice(0, 10));
   const [preview, setPreview] = useState<string>("");
   const [insertResult, setInsertResult] = useState<string>("");
+  const [insertOk, setInsertOk] = useState(false);
   const [inserting, setInserting] = useState(false);
 
   const filtered = useMemo(() => {
@@ -120,6 +122,7 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
       });
       const json = await response.json();
       setInsertResult(JSON.stringify(json, null, 2));
+      setInsertOk(response.ok);
     } finally {
       setInserting(false);
     }
@@ -172,8 +175,8 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
               {inserting ? "Gravando..." : "Gravar no Sienge"}
             </button>
           </div>
-          {preview && <pre className="quotation-payload-preview">{preview}</pre>}
-          {insertResult && <pre className="quotation-payload-preview">{insertResult}</pre>}
+          <OperationResultPanel title="Payload preparado" kind="info" json={preview} />
+          <OperationResultPanel title="Retorno do Sienge" kind={insertOk ? "success" : "error"} json={insertResult} />
         </section>
       )}
 

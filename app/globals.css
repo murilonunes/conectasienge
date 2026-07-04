@@ -1125,6 +1125,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-operation-side .badge { font-style: normal; }
 .quotation-operation-result { grid-column: 1 / -1; }
 .quotation-operation-result .quotation-payload-preview { max-height: 360px; }
+.quotation-result-success { border-left: 3px solid var(--green); }
+.quotation-result-error { border-left: 3px solid var(--red); }
+.quotation-result-info { border-left: 3px solid var(--amber); }
+.quotation-result-toggle { width: fit-content; margin-top: 12px; padding: 7px 12px; font-size: 10px; }
 .quotation-copy-link { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 9px; margin-bottom: 12px; }
 .quotation-copy-link input { width: 100%; min-width: 0; border: 1px solid #cfe1d7; border-radius: 9px; background: #f8fbf9; color: var(--green); padding: 10px 12px; font-size: 12px; font-weight: 700; outline: none; }
 .quotation-link-result { border-color: #cfe1d7; background: #fff; }
@@ -1242,12 +1246,13 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-response-items { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .quotation-response-items table { min-width: 820px; box-shadow: none; }
 .quotation-detail-workspace { display: grid; gap: 14px; }
-.quotation-detail-workspace .panel-note,
-.quotation-detail-workspace .advanced-search-hint { display: none; }
+.quotation-detail-workspace .panel-note { display: block; margin-top: 3px; font-size: 10.5px; line-height: 1.4; }
+.quotation-detail-workspace .advanced-search-hint { margin-top: 14px; }
 .quotation-detail-workspace .card { border-radius: 12px; box-shadow: 0 12px 28px rgba(28, 48, 39, 0.045); }
 .quotation-detail-workspace .panel,
 .quotation-detail-workspace .quotation-comparison { padding: 16px; }
-.quotation-detail-workspace .panel-head { align-items: center; gap: 12px; margin-bottom: 14px; }
+.quotation-detail-workspace .panel-head { align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.quotation-detail-workspace .panel-head > i.badge { margin-top: 2px; }
 .quotation-detail-workspace .panel-title { font-family: var(--font-display); font-size: 14px; font-weight: 700; letter-spacing: 0; }
 .quotation-detail-workspace .button { min-height: 38px; border-radius: 9px; font-size: 11px; font-weight: 800; }
 .quotation-detail-workspace .button.sienge-write { background: var(--amber); }
@@ -1557,4 +1562,5 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-next-actions,
   .quotation-copy-link,
   .quotation-pending-list { grid-template-columns: 1fr; }
+  .quotation-detail-tabs { flex-wrap: nowrap; overflow-x: auto; }
 }

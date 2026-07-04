@@ -17,6 +17,7 @@ export function ResumoTab({ quotation, bestSupplier, hasPortalResponses }: { quo
           <div className="panel-head">
             <div>
               <h2 className="panel-title">Melhor proposta</h2>
+              <span className="panel-note">Menor valor total recebido para esta cotação até agora</span>
             </div>
           </div>
           {bestSupplier ? (
@@ -33,6 +34,7 @@ export function ResumoTab({ quotation, bestSupplier, hasPortalResponses }: { quo
           <div className="panel-head">
             <div>
               <h2 className="panel-title">Operação</h2>
+              <span className="panel-note">Onde esta cotação está e o que falta para fechar a decisão</span>
             </div>
           </div>
           <div className="quotation-next-actions">

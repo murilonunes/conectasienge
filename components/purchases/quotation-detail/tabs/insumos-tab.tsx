@@ -10,6 +10,12 @@ export function InsumosTab({
 }) {
   return (
     <section className="card table-card quotation-detail-table">
+      <div className="panel-head table-head">
+        <div>
+          <h2 className="panel-title">Insumos da cotação</h2>
+          <span className="panel-note">Itens solicitados nesta cotação. Use &quot;Usar&quot; para vincular um item na aba Sienge</span>
+        </div>
+      </div>
       <table>
         <thead>
           <tr>

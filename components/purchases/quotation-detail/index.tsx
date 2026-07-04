@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteAwardSummary, SupplierQuoteEventSummary, SupplierQuoteInvitationSummary, SupplierQuoteResponseSummary, SupplierRegistrationReview } from "@/lib/supplier-quote-portal";
+import type { OperationResultKind } from "../operation-result-panel";
 import { confirmSiengeWrite, exportComparison, exportItemComparison, numberOrUndefined, registrationText, siengeActionQuestions } from "./helpers";
 import { AprovacaoTab } from "./tabs/aprovacao-tab";
 import { CadastrosTab } from "./tabs/cadastros-tab";
@@ -50,6 +51,7 @@ export function QuotationDetail({
   const [directItemNeedDate, setDirectItemNeedDate] = useState(new Date().toISOString().slice(0, 10));
   const [operationResult, setOperationResult] = useState("");
   const [operationTitle, setOperationTitle] = useState("Retorno da integração");
+  const [operationKind, setOperationKind] = useState<OperationResultKind>("info");
   const [generatedSupplierLink, setGeneratedSupplierLink] = useState<GeneratedSupplierLink>();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [awards, setAwards] = useState(supplierAwards);
@@ -72,6 +74,7 @@ export function QuotationDetail({
   const [approvalSaving, setApprovalSaving] = useState(false);
   const [registrationReviews, setRegistrationReviews] = useState(supplierReviews);
   const [pendingSupplierResult, setPendingSupplierResult] = useState("");
+  const [pendingSupplierKind, setPendingSupplierKind] = useState<OperationResultKind>("info");
   const [pendingSupplierLoading, setPendingSupplierLoading] = useState<string | null>(null);
   const [invitations, setInvitations] = useState(supplierInvitations);
   const [events, setEvents] = useState(supplierEvents);
@@ -210,6 +213,7 @@ export function QuotationDetail({
       });
       const json = await response.json();
       setOperationResult(JSON.stringify(json, null, 2));
+      setOperationKind(confirm ? (response.ok ? "success" : "error") : "info");
       if (confirm) void refreshEvents();
     } finally {
       setLoadingAction(null);
@@ -255,6 +259,7 @@ export function QuotationDetail({
       const message = error instanceof Error ? error.message : "Erro inesperado ao gerar link.";
       setLinkMessage(message);
       setOperationResult(JSON.stringify({ message }, null, 2));
+      setOperationKind("error");
       return undefined;
     } finally {
       setLoadingAction(null);
@@ -341,6 +346,7 @@ export function QuotationDetail({
         if (confirm && !response.ok) break;
       }
       setOperationResult(JSON.stringify(results.length === 1 ? results[0] : results, null, 2));
+      setOperationKind(confirm ? (results.every((result) => result.ok) ? "success" : "error") : "info");
       if (confirm) void refreshEvents();
     } finally {
       setLoadingAction(null);
@@ -396,6 +402,7 @@ export function QuotationDetail({
       if (!response.ok || !json.urls?.length) {
         setOperationTitle("Mapa comparativo do Sienge");
         setOperationResult(JSON.stringify(json, null, 2));
+        setOperationKind("error");
         setTab("sienge");
         return;
       }
@@ -543,11 +550,13 @@ export function QuotationDetail({
       const status: SupplierRegistrationReview["status"] = siengeResponse.ok ? (confirm ? "created" : "prepared") : "failed";
       await updateRegistrationReview(document, status, json);
       setPendingSupplierResult(JSON.stringify(json, null, 2));
+      setPendingSupplierKind(confirm ? (siengeResponse.ok ? "success" : "error") : "info");
       if (confirm) void refreshEvents();
     } catch (error) {
       const result = { message: error instanceof Error ? error.message : "Erro inesperado ao processar fornecedor." };
       await updateRegistrationReview(document, "failed", result);
       setPendingSupplierResult(JSON.stringify(result, null, 2));
+      setPendingSupplierKind("error");
     } finally {
       setPendingSupplierLoading(null);
     }
@@ -638,6 +647,7 @@ export function QuotationDetail({
           onGenerateLink={() => void generateSupplierPortalLink()}
           operationResult={operationResult}
           operationTitle={operationTitle}
+          operationKind={operationKind}
           generatedSupplierLink={generatedSupplierLink}
           onCopyLink={copyInvitationLink}
         />
@@ -726,6 +736,7 @@ export function QuotationDetail({
           registrationReviews={registrationReviews}
           pendingSupplierLoading={pendingSupplierLoading}
           pendingSupplierResult={pendingSupplierResult}
+          pendingSupplierKind={pendingSupplierKind}
           onSubmitPendingSupplier={(response, confirm) => void submitPendingSupplier(response, confirm)}
         />
       )}

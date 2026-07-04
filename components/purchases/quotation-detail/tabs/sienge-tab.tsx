@@ -1,5 +1,6 @@
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import { formatOptionalDate } from "@/lib/formatters";
+import { OperationResultPanel, type OperationResultKind } from "../../operation-result-panel";
 import { formatDocument } from "../helpers";
 import type { GeneratedSupplierLink, SiengeAction } from "../types";
 
@@ -28,6 +29,7 @@ export function SiengeTab({
   onGenerateLink,
   operationResult,
   operationTitle,
+  operationKind,
   generatedSupplierLink,
   onCopyLink
 }: {
@@ -41,6 +43,7 @@ export function SiengeTab({
   onGenerateLink: () => void;
   operationResult: string;
   operationTitle: string;
+  operationKind: OperationResultKind;
   generatedSupplierLink?: GeneratedSupplierLink;
   onCopyLink: (url: string) => void;
 }) {
@@ -180,17 +183,7 @@ export function SiengeTab({
         </div>
       </aside>
 
-      {operationResult && (
-        <div className="card panel quotation-operation-result">
-          <div className="panel-head">
-            <div>
-              <h2 className="panel-title">{operationTitle}</h2>
-              <span className="panel-note">Resposta da rota de integração</span>
-            </div>
-          </div>
-          <pre className="quotation-payload-preview">{operationResult}</pre>
-        </div>
-      )}
+      <OperationResultPanel title={operationTitle} kind={operationKind} json={operationResult} />
       {generatedSupplierLink && (
         <div className="card panel quotation-operation-result quotation-link-result">
           <div className="panel-head">
