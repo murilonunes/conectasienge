@@ -73,15 +73,20 @@ export function MapaTab({
                       {row.offers.map((offer) => {
                         const isBest = row.best?.responseId === offer.responseId;
                         const sourceResponse = supplierResponses.find((current) => current.id === offer.responseId);
+                        const statusLabel = offer.attends
+                          ? offer.partial
+                            ? isBest ? "Melhor parcial" : "Parcial"
+                            : isBest ? "Melhor preço" : "Atende"
+                          : offer.hasResponse ? "Não atende" : "Sem resposta";
                         return (
-                          <tr className={isBest ? "best-row" : ""} key={`${row.itemNumber}-${offer.responseId}`}>
+                          <tr className={[isBest ? "best-row" : "", offer.attends && offer.partial ? "partial-row" : ""].filter(Boolean).join(" ")} key={`${row.itemNumber}-${offer.responseId}`}>
                             <td>
                               <strong>{offer.supplierName}</strong><br />
                               <span className="table-muted">{formatDocument(offer.document)}</span>
                             </td>
                             <td>
-                              <i className={`badge ${offer.attends ? "" : "muted"}`}>
-                                {offer.attends ? isBest ? "Melhor preço" : "Atende" : offer.hasResponse ? "Não atende" : "Sem resposta"}
+                              <i className={`badge ${offer.attends ? offer.partial ? "warn" : "" : "muted"}`}>
+                                {statusLabel}
                               </i>
                             </td>
                             <td>{offer.attends ? formatCurrency(offer.unitPrice) : "-"}</td>

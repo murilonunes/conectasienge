@@ -27,6 +27,7 @@ export type ItemComparisonOffer = {
   registrationPending: boolean;
   hasResponse: boolean;
   attends: boolean;
+  partial: boolean;
   hasPrice: boolean;
   unitPrice: number;
   quantity: number;

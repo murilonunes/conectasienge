@@ -97,10 +97,11 @@ export function RespostasTab({
                       {response.items.map((item) => {
                         const quotationItem = quotation.items.find((current) => current.itemNumber === item.itemNumber);
                         const total = item.attends ? (item.unitPrice || 0) * (item.quantity || 0) : 0;
+                        const itemStatus = item.attends ? item.partial ? "Parcial" : "Atende" : "Não atende";
                         return (
-                          <tr key={`${response.id}-${item.itemNumber}`}>
+                          <tr className={item.attends && item.partial ? "partial-row" : ""} key={`${response.id}-${item.itemNumber}`}>
                             <td><strong>{quotationItem?.name || `Item ${item.itemNumber}`}</strong><br /><span className="table-muted">#{item.itemNumber}</span></td>
-                            <td><i className={`badge ${item.attends ? "" : "muted"}`}>{item.attends ? "Atende" : "Não atende"}</i></td>
+                            <td><i className={`badge ${item.attends ? item.partial ? "warn" : "" : "muted"}`}>{itemStatus}</i></td>
                             <td>{item.attends ? item.quantity || 0 : "-"}</td>
                             <td>{item.attends ? formatCurrency(item.unitPrice || 0) : "-"}</td>
                             <td>{item.attends ? formatCurrency(total) : "-"}</td>

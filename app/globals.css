@@ -1207,6 +1207,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-item-table { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .quotation-item-table table { min-width: 780px; box-shadow: none; }
 .quotation-item-table tr.best-row td { background: var(--green-soft); }
+.quotation-response-items tr.partial-row td,
+.quotation-item-table tr.partial-row td { background: #fffaf1; }
 .quotation-best-price-panel { position: sticky; top: 18px; display: grid; gap: 14px; padding: 18px; }
 .quotation-best-price-list { display: grid; gap: 10px; }
 .quotation-best-price-list article { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfb; }

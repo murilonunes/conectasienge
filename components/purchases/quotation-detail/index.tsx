@@ -117,6 +117,7 @@ export function QuotationDetail({
           registrationPending: response.registrationPending,
           hasResponse: Boolean(quotedItem),
           attends,
+          partial: Boolean(quotedItem?.partial),
           hasPrice,
           unitPrice,
           quantity,
