@@ -26,6 +26,10 @@ function validPhone(value: string) {
   return digits.length >= 10 && digits.length <= 15;
 }
 
+function validFreightType(value: unknown) {
+  return value === "INCLUDED" || value === "PAID" || value === "NONE";
+}
+
 export async function POST(request: Request) {
   try {
     if (rateLimited(`supplier-responses:${clientIp(request)}`, 20, 10 * 60 * 1000)
@@ -58,6 +62,16 @@ export async function POST(request: Request) {
 
     if (!validEmail(email) || !validPhone(phone)) {
       return NextResponse.json({ message: "Informe e-mail válido e telefone com DDD para enviar a proposta." }, { status: 400 });
+    }
+
+    const commercialTerms = input.commercialTerms || {};
+    const deliveryDays = Math.round(Number(commercialTerms.deliveryDays) || 0);
+    if (!validFreightType(commercialTerms.freightType) || deliveryDays <= 0) {
+      return NextResponse.json({ message: "Escolha uma opção de frete e informe o prazo geral de entrega." }, { status: 400 });
+    }
+
+    if (commercialTerms.freightType === "PAID" && Number(commercialTerms.freightPrice || 0) <= 0) {
+      return NextResponse.json({ message: "Informe o valor do frete a pagar." }, { status: 400 });
     }
 
     if (tokenDocument && tokenDocument !== document) {
@@ -98,6 +112,11 @@ export async function POST(request: Request) {
       document,
       email,
       phone,
+      commercialTerms: {
+        ...commercialTerms,
+        freightType: commercialTerms.freightType,
+        deliveryDays
+      },
       registration: localSupplier ? undefined : input.registration
         ? {
             tradeName: text(input.registration.tradeName, 160),

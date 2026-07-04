@@ -36,7 +36,7 @@ export function ItemsStep({ items, responseItems, onItemChange }: ItemsStepProps
               <div className="supplier-item-values">
                 <label><span>Valor unitário</span><input disabled={!current.attends} value={current.unitPrice} onChange={(event) => onItemChange(item.itemNumber, "unitPrice", event.target.value)} type="number" min="0" step="0.01" /></label>
                 <label><span>Quantidade</span><input disabled={!current.attends} value={current.quantity} onChange={(event) => onItemChange(item.itemNumber, "quantity", event.target.value)} type="number" min="0" step="0.01" /></label>
-                <label><span>Prazo de entrega (dias)</span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => onItemChange(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" /></label>
+                <label><span>Prazo diferente (dias)</span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => onItemChange(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" placeholder="Opcional" /></label>
                 <label><span>Observação</span><input disabled={!current.attends} value={current.notes} onChange={(event) => onItemChange(item.itemNumber, "notes", event.target.value)} /></label>
               </div>
             </article>

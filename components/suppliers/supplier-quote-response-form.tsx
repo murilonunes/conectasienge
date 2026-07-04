@@ -51,8 +51,9 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [cashDiscountPercentage, setCashDiscountPercentage] = useState("");
   const [offersTerm, setOffersTerm] = useState(false);
   const [installments, setInstallments] = useState<InstallmentRow[]>(() => defaultInstallments());
-  const [freightType, setFreightType] = useState<FreightType>("NONE");
+  const [freightType, setFreightType] = useState<FreightType>("");
   const [freightPrice, setFreightPrice] = useState("");
+  const [deliveryDays, setDeliveryDays] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
   const [checkingDocument, setCheckingDocument] = useState(false);
   const [supplierExists, setSupplierExists] = useState<boolean | undefined>();
@@ -104,7 +105,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
   const itemsValid = quotedCount > 0 && missingQuotedValues === 0;
   const paymentValid = (offersCash || offersTerm) && (!offersTerm || installmentsTotalValid);
-  const freightValid = freightType !== "PAID" || Number(freightPrice) > 0;
+  const freightValid = Boolean(freightType) && Number(deliveryDays) > 0 && (freightType !== "PAID" || Number(freightPrice) > 0);
   const canSubmit = identityValid && itemsValid && paymentValid && freightValid;
 
   const stepValid: Record<WizardStep, boolean> = {
@@ -121,7 +122,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     3: offersTerm && !installmentsTotalValid
       ? "As parcelas do pagamento a prazo devem somar 100% do valor."
       : "Marque ao menos uma forma de pagamento: à vista, a prazo ou as duas.",
-    4: "Informe o valor do frete a pagar ou escolha outra opção de frete.",
+    4: "Escolha uma opção de frete e informe o prazo geral de entrega em dias.",
     5: "Revise os passos anteriores: fornecedor, itens, pagamento e frete."
   };
 
@@ -214,6 +215,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           })),
           freightType,
           freightPrice: Number(freightPrice || 0),
+          deliveryDays: Number(deliveryDays || 0),
           generalNotes
         }
       };
@@ -328,9 +330,11 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           <FreightStep
             freightType={freightType}
             freightPrice={freightPrice}
+            deliveryDays={deliveryDays}
             generalNotes={generalNotes}
             onFreightTypeChange={setFreightType}
             onFreightPriceChange={setFreightPrice}
+            onDeliveryDaysChange={setDeliveryDays}
             onGeneralNotesChange={setGeneralNotes}
           />
         )}
@@ -351,6 +355,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             installments={installments}
             freightType={freightType}
             freightPrice={freightPrice}
+            deliveryDays={deliveryDays}
             generalNotes={generalNotes}
             onEditStep={goToStep}
           />

@@ -3,18 +3,22 @@ import type { FreightType } from "./types";
 type FreightStepProps = {
   freightType: FreightType;
   freightPrice: string;
+  deliveryDays: string;
   generalNotes: string;
   onFreightTypeChange: (value: FreightType) => void;
   onFreightPriceChange: (value: string) => void;
+  onDeliveryDaysChange: (value: string) => void;
   onGeneralNotesChange: (value: string) => void;
 };
 
 export function FreightStep({
   freightType,
   freightPrice,
+  deliveryDays,
   generalNotes,
   onFreightTypeChange,
   onFreightPriceChange,
+  onDeliveryDaysChange,
   onGeneralNotesChange
 }: FreightStepProps) {
   return (
@@ -28,10 +32,15 @@ export function FreightStep({
         <label>
           <span>Frete</span>
           <select value={freightType} onChange={(event) => onFreightTypeChange(event.target.value as FreightType)}>
+            <option value="">Selecione</option>
+            <option value="INCLUDED">Frete incluso</option>
+            <option value="PAID">Frete a pagar à parte</option>
             <option value="NONE">Sem frete</option>
-            <option value="INCLUDED">Incluso no preço</option>
-            <option value="PAID">A pagar à parte</option>
           </select>
+        </label>
+        <label>
+          <span>Dias de entrega *</span>
+          <input value={deliveryDays} onChange={(event) => onDeliveryDaysChange(event.target.value)} type="number" min="1" step="1" placeholder="Ex.: 7" />
         </label>
         {freightType === "PAID" && (
           <label>

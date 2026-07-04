@@ -76,9 +76,12 @@ export function paymentSummary(terms: SupplierQuoteCommercialTerms) {
 }
 
 export function freightSummary(terms: SupplierQuoteCommercialTerms) {
-  if (terms.freightType === "INCLUDED") return "Incluso no preço";
-  if (terms.freightType === "PAID") return `A pagar - ${formatCurrency(terms.freightPrice)}`;
-  return "Sem frete";
+  const freight = terms.freightType === "INCLUDED"
+    ? "Frete incluso"
+    : terms.freightType === "PAID"
+      ? `A pagar - ${formatCurrency(terms.freightPrice)}`
+      : "Sem frete";
+  return terms.deliveryDays > 0 ? `${freight} | Entrega em ${terms.deliveryDays} dia(s)` : freight;
 }
 
 export function formatDocument(value: string) {

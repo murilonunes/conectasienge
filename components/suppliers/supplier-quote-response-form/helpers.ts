@@ -41,8 +41,14 @@ export function cashSummaryText(cashDiscountPercentage: string) {
   return discount > 0 ? `À vista com ${discount}% de desconto` : "À vista";
 }
 
-export function freightSummaryText(freightType: FreightType, freightPrice: string) {
-  if (freightType === "INCLUDED") return "Incluso no preço";
-  if (freightType === "PAID") return `A pagar - ${formatCurrency(Number(freightPrice) || 0)}`;
-  return "Sem frete";
+export function freightSummaryText(freightType: FreightType, freightPrice: string, deliveryDays?: string | number) {
+  const freightText = freightType === "INCLUDED"
+    ? "Frete incluso"
+    : freightType === "PAID"
+      ? `A pagar - ${formatCurrency(Number(freightPrice) || 0)}`
+      : freightType === "NONE"
+        ? "Sem frete"
+        : "Não informado";
+  const days = Number(deliveryDays || 0);
+  return days > 0 ? `${freightText} | Entrega em ${days} dia(s)` : freightText;
 }

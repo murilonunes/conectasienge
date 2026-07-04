@@ -18,6 +18,7 @@ type ReviewStepProps = {
   installments: InstallmentRow[];
   freightType: FreightType;
   freightPrice: string;
+  deliveryDays: string;
   generalNotes: string;
   onEditStep: (step: WizardStep) => void;
 };
@@ -37,6 +38,7 @@ export function ReviewStep({
   installments,
   freightType,
   freightPrice,
+  deliveryDays,
   generalNotes,
   onEditStep
 }: ReviewStepProps) {
@@ -68,7 +70,7 @@ export function ReviewStep({
         {quotedCount ? (
           <div className="supplier-review-items">
             <div className="supplier-review-items-row supplier-review-items-head">
-              <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Total</span>
+              <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Prazo dif.</span><span>Total</span>
             </div>
             {responseItems.filter((item) => item.attends).map((item) => {
               const original = items.find((current) => current.itemNumber === item.itemNumber);
@@ -77,6 +79,7 @@ export function ReviewStep({
                   <span>{original?.name || `Item ${item.itemNumber}`}</span>
                   <span>{formatCurrency(Number(item.unitPrice || 0))}</span>
                   <span>{item.quantity} {original?.unit || ""}</span>
+                  <span>{item.deadlineDays ? `${item.deadlineDays}d` : "-"}</span>
                   <strong>{formatCurrency(itemTotal(item))}</strong>
                 </div>
               );
@@ -105,7 +108,7 @@ export function ReviewStep({
           <button type="button" className="supplier-review-edit" onClick={() => onEditStep(4)}>Editar</button>
         </div>
         <div className="supplier-review-grid">
-          <span><strong>Frete</strong>{freightSummaryText(freightType, freightPrice)}</span>
+          <span><strong>Frete e entrega</strong>{freightSummaryText(freightType, freightPrice, deliveryDays)}</span>
         </div>
         {generalNotes && <p className="quotation-response-notes">{generalNotes}</p>}
       </div>

@@ -27,6 +27,7 @@ export type SupplierQuoteCommercialTerms = {
   installments: SupplierQuoteInstallment[];
   freightType: SupplierQuoteFreightType;
   freightPrice: number;
+  deliveryDays: number;
   generalNotes: string;
 };
 
@@ -472,6 +473,7 @@ export const defaultCommercialTerms: SupplierQuoteCommercialTerms = {
   installments: [{ days: 30, percentage: 100 }],
   freightType: "NONE",
   freightPrice: 0,
+  deliveryDays: 0,
   generalNotes: ""
 };
 
@@ -497,6 +499,7 @@ export function normalizeCommercialTerms(input?: LegacyCommercialTermsInput): Su
     installments: offersTerm && installments.length ? installments : defaultCommercialTerms.installments,
     freightType: input?.freightType === "INCLUDED" || input?.freightType === "PAID" ? input.freightType : "NONE",
     freightPrice: Math.max(0, Math.min(999999999, Number(input?.freightPrice) || 0)),
+    deliveryDays: Math.max(0, Math.min(3650, Math.round(Number(input?.deliveryDays) || 0))),
     generalNotes: String(input?.generalNotes || "").trim().slice(0, 2000)
   };
 }
