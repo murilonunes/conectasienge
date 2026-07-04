@@ -1234,23 +1234,66 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-best-price-list strong { font-family: Georgia, serif; font-size: 24px; font-weight: 500; color: var(--green); }
 .quotation-best-price-list small { color: var(--ink); font-size: 10px; font-weight: 800; }
 .quotation-best-price-list p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
-.quotation-approval-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .34fr); gap: 16px; align-items: start; }
+.quotation-approval-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .36fr); gap: 16px; align-items: start; }
 .quotation-approval-main, .quotation-approval-side { padding: 18px; }
-.quotation-approval-mode { display: inline-flex; gap: 6px; padding: 5px; margin: 12px 0 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
-.quotation-approval-mode button { border: 0; border-radius: 8px; padding: 8px 12px; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 800; }
-.quotation-approval-mode button.active { background: var(--green); color: #fff; }
-.quotation-approval-form { display: grid; grid-template-columns: minmax(220px, .38fr) 1fr; gap: 12px; align-items: start; }
+.quotation-approval-hero { padding: 14px; border: 1px solid #d7e6dd; border-radius: 13px; background: linear-gradient(135deg, #f8fbf9 0%, #fff 72%); }
+.quotation-approval-hero span { color: var(--green); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.quotation-approval-hero p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.quotation-approval-hero .badge.warn,
+.quotation-approval-item-score .badge.warn { border-color: #ead3ad; background: #fffaf1; color: #80591f; }
+.quotation-approval-command { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.quotation-approval-command article { display: grid; gap: 5px; min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.quotation-approval-command article.warn { border-color: #ead3ad; background: #fffaf1; }
+.quotation-approval-command span,
+.quotation-approval-selected > div > span,
+.quotation-approval-item-main span,
+.quotation-approval-item-score span,
+.quotation-approval-form label > span,
+.quotation-approval-common > span { color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.quotation-approval-command strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: 0; }
+.quotation-approval-command small { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.quotation-approval-mode { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 0; margin: 0 0 14px; border: 0; background: transparent; }
+.quotation-approval-mode button { display: grid; gap: 3px; min-height: 62px; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; background: #fff; color: var(--ink); cursor: pointer; text-align: left; }
+.quotation-approval-mode button strong { font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0; }
+.quotation-approval-mode button small { color: var(--muted); font-size: 10px; font-weight: 800; }
+.quotation-approval-mode button.active { border-color: #cfe1d7; background: #f8fbf9; box-shadow: inset 4px 0 0 var(--green); color: var(--green); }
+.quotation-approval-board { display: grid; grid-template-columns: minmax(260px, .9fr) minmax(260px, 1.1fr); gap: 12px; align-items: stretch; }
+.quotation-approval-form { display: grid; gap: 12px; align-items: start; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
 .quotation-approval-form label, .quotation-approval-common { display: grid; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 800; }
 .quotation-approval-form .field, .quotation-approval-common .field, .quotation-approval-items .field { width: 100%; min-width: 0; color: var(--ink); font: inherit; }
 .quotation-approval-form textarea, .quotation-approval-common textarea, .quotation-approval-items textarea { min-height: 84px; resize: vertical; }
-.quotation-approval-items { display: grid; gap: 12px; }
-.quotation-approval-items article { display: grid; grid-template-columns: minmax(190px, .32fr) minmax(190px, .3fr) 1fr; gap: 10px; align-items: start; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
-.quotation-approval-items article > div { display: grid; gap: 4px; min-width: 0; }
-.quotation-approval-items span { color: var(--green); font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
-.quotation-approval-items strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.quotation-approval-items small { color: var(--muted); font-size: 10px; }
-.quotation-approval-common { margin-top: 14px; }
-.quotation-approval-side { position: sticky; top: 18px; }
+.quotation-approval-selected { display: grid; gap: 12px; min-width: 0; padding: 14px; border: 1px solid #d7e6dd; border-radius: 12px; background: #fff; }
+.quotation-approval-selected h3 { margin: 3px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0; }
+.quotation-approval-selected small { color: var(--muted); font-size: 10px; }
+.quotation-approval-selected p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.quotation-approval-selected-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.quotation-approval-selected-grid span { display: grid; gap: 4px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfb; }
+.quotation-approval-selected-grid strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--green); font-size: 15px; }
+.quotation-approval-selected-grid small { color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.quotation-approval-items { display: grid; gap: 10px; }
+.quotation-approval-items article { display: grid; grid-template-columns: minmax(180px, .9fr) minmax(150px, .45fr) minmax(180px, .5fr) minmax(210px, .7fr); gap: 10px; align-items: start; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.quotation-approval-items article.partial { border-color: #ead3ad; background: #fffaf1; }
+.quotation-approval-items article.muted { background: #fbfcfb; }
+.quotation-approval-item-main,
+.quotation-approval-item-score { display: grid; gap: 5px; min-width: 0; }
+.quotation-approval-item-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.quotation-approval-item-main small,
+.quotation-approval-item-score small { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.quotation-approval-item-main p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.quotation-approval-item-score strong { color: var(--green); font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0; }
+.quotation-approval-item-score .badge { width: fit-content; }
+.quotation-approval-common { margin-top: 14px; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.quotation-approval-actions { position: sticky; bottom: 12px; z-index: 4; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.94); box-shadow: 0 12px 26px rgba(28, 48, 39, .08); backdrop-filter: blur(10px); }
+.quotation-approval-side { position: sticky; top: 18px; display: grid; gap: 12px; }
+.quotation-approval-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.quotation-approval-status span { display: grid; gap: 4px; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfb; }
+.quotation-approval-status strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--green); font-size: 12px; }
+.quotation-approval-status small { color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.quotation-approval-checklist { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.quotation-approval-checklist span { position: relative; padding-left: 20px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.quotation-approval-checklist span::before { content: ""; position: absolute; left: 0; top: 3px; width: 10px; height: 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+.quotation-approval-checklist span.done { color: var(--green); }
+.quotation-approval-checklist span.done::before { border-color: var(--green); background: var(--green); box-shadow: inset 0 0 0 2px #fff; }
 .quotation-award-list { display: grid; gap: 10px; }
 .quotation-award-list article { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfb; }
 .quotation-award-list span { color: var(--green); font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
@@ -1448,6 +1491,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-timeline-body { border-radius: 11px; background: #fbfcfb; }
 @media (max-width: 1050px) {
   .quotation-detail-hero > .quotation-detail-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quotation-approval-command,
+  .quotation-approval-selected-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .quotation-approval-board { grid-template-columns: 1fr; }
+  .quotation-approval-items article { grid-template-columns: minmax(0, 1fr) minmax(160px, .45fr); }
+  .quotation-approval-items article textarea { grid-column: 1 / -1; }
   .quotation-operation-side,
   .quotation-best-price-panel,
   .quotation-approval-side { position: static; }
@@ -1627,6 +1675,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .quotation-create-box,
   .quotation-detail-hero,
   .quotation-detail-stats,
+  .quotation-approval-command,
+  .quotation-approval-mode,
+  .quotation-approval-selected-grid,
+  .quotation-approval-status,
   .quotation-map-intelligence,
   .quotation-map-analysis-grid,
   .quotation-supplier-analysis,

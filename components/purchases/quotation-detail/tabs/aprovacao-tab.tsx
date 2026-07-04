@@ -1,8 +1,24 @@
-import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteAwardSummary, SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 import { formatDocument } from "../helpers";
-import type { ApprovalMode, ItemComparisonRow } from "../types";
+import type { ApprovalMode, ItemComparisonOffer, ItemComparisonRow } from "../types";
+
+type SupplierDecisionMetrics = {
+  response: SupplierQuoteResponseSummary;
+  bestCount: number;
+  partialCount: number;
+  total: number;
+  coverage: number;
+};
+
+function offerExists(offer: ItemComparisonOffer | undefined): offer is ItemComparisonOffer {
+  return Boolean(offer);
+}
+
+function averageDeadline(offers: ItemComparisonOffer[]) {
+  const deadlines = offers.map((offer) => offer.deadlineDays).filter((days) => days > 0);
+  return deadlines.length ? Math.round(deadlines.reduce((sum, days) => sum + days, 0) / deadlines.length) : 0;
+}
 
 export function AprovacaoTab({
   supplierResponses,
@@ -43,69 +59,178 @@ export function AprovacaoTab({
   onSendAwardsToSienge: (confirm: boolean) => void;
   loadingAction: string | null;
 }) {
+  const rowsWithBest = itemComparison.filter((row) => row.best);
+  const rowsWithoutPrice = itemComparison.filter((row) => !row.best);
+  const partialBestRows = rowsWithBest.filter((row) => row.best?.partial);
+  const bestBasketTotal = rowsWithBest.reduce((sum, row) => sum + (row.best?.total || 0), 0);
+  const savedItemAwards = awards.filter((award) => award.scope === "item").length;
+  const hasQuotationAward = awards.some((award) => award.scope === "quotation");
+  const savedCoverage = approvalMode === "quotation"
+    ? hasQuotationAward ? 100 : 0
+    : itemComparison.length ? Math.round((savedItemAwards / itemComparison.length) * 100) : 0;
+
+  const supplierMetrics: SupplierDecisionMetrics[] = supplierResponses
+    .map((response) => {
+      const offers = itemComparison
+        .map((row) => row.offers.find((offer) => offer.responseId === response.id))
+        .filter(offerExists);
+      const attendedOffers = offers.filter((offer) => offer.attends);
+      const bestCount = rowsWithBest.filter((row) => row.best?.responseId === response.id).length;
+
+      return {
+        response,
+        bestCount,
+        partialCount: attendedOffers.filter((offer) => offer.partial).length,
+        total: attendedOffers.reduce((sum, offer) => sum + offer.total, 0),
+        coverage: itemComparison.length ? Math.round((attendedOffers.length / itemComparison.length) * 100) : 0
+      };
+    })
+    .sort((left, right) => right.bestCount - left.bestCount || right.coverage - left.coverage || left.total - right.total);
+  const recommendedSupplier = supplierMetrics[0];
+  const selectedResponse = supplierResponses.find((response) => String(response.id) === approvalResponseId);
+  const selectedOffers = selectedResponse
+    ? itemComparison
+        .map((row) => row.offers.find((offer) => offer.responseId === selectedResponse.id))
+        .filter(offerExists)
+    : [];
+  const selectedAttendedOffers = selectedOffers.filter((offer) => offer.attends);
+  const selectedBestCount = rowsWithBest.filter((row) => row.best?.responseId === selectedResponse?.id).length;
+  const selectedPartialCount = selectedAttendedOffers.filter((offer) => offer.partial).length;
+  const selectedCoverage = itemComparison.length ? Math.round((selectedAttendedOffers.length / itemComparison.length) * 100) : 0;
+  const selectedAverageDeadline = averageDeadline(selectedAttendedOffers);
+  const approvalReadiness = !supplierResponses.length
+    ? "Aguardando propostas"
+    : rowsWithoutPrice.length
+      ? "Revisar itens sem preço"
+      : partialBestRows.length
+        ? "Validar parciais"
+        : "Pronto para aprovar";
+  const readinessDetail = !supplierResponses.length
+    ? "Receba respostas dos fornecedores antes de registrar a decisão."
+    : rowsWithoutPrice.length
+      ? `${rowsWithoutPrice.length} item(ns) ainda não têm preço válido.`
+      : partialBestRows.length
+        ? `${partialBestRows.length} melhor(es) preço(s) atendem quantidade parcial.`
+        : "A melhor cesta tem preço para todos os itens comparados.";
+
   return (
     <section className="quotation-approval-layout">
       <div className="card panel quotation-approval-main">
-        <div className="panel-head">
+        <div className="panel-head quotation-approval-hero">
           <div>
+            <span>Central de decisão</span>
             <h2 className="panel-title">Aprovação do vencedor</h2>
-            <span className="panel-note">Escolha por cotação inteira ou por item, sempre com justificativa</span>
+            <p>Compare recomendação, risco e cobertura antes de salvar a escolha final.</p>
           </div>
-          <i className="badge">{approvalMode === "quotation" ? "Cotação inteira" : "Por item"}</i>
+          <i className={`badge ${rowsWithoutPrice.length || partialBestRows.length ? "warn" : ""}`}>{approvalReadiness}</i>
+        </div>
+
+        <div className="quotation-approval-command">
+          <article>
+            <span>Melhor cesta</span>
+            <strong>{formatCurrency(bestBasketTotal)}</strong>
+            <small>{rowsWithBest.length} de {itemComparison.length} item(ns) com vencedor sugerido</small>
+          </article>
+          <article className={rowsWithoutPrice.length ? "warn" : ""}>
+            <span>Pendências</span>
+            <strong>{rowsWithoutPrice.length + partialBestRows.length}</strong>
+            <small>{readinessDetail}</small>
+          </article>
+          <article>
+            <span>Recomendação</span>
+            <strong>{recommendedSupplier?.response.supplierName || "-"}</strong>
+            <small>{recommendedSupplier ? `${recommendedSupplier.bestCount} melhor(es) item(ns), ${recommendedSupplier.coverage}% cobertura` : "Sem resposta elegível"}</small>
+          </article>
+          <article>
+            <span>Salvo</span>
+            <strong>{savedCoverage}%</strong>
+            <small>{awards.length ? `${awards.length} decisão(ões) registradas` : "Nenhuma decisão salva"}</small>
+          </article>
         </div>
 
         <div className="quotation-approval-mode">
           <button className={approvalMode === "quotation" ? "active" : ""} type="button" onClick={() => onApprovalModeChange("quotation")}>
-            Cotação inteira
+            <strong>Cotação inteira</strong>
+            <small>Um fornecedor vence tudo</small>
           </button>
           <button className={approvalMode === "item" ? "active" : ""} type="button" onClick={() => onApprovalModeChange("item")}>
-            Por item
+            <strong>Por item</strong>
+            <small>Melhor decisão por insumo</small>
           </button>
         </div>
 
         {approvalMode === "quotation" ? (
-          <div className="quotation-approval-form">
-            <label>
-              <span>Fornecedor vencedor</span>
-              <select className="field" value={approvalResponseId} onChange={(event) => onApprovalResponseIdChange(event.target.value)}>
-                <option value="">Selecione</option>
-                {supplierResponses.map((response) => (
-                  <option value={response.id} key={response.id}>
-                    {response.supplierName} - {formatCurrency(response.totalValue)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Justificativa</span>
-              <textarea className="field" value={approvalJustification} onChange={(event) => onApprovalJustificationChange(event.target.value)} placeholder="Ex.: menor preço global, atende prazo e quantidade total." />
-            </label>
-          </div>
-        ) : (
-          <div className="quotation-approval-items">
-            {itemComparison.map((row) => (
-              <article key={row.itemNumber}>
-                <div>
-                  <span>Insumo #{row.item?.productId || row.itemNumber}</span>
-                  <strong>{row.item?.name || `Item ${row.itemNumber}`}</strong>
-                  <small>{row.item?.quantity || 0} {row.item?.unit || "un"} solicitados</small>
-                </div>
-                <select className="field" value={itemAwardSelections[row.itemNumber] || String(row.best?.responseId || "")} onChange={(event) => onItemAwardChange(row.itemNumber, event.target.value)}>
+          <div className="quotation-approval-board">
+            <div className="quotation-approval-form">
+              <label>
+                <span>Fornecedor vencedor</span>
+                <select className="field" value={approvalResponseId} onChange={(event) => onApprovalResponseIdChange(event.target.value)}>
                   <option value="">Selecione</option>
-                  {row.offers.filter((offer) => offer.attends).map((offer) => (
-                    <option value={offer.responseId} key={offer.responseId}>
-                      {offer.supplierName} - {formatCurrency(offer.unitPrice)} - qtd. {offer.quantity}
+                  {supplierResponses.map((response) => (
+                    <option value={response.id} key={response.id}>
+                      {response.supplierName} - {formatCurrency(response.totalValue)}
                     </option>
                   ))}
                 </select>
-                <textarea
-                  className="field"
-                  value={itemAwardJustifications[row.itemNumber] || ""}
-                  onChange={(event) => onItemJustificationChange(row.itemNumber, event.target.value)}
-                  placeholder={row.best ? `Sugestão: melhor preço com ${row.best.supplierName}.` : "Justifique a escolha deste item."}
-                />
-              </article>
-            ))}
+              </label>
+              <label>
+                <span>Justificativa executiva</span>
+                <textarea className="field" value={approvalJustification} onChange={(event) => onApprovalJustificationChange(event.target.value)} placeholder="Ex.: menor preço global, atende prazo, cobertura e quantidade total." />
+              </label>
+            </div>
+
+            <div className="quotation-approval-selected">
+              <div>
+                <span>Fornecedor em análise</span>
+                <h3>{selectedResponse?.supplierName || "Selecione um fornecedor"}</h3>
+                <small>{selectedResponse ? formatDocument(selectedResponse.document) : "Os indicadores aparecem aqui ao escolher o vencedor."}</small>
+              </div>
+              <div className="quotation-approval-selected-grid">
+                <span><strong>{selectedCoverage}%</strong><small>Cobertura</small></span>
+                <span><strong>{selectedBestCount}</strong><small>Melhores itens</small></span>
+                <span><strong>{selectedPartialCount}</strong><small>Parciais</small></span>
+                <span><strong>{selectedAverageDeadline || "-"}</strong><small>Prazo médio</small></span>
+              </div>
+              <p>{selectedResponse ? `${selectedResponse.supplierName} soma ${formatCurrency(selectedResponse.totalValue)} na proposta enviada. Compare com a melhor cesta de ${formatCurrency(bestBasketTotal)} antes de confirmar.` : "Escolha o fornecedor para avaliar aderência, prazo e risco de compra integral."}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="quotation-approval-items">
+            {itemComparison.map((row) => {
+              const selectedResponseId = itemAwardSelections[row.itemNumber] || String(row.best?.responseId || "");
+              const selectedOffer = row.offers.find((offer) => String(offer.responseId) === selectedResponseId);
+              const validOffers = row.offers.filter((offer) => offer.attends);
+              return (
+                <article className={row.best?.partial ? "partial" : !row.best ? "muted" : ""} key={row.itemNumber}>
+                  <div className="quotation-approval-item-main">
+                    <span>Insumo #{row.item?.productId || row.itemNumber}</span>
+                    <strong>{row.item?.name || `Item ${row.itemNumber}`}</strong>
+                    <small>{row.item?.quantity || 0} {row.item?.unit || "un"} solicitados</small>
+                    <p>{row.best ? `Sugestão: ${row.best.supplierName} por ${formatCurrency(row.best.unitPrice)}.` : "Sem preço válido para recomendação automática."}</p>
+                  </div>
+                  <div className="quotation-approval-item-score">
+                    <span>{validOffers.length} oferta(s)</span>
+                    <strong>{selectedOffer?.attends ? formatCurrency(selectedOffer.unitPrice) : "-"}</strong>
+                    <small>{selectedOffer?.attends ? `${selectedOffer.quantity} atendido(s) - ${selectedOffer.deadlineDays || 0} dia(s)` : "Escolha uma proposta"}</small>
+                    {selectedOffer?.partial && <i className="badge warn">Parcial</i>}
+                  </div>
+                  <select className="field" value={selectedResponseId} onChange={(event) => onItemAwardChange(row.itemNumber, event.target.value)}>
+                    <option value="">Selecione</option>
+                    {validOffers.map((offer) => (
+                      <option value={offer.responseId} key={offer.responseId}>
+                        {offer.supplierName} - {formatCurrency(offer.unitPrice)} - qtd. {offer.quantity}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea
+                    className="field"
+                    value={itemAwardJustifications[row.itemNumber] || ""}
+                    onChange={(event) => onItemJustificationChange(row.itemNumber, event.target.value)}
+                    placeholder={row.best ? `Sugestão: melhor preço com ${row.best.supplierName}.` : "Justifique a escolha deste item."}
+                  />
+                </article>
+              );
+            })}
           </div>
         )}
 
@@ -117,7 +242,7 @@ export function AprovacaoTab({
         )}
 
         {approvalMessage && <div className="settings-inline-message">{approvalMessage}</div>}
-        <div className="quotation-operation-actions">
+        <div className="quotation-operation-actions quotation-approval-actions">
           <button className="button" type="button" disabled={approvalSaving || !supplierResponses.length} onClick={onSaveAward}>
             {approvalSaving ? "Salvando..." : "Salvar aprovação"}
           </button>
@@ -135,8 +260,19 @@ export function AprovacaoTab({
         <div className="panel-head">
           <div>
             <h2 className="panel-title">Decisão salva</h2>
-            <span className="panel-note">Registro local da aprovação</span>
+            <span className="panel-note">Controle local da aprovação</span>
           </div>
+        </div>
+        <div className="quotation-approval-status">
+          <span><strong>{awards.length}</strong><small>Registro(s)</small></span>
+          <span><strong>{savedCoverage}%</strong><small>Cobertura salva</small></span>
+          <span><strong>{loadingAction ? "Em envio" : awards.length ? "Pronto" : "Pendente"}</strong><small>Sienge</small></span>
+        </div>
+        <div className="quotation-approval-checklist">
+          <span className={supplierResponses.length ? "done" : ""}>Propostas recebidas</span>
+          <span className={rowsWithoutPrice.length ? "" : "done"}>Itens com preço analisado</span>
+          <span className={approvalJustification.trim() ? "done" : ""}>Justificativa preenchida</span>
+          <span className={awards.length ? "done" : ""}>Decisão salva</span>
         </div>
         <div className="quotation-award-list">
           {awards.map((award) => (
