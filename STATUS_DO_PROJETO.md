@@ -1,6 +1,6 @@
 # Status do projeto Brasin
 
-Atualizado em: 04/07/2026
+Atualizado em: 05/07/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
@@ -21,6 +21,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A aba Mapa ganhou análise de decisão com melhor cesta, cobertura, parciais, economias relevantes e ranking de fornecedores.
 - A aba Aprovar virou uma central de decisão com recomendação automática, status de prontidão, análise do fornecedor escolhido, checklist e layout responsivo.
 - Textos das telas de cotação foram revisados para remover plurais técnicos como `item(ns)` e padronizar mensagens comerciais; o CSS das abas Mapa/Aprovar foi revisado para evitar sobrescritas antigas em telas médias.
+- Foi documentado o mapa real das conexões Sienge em cotações: telas abrem pelo espelho local, escritas passam por dry-run em `/api/sienge/purchase-quotations`, e o portal público do fornecedor não chama o Sienge diretamente.
 
 ## Acesso e autenticação
 
@@ -62,6 +63,9 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O segredo de assinatura vem de `SUPPLIER_PORTAL_SECRET` ou é gerado localmente uma única vez, com gravação atômica para evitar corrida entre processos.
 - Segurança das rotas públicas: envio de propostas limitado a 20 por 10 minutos por IP (200 global) e consulta de fornecedor a 30 por 10 minutos por IP (300 global); corpo do envio limitado a 128 KB e campos saneados antes de gravar.
 - A integração com o Sienge cria a cotação (`/v1/purchase-quotations`), anexa itens da solicitação e inclui fornecedores por item, sempre com dry-run de conferência antes de confirmar a gravação.
+- As ações reais de escrita em cotações ficam concentradas em `/api/sienge/purchase-quotations`: criar cotação, vincular item de solicitação, incluir fornecedor por item, criar insumo direto, criar/atualizar negociação e autorizar a última negociação.
+- O PDF do mapa comparativo usa a rota interna `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`, que consulta o Sienge em `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`.
+- A criação de fornecedor pendente usa `/api/sienge/suppliers`, com dry-run antes da confirmação real em `/v1/creditors`.
 - A rota `/api/sienge/suppliers` busca credores no Sienge e permite criar credor a partir do cadastro pendente.
 - Configurações ganhou a área de atualização `Fornecedores`, que espelha os credores do Sienge (`/v1/creditors`) usados para localizar e vincular fornecedores nas cotações.
 
@@ -304,6 +308,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Validacoes recentes
 
+- Em 05/07/2026, a revisão das conexões Sienge de cotações passou em `tsc --noEmit --incremental false` e atualizou a documentação técnica (`lib/api/README.md`) com endpoints, telas envolvidas e pontos de atenção.
 - TypeScript passou com `tsc --noEmit` e a build passou com `next build` apos as mudancas de autenticacao, cotacoes, seguranca, portal do fornecedor e separacao dos componentes de abas/blocos de cotacao.
 - O fluxo do portal do fornecedor foi testado de ponta a ponta: link ativo abre o portal, link revogado retorna 404 no portal e 401 no envio de proposta.
 - Os limites de requisicao foram testados: a consulta publica bloqueia com 429 apos o limite por IP, e o login bloqueia forca bruta mesmo com IP forjado diferente a cada tentativa.
@@ -319,6 +324,8 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O token bruto dos links de fornecedor fica salvo na tabela de convites para permitir o botao Copiar; quem tiver acesso ao arquivo SQLite tem links validos. A revogacao mitiga, mas remover o token bruto e uma melhoria futura.
 - Se o sistema for exposto fora da rede local, e preciso colocar um proxy com TLS confiavel na frente; so entao o cabecalho `x-forwarded-for` passa a ser confiavel para o limite por IP.
 - O mesmo link de fornecedor aceita mais de uma resposta (a tela mostra a contagem); travar reenvio e uma decisao de negocio pendente.
+- O botão de PDF do Mapa da cotação depende de enviar `quotationId` corretamente para a rota interna; se o parâmetro for montado errado, a API retorna 400 antes de consultar o Sienge.
+- A ação `add-item`/Insumo direto está implementada, mas ainda deve ser validada contra o contrato oficial do Sienge antes de ser considerada pronta para produção, especialmente quanto à apropriação por obra (`buildingsApropriations`) no payload de criação de item.
 
 ## Configuracoes
 

@@ -26,3 +26,33 @@ O fluxo de cotações usa o espelho local de compras na abertura das telas. As e
 - preparar ou confirmar negociação a partir das respostas recebidas pelo portal do fornecedor.
 
 O portal público do fornecedor não chama o Sienge diretamente. Ele grava convites, respostas, aprovações, revisões de cadastro e eventos no banco local `supplier-quotations.sqlite`; a integração posterior com o Sienge acontece pelas abas internas da cotação.
+
+### O que cada tela faz de fato
+
+- `/cotacoes` abre lendo o espelho local de compras (`loadPurchases`) e monta filtros, status, exportação e cards sem consultar o Sienge.
+- Quando `/cotacoes` recebe uma solicitação de compra como origem, os botões de criação chamam `/api/sienge/purchase-quotations`: primeiro em `dryRun`, depois com `confirm: true`.
+- `/cotacoes/[id]` também abre pelo espelho local e pelas tabelas locais do portal do fornecedor; as ações que gravam no Sienge ficam nas abas Sienge, Respostas, Aprovar e Cadastros.
+- A aba Sienge prepara ou confirma criação da cotação, vínculo de itens de solicitação, inclusão de fornecedor por item e criação de insumo direto.
+- A aba Respostas envia uma proposta recebida pelo portal como negociação do fornecedor no Sienge.
+- A aba Aprovar salva a decisão localmente e, quando confirmado, envia a decisão como negociação autorizada.
+- A aba Cadastros cria fornecedor/credor no Sienge por `/api/sienge/suppliers`, que usa `/v1/creditors`.
+- A aba Mapa calcula análises localmente e pode buscar o PDF do mapa comparativo do Sienge.
+
+### Endpoints usados em cotações
+
+- `POST /v1/purchase-quotations`: cria cotação.
+- `POST /v1/purchase-quotations/{id}/items/from-purchase-request`: vincula item de solicitação à cotação.
+- `POST /v1/purchase-quotations/{id}/items/{item}/suppliers`: inclui fornecedor em item.
+- `POST /v1/purchase-quotations/{id}/items`: cria insumo direto na cotação.
+- `GET /v1/purchase-quotations/all/negotiations?quotationNumber={id}`: consulta negociações e ajuda a identificar a última negociação criada.
+- `POST /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations`: cria negociação.
+- `PUT /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations/{negotiationNumber}`: atualiza condições comerciais da negociação.
+- `PUT /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations/{negotiationNumber}/items/{item}`: atualiza preço, quantidade e seleção por item.
+- `PATCH /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations/latest/authorize`: autoriza a última negociação.
+- `GET /v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`: busca URL do PDF do mapa comparativo.
+- `POST /v1/creditors`: cria fornecedor/credor a partir de cadastro pendente.
+
+### Pontos de atenção atuais
+
+- O botão de PDF do Mapa no detalhe da cotação deve chamar `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`. Se o separador `&` for perdido, a rota recebe a cotação sem `quotationId` válido e retorna 400 antes de chegar ao Sienge.
+- O caminho de `add-item`/Insumo direto está implementado no app, mas deve ser validado campo a campo contra o contrato oficial do Sienge antes de ser tratado como pronto em produção. Em revisões anteriores, o campo de apropriação por obra (`buildingsApropriations`) apareceu como risco para `PurchaseQuotationItemInsert`.

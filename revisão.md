@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-07-04
+Atualizado em: 2026-07-05
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -32,8 +32,8 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |
 | Revisado | Média | `/sales` | `app/sales/page.tsx`, `components/sales/sales-explorer.tsx` | Revisada a lógica de período, permutas e listagem enxuta. Sem ajuste agora: o volume atual é baixo e os contratos do recorte seguem paginados na tela. |
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
-| Revisado | Alta | `/cotacoes` | `app/cotacoes/page.tsx`, `components/purchases/quotations-portal.tsx`, `components/purchases/quotations/*` | Revisado: a tela lê o espelho local, mantém filtros/status/exportação CSV e agora está separada em arquivos por bloco: filtros, origem/criação no Sienge, estatísticas, status rápidos, lista e helpers. |
-| Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*`, `app/globals.css` | Revisado: o detalhe mantém 10 abas separadas por arquivo (Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico), com Mapa/Aprovar em layout de decisão, textos revisados e CSS responsivo sem sobrescritas antigas. |
+| Revisado | Alta | `/cotacoes` | `app/cotacoes/page.tsx`, `components/purchases/quotations-portal.tsx`, `components/purchases/quotations/*`, `app/api/sienge/purchase-quotations/route.ts` | Revisado: a tela lê o espelho local, mantém filtros/status/exportação CSV e chama o Sienge somente nos botões de preparo/confirmação de criação da cotação. |
+| Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*`, `app/api/sienge/purchase-quotations/route.ts`, `app/api/sienge/suppliers/route.ts`, `app/globals.css` | Revisado: o detalhe mantém 10 abas separadas por arquivo, com ações Sienge concentradas nas abas Sienge, Respostas, Aprovar, Mapa e Cadastros; Mapa/Aprovar seguem em layout de decisão. |
 | Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão e proposta enviada apenas para consulta. |
 | Revisado | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx`, `features/inventory/data.ts` | Revisado e ampliado: tela virou visão estratégica de estoque, com carteira vendável, reservas/propostas, qualidade da base de valores, propriedade, mapa imobiliário e insumos quando configurados. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
@@ -112,6 +112,23 @@ Revisado nesta etapa:
 - O CSS das abas de decisão foi revisado para impedir que regras antigas sobrescrevam cards, colunas e estados amarelos em telas médias.
 
 Resultado: as abas de decisão ficaram mais consistentes com o padrão visual do projeto e mais claras para quem precisa escolher fornecedor, validar parciais e registrar decisão no Sienge.
+
+### Etapa 12 revisada - Conexões Sienge em cotações
+
+Revisado nesta etapa:
+
+- `/cotacoes` e `/cotacoes/[id]` foram conferidos contra o código real para separar leitura local, dry-run e gravação no Sienge.
+- A abertura das telas continua usando o espelho local de compras e as tabelas locais do portal do fornecedor; não há consulta direta ao Sienge apenas por abrir a tela.
+- `/api/sienge/purchase-quotations` concentra as ações reais de cotações: criar cotação, vincular item de solicitação, incluir fornecedor no item, criar insumo direto, consultar negociações, criar/atualizar negociação, atualizar itens negociados, autorizar negociação e buscar o PDF do mapa comparativo.
+- `/api/sienge/suppliers` concentra a criação real de fornecedor/credor em `/v1/creditors`, também com dry-run antes da confirmação.
+- O portal público do fornecedor foi confirmado como fluxo local: gera links, valida token, recebe proposta, salva resposta, registra aprovação/eventos e não chama o Sienge diretamente.
+
+Pontos de atenção registrados:
+
+- O PDF do Mapa depende do parâmetro interno `quotationId`; se a URL for montada sem `&quotationId`, a rota retorna 400 antes de chamar o Sienge.
+- A ação `add-item`/Insumo direto ainda precisa validação de contrato contra a API oficial antes de ser tratada como pronta para produção, especialmente quanto ao campo de apropriação por obra (`buildingsApropriations`).
+
+Resultado: ficou documentado o que de fato acontece em cotações e detalhamento de cotações, incluindo quais ações escrevem no Sienge e quais ficam apenas no banco local.
 
 ### Etapa 9 revisada - Importação do dump em Configurações
 
