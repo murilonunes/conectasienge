@@ -60,6 +60,9 @@ export function QuotationDetail({
   const [directItemQuantity, setDirectItemQuantity] = useState("");
   const [directItemUnity, setDirectItemUnity] = useState("");
   const [directItemNeedDate, setDirectItemNeedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [directItemBuildingUnitId, setDirectItemBuildingUnitId] = useState("");
+  const [directItemCostEstimationItemReference, setDirectItemCostEstimationItemReference] = useState("");
+  const [directItemAppropriationPercentage, setDirectItemAppropriationPercentage] = useState("100");
   const [operationResult, setOperationResult] = useState("");
   const [operationTitle, setOperationTitle] = useState("Retorno da integração");
   const [operationKind, setOperationKind] = useState<OperationResultKind>("info");
@@ -214,19 +217,37 @@ export function QuotationDetail({
               deliveryRequirements: [{
                 requirementDate: directItemNeedDate,
                 requirementQuantity: Number(directItemQuantity) || 0
+              }],
+              buildingsApropriations: [{
+                buildingUnitId: Number(directItemBuildingUnitId) || undefined,
+                costEstimationItemReference: directItemCostEstimationItemReference.trim() || undefined,
+                percentage: Number(directItemAppropriationPercentage) || 0
               }]
             }
           : undefined
       };
 
-      const response = await fetch("/api/sienge/purchase-quotations", {
+      let response = await fetch("/api/sienge/purchase-quotations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const json = await response.json();
+      let json = await response.json();
+      let skippedAsDuplicate = false;
+      if (response.status === 409 && json.alreadyIntegrated) {
+        if (window.confirm(`${json.message}\n\nDeseja repetir a operação mesmo assim?`)) {
+          response = await fetch("/api/sienge/purchase-quotations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, force: true })
+          });
+          json = await response.json();
+        } else {
+          skippedAsDuplicate = true;
+        }
+      }
       setOperationResult(JSON.stringify(json, null, 2));
-      setOperationKind(confirm ? (response.ok ? "success" : "error") : "info");
+      setOperationKind(confirm ? (response.ok ? "success" : skippedAsDuplicate ? "info" : "error") : "info");
       if (confirm) void refreshEvents();
     } finally {
       setLoadingAction(null);
@@ -311,6 +332,7 @@ export function QuotationDetail({
     }
 
     return {
+      responseId: dispatch.response.id,
       supplierAnswerDate: dispatch.response.createdAt.slice(0, 10),
       internalNotes: `Resposta #${dispatch.response.id} recebida pelo portal do fornecedor em ${dispatch.response.createdAt.slice(0, 10)}.`,
       supplierNotes: terms.generalNotes || undefined,
@@ -352,26 +374,41 @@ export function QuotationDetail({
     try {
       const results = [];
       for (const dispatch of dispatches) {
-        const response = await fetch("/api/sienge/purchase-quotations", {
+        const requestBody = {
+          action: "send-negotiation",
+          confirm,
+          dryRun: !confirm,
+          purchaseQuotationId: quotation.id,
+          supplierId: dispatch.response.supplierId,
+          negotiation: negotiationPayloadFromResponse(dispatch)
+        };
+        let response = await fetch("/api/sienge/purchase-quotations", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "send-negotiation",
-            confirm,
-            dryRun: !confirm,
-            purchaseQuotationId: quotation.id,
-            supplierId: dispatch.response.supplierId,
-            negotiation: negotiationPayloadFromResponse(dispatch)
-          })
+          body: JSON.stringify(requestBody)
         });
-        const json = await response.json();
+        let json = await response.json();
+        let skippedAsDuplicate = false;
+        if (response.status === 409 && json.alreadyIntegrated) {
+          if (window.confirm(`${dispatch.response.supplierName}: ${json.message}\n\nDeseja repetir o envio mesmo assim?`)) {
+            response = await fetch("/api/sienge/purchase-quotations", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...requestBody, force: true })
+            });
+            json = await response.json();
+          } else {
+            skippedAsDuplicate = true;
+          }
+        }
         results.push({
           supplier: dispatch.response.supplierName,
           supplierId: dispatch.response.supplierId,
-          ok: response.ok,
+          ok: response.ok || skippedAsDuplicate,
+          skippedAsDuplicate: skippedAsDuplicate || undefined,
           ...json
         });
-        if (confirm && !response.ok) break;
+        if (confirm && !response.ok && !skippedAsDuplicate) break;
       }
       setOperationResult(JSON.stringify(results.length === 1 ? results[0] : results, null, 2));
       setOperationKind(confirm ? (results.every((result) => result.ok) ? "success" : "error") : "info");
@@ -587,12 +624,26 @@ export function QuotationDetail({
     setPendingSupplierLoading(`${document}-${confirm ? "confirm" : "preview"}`);
     setPendingSupplierResult("");
     try {
-      const siengeResponse = await fetch("/api/sienge/suppliers", {
+      let siengeResponse = await fetch("/api/sienge/suppliers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const json = await siengeResponse.json() as Record<string, unknown>;
+      let json = await siengeResponse.json() as Record<string, unknown>;
+      if (siengeResponse.status === 409 && json.alreadyIntegrated) {
+        if (window.confirm(`${String(json.message)}\n\nDeseja criar o cadastro novamente mesmo assim?`)) {
+          siengeResponse = await fetch("/api/sienge/suppliers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, force: true })
+          });
+          json = await siengeResponse.json() as Record<string, unknown>;
+        } else {
+          setPendingSupplierResult(JSON.stringify(json, null, 2));
+          setPendingSupplierKind("info");
+          return;
+        }
+      }
       const status: SupplierRegistrationReview["status"] = siengeResponse.ok ? (confirm ? "created" : "prepared") : "failed";
       await updateRegistrationReview(document, status, json);
       setPendingSupplierResult(JSON.stringify(json, null, 2));
@@ -625,7 +676,10 @@ export function QuotationDetail({
     directItemProductId,
     directItemQuantity,
     directItemUnity,
-    directItemNeedDate
+    directItemNeedDate,
+    directItemBuildingUnitId,
+    directItemCostEstimationItemReference,
+    directItemAppropriationPercentage
   };
 
   const siengeFormSetters: Record<keyof typeof siengeForm, (value: string) => void> = {
@@ -639,7 +693,10 @@ export function QuotationDetail({
     directItemProductId: setDirectItemProductId,
     directItemQuantity: setDirectItemQuantity,
     directItemUnity: setDirectItemUnity,
-    directItemNeedDate: setDirectItemNeedDate
+    directItemNeedDate: setDirectItemNeedDate,
+    directItemBuildingUnitId: setDirectItemBuildingUnitId,
+    directItemCostEstimationItemReference: setDirectItemCostEstimationItemReference,
+    directItemAppropriationPercentage: setDirectItemAppropriationPercentage
   };
 
   function handleSiengeFormChange<K extends keyof typeof siengeForm>(field: K, value: typeof siengeForm[K]) {
@@ -703,6 +760,7 @@ export function QuotationDetail({
           operationKind={operationKind}
           generatedSupplierLink={generatedSupplierLink}
           onCopyLink={copyInvitationLink}
+          events={events}
         />
       )}
 

@@ -1008,6 +1008,91 @@ export function loadSupplierQuoteEvents(quotationId: number): SupplierQuoteEvent
   }
 }
 
+// Procura uma integração bem-sucedida já registrada com a mesma chave de
+// deduplicação. É a base da proteção contra gravar a mesma coisa 2x no Sienge.
+export function findSupplierQuoteIntegration(quotationId: number, integrationKey: string): SupplierQuoteEventSummary | undefined {
+  if (!integrationKey || !supplierQuoteDatabaseExists()) return undefined;
+
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT id, quotation_id, type, title, description, supplier_name, document, metadata_json, created_at
+      FROM supplier_quote_events
+      WHERE quotation_id = ?
+        AND type = 'sienge_created'
+        AND json_extract(metadata_json, '$.integrationKey') = ?
+      ORDER BY id DESC
+      LIMIT 1
+    `).get(quotationId, integrationKey) as {
+      id: number;
+      quotation_id: number;
+      type: SupplierQuoteEventType;
+      title: string;
+      description: string | null;
+      supplier_name: string | null;
+      document: string | null;
+      metadata_json: string | null;
+      created_at: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      type: row.type,
+      title: row.title,
+      description: row.description ?? undefined,
+      supplierName: row.supplier_name ?? undefined,
+      document: row.document ?? undefined,
+      metadata: parseJson<Record<string, unknown> | undefined>(row.metadata_json, undefined),
+      createdAt: row.created_at
+    };
+  } finally {
+    db.close();
+  }
+}
+
+export function findSupplierQuoteIntegrationByKey(integrationKey: string): SupplierQuoteEventSummary | undefined {
+  if (!integrationKey || !supplierQuoteDatabaseExists()) return undefined;
+
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT id, quotation_id, type, title, description, supplier_name, document, metadata_json, created_at
+      FROM supplier_quote_events
+      WHERE type = 'sienge_created'
+        AND json_extract(metadata_json, '$.integrationKey') = ?
+      ORDER BY id DESC
+      LIMIT 1
+    `).get(integrationKey) as {
+      id: number;
+      quotation_id: number;
+      type: SupplierQuoteEventType;
+      title: string;
+      description: string | null;
+      supplier_name: string | null;
+      document: string | null;
+      metadata_json: string | null;
+      created_at: string;
+    } | undefined;
+
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      quotationId: row.quotation_id,
+      type: row.type,
+      title: row.title,
+      description: row.description ?? undefined,
+      supplierName: row.supplier_name ?? undefined,
+      document: row.document ?? undefined,
+      metadata: parseJson<Record<string, unknown> | undefined>(row.metadata_json, undefined),
+      createdAt: row.created_at
+    };
+  } finally {
+    db.close();
+  }
+}
+
 export function supplierQuoteDatabaseExists() {
   return existsSync(databasePath);
 }

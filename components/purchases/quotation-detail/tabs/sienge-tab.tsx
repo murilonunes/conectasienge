@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import { formatOptionalDate } from "@/lib/formatters";
+import type { SupplierQuoteEventSummary } from "@/lib/supplier-quote-portal";
 import { OperationResultPanel, type OperationResultKind } from "../../operation-result-panel";
 import { formatDocument } from "../helpers";
 import type { GeneratedSupplierLink, SiengeAction } from "../types";
@@ -19,9 +20,19 @@ type SiengeFormState = {
   directItemQuantity: string;
   directItemUnity: string;
   directItemNeedDate: string;
+  directItemBuildingUnitId: string;
+  directItemCostEstimationItemReference: string;
+  directItemAppropriationPercentage: string;
 };
 
 type SiengeTopic = "quotation" | "requestItem" | "supplier" | "directItem";
+
+const topicActionMap: Record<SiengeTopic, string> = {
+  quotation: "create",
+  requestItem: "attach-items",
+  supplier: "add-supplier",
+  directItem: "add-item"
+};
 
 export function SiengeTab({
   quotationId,
@@ -36,7 +47,8 @@ export function SiengeTab({
   operationTitle,
   operationKind,
   generatedSupplierLink,
-  onCopyLink
+  onCopyLink,
+  events
 }: {
   quotationId: number;
   knownBuyerIds: string[];
@@ -51,12 +63,28 @@ export function SiengeTab({
   operationKind: OperationResultKind;
   generatedSupplierLink?: GeneratedSupplierLink;
   onCopyLink: (url: string) => void;
+  events: SupplierQuoteEventSummary[];
 }) {
   const [activeTopic, setActiveTopic] = useState<SiengeTopic>("quotation");
-  const directItemDisabled = !form.directItemBuildingId || !form.directItemProductId || !form.directItemQuantity || !form.directItemUnity.trim() || loadingAction !== null;
+  const integrationEvents = events.filter((event) => event.type === "sienge_created" || event.type === "integration_error");
+  const lastSuccessByTopic = (topic: SiengeTopic) =>
+    events.find((event) => event.type === "sienge_created" && event.metadata?.action === topicActionMap[topic]);
+  const selectedTopicIntegration = lastSuccessByTopic(activeTopic);
+  const quotationAlreadyExists = quotationId > 0;
+  const directItemAppropriationReady = Boolean(
+    form.directItemBuildingUnitId
+    && form.directItemCostEstimationItemReference.trim()
+    && Number(form.directItemAppropriationPercentage) > 0
+  );
+  const directItemDisabled = !form.directItemBuildingId
+    || !form.directItemProductId
+    || !form.directItemQuantity
+    || !form.directItemUnity.trim()
+    || !directItemAppropriationReady
+    || loadingAction !== null;
   const requestItemReady = Boolean(form.purchaseRequestId && form.purchaseRequestItemNumber);
   const supplierReady = Boolean(form.supplierId && form.purchaseRequestItemNumber);
-  const directItemReady = Boolean(form.directItemBuildingId && form.directItemProductId && form.directItemQuantity && form.directItemUnity.trim());
+  const directItemReady = Boolean(form.directItemBuildingId && form.directItemProductId && form.directItemQuantity && form.directItemUnity.trim() && directItemAppropriationReady);
 
   const topics: Array<{ key: SiengeTopic; label: string; title: string; description: string; status: string }> = [
     {
@@ -64,28 +92,28 @@ export function SiengeTab({
       label: "Cotação",
       title: "Cotação no Sienge",
       description: "Crie ou confira a cotação principal antes de vincular itens e fornecedores.",
-      status: form.buyerId.trim() ? "Pronto" : "Informe comprador"
+      status: lastSuccessByTopic("quotation") ? "Integrado" : quotationAlreadyExists ? "Existente" : form.buyerId.trim() ? "Pronto" : "Informe comprador"
     },
     {
       key: "requestItem",
       label: "Item",
       title: "Item da solicitação",
       description: "Vincule um item de solicitação de compra a esta cotação.",
-      status: requestItemReady ? "Pronto" : "Informe solicitação"
+      status: lastSuccessByTopic("requestItem") ? "Integrado" : requestItemReady ? "Pronto" : "Informe solicitação"
     },
     {
       key: "supplier",
       label: "Fornecedor",
       title: "Fornecedor e link",
       description: "Inclua fornecedor no item e gere o link do portal público.",
-      status: supplierReady ? "Pronto" : "Escolha fornecedor"
+      status: lastSuccessByTopic("supplier") ? "Integrado" : supplierReady ? "Pronto" : "Escolha fornecedor"
     },
     {
       key: "directItem",
       label: "Insumo direto",
       title: "Insumo direto",
       description: "Use somente quando o item não veio de uma solicitação de compra.",
-      status: directItemReady ? "Pronto" : "Opcional"
+      status: lastSuccessByTopic("directItem") ? "Integrado" : directItemReady ? "Pronto" : "Opcional"
     }
   ];
   const selectedTopic = topics.find((topic) => topic.key === activeTopic) || topics[0];
@@ -125,6 +153,19 @@ export function SiengeTab({
           </div>
           <i className="badge">{selectedTopic.label}</i>
         </div>
+
+        {selectedTopicIntegration && (
+          <div className="advanced-search-hint quotation-integration-hint">
+            Já integrado em {formatOptionalDate(selectedTopicIntegration.createdAt)}: {selectedTopicIntegration.title}.
+            {" "}Um novo envio idêntico será bloqueado e pedirá confirmação para evitar duplicidade no Sienge.
+          </div>
+        )}
+
+        {activeTopic === "quotation" && !selectedTopicIntegration && quotationAlreadyExists && (
+          <div className="advanced-search-hint quotation-integration-hint">
+            Esta cotação já possui ID no Sienge. A criação de uma nova cotação a partir desta tela será bloqueada para evitar duplicidade.
+          </div>
+        )}
 
         {activeTopic === "quotation" && (
           <article className="quotation-operation-block focused">
@@ -237,6 +278,21 @@ export function SiengeTab({
                 <span>Data de necessidade</span>
                 <input type="date" value={form.directItemNeedDate} onChange={(event) => onFormChange("directItemNeedDate", event.target.value)} />
               </label>
+              <label>
+                <span>Unidade construtiva</span>
+                <input value={form.directItemBuildingUnitId} onChange={(event) => onFormChange("directItemBuildingUnitId", event.target.value.replace(/\D/g, ""))} placeholder="ID da unidade" />
+              </label>
+              <label>
+                <span>Referência do orçamento</span>
+                <input value={form.directItemCostEstimationItemReference} onChange={(event) => onFormChange("directItemCostEstimationItemReference", event.target.value)} placeholder="Ex.: 01.02.003" />
+              </label>
+              <label>
+                <span>Percentual apropriado</span>
+                <input value={form.directItemAppropriationPercentage} onChange={(event) => onFormChange("directItemAppropriationPercentage", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="100" />
+              </label>
+            </div>
+            <div className="advanced-search-hint quotation-integration-hint">
+              O Sienge exige apropriação de obra para criar insumo direto. Para itens que vieram de solicitação de compra, prefira a aba Item, que reaproveita a apropriação já cadastrada na solicitação.
             </div>
             <div className="quotation-operation-actions">
               <button className="button secondary" type="button" onClick={() => onRunAction("add-item", false)} disabled={directItemDisabled}>
@@ -276,6 +332,44 @@ export function SiengeTab({
           </div>
         </div>
       )}
+
+      <div className="card panel quotation-operation-result quotation-integration-history">
+        <div className="panel-head">
+          <div>
+            <h2 className="panel-title">Histórico de integrações</h2>
+            <span className="panel-note">O que já foi gravado no Sienge para esta cotação</span>
+          </div>
+          <i className={`badge ${integrationEvents.some((event) => event.type === "integration_error") ? "warn" : ""}`}>
+            {integrationEvents.filter((event) => event.type === "sienge_created").length} integração(ões)
+          </i>
+        </div>
+        {integrationEvents.length ? (
+          <div className="quotation-timeline">
+            {integrationEvents.slice(0, 10).map((event) => (
+              <article key={event.id}>
+                <div className="quotation-timeline-marker" />
+                <div className="quotation-timeline-body">
+                  <div className="quotation-timeline-head">
+                    <div>
+                      <span>{formatOptionalDate(event.createdAt)}</span>
+                      <h3>{event.title}</h3>
+                    </div>
+                    <i className={`badge ${event.type === "integration_error" ? "late" : ""}`}>
+                      {event.type === "integration_error" ? "Erro" : "Integrado"}
+                    </i>
+                  </div>
+                  {event.description && <p>{event.description}</p>}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">Nenhuma integração gravada no Sienge para esta cotação ainda. Confirmações e erros aparecerão aqui.</div>
+        )}
+        {integrationEvents.length > 10 && (
+          <p className="table-muted">Mostrando as 10 mais recentes. Veja tudo na aba Histórico.</p>
+        )}
+      </div>
     </section>
   );
 }

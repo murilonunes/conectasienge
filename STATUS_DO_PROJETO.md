@@ -23,6 +23,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Textos das telas de cotação foram revisados para remover plurais técnicos como `item(ns)` e padronizar mensagens comerciais; o CSS das abas Mapa/Aprovar foi revisado para evitar sobrescritas antigas em telas médias.
 - Foi documentado o mapa real das conexões Sienge em cotações: telas abrem pelo espelho local, escritas passam por dry-run em `/api/sienge/purchase-quotations`, e o portal público do fornecedor não chama o Sienge diretamente.
 - O portal do fornecedor passou a validar forma de pagamento também no backend, gerar novo link automaticamente quando o fornecedor solicita revisão de uma proposta já enviada, e permitir que a equipe exclua uma resposta pela aba Respostas.
+- A integração Sienge de cotações passou a manter histórico de gravações na própria aba Sienge e a bloquear envios confirmados duplicados por chave de operação.
 
 ## Acesso e autenticação
 
@@ -66,6 +67,9 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Segurança das rotas públicas: envio de propostas limitado a 20 por 10 minutos por IP (200 global), solicitação de novo link a 8 por 10 minutos por IP (80 global) e consulta de fornecedor a 30 por 10 minutos por IP (300 global); corpo do envio limitado a 128 KB e campos saneados antes de gravar.
 - A integração com o Sienge cria a cotação (`/v1/purchase-quotations`), anexa itens da solicitação e inclui fornecedores por item, sempre com dry-run de conferência antes de confirmar a gravação.
 - As ações reais de escrita em cotações ficam concentradas em `/api/sienge/purchase-quotations`: criar cotação, vincular item de solicitação, incluir fornecedor por item, criar insumo direto, criar/atualizar negociação e autorizar a última negociação.
+- Escritas confirmadas no Sienge registram `integrationKey` no histórico local; antes de gravar novamente, a rota verifica se a mesma criação, vínculo de item, vínculo de fornecedor, insumo direto, negociação, autorização ou criação de credor já foi integrada.
+- A aba Sienge mostra o histórico de integrações e erros da cotação, marca temas já integrados e avisa quando a cotação já existe no Sienge para evitar criar outra por engano.
+- O insumo direto exige apropriação de obra antes de confirmar: unidade construtiva, referência do item de orçamento e percentual total de 100%.
 - O PDF do mapa comparativo usa a rota interna `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`, que consulta o Sienge em `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`.
 - A criação de fornecedor pendente usa `/api/sienge/suppliers`, com dry-run antes da confirmação real em `/v1/creditors`.
 - A rota `/api/sienge/suppliers` busca credores no Sienge e permite criar credor a partir do cadastro pendente.
@@ -326,7 +330,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O token bruto dos links de fornecedor fica salvo na tabela de convites para permitir o botao Copiar; quem tiver acesso ao arquivo SQLite tem links validos. A revogacao mitiga, mas remover o token bruto e uma melhoria futura.
 - Se o sistema for exposto fora da rede local, e preciso colocar um proxy com TLS confiavel na frente; so entao o cabecalho `x-forwarded-for` passa a ser confiavel para o limite por IP.
 - Cada link de fornecedor aceita apenas uma resposta; revisões devem usar novo link. Excluir uma resposta é uma ação administrativa destrutiva e remove aprovações vinculadas àquela resposta.
-- A ação `add-item`/Insumo direto está implementada, mas ainda deve ser validada contra o contrato oficial do Sienge antes de ser considerada pronta para produção, especialmente quanto à apropriação por obra (`buildingsApropriations`) no payload de criação de item.
+- O contrato oficial do Sienge para insumo direto em cotações deve ser revisado quando houver mudança de versão da API, principalmente nos nomes dos campos de apropriação de obra.
 
 ## Configuracoes
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { credoresApi } from "@/lib/api/financeiro";
 import { SiengeApiError } from "@/lib/api/sienge";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
-import { recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
+import { findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -60,6 +60,18 @@ export async function POST(request: Request) {
       });
     }
 
+    const integrationKey = `create-supplier:${eventDocument}`;
+    if (input.force !== true) {
+      const existing = findSupplierQuoteIntegrationByKey(integrationKey);
+      if (existing) {
+        return NextResponse.json({
+          message: `Este fornecedor já foi criado no Sienge em ${existing.createdAt.slice(0, 10)}. Nada foi enviado agora para evitar cadastro duplicado.`,
+          alreadyIntegrated: true,
+          integration: { eventId: existing.id, title: existing.title, createdAt: existing.createdAt }
+        }, { status: 409 });
+      }
+    }
+
     const created = await credoresApi.create(payload);
     if (quotationId) {
       recordSupplierQuoteEvent({
@@ -69,7 +81,7 @@ export async function POST(request: Request) {
         description: "Cadastro enviado para /v1/creditors.",
         supplierName: payload.name,
         document: payload.cnpj || payload.cpf,
-        metadata: { endpoint: "/v1/creditors", created }
+        metadata: { action: "create-supplier", integrationKey, endpoint: "/v1/creditors", created }
       });
     }
     return NextResponse.json({

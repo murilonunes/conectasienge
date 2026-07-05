@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
+import { findSupplierQuoteIntegration, findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,11 @@ type QuotationItemInsertPayload = {
   deliveryRequirements?: Array<{
     requirementDate: string;
     requirementQuantity: number;
+  }>;
+  buildingsApropriations?: Array<{
+    buildingUnitId?: number;
+    costEstimationItemReference?: string;
+    percentage?: number;
   }>;
 };
 
@@ -54,6 +59,7 @@ type NegotiationInput = {
   }>;
   items?: NegotiationItemInput[];
   authorize?: boolean;
+  responseId?: number;
 };
 
 type QuotationCreateRequest = {
@@ -68,6 +74,7 @@ type QuotationCreateRequest = {
   request?: PurchaseRequestPayload;
   item?: QuotationItemInsertPayload;
   negotiation?: NegotiationInput;
+  force?: boolean;
 };
 
 type SiengePostResult =
@@ -254,6 +261,77 @@ function unreadableContentError(value: unknown) {
   return /content could not be read|empty or invalid/i.test(text);
 }
 
+// Chave de deduplicação: identifica "a mesma operação" para bloquear um
+// segundo envio idêntico ao Sienge (a menos que o usuário force a repetição).
+function integrationKeyFor(action: QuotationAction, body: QuotationCreateRequest): string | undefined {
+  const quotationId = Number(body.purchaseQuotationId) || 0;
+  if (action === "create") {
+    if (quotationId) return `create:${quotationId}`;
+    const requestId = Number(body.request?.purchaseRequestId) || 0;
+    const items = (body.request?.items || [])
+      .map((item) => `${item.purchaseRequestId}.${item.purchaseRequestItemNumber}.${item.deliveryRequirementNumber}`)
+      .sort()
+      .join("|");
+    return requestId ? `create-from-request:${requestId}:${items || "all"}` : `create-manual:${normalizeBuyerId(String(body.buyerId || ""))}:${body.date || todayIso()}`;
+  }
+  if (action === "attach-items") {
+    const items = (body.request?.items || [])
+      .map((item) => `${item.purchaseRequestId}.${item.purchaseRequestItemNumber}.${item.deliveryRequirementNumber}`)
+      .sort()
+      .join("|");
+    return items ? `attach-items:${quotationId}:${items}` : undefined;
+  }
+  if (action === "add-supplier") {
+    const itemNumber = Number(body.purchaseQuotationItemNumber || body.request?.items?.[0]?.purchaseRequestItemNumber) || 0;
+    return `add-supplier:${quotationId}:${itemNumber}:${Number(body.supplierId) || 0}`;
+  }
+  if (action === "add-item") {
+    const appropriations = (body.item?.buildingsApropriations || [])
+      .map((item) => `${Number(item.buildingUnitId) || 0}.${String(item.costEstimationItemReference || "").trim()}.${Number(item.percentage) || 0}`)
+      .sort()
+      .join("|");
+    return `add-item:${quotationId}:${Number(body.item?.buildingId) || 0}:${Number(body.item?.productId) || 0}:${Number(body.item?.quantity) || 0}:${appropriations}`;
+  }
+  if (action === "send-negotiation") {
+    const responseId = Number(body.negotiation?.responseId) || 0;
+    const mode = body.negotiation?.authorize ? "auth" : "save";
+    return `send-negotiation:${quotationId}:${Number(body.supplierId) || 0}:${responseId ? `resposta-${responseId}` : "manual"}:${mode}`;
+  }
+  return undefined;
+}
+
+function duplicateIntegrationResponse(quotationId: number | undefined, integrationKey: string | undefined, force: boolean | undefined) {
+  if (!integrationKey || force === true) return undefined;
+  const existing = quotationId
+    ? findSupplierQuoteIntegration(quotationId, integrationKey)
+    : findSupplierQuoteIntegrationByKey(integrationKey);
+  if (!existing) return undefined;
+  return NextResponse.json({
+    message: `Esta operação já foi integrada ao Sienge em ${existing.createdAt.slice(0, 10)} (${existing.title}). Nada foi enviado agora para evitar duplicidade.`,
+    alreadyIntegrated: true,
+    integration: {
+      eventId: existing.id,
+      title: existing.title,
+      description: existing.description,
+      createdAt: existing.createdAt
+    }
+  }, { status: 409 });
+}
+
+function alreadyExistingQuotationResponse(quotationId: number | undefined, force: boolean | undefined) {
+  if (!quotationId || force === true) return undefined;
+  return NextResponse.json({
+    message: `Esta cotacao ja existe no Sienge com ID ${quotationId}. A criacao de uma nova cotacao a partir do detalhe foi bloqueada para evitar duplicidade.`,
+    alreadyIntegrated: true,
+    integration: {
+      eventId: undefined,
+      title: "Cotacao ja existente no Sienge",
+      description: "Use a criacao apenas a partir de uma solicitacao ainda nao cotada ou force conscientemente a repeticao.",
+      createdAt: todayIso()
+    }
+  }, { status: 409 });
+}
+
 function parseIdFromResult(result: SiengePostResult) {
   if (!result.ok) return undefined;
   const locationId = parseIdFromLocation(result.location);
@@ -304,6 +382,7 @@ export async function POST(request: NextRequest) {
   const buyerId = normalizeBuyerId(String(body.buyerId || ""));
   const date = body.date || todayIso();
   const eventQuotationId = Number(body.purchaseQuotationId) || undefined;
+  const integrationKey = integrationKeyFor(action, body);
 
   function recordIntegrationEvent(type: "integration_error" | "sienge_created", title: string, description?: string, metadata?: Record<string, unknown>) {
     if (!eventQuotationId) return;
@@ -326,6 +405,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: "Informe a data da cotacao no formato yyyy-MM-dd."
     }, { status: 400 });
+  }
+
+  if (action === "create") {
+    const duplicateExisting = alreadyExistingQuotationResponse(eventQuotationId, body.force);
+    if (duplicateExisting) return duplicateExisting;
   }
 
   if (action !== "create" && !body.purchaseQuotationId) {
@@ -366,6 +450,9 @@ export async function POST(request: NextRequest) {
       return dryRunResponse(body, { itemPayloads: payloads });
     }
 
+    const duplicate = duplicateIntegrationResponse(eventQuotationId, integrationKey, body.force);
+    if (duplicate) return duplicate;
+
     const config = siengeConfig();
     if ("error" in config) {
       recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
@@ -381,7 +468,7 @@ export async function POST(request: NextRequest) {
     if (failed) {
       recordIntegrationEvent("integration_error", "Erro ao vincular item no Sienge", "Um ou mais itens nao foram aceitos pelo Sienge.", { results });
     } else {
-      recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitacao foram vinculados a cotacao.", { results });
+      recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitacao foram vinculados a cotacao.", { integrationKey, results });
     }
     return NextResponse.json({
       message: failed ? "Um ou mais itens nao foram aceitos pelo Sienge." : "Itens vinculados a cotacao no Sienge.",
@@ -407,6 +494,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const duplicate = duplicateIntegrationResponse(eventQuotationId, integrationKey, body.force);
+    if (duplicate) return duplicate;
+
     const config = siengeConfig();
     if ("error" in config) {
       recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
@@ -423,6 +513,7 @@ export async function POST(request: NextRequest) {
     }
 
     recordIntegrationEvent("sienge_created", "Fornecedor vinculado no Sienge", "Fornecedor incluido em um item da cotacao.", {
+      integrationKey,
       endpoint: payload.endpoint,
       supplierId
     });
@@ -436,9 +527,20 @@ export async function POST(request: NextRequest) {
     const purchaseQuotationId = Number(body.purchaseQuotationId);
     const item = body.item;
     const deliveries = (item?.deliveryRequirements || []).filter((delivery) => isIsoDate(delivery.requirementDate) && Number(delivery.requirementQuantity) > 0);
+    const appropriations = (item?.buildingsApropriations || []).filter((appropriation) =>
+      Number(appropriation.buildingUnitId) > 0
+      && String(appropriation.costEstimationItemReference || "").trim()
+      && Number(appropriation.percentage) > 0
+    );
+    const appropriationTotal = appropriations.reduce((sum, appropriation) => sum + (Number(appropriation.percentage) || 0), 0);
     if (!purchaseQuotationId || !item || !Number(item.buildingId) || !Number(item.productId) || !Number(item.quantity) || !item.unitySymbol?.trim() || !deliveries.length) {
       return NextResponse.json({
         message: "Informe obra, insumo, quantidade, unidade e ao menos uma entrega com data e quantidade."
+      }, { status: 400 });
+    }
+    if (!appropriations.length || Math.abs(appropriationTotal - 100) >= 0.01) {
+      return NextResponse.json({
+        message: "Informe a apropriacao de obra do insumo direto com unidade construtiva, referencia do orcamento e percentual total de 100%."
       }, { status: 400 });
     }
 
@@ -455,6 +557,11 @@ export async function POST(request: NextRequest) {
         deliveryRequirements: deliveries.map((delivery) => ({
           requirementDate: delivery.requirementDate,
           requirementQuantity: Number(delivery.requirementQuantity)
+        })),
+        buildingsApropriations: appropriations.map((appropriation) => ({
+          buildingUnitId: Number(appropriation.buildingUnitId),
+          costEstimationItemReference: String(appropriation.costEstimationItemReference || "").trim(),
+          percentage: Number(appropriation.percentage)
         }))
       }
     };
@@ -462,6 +569,9 @@ export async function POST(request: NextRequest) {
     if (body.dryRun !== false || !body.confirm) {
       return dryRunResponse(body, { endpoint: payload.endpoint, itemPayload: payload.body });
     }
+
+    const duplicate = duplicateIntegrationResponse(eventQuotationId, integrationKey, body.force);
+    if (duplicate) return duplicate;
 
     const config = siengeConfig();
     if ("error" in config) {
@@ -479,6 +589,7 @@ export async function POST(request: NextRequest) {
     }
 
     recordIntegrationEvent("sienge_created", "Insumo criado na cotacao", "Insumo criado direto na cotacao, sem solicitacao de compra.", {
+      integrationKey,
       endpoint: payload.endpoint,
       productId: payload.body.productId
     });
@@ -519,6 +630,9 @@ export async function POST(request: NextRequest) {
         ...plannedSteps
       });
     }
+
+    const duplicate = duplicateIntegrationResponse(eventQuotationId, integrationKey, body.force);
+    if (duplicate) return duplicate;
 
     const config = siengeConfig();
     if ("error" in config) {
@@ -572,7 +686,7 @@ export async function POST(request: NextRequest) {
     if (failed) {
       recordIntegrationEvent("integration_error", "Erro ao gravar negociacao no Sienge", "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge.", { negotiationNumber, steps });
     } else {
-      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociacao gravada e autorizada no Sienge" : "Negociacao gravada no Sienge", `Negociacao ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { negotiationNumber, supplierId, authorized: Boolean(negotiation.authorize) });
+      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociacao gravada e autorizada no Sienge" : "Negociacao gravada no Sienge", `Negociacao ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
     }
 
     return NextResponse.json({
@@ -585,6 +699,9 @@ export async function POST(request: NextRequest) {
       steps
     }, { status: failed ? failed.status : 200 });
   }
+
+  const createDuplicate = duplicateIntegrationResponse(undefined, integrationKey, body.force);
+  if (createDuplicate) return createDuplicate;
 
   const config = siengeConfig();
   if ("error" in config) {
@@ -625,11 +742,39 @@ export async function POST(request: NextRequest) {
   }
   const failedItem = itemResults.find((itemResult) => !itemResult.ok);
 
-  recordIntegrationEvent("sienge_created", "Cotacao criada no Sienge", "Cotacao criada via /v1/purchase-quotations.", {
-    purchaseQuotationId,
-    location: result.location,
-    itemResults
-  });
+  const createdEventQuotationId = purchaseQuotationId || eventQuotationId;
+  if (createdEventQuotationId) {
+    recordSupplierQuoteEvent({
+      quotationId: createdEventQuotationId,
+      type: "sienge_created",
+      title: "Cotacao criada no Sienge",
+      description: "Cotacao criada via /v1/purchase-quotations.",
+      metadata: {
+        action,
+        integrationKey,
+        purchaseQuotationId,
+        location: result.location,
+        itemResults
+      }
+    });
+  }
+
+  const attachIntegrationKey = purchaseQuotationId
+    ? integrationKeyFor("attach-items", { ...body, purchaseQuotationId })
+    : undefined;
+  if (purchaseQuotationId && attachIntegrationKey && itemResults.length && !failedItem) {
+    recordSupplierQuoteEvent({
+      quotationId: purchaseQuotationId,
+      type: "sienge_created",
+      title: "Itens vinculados no Sienge",
+      description: "Itens da solicitacao foram vinculados junto com a criacao da cotacao.",
+      metadata: {
+        action: "attach-items",
+        integrationKey: attachIntegrationKey,
+        itemResults
+      }
+    });
+  }
 
   return NextResponse.json({
     message: failedItem

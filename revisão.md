@@ -127,7 +127,7 @@ Revisado nesta etapa:
 
 Pontos de atenção registrados:
 
-- A ação `add-item`/Insumo direto ainda precisa validação de contrato contra a API oficial antes de ser tratada como pronta para produção, especialmente quanto ao campo de apropriação por obra (`buildingsApropriations`).
+- A ação `add-item`/Insumo direto passou a exigir apropriação de obra antes de confirmar, reduzindo o risco de payload incompleto no Sienge. A conferência de contrato deve ser repetida apenas quando houver mudança de versão da API.
 
 Resultado: ficou documentado o que de fato acontece em cotações e detalhamento de cotações, incluindo quais ações escrevem no Sienge e quais ficam apenas no banco local.
 
@@ -143,6 +143,20 @@ Revisado nesta etapa:
 - A exclusão de resposta remove aprovações vinculadas e registra evento `response_deleted` na timeline.
 
 Resultado: revisão de proposta deixou de depender de edição do envio anterior. O fornecedor recebe um novo link para revisar, enquanto a equipe mantém controle para excluir uma resposta incorreta quando necessário.
+
+### Etapa 14 revisada - Integração Sienge e anti-duplicidade
+
+Revisado nesta etapa:
+
+- `/api/sienge/purchase-quotations` passou a calcular `integrationKey` por operação confirmada e bloquear repetição antes de chamar o Sienge.
+- A criação de cotação a partir de detalhe já existente é bloqueada por padrão, porque a cotação já tem ID no Sienge; a criação real fica para o fluxo de solicitação em `/cotacoes`.
+- A criação de cotação vinda de solicitação agora usa chave global pela solicitação e, ao retornar ID do Sienge, registra a criação e os vínculos de itens no histórico local.
+- `attach-items`, `add-supplier`, `add-item` e `send-negotiation` registram a chave usada, permitindo que a tela bloqueie novo envio idêntico e peça confirmação explícita para repetir.
+- `/api/sienge/suppliers` passou a bloquear criação duplicada de credor por CPF/CNPJ em qualquer cotação já registrada.
+- A aba Sienge ganhou histórico de integrações e erros, status por tema e aviso quando uma operação já foi integrada.
+- O insumo direto passou a exigir apropriação de obra antes de confirmar, com unidade construtiva, referência do orçamento e percentual total de 100%.
+
+Resultado: a integração ficou mais segura contra cliques repetidos e reprocessamentos acidentais. Conferências (`dryRun`) continuam livres; apenas gravações confirmadas são deduplicadas.
 
 ### Etapa 9 revisada - Importação do dump em Configurações
 

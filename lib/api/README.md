@@ -27,6 +27,8 @@ O fluxo de cotações usa o espelho local de compras na abertura das telas. As e
 
 O portal público do fornecedor não chama o Sienge diretamente. Ele grava convites, respostas, aprovações, revisões de cadastro e eventos no banco local `supplier-quotations.sqlite`; a integração posterior com o Sienge acontece pelas abas internas da cotação.
 
+Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. Antes de repetir uma gravação confirmada, a rota consulta esse histórico e retorna `409` quando encontra a mesma operação já integrada. O usuário pode forçar a repetição conscientemente pela tela, mas o envio automático duplicado fica bloqueado.
+
 ### O que cada tela faz de fato
 
 - `/cotacoes` abre lendo o espelho local de compras (`loadPurchases`) e monta filtros, status, exportação e cards sem consultar o Sienge.
@@ -53,9 +55,27 @@ O portal público do fornecedor não chama o Sienge diretamente. Ele grava convi
 - `GET /v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`: busca URL do PDF do mapa comparativo.
 - `POST /v1/creditors`: cria fornecedor/credor a partir de cadastro pendente.
 
+### Dados enviados por operação Sienge
+
+- Criar cotação (`POST /v1/purchase-quotations`): usa comprador e data informados na tela. Quando vem de uma solicitação, usa também `purchaseRequestId`, itens e entregas para vincular os itens retornados pelo Sienge. No detalhe de uma cotação já existente, a criação é bloqueada por padrão para evitar duplicar a cotação.
+- Vincular item de solicitação (`POST /items/from-purchase-request`): usa ID da cotação, ID da solicitação, número do item e entrega. A chave de deduplicação considera todos esses campos.
+- Incluir fornecedor no item (`POST /items/{item}/suppliers`): usa ID da cotação, número do item da cotação e ID do credor/fornecedor Sienge. A chave de deduplicação considera cotação, item e fornecedor.
+- Criar insumo direto (`POST /items`): usa obra, insumo, quantidade, unidade, entrega e apropriação de obra (`buildingUnitId`, `costEstimationItemReference`, `percentage`). A tela exige apropriação total de 100% antes de confirmar, porque esse caminho não reaproveita a apropriação de uma solicitação de compra.
+- Gravar negociação (`POST/PUT /negotiations` e `PUT /items/{item}`): usa fornecedor Sienge e a resposta recebida pelo portal do fornecedor, incluindo pagamento, frete, observações, preço, quantidade e itens selecionados. A chave de deduplicação considera cotação, fornecedor, resposta do portal e modo de envio.
+- Autorizar negociação (`PATCH /negotiations/latest/authorize`): usa a mesma resposta aprovada localmente e marca a última negociação do fornecedor como autorizada. A autorização tem chave separada da gravação simples.
+- Criar fornecedor (`POST /v1/creditors`): usa nome, CPF/CNPJ, e-mail e telefone da resposta do fornecedor. A chave de deduplicação é global por documento, para evitar criar o mesmo credor por outra cotação.
+
+### Histórico e deduplicação
+
+- Eventos de sucesso ficam em `supplier_quote_events` com tipo `sienge_created`.
+- Eventos de erro ficam em `supplier_quote_events` com tipo `integration_error`.
+- A aba Sienge mostra as 10 integrações mais recentes da cotação e marca cada tema como `Integrado`, `Existente`, `Pronto` ou pendente conforme o histórico e os campos preenchidos.
+- O backend nunca bloqueia `dryRun`; bloqueia apenas gravação confirmada que repete a mesma `integrationKey`.
+- Integrações antigas que não tinham `integrationKey` continuam aparecendo no histórico, mas não conseguem bloquear duplicidade retroativamente.
+
 ### Pontos de atenção atuais
 
-- O caminho de `add-item`/Insumo direto está implementado no app, mas deve ser validado campo a campo contra o contrato oficial do Sienge antes de ser tratado como pronto em produção. Em revisões anteriores, o campo de apropriação por obra (`buildingsApropriations`) apareceu como risco para `PurchaseQuotationItemInsert`.
+- O caminho de `add-item`/Insumo direto agora exige apropriação de obra antes de confirmar. A documentação oficial de apoio do Sienge informa que apropriações de item de solicitação retornam unidade construtiva, referência do orçamento e percentual; se o contrato oficial do endpoint de cotações mudar, esses campos devem ser conferidos novamente antes de usar em produção.
 
 ### Rotas locais do portal do fornecedor
 
