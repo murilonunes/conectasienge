@@ -7,7 +7,10 @@ import path from "path";
 export type SupplierQuoteTokenPayload = {
   quotationId: number;
   supplierId?: number;
+  supplierName?: string;
   document?: string;
+  email?: string;
+  phone?: string;
   exp: number;
   iat: number;
   nonce: string;
@@ -180,6 +183,17 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function validEmailText(value?: string) {
+  const email = value?.trim() || "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined;
+}
+
+function validPhoneText(value?: string) {
+  const phone = value?.trim() || "";
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15 ? phone : undefined;
+}
+
 function safeCompare(left: string, right: string) {
   const leftBuffer = Buffer.from(left);
   const rightBuffer = Buffer.from(right);
@@ -312,12 +326,23 @@ function insertSupplierQuoteEvent(db: DatabaseSync, input: SupplierQuoteEventInp
   } satisfies SupplierQuoteEventSummary;
 }
 
-export function createSupplierQuoteToken(input: { quotationId: number; supplierId?: number; document?: string; expiresInDays?: number }) {
+export function createSupplierQuoteToken(input: {
+  quotationId: number;
+  supplierId?: number;
+  supplierName?: string;
+  document?: string;
+  email?: string;
+  phone?: string;
+  expiresInDays?: number;
+}) {
   const now = Math.floor(Date.now() / 1000);
   const payload: SupplierQuoteTokenPayload = {
     quotationId: input.quotationId,
     supplierId: input.supplierId,
+    supplierName: input.supplierName?.trim() || undefined,
     document: input.document?.replace(/\D/g, "") || undefined,
+    email: validEmailText(input.email),
+    phone: validPhoneText(input.phone),
     iat: now,
     exp: now + (input.expiresInDays || 7) * 24 * 60 * 60,
     nonce: randomBytes(12).toString("hex")

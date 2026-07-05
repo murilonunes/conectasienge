@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getLocalSupplierById, searchLocalSuppliers } from "@/features/suppliers/data";
 import { createSupplierQuoteToken, loadSupplierQuoteInvitations, revokeSupplierQuoteInvitation, saveSupplierQuoteInvitation, verifySupplierQuoteToken } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
       supplierId?: number;
       supplierName?: string;
       document?: string;
+      email?: string;
+      phone?: string;
       expiresInDays?: number;
     };
     const quotationId = Number(input.quotationId);
@@ -32,11 +35,25 @@ export async function POST(request: Request) {
     const expiresInDays = Number.isFinite(Number(input.expiresInDays)) && Number(input.expiresInDays) > 0
       ? Number(input.expiresInDays)
       : 7;
+    const supplierId = Number(input.supplierId) || undefined;
+    const inputDocument = input.document?.replace(/\D/g, "") || undefined;
+    const localSupplier = supplierId
+      ? getLocalSupplierById(supplierId)
+      : inputDocument
+        ? searchLocalSuppliers(inputDocument, 1).suppliers[0]
+        : undefined;
+    const supplierName = input.supplierName?.trim() || localSupplier?.name;
+    const document = inputDocument || localSupplier?.document;
+    const email = input.email?.trim() || localSupplier?.email;
+    const phone = input.phone?.trim() || localSupplier?.phone;
 
     const token = createSupplierQuoteToken({
       quotationId,
-      supplierId: Number(input.supplierId) || undefined,
-      document: input.document,
+      supplierId,
+      supplierName,
+      document,
+      email,
+      phone,
       expiresInDays
     });
     const origin = new URL(request.url).origin;
@@ -49,9 +66,9 @@ export async function POST(request: Request) {
       token,
       url,
       quotationId,
-      supplierId: Number(input.supplierId) || undefined,
-      supplierName: input.supplierName,
-      document: input.document,
+      supplierId,
+      supplierName,
+      document,
       expiresAt: new Date(payload.exp * 1000).toISOString()
     });
 

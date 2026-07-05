@@ -11,6 +11,8 @@ export type SupplierDirectoryItem = {
   name: string;
   tradeName?: string;
   document?: string;
+  email?: string;
+  phone?: string;
   city?: string;
   state?: string;
   active?: boolean;
@@ -45,6 +47,26 @@ function documentFrom(record: JsonRecord) {
     || undefined;
 }
 
+function emailFrom(record: JsonRecord) {
+  return asText(record.email)
+    || asText(record.emailAddress)
+    || asText(record.mail)
+    || asText(record.contactEmail)
+    || asText(record.mainEmail)
+    || undefined;
+}
+
+function phoneFrom(record: JsonRecord) {
+  return asText(record.phone)
+    || asText(record.phoneNumber)
+    || asText(record.telephone)
+    || asText(record.telephoneNumber)
+    || asText(record.mobilePhone)
+    || asText(record.cellPhone)
+    || asText(record.contactPhone)
+    || undefined;
+}
+
 function nameFrom(record: JsonRecord) {
   return asText(record.name)
     || asText(record.corporateName)
@@ -63,6 +85,8 @@ function supplierFromCreditor(record: JsonRecord): SupplierDirectoryItem | undef
     name: nameFrom(record),
     tradeName: asText(record.tradeName) || asText(record.fantasyName) || undefined,
     document: documentFrom(record),
+    email: emailFrom(record),
+    phone: phoneFrom(record),
     city: asText(record.city) || undefined,
     state: asText(record.state) || asText(record.uf) || undefined,
     active: typeof record.active === "boolean" ? record.active : undefined,
@@ -164,6 +188,11 @@ export function searchLocalSuppliers(search = "", limit = 20): SupplierDirectory
     total: filtered.length,
     warning: merged.length ? undefined : "Nenhum fornecedor foi encontrado na base local. Atualize Fornecedores em Configurações."
   };
+}
+
+export function getLocalSupplierById(id: number) {
+  if (!Number.isFinite(id) || id <= 0) return undefined;
+  return dedupeSuppliers([...readCreditors(), ...readPayableSuppliers()]).find((supplier) => supplier.id === id);
 }
 
 export async function refreshSupplierDirectory(forceRefresh = false) {

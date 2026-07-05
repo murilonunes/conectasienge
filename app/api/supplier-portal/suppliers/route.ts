@@ -6,6 +6,17 @@ import { clientIp, rateLimited } from "@/lib/rate-limit";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function validEmailText(value?: string) {
+  const email = value?.trim() || "";
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined;
+}
+
+function validPhoneText(value?: string) {
+  const phone = value?.trim() || "";
+  const digits = phone.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15 ? phone : undefined;
+}
+
 export async function GET(request: Request) {
   if (rateLimited(`supplier-lookup:${clientIp(request)}`, 30, 10 * 60 * 1000)
     || rateLimited("supplier-lookup:global", 300, 10 * 60 * 1000)) {
@@ -36,6 +47,8 @@ export async function GET(request: Request) {
       id: supplier.id,
       name: supplier.name,
       document: supplier.document,
+      email: validEmailText(supplier.email),
+      phone: validPhoneText(supplier.phone),
       active: supplier.active
     }));
 

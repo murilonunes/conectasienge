@@ -38,7 +38,10 @@ export async function POST(request: Request) {
     const token = createSupplierQuoteToken({
       quotationId: response.quotationId,
       supplierId: response.supplierId,
+      supplierName: response.supplierName,
       document: response.document,
+      email: response.email,
+      phone: response.phone,
       expiresInDays: 7
     });
     const payload = verifySupplierQuoteToken(token);

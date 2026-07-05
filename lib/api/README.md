@@ -27,6 +27,8 @@ O fluxo de cotações usa o espelho local de compras na abertura das telas. As e
 
 O portal público do fornecedor não chama o Sienge diretamente. Ele grava convites, respostas, aprovações, revisões de cadastro e eventos no banco local `supplier-quotations.sqlite`; a integração posterior com o Sienge acontece pelas abas internas da cotação.
 
+Quando um convite é emitido para um fornecedor já escolhido, o token carrega os dados conhecidos do fornecedor e o portal público preenche a identificação automaticamente. Campos fixados pelo convite não podem ser alterados na tela e são conferidos novamente na API de resposta.
+
 Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. Antes de repetir uma gravação confirmada, a rota consulta esse histórico e retorna `409` quando encontra a mesma operação já integrada. As ações confirmadas também fazem pré-consulta ao Sienge (`preflight`) antes da escrita, para trazer o estado atual da cotação/fornecedor e evitar duplicidade detectável fora do histórico local. O usuário pode forçar a repetição conscientemente pela tela, mas o envio automático duplicado fica bloqueado.
 
 ### O que cada tela faz de fato

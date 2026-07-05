@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasSupplierQuoteResponse, saveSupplierQuoteResponse, verifyActiveSupplierQuoteToken, type SupplierQuoteResponseInput } from "@/lib/supplier-quote-portal";
-import { searchLocalSuppliers } from "@/features/suppliers/data";
+import { getLocalSupplierById, searchLocalSuppliers, type SupplierDirectoryItem } from "@/features/suppliers/data";
 import { loadQuotationDetail } from "@/features/quotations/data";
 import { clientIp, rateLimited } from "@/lib/rate-limit";
 
@@ -24,6 +24,54 @@ function validEmail(value: string) {
 function validPhone(value: string) {
   const digits = value.replace(/\D/g, "");
   return digits.length >= 10 && digits.length <= 15;
+}
+
+function validEmailOrUndefined(value?: string) {
+  const email = text(value, 160);
+  return validEmail(email) ? email : undefined;
+}
+
+function validPhoneOrUndefined(value?: string) {
+  const phone = text(value, 40);
+  return validPhone(phone) ? phone : undefined;
+}
+
+function sameText(left?: string, right?: string) {
+  return String(left || "").trim().toLocaleLowerCase("pt-BR") === String(right || "").trim().toLocaleLowerCase("pt-BR");
+}
+
+function sameDigits(left?: string, right?: string) {
+  return String(left || "").replace(/\D/g, "") === String(right || "").replace(/\D/g, "");
+}
+
+function supplierFromPayload(payload: NonNullable<ReturnType<typeof verifyActiveSupplierQuoteToken>>) {
+  const localSupplier = payload.supplierId
+    ? getLocalSupplierById(payload.supplierId)
+    : payload.document
+      ? searchLocalSuppliers(payload.document, 1).suppliers[0]
+      : undefined;
+
+  return {
+    localSupplier,
+    supplierId: payload.supplierId || localSupplier?.id,
+    supplierName: payload.supplierName || localSupplier?.name,
+    document: payload.document || localSupplier?.document,
+    email: validEmailOrUndefined(payload.email || localSupplier?.email),
+    phone: validPhoneOrUndefined(payload.phone || localSupplier?.phone),
+    locked: Boolean(payload.supplierId || payload.supplierName || payload.document)
+  };
+}
+
+function lockedIdentityViolation(
+  lockedSupplier: ReturnType<typeof supplierFromPayload>,
+  input: { supplierName: string; document: string; email: string; phone: string }
+) {
+  if (!lockedSupplier.locked) return "";
+  if (lockedSupplier.document && !sameDigits(lockedSupplier.document, input.document)) return "Documento nao corresponde ao fornecedor definido neste link.";
+  if (lockedSupplier.supplierName && !sameText(lockedSupplier.supplierName, input.supplierName)) return "Razao social/nome nao corresponde ao fornecedor definido neste link.";
+  if (lockedSupplier.email && !sameText(lockedSupplier.email, input.email)) return "E-mail nao corresponde ao fornecedor definido neste link.";
+  if (lockedSupplier.phone && !sameDigits(lockedSupplier.phone, input.phone)) return "Telefone nao corresponde ao fornecedor definido neste link.";
+  return "";
 }
 
 function validFreightType(value: unknown) {
@@ -55,7 +103,8 @@ export async function POST(request: Request) {
     const document = String(input.document || "").replace(/\D/g, "");
     const email = text(input.email, 160);
     const phone = text(input.phone, 40);
-    const tokenDocument = payload.document?.replace(/\D/g, "") || "";
+    const lockedSupplier = supplierFromPayload(payload);
+    const tokenDocument = lockedSupplier.document?.replace(/\D/g, "") || payload.document?.replace(/\D/g, "") || "";
     if (!text(input.supplierName) || !validDocument(document)) {
       return NextResponse.json({ message: "Informe nome e CPF/CNPJ válido para enviar a proposta." }, { status: 400 });
     }
@@ -88,6 +137,15 @@ export async function POST(request: Request) {
 
     if (tokenDocument && tokenDocument !== document) {
       return NextResponse.json({ message: "Documento não corresponde ao link da cotação." }, { status: 403 });
+    }
+    const identityViolation = lockedIdentityViolation(lockedSupplier, {
+      supplierName: text(input.supplierName),
+      document,
+      email,
+      phone
+    });
+    if (identityViolation) {
+      return NextResponse.json({ message: identityViolation }, { status: 403 });
     }
 
     const quotedItems = (input.items || []).filter((item) => item.attends);
@@ -135,19 +193,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Informe valor e quantidade dos itens atendidos." }, { status: 400 });
     }
 
-    const localSupplier = searchLocalSuppliers(document, 1).suppliers[0];
+    const localSupplier: SupplierDirectoryItem | undefined = lockedSupplier.localSupplier || searchLocalSuppliers(document, 1).suppliers[0];
+    const finalSupplierName = lockedSupplier.supplierName || text(input.supplierName);
+    const finalDocument = (lockedSupplier.document || document).replace(/\D/g, "");
+    const finalEmail = lockedSupplier.email || email;
+    const finalPhone = lockedSupplier.phone || phone;
     const saved = saveSupplierQuoteResponse({
       ...input,
-      supplierName: text(input.supplierName),
-      document,
-      email,
-      phone,
+      supplierName: finalSupplierName,
+      document: finalDocument,
+      email: finalEmail,
+      phone: finalPhone,
       commercialTerms: {
         ...commercialTerms,
         freightType: commercialTerms.freightType,
         deliveryDays
       },
-      registration: localSupplier ? undefined : input.registration
+      registration: localSupplier || lockedSupplier.locked ? undefined : input.registration
         ? {
             tradeName: text(input.registration.tradeName, 160),
             city: text(input.registration.city, 80),
@@ -157,16 +219,16 @@ export async function POST(request: Request) {
       items: safeItems
     }, {
       ...payload,
-      supplierId: payload.supplierId || localSupplier?.id
+      supplierId: lockedSupplier.supplierId || localSupplier?.id
     });
 
     return NextResponse.json({
       message: "Proposta enviada com sucesso.",
       responseId: saved.id,
       createdAt: saved.createdAt,
-      supplierFound: Boolean(localSupplier),
-      supplierId: payload.supplierId || localSupplier?.id,
-      registrationPending: !localSupplier
+      supplierFound: Boolean(localSupplier || lockedSupplier.locked),
+      supplierId: lockedSupplier.supplierId || localSupplier?.id,
+      registrationPending: !localSupplier && !lockedSupplier.locked
     }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível salvar a proposta.";

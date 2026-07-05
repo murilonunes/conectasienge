@@ -25,7 +25,14 @@ type SupplierQuoteResponseFormProps = {
   token: string;
   quotationCode: string;
   items: QuotationItemSummary[];
-  initialDocument?: string;
+  initialSupplier?: {
+    supplierId?: number;
+    supplierName?: string;
+    document?: string;
+    email?: string;
+    phone?: string;
+    locked?: boolean;
+  };
 };
 
 function validEmail(value: string) {
@@ -42,11 +49,12 @@ function validDocument(value: string) {
   return digits.length === 11 || digits.length === 14;
 }
 
-export function SupplierQuoteResponseForm({ token, quotationCode, items, initialDocument = "" }: SupplierQuoteResponseFormProps) {
-  const [supplierName, setSupplierName] = useState("");
-  const [document, setDocument] = useState(initialDocument);
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+export function SupplierQuoteResponseForm({ token, quotationCode, items, initialSupplier }: SupplierQuoteResponseFormProps) {
+  const fixedSupplier = initialSupplier?.locked ? initialSupplier : undefined;
+  const [supplierName, setSupplierName] = useState(initialSupplier?.supplierName || "");
+  const [document, setDocument] = useState(initialSupplier?.document || "");
+  const [email, setEmail] = useState(initialSupplier?.email || "");
+  const [phone, setPhone] = useState(initialSupplier?.phone || "");
   const [registration, setRegistration] = useState<RegistrationData>({ tradeName: "", city: "", state: "" });
   const [responseItems, setResponseItems] = useState(() => initialItems(items));
   const [offersCash, setOffersCash] = useState(true);
@@ -58,7 +66,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [deliveryDays, setDeliveryDays] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
   const [checkingDocument, setCheckingDocument] = useState(false);
-  const [supplierExists, setSupplierExists] = useState<boolean | undefined>();
+  const [supplierExists, setSupplierExists] = useState<boolean | undefined>(fixedSupplier ? true : undefined);
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submittedResponse, setSubmittedResponse] = useState<SupplierQuoteResponseSummary | undefined>();
@@ -163,8 +171,13 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
   useEffect(() => {
     const clean = document.replace(/\D/g, "");
+    if (fixedSupplier && supplierName && email && phone) {
+      setSupplierExists(true);
+      setCheckingDocument(false);
+      return;
+    }
     if (clean.length < 11) {
-      setSupplierExists(undefined);
+      setSupplierExists(fixedSupplier ? true : undefined);
       return;
     }
     const controller = new AbortController();
@@ -173,10 +186,12 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
       try {
         const response = await fetch(`/api/supplier-portal/suppliers?token=${encodeURIComponent(token)}&q=${encodeURIComponent(clean)}&limit=1`, { signal: controller.signal });
         if (!response.ok) return;
-        const json = await response.json() as { suppliers: Array<{ name: string }> };
+        const json = await response.json() as { suppliers: Array<{ name: string; email?: string; phone?: string }> };
         const supplier = json.suppliers[0];
-        setSupplierExists(Boolean(supplier));
+        setSupplierExists(fixedSupplier ? true : Boolean(supplier));
         if (supplier && !supplierName) setSupplierName(supplier.name);
+        if (supplier && !email) setEmail(supplier.email || "");
+        if (supplier && !phone) setPhone(supplier.phone || "");
       } finally {
         setCheckingDocument(false);
       }
@@ -185,7 +200,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [document, supplierName, token]);
+  }, [document, email, fixedSupplier, phone, supplierName, token]);
 
   function updateItem(itemNumber: number, field: keyof ResponseItem, value: string | boolean) {
     setResponseItems((current) => current.map((item) => (
@@ -355,6 +370,12 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             registration={registration}
             checkingDocument={checkingDocument}
             supplierExists={supplierExists}
+            lockedFields={{
+              document: Boolean(fixedSupplier?.document),
+              supplierName: Boolean(fixedSupplier?.supplierName),
+              email: Boolean(fixedSupplier?.email),
+              phone: Boolean(fixedSupplier?.phone)
+            }}
             onDocumentChange={setDocument}
             onSupplierNameChange={setSupplierName}
             onEmailChange={setEmail}
