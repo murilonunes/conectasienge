@@ -1,74 +1,8 @@
-import Link from "next/link";
 import { getAppSettings } from "@/lib/settings";
-
-const overviewNavigation = [
-  ["Dashboard", "/dashboard", "D"],
-  ["Central financeira", "/financeiro", "F"],
-  ["Portal de vendas", "/sales", "V"],
-  ["Portal de compras", "/compras", "CP"],
-  ["Bens em estoque", "/estoque", "E"]
-] as const;
-
-const operationNavigation = [
-  ["Contratos", "/contratos", "C"],
-  ["Conciliação", "/conciliacao", "CC"],
-  ["Solicitações de compra", "/solicitacoes-compra", "SC"],
-  ["Cotações", "/cotacoes", "CT"],
-  ["Contas a pagar", "/contas-pagar", "P"],
-  ["Contas a receber", "/contas-receber", "R"],
-  ["Baixa a pagar", "/lancamentos/baixa", "BP"],
-  ["Baixa a receber", "/lancamentos/baixa-receber", "BR"]
-] as const;
-
-const analysisNavigation = [
-  ["Relatórios", "/relatorios", "G"],
-  ["DRE POC", "/dre-gerencial", "="],
-  ["Mapa Sienge", "/sienge", "S"]
-] as const;
-const settingsNavigation = [["Configurações", "/configuracoes", "CF"]] as const;
-
-function NavigationGroup({ label, items }: { label: string; items: readonly (readonly [string, string, string])[] }) {
-  return (
-    <>
-      <p className="nav-label">{label}</p>
-      {items.map(([itemLabel, href, icon]) => (
-        <Link className="nav-link" href={href} key={href}><span className="nav-icon">{icon}</span>{itemLabel}</Link>
-      ))}
-    </>
-  );
-}
+import { AppShellClient } from "@/components/ui/app-shell-client";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const settings = getAppSettings();
 
-  return (
-    <div className="shell">
-      <aside className="sidebar">
-        <Link className="brand" href="/" aria-label="Ir para a tela inicial">
-          <div className="brand-mark">B</div>
-          <div><strong>Brasin</strong><span>GESTÃO FINANCEIRA</span></div>
-        </Link>
-        <nav>
-          <NavigationGroup label="VISÃO GERAL" items={overviewNavigation} />
-          <NavigationGroup label="OPERAÇÕES" items={operationNavigation} />
-          <NavigationGroup label="ANÁLISE" items={analysisNavigation} />
-          <NavigationGroup label="CONFIGURAÇÕES" items={settingsNavigation} />
-        </nav>
-      </aside>
-      <main className="main">
-        <header className="topbar">
-          <div className="user">
-            <span className="integration-dot" aria-hidden="true" />
-            <div><strong>Sienge</strong><br /><span className="panel-note">Integração</span></div>
-            <div><strong>{settings.responsibleName}</strong><br /><span className="panel-note">{settings.responsibleRole}</span></div>
-            <div className="avatar">{settings.responsibleInitials}</div>
-            <form action="/api/auth/logout" method="post">
-              <button className="logout-button" type="submit">Sair</button>
-            </form>
-          </div>
-        </header>
-        <div className="content">{children}</div>
-      </main>
-    </div>
-  );
+  return <AppShellClient settings={settings}>{children}</AppShellClient>;
 }
