@@ -5,8 +5,7 @@ import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-pic
 import { formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteEventSummary } from "@/lib/supplier-quote-portal";
 import { OperationResultPanel, type OperationResultKind } from "../../operation-result-panel";
-import { formatDocument } from "../helpers";
-import type { GeneratedSupplierLink, SiengeAction } from "../types";
+import type { SiengeAction } from "../types";
 
 type SiengeFormState = {
   buyerId: string;
@@ -42,12 +41,9 @@ export function SiengeTab({
   onSupplierChange,
   loadingAction,
   onRunAction,
-  onGenerateLink,
   operationResult,
   operationTitle,
   operationKind,
-  generatedSupplierLink,
-  onCopyLink,
   events
 }: {
   quotationId: number;
@@ -57,12 +53,9 @@ export function SiengeTab({
   onSupplierChange: (id: string, supplier?: { document?: string; name?: string }) => void;
   loadingAction: string | null;
   onRunAction: (action: SiengeAction, confirm: boolean) => void;
-  onGenerateLink: () => void;
   operationResult: string;
   operationTitle: string;
   operationKind: OperationResultKind;
-  generatedSupplierLink?: GeneratedSupplierLink;
-  onCopyLink: (url: string) => void;
   events: SupplierQuoteEventSummary[];
 }) {
   const [activeTopic, setActiveTopic] = useState<SiengeTopic>("quotation");
@@ -104,8 +97,8 @@ export function SiengeTab({
     {
       key: "supplier",
       label: "Fornecedor",
-      title: "Fornecedor e link",
-      description: "Inclua fornecedor no item e gere o link do portal público.",
+      title: "Fornecedor no item",
+      description: "Inclua o fornecedor no item da cotação no Sienge. O convite do portal fica na aba Fornecedores.",
       status: lastSuccessByTopic("supplier") ? "Integrado" : supplierReady ? "Pronto" : "Escolha fornecedor"
     },
     {
@@ -248,9 +241,6 @@ export function SiengeTab({
               <button className="button sienge-write" type="button" onClick={() => onRunAction("add-supplier", true)} disabled={!supplierReady || loadingAction !== null}>
                 {loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"}
               </button>
-              <button className="button secondary" type="button" onClick={onGenerateLink} disabled={loadingAction !== null}>
-                {loadingAction === "supplier-link" ? "Gerando..." : "Gerar link"}
-              </button>
             </div>
           </article>
         )}
@@ -307,31 +297,6 @@ export function SiengeTab({
       </div>
 
       <OperationResultPanel title={operationTitle} kind={operationKind} json={operationResult} />
-      {generatedSupplierLink && (
-        <div className="card panel quotation-operation-result quotation-link-result">
-          <div className="panel-head">
-            <div>
-              <h2 className="panel-title">Link do fornecedor</h2>
-            </div>
-            <i className="badge">Pronto</i>
-          </div>
-          <div className="quotation-copy-link">
-            <input readOnly value={generatedSupplierLink.url} onFocus={(event) => event.currentTarget.select()} />
-            <button className="button" type="button" onClick={() => onCopyLink(generatedSupplierLink.url)}>
-              Copiar link
-            </button>
-            <a className="button secondary" href={generatedSupplierLink.url} target="_blank" rel="noreferrer">
-              Abrir
-            </a>
-          </div>
-          <div className="quotation-link-meta">
-            <span><strong>Fornecedor</strong>{generatedSupplierLink.supplierName || "Não informado"}</span>
-            <span><strong>Documento</strong>{generatedSupplierLink.document ? formatDocument(generatedSupplierLink.document) : "Não informado"}</span>
-            <span><strong>Validade</strong>{generatedSupplierLink.expiresAt ? formatOptionalDate(generatedSupplierLink.expiresAt) : "7 dias"}</span>
-            <span><strong>Status</strong>Copiável</span>
-          </div>
-        </div>
-      )}
 
       <div className="card panel quotation-operation-result quotation-integration-history">
         <div className="panel-head">

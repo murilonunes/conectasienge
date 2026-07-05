@@ -48,9 +48,9 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A implementação da tela `/cotacoes` fica separada em `components/purchases/quotations`: `filters-bar.tsx`, `request-bridge.tsx`, `summary-stats.tsx`, `status-tabs.tsx`, `quotations-list.tsx` e `helpers.ts`.
 - O detalhe `/cotacoes/[id]` organiza a operação em abas: Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico.
 - As abas do detalhe ficam separadas em arquivos próprios em `components/purchases/quotation-detail/tabs`, enquanto `index.tsx` coordena estado, chamadas e navegação entre abas.
-- A aba de fornecedores permite escolher um credor do Sienge (busca local com criação quando necessário) e gerar o link público de resposta.
+- A aba de fornecedores permite escolher um credor do Sienge (busca local com criação quando necessário) e gerar o link público de resposta em um modal na própria tela do fornecedor.
 - Cada link é um token assinado (HMAC) com validade padrão de 7 dias, vinculado à cotação e, quando informado, ao documento do fornecedor.
-- A aba Links mostra validade, status (aguardando, respondido, vencido, revogado), contagem de respostas e ações de copiar, regerar e revogar.
+- A aba Links mostra validade, status (aguardando, respondido, vencido, revogado), contagem de respostas e ações de copiar, regerar e revogar; a criação inicial do convite fica concentrada na aba Fornecedores.
 - Revogar um link registra o evento e bloqueia imediatamente o portal público e o envio de propostas por aquele token.
 - O portal público `/portal-cotacao/[token]` permite ao fornecedor informar, item a item: se atende, preço unitário, quantidade, prazo diferente do pedido e observação; preço zero informado é tratado como valor válido.
 - Itens parciais usam quantidade menor que a solicitada e destaque amarelo. Itens que o fornecedor não cotou aparecem separados no detalhe final/impressão, também com fundo amarelo.

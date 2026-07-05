@@ -82,5 +82,5 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 - `POST /api/supplier-portal/responses`: recebe a proposta pública, valida token ativo, bloqueia reenvio pelo mesmo token, valida e-mail, telefone, frete, prazo geral, forma de pagamento, parcelas e quantidades.
 - `DELETE /api/supplier-portal/responses/{responseId}?quotationId={id}`: rota protegida por sessão; exclui uma resposta recebida, remove aprovações vinculadas e registra evento local.
 - `POST /api/supplier-portal/link-requests`: rota pública com limite por IP e global; gera novo link para revisão quando o fornecedor possui o token de uma proposta já enviada e o token não está revogado.
-- `POST /api/supplier-portal/invitations`: rota protegida por sessão; gera links a partir da tela interna de cotações.
+- `POST /api/supplier-portal/invitations`: rota protegida por sessão; gera links a partir da aba Fornecedores do detalhe da cotação, com retorno exibido em modal para copiar ou abrir o convite.
 - `DELETE /api/supplier-portal/invitations`: rota protegida por sessão; revoga links.

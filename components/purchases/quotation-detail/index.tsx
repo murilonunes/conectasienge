@@ -754,12 +754,9 @@ export function QuotationDetail({
           onSupplierChange={handleSupplierChange}
           loadingAction={loadingAction}
           onRunAction={runSiengeAction}
-          onGenerateLink={() => void generateSupplierPortalLink()}
           operationResult={operationResult}
           operationTitle={operationTitle}
           operationKind={operationKind}
-          generatedSupplierLink={generatedSupplierLink}
-          onCopyLink={copyInvitationLink}
           events={events}
         />
       )}
@@ -778,6 +775,10 @@ export function QuotationDetail({
           onSupplierChange={handleSupplierChange}
           onGoToTab={setTab}
           onGenerateLink={() => void generateSupplierPortalLink()}
+          generatedLink={generatedSupplierLink}
+          linkMessage={linkMessage}
+          onDismissGeneratedLink={() => setGeneratedSupplierLink(undefined)}
+          onCopyLink={copyInvitationLink}
           loadingAction={loadingAction}
         />
       )}

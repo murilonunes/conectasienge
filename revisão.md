@@ -139,6 +139,7 @@ Revisado nesta etapa:
 - Reabrir um link já respondido continua mostrando a proposta em modo somente consulta, com imprimir/salvar PDF.
 - A rota pública `/api/supplier-portal/link-requests` gera novo link automaticamente para o mesmo fornecedor e documento quando quem solicita possui o token de uma proposta já enviada.
 - A rota de novo link bloqueia token revogado e tem limite de requisições por IP e global.
+- A criação inicial do link pela equipe fica concentrada na aba Fornecedores do detalhe da cotação, com modal para copiar/abrir o convite sem desviar o usuário para a aba Sienge.
 - A aba Respostas permite excluir uma resposta recebida; a rota dinâmica de exclusão permanece protegida por sessão, porque o middleware só libera a rota pública exata de envio de propostas.
 - A exclusão de resposta remove aprovações vinculadas e registra evento `response_deleted` na timeline.
 
