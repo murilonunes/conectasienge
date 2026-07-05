@@ -92,6 +92,24 @@ type SiengePostResult =
       apiMessage: unknown;
     };
 
+type SiengePreflight = {
+  action: QuotationAction;
+  checkedAt: string;
+  quotation?: SiengeLookupSummary;
+  supplier?: SiengeLookupSummary & { supplierInfo?: Record<string, unknown> };
+  latestNegotiationNumber?: number;
+  hints: string[];
+};
+
+type SiengeLookupSummary = {
+  endpoint: string;
+  ok: boolean;
+  status: number;
+  exists: boolean;
+  body?: unknown;
+  apiMessage?: unknown;
+};
+
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -196,6 +214,76 @@ function validNegotiationItems(negotiation?: NegotiationInput) {
   return (negotiation?.items || []).filter((item) => Number.isFinite(item.quotationItemNumber) && item.quotationItemNumber > 0);
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+}
+
+function responseResults(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  const record = asRecord(value);
+  if (!record) return [];
+  if (Array.isArray(record.results)) return record.results;
+  if (Array.isArray(record.data)) return record.data;
+  return Object.keys(record).length ? [record] : [];
+}
+
+function hasSiengeContent(value: unknown) {
+  return responseResults(value).length > 0;
+}
+
+function containsNumberForKeys(value: unknown, keys: string[], expected: number): boolean {
+  if (!Number.isFinite(expected) || expected <= 0) return false;
+  if (Array.isArray(value)) return value.some((item) => containsNumberForKeys(item, keys, expected));
+  const record = asRecord(value);
+  if (!record) return false;
+  return Object.entries(record).some(([key, current]) => {
+    if (keys.includes(key) && Number(current) === expected) return true;
+    return containsNumberForKeys(current, keys, expected);
+  });
+}
+
+function recordHasNumber(record: Record<string, unknown>, keys: string[], expected: number) {
+  return keys.some((key) => Number(record[key]) === expected);
+}
+
+function containsSupplierForItem(value: unknown, supplierId: number, itemNumber: number): boolean {
+  if (!supplierId || !itemNumber) return false;
+  if (Array.isArray(value)) return value.some((item) => containsSupplierForItem(item, supplierId, itemNumber));
+  const record = asRecord(value);
+  if (!record) return false;
+  const hasSupplier = recordHasNumber(record, ["supplierId", "creditorId"], supplierId);
+  const hasItem = recordHasNumber(record, ["quotationItemNumber", "purchaseQuotationItemNumber", "itemNumber", "purchaseRequestItemNumber"], itemNumber);
+  if (hasSupplier && hasItem) return true;
+  return Object.values(record).some((current) => containsSupplierForItem(current, supplierId, itemNumber));
+}
+
+function summarizeSupplier(body: unknown) {
+  const supplier = responseResults(body).map(asRecord).find(Boolean);
+  if (!supplier) return undefined;
+  return {
+    id: supplier.id ?? supplier.creditorId,
+    name: supplier.name ?? supplier.corporateName ?? supplier.companyName ?? supplier.creditorName,
+    tradeName: supplier.tradeName ?? supplier.fantasyName,
+    cnpj: supplier.cnpj,
+    cpf: supplier.cpf,
+    document: supplier.document ?? supplier.documentNumber ?? supplier.taxId,
+    city: supplier.city,
+    state: supplier.state ?? supplier.uf,
+    active: supplier.active
+  };
+}
+
+function lookupSummary(result: SiengePostResult): SiengeLookupSummary {
+  return {
+    endpoint: result.endpoint,
+    ok: result.ok || result.status === 404,
+    status: result.status,
+    exists: result.ok ? hasSiengeContent(result.body) : false,
+    body: result.ok ? result.body : undefined,
+    apiMessage: result.ok ? undefined : result.apiMessage
+  };
+}
+
 async function findLatestNegotiationNumber(tenant: string, username: string, password: string, purchaseQuotationId: number, supplierId: number) {
   const result = await callSienge(tenant, username, password, "GET", `/v1/purchase-quotations/all/negotiations?quotationNumber=${purchaseQuotationId}`);
   if (!result.ok || !result.body || typeof result.body !== "object") return undefined;
@@ -206,6 +294,63 @@ async function findLatestNegotiationNumber(tenant: string, username: string, pas
     if (Number.isFinite(negotiationId) && negotiationId > 0) return negotiationId;
   }
   return undefined;
+}
+
+async function runPreflight(action: QuotationAction, body: QuotationCreateRequest, config: { tenant: string; username: string; password: string }): Promise<SiengePreflight> {
+  const purchaseQuotationId = Number(body.purchaseQuotationId) || 0;
+  const supplierId = Number(body.supplierId) || 0;
+  const itemNumber = Number(body.purchaseQuotationItemNumber || body.request?.items?.[0]?.purchaseRequestItemNumber) || 0;
+  const productId = Number(body.item?.productId) || 0;
+  const preflight: SiengePreflight = {
+    action,
+    checkedAt: new Date().toISOString(),
+    hints: []
+  };
+
+  if (purchaseQuotationId > 0) {
+    preflight.quotation = lookupSummary(await callSienge(
+      config.tenant,
+      config.username,
+      config.password,
+      "GET",
+      `/v1/purchase-quotations/all/negotiations?quotationNumber=${purchaseQuotationId}`
+    ));
+    if (preflight.quotation.exists) {
+      preflight.hints.push("Cotacao localizada no Sienge antes da gravacao.");
+    }
+    if (itemNumber && containsNumberForKeys(preflight.quotation.body, ["quotationItemNumber", "purchaseQuotationItemNumber", "itemNumber", "purchaseRequestItemNumber"], itemNumber)) {
+      preflight.hints.push(`Item ${itemNumber} ja aparece nos dados retornados pelo Sienge.`);
+    }
+    if (productId && containsNumberForKeys(preflight.quotation.body, ["productId", "insumoId", "materialId"], productId)) {
+      preflight.hints.push(`Insumo ${productId} ja aparece nos dados retornados pelo Sienge.`);
+    }
+    if (supplierId && itemNumber && containsSupplierForItem(preflight.quotation.body, supplierId, itemNumber)) {
+      preflight.hints.push(`Fornecedor ${supplierId} ja aparece no item ${itemNumber} desta cotacao no Sienge.`);
+    } else if (supplierId && containsNumberForKeys(preflight.quotation.body, ["supplierId", "creditorId"], supplierId)) {
+      preflight.hints.push(`Fornecedor ${supplierId} ja aparece nesta cotacao no Sienge.`);
+    }
+  }
+
+  if (supplierId > 0) {
+    const supplierLookup = lookupSummary(await callSienge(config.tenant, config.username, config.password, "GET", `/v1/creditors/${supplierId}`));
+    preflight.supplier = {
+      ...supplierLookup,
+      supplierInfo: summarizeSupplier(supplierLookup.body)
+    };
+    if (supplierLookup.exists) {
+      const name = preflight.supplier.supplierInfo?.name;
+      preflight.hints.push(name ? `Fornecedor localizado no Sienge: ${String(name)}.` : "Fornecedor localizado no Sienge.");
+    }
+  }
+
+  if (action === "send-negotiation" && purchaseQuotationId && supplierId) {
+    preflight.latestNegotiationNumber = await findLatestNegotiationNumber(config.tenant, config.username, config.password, purchaseQuotationId, supplierId);
+    if (preflight.latestNegotiationNumber) {
+      preflight.hints.push(`Negociacao ${preflight.latestNegotiationNumber} ja existe para este fornecedor e sera reutilizada.`);
+    }
+  }
+
+  return preflight;
 }
 
 function dryRunResponse(body: QuotationCreateRequest, payload: Record<string, unknown>) {
@@ -316,6 +461,21 @@ function duplicateIntegrationResponse(quotationId: number | undefined, integrati
       createdAt: existing.createdAt
     }
   }, { status: 409 });
+}
+
+function existingInSiengeResponse(message: string, preflight: SiengePreflight) {
+  return NextResponse.json({
+    message,
+    alreadyExistsInSienge: true,
+    preflight
+  }, { status: 409 });
+}
+
+function preflightUnavailableResponse(preflight: SiengePreflight) {
+  return NextResponse.json({
+    message: "Nao foi possivel consultar o Sienge antes da gravacao. Nada foi enviado.",
+    preflight
+  }, { status: 502 });
 }
 
 function alreadyExistingQuotationResponse(quotationId: number | undefined, force: boolean | undefined) {
@@ -459,6 +619,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
+    const preflight = await runPreflight(action, body, config);
+    if (preflight.quotation && !preflight.quotation.ok) return preflightUnavailableResponse(preflight);
+    if (body.force !== true && preflight.hints.some((hint) => hint.includes("Item"))) {
+      return existingInSiengeResponse("Este item ja aparece na consulta previa do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
+    }
+
     const results = [];
     for (const payload of payloads) {
       results.push(await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body));
@@ -466,12 +632,13 @@ export async function POST(request: NextRequest) {
 
     const failed = results.find((result) => !result.ok);
     if (failed) {
-      recordIntegrationEvent("integration_error", "Erro ao vincular item no Sienge", "Um ou mais itens nao foram aceitos pelo Sienge.", { results });
+      recordIntegrationEvent("integration_error", "Erro ao vincular item no Sienge", "Um ou mais itens nao foram aceitos pelo Sienge.", { preflight, results });
     } else {
-      recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitacao foram vinculados a cotacao.", { integrationKey, results });
+      recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitacao foram vinculados a cotacao.", { integrationKey, preflight, results });
     }
     return NextResponse.json({
       message: failed ? "Um ou mais itens nao foram aceitos pelo Sienge." : "Itens vinculados a cotacao no Sienge.",
+      preflight,
       results
     }, { status: failed ? failed.status : 201 });
   }
@@ -503,22 +670,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
+    const preflight = await runPreflight(action, body, config);
+    if ((preflight.quotation && !preflight.quotation.ok) || (preflight.supplier && !preflight.supplier.ok)) return preflightUnavailableResponse(preflight);
+    if (preflight.supplier && !preflight.supplier.exists) {
+      return NextResponse.json({
+        message: "Fornecedor nao encontrado no Sienge na consulta previa. Nada foi enviado.",
+        preflight
+      }, { status: 404 });
+    }
+    if (body.force !== true && preflight.hints.some((hint) => hint.includes("Fornecedor") && hint.includes("no item"))) {
+      return existingInSiengeResponse("Este fornecedor ja aparece neste item na consulta previa do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
+    }
+
     const result = await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body);
     if (!result.ok) {
-      recordIntegrationEvent("integration_error", "Erro ao incluir fornecedor no item", "O Sienge nao aceitou o fornecedor neste item da cotacao.", { result });
+      recordIntegrationEvent("integration_error", "Erro ao incluir fornecedor no item", "O Sienge nao aceitou o fornecedor neste item da cotacao.", { preflight, result });
       return NextResponse.json({
         message: "O Sienge nao aceitou o fornecedor neste item da cotacao.",
+        preflight,
         result
       }, { status: result.status });
     }
 
     recordIntegrationEvent("sienge_created", "Fornecedor vinculado no Sienge", "Fornecedor incluido em um item da cotacao.", {
       integrationKey,
+      preflight,
       endpoint: payload.endpoint,
       supplierId
     });
     return NextResponse.json({
       message: "Fornecedor incluido no item da cotacao no Sienge.",
+      preflight,
       result
     }, { status: 201 });
   }
@@ -579,22 +761,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
+    const preflight = await runPreflight(action, body, config);
+    if (preflight.quotation && !preflight.quotation.ok) return preflightUnavailableResponse(preflight);
+    if (body.force !== true && preflight.hints.some((hint) => hint.includes("Insumo"))) {
+      return existingInSiengeResponse("Este insumo ja aparece na consulta previa do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
+    }
+
     const result = await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body);
     if (!result.ok) {
-      recordIntegrationEvent("integration_error", "Erro ao criar insumo na cotacao", "O Sienge nao aceitou o insumo direto nesta cotacao.", { result });
+      recordIntegrationEvent("integration_error", "Erro ao criar insumo na cotacao", "O Sienge nao aceitou o insumo direto nesta cotacao.", { preflight, result });
       return NextResponse.json({
         message: "O Sienge nao aceitou o insumo direto nesta cotacao.",
+        preflight,
         result
       }, { status: result.status });
     }
 
     recordIntegrationEvent("sienge_created", "Insumo criado na cotacao", "Insumo criado direto na cotacao, sem solicitacao de compra.", {
       integrationKey,
+      preflight,
       endpoint: payload.endpoint,
       productId: payload.body.productId
     });
     return NextResponse.json({
       message: "Insumo criado na cotacao do Sienge.",
+      preflight,
       result
     }, { status: 201 });
   }
@@ -640,22 +831,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
+    const preflight = await runPreflight(action, body, config);
+    if ((preflight.quotation && !preflight.quotation.ok) || (preflight.supplier && !preflight.supplier.ok)) return preflightUnavailableResponse(preflight);
+    if (preflight.supplier && !preflight.supplier.exists) {
+      return NextResponse.json({
+        message: "Fornecedor nao encontrado no Sienge na consulta previa. Nada foi enviado.",
+        preflight
+      }, { status: 404 });
+    }
+
     const steps: SiengePostResult[] = [];
-    let negotiationNumber = Number(negotiation.negotiationNumber) || undefined;
+    let negotiationNumber = Number(negotiation.negotiationNumber) || preflight.latestNegotiationNumber || undefined;
 
     if (!negotiationNumber) {
       const created = await postSienge(config.tenant, config.username, config.password, basePath, {});
       steps.push(created);
       if (!created.ok) {
-        recordIntegrationEvent("integration_error", "Erro ao criar negociacao no Sienge", "O Sienge nao aceitou a criacao da negociacao para o fornecedor.", { steps });
-        return NextResponse.json({ message: "O Sienge nao aceitou a criacao da negociacao.", steps }, { status: created.status });
+        recordIntegrationEvent("integration_error", "Erro ao criar negociacao no Sienge", "O Sienge nao aceitou a criacao da negociacao para o fornecedor.", { preflight, steps });
+        return NextResponse.json({ message: "O Sienge nao aceitou a criacao da negociacao.", preflight, steps }, { status: created.status });
       }
       negotiationNumber = parseIdFromLocation(created.location)
         || await findLatestNegotiationNumber(config.tenant, config.username, config.password, purchaseQuotationId, supplierId);
       if (!negotiationNumber) {
-        recordIntegrationEvent("integration_error", "Negociacao criada sem numero identificado", "A negociacao foi criada, mas o numero nao pode ser identificado para gravar os valores.", { steps });
+        recordIntegrationEvent("integration_error", "Negociacao criada sem numero identificado", "A negociacao foi criada, mas o numero nao pode ser identificado para gravar os valores.", { preflight, steps });
         return NextResponse.json({
           message: "Negociacao criada, mas o numero nao pode ser identificado. Atualize os dados e tente gravar os valores novamente.",
+          preflight,
           steps
         }, { status: 502 });
       }
@@ -684,9 +885,9 @@ export async function POST(request: NextRequest) {
 
     const failed = steps.find((step) => !step.ok);
     if (failed) {
-      recordIntegrationEvent("integration_error", "Erro ao gravar negociacao no Sienge", "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge.", { negotiationNumber, steps });
+      recordIntegrationEvent("integration_error", "Erro ao gravar negociacao no Sienge", "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge.", { preflight, negotiationNumber, steps });
     } else {
-      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociacao gravada e autorizada no Sienge" : "Negociacao gravada no Sienge", `Negociacao ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
+      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociacao gravada e autorizada no Sienge" : "Negociacao gravada no Sienge", `Negociacao ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, preflight, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
     }
 
     return NextResponse.json({
@@ -695,6 +896,7 @@ export async function POST(request: NextRequest) {
         : negotiation.authorize
           ? "Negociacao gravada e autorizada no Sienge."
           : "Negociacao gravada no Sienge.",
+      preflight,
       negotiationNumber,
       steps
     }, { status: failed ? failed.status : 200 });

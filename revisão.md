@@ -159,6 +159,19 @@ Revisado nesta etapa:
 
 Resultado: a integração ficou mais segura contra cliques repetidos e reprocessamentos acidentais. Conferências (`dryRun`) continuam livres; apenas gravações confirmadas são deduplicadas.
 
+### Etapa 15 revisada - Aba Sienge e pré-consulta
+
+Revisado nesta etapa:
+
+- A aba Sienge foi reorganizada para deixar o menu de temas menor e a área operacional maior.
+- O seletor de fornecedor passou a mostrar mais contexto: nome fantasia, documento, ID, cidade/UF e status ativo/inativo quando esses campos existem no espelho local.
+- `/api/sienge/purchase-quotations` passou a montar um `preflight` antes das escritas confirmadas, consultando cotação/negociações e, quando houver fornecedor, o credor no Sienge.
+- A inclusão de fornecedor bloqueia duplicidade quando a pré-consulta indica o mesmo fornecedor no mesmo item; a criação de insumo direto bloqueia quando o insumo já aparece na consulta da cotação.
+- O envio de negociação reaproveita a última negociação existente do fornecedor na cotação antes de tentar criar uma nova.
+- `/api/sienge/suppliers` passou a consultar `/v1/creditors` por CPF/CNPJ antes de criar credor, retornando `409` quando o documento já existe.
+
+Resultado: a operação ficou mais clara na tela e as gravações confirmadas passaram a consultar o Sienge antes de escrever, reduzindo o risco de duplicidade fora do histórico local.
+
 ### Etapa 9 revisada - Importação do dump em Configurações
 
 Revisado nesta etapa:

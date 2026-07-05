@@ -23,7 +23,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Textos das telas de cotação foram revisados para remover plurais técnicos como `item(ns)` e padronizar mensagens comerciais; o CSS das abas Mapa/Aprovar foi revisado para evitar sobrescritas antigas em telas médias.
 - Foi documentado o mapa real das conexões Sienge em cotações: telas abrem pelo espelho local, escritas passam por dry-run em `/api/sienge/purchase-quotations`, e o portal público do fornecedor não chama o Sienge diretamente.
 - O portal do fornecedor passou a validar forma de pagamento também no backend, gerar novo link automaticamente quando o fornecedor solicita revisão de uma proposta já enviada, e permitir que a equipe exclua uma resposta pela aba Respostas.
-- A integração Sienge de cotações passou a manter histórico de gravações na própria aba Sienge e a bloquear envios confirmados duplicados por chave de operação.
+- A integração Sienge de cotações mantém histórico de gravações na própria aba Sienge, bloqueia envios confirmados duplicados por chave de operação e faz pré-consulta ao Sienge antes das escritas confirmadas.
 
 ## Acesso e autenticação
 
@@ -68,11 +68,12 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A integração com o Sienge cria a cotação (`/v1/purchase-quotations`), anexa itens da solicitação e inclui fornecedores por item, sempre com dry-run de conferência antes de confirmar a gravação.
 - As ações reais de escrita em cotações ficam concentradas em `/api/sienge/purchase-quotations`: criar cotação, vincular item de solicitação, incluir fornecedor por item, criar insumo direto, criar/atualizar negociação e autorizar a última negociação.
 - Escritas confirmadas no Sienge registram `integrationKey` no histórico local; antes de gravar novamente, a rota verifica se a mesma criação, vínculo de item, vínculo de fornecedor, insumo direto, negociação, autorização ou criação de credor já foi integrada.
-- A aba Sienge mostra o histórico de integrações e erros da cotação, marca temas já integrados e avisa quando a cotação já existe no Sienge para evitar criar outra por engano.
+- Antes das escritas confirmadas em cotação, a rota consulta a cotação/negociações no Sienge, consulta o credor quando há fornecedor, reaproveita negociação já existente e retorna o bloco `preflight` com os indícios encontrados.
+- A aba Sienge mostra o histórico de integrações e erros da cotação, marca temas já integrados, deixa o menu de temas mais compacto e prioriza a área operacional maior.
 - O insumo direto exige apropriação de obra antes de confirmar: unidade construtiva, referência do item de orçamento e percentual total de 100%.
 - O PDF do mapa comparativo usa a rota interna `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`, que consulta o Sienge em `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`.
 - A criação de fornecedor pendente usa `/api/sienge/suppliers`, com dry-run antes da confirmação real em `/v1/creditors`.
-- A rota `/api/sienge/suppliers` busca credores no Sienge e permite criar credor a partir do cadastro pendente.
+- A rota `/api/sienge/suppliers` busca credores no Sienge e, antes de criar credor por cadastro pendente, consulta `/v1/creditors` por CPF/CNPJ para bloquear cadastro duplicado.
 - Configurações ganhou a área de atualização `Fornecedores`, que espelha os credores do Sienge (`/v1/creditors`) usados para localizar e vincular fornecedores nas cotações.
 
 ## Estado geral

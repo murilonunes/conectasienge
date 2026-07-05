@@ -135,7 +135,7 @@ export function SiengeTab({
             </button>
           ))}
         </div>
-        <p className="quotation-sienge-legend"><i /> Botões amarelos gravam direto no Sienge quando confirmados.</p>
+        <p className="quotation-sienge-legend"><i /> Botões amarelos consultam o Sienge e só depois gravam quando confirmados.</p>
       </aside>
 
       <div className="card panel quotation-operation-main">

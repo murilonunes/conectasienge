@@ -27,14 +27,14 @@ O fluxo de cotações usa o espelho local de compras na abertura das telas. As e
 
 O portal público do fornecedor não chama o Sienge diretamente. Ele grava convites, respostas, aprovações, revisões de cadastro e eventos no banco local `supplier-quotations.sqlite`; a integração posterior com o Sienge acontece pelas abas internas da cotação.
 
-Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. Antes de repetir uma gravação confirmada, a rota consulta esse histórico e retorna `409` quando encontra a mesma operação já integrada. O usuário pode forçar a repetição conscientemente pela tela, mas o envio automático duplicado fica bloqueado.
+Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. Antes de repetir uma gravação confirmada, a rota consulta esse histórico e retorna `409` quando encontra a mesma operação já integrada. As ações confirmadas também fazem pré-consulta ao Sienge (`preflight`) antes da escrita, para trazer o estado atual da cotação/fornecedor e evitar duplicidade detectável fora do histórico local. O usuário pode forçar a repetição conscientemente pela tela, mas o envio automático duplicado fica bloqueado.
 
 ### O que cada tela faz de fato
 
 - `/cotacoes` abre lendo o espelho local de compras (`loadPurchases`) e monta filtros, status, exportação e cards sem consultar o Sienge.
 - Quando `/cotacoes` recebe uma solicitação de compra como origem, os botões de criação chamam `/api/sienge/purchase-quotations`: primeiro em `dryRun`, depois com `confirm: true`.
 - `/cotacoes/[id]` também abre pelo espelho local e pelas tabelas locais do portal do fornecedor; as ações que gravam no Sienge ficam nas abas Sienge, Respostas, Aprovar e Cadastros.
-- A aba Sienge prepara ou confirma criação da cotação, vínculo de itens de solicitação, inclusão de fornecedor por item e criação de insumo direto.
+- A aba Sienge prepara ou confirma criação da cotação, vínculo de itens de solicitação, inclusão de fornecedor por item e criação de insumo direto. O menu de temas fica compacto e a área operacional ocupa a maior parte da tela.
 - A aba Respostas envia uma proposta recebida pelo portal como negociação do fornecedor no Sienge e permite excluir uma resposta local, removendo aprovações vinculadas.
 - A aba Aprovar salva a decisão localmente e, quando confirmado, envia a decisão como negociação autorizada.
 - A aba Cadastros cria fornecedor/credor no Sienge por `/api/sienge/suppliers`, que usa `/v1/creditors`.
@@ -48,6 +48,7 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 - `POST /v1/purchase-quotations/{id}/items/{item}/suppliers`: inclui fornecedor em item.
 - `POST /v1/purchase-quotations/{id}/items`: cria insumo direto na cotação.
 - `GET /v1/purchase-quotations/all/negotiations?quotationNumber={id}`: consulta negociações e ajuda a identificar a última negociação criada.
+- `GET /v1/creditors/{supplierId}` e `GET /v1/creditors?cpf/cnpj`: conferem fornecedor existente antes de vincular ou criar cadastro.
 - `POST /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations`: cria negociação.
 - `PUT /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations/{negotiationNumber}`: atualiza condições comerciais da negociação.
 - `PUT /v1/purchase-quotations/{id}/suppliers/{supplierId}/negotiations/{negotiationNumber}/items/{item}`: atualiza preço, quantidade e seleção por item.
@@ -61,15 +62,16 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 - Vincular item de solicitação (`POST /items/from-purchase-request`): usa ID da cotação, ID da solicitação, número do item e entrega. A chave de deduplicação considera todos esses campos.
 - Incluir fornecedor no item (`POST /items/{item}/suppliers`): usa ID da cotação, número do item da cotação e ID do credor/fornecedor Sienge. A chave de deduplicação considera cotação, item e fornecedor.
 - Criar insumo direto (`POST /items`): usa obra, insumo, quantidade, unidade, entrega e apropriação de obra (`buildingUnitId`, `costEstimationItemReference`, `percentage`). A tela exige apropriação total de 100% antes de confirmar, porque esse caminho não reaproveita a apropriação de uma solicitação de compra.
-- Gravar negociação (`POST/PUT /negotiations` e `PUT /items/{item}`): usa fornecedor Sienge e a resposta recebida pelo portal do fornecedor, incluindo pagamento, frete, observações, preço, quantidade e itens selecionados. A chave de deduplicação considera cotação, fornecedor, resposta do portal e modo de envio.
+- Gravar negociação (`POST/PUT /negotiations` e `PUT /items/{item}`): usa fornecedor Sienge e a resposta recebida pelo portal do fornecedor, incluindo pagamento, frete, observações, preço, quantidade e itens selecionados. Antes de criar negociação nova, a rota consulta a última negociação do fornecedor na cotação e a reutiliza quando já existir. A chave de deduplicação considera cotação, fornecedor, resposta do portal e modo de envio.
 - Autorizar negociação (`PATCH /negotiations/latest/authorize`): usa a mesma resposta aprovada localmente e marca a última negociação do fornecedor como autorizada. A autorização tem chave separada da gravação simples.
-- Criar fornecedor (`POST /v1/creditors`): usa nome, CPF/CNPJ, e-mail e telefone da resposta do fornecedor. A chave de deduplicação é global por documento, para evitar criar o mesmo credor por outra cotação.
+- Criar fornecedor (`POST /v1/creditors`): usa nome, CPF/CNPJ, e-mail e telefone da resposta do fornecedor. Antes de criar, consulta `/v1/creditors` por documento; se encontrar o mesmo CPF/CNPJ, retorna `409` sem gravar. A chave de deduplicação local também é global por documento, para evitar criar o mesmo credor por outra cotação.
 
 ### Histórico e deduplicação
 
 - Eventos de sucesso ficam em `supplier_quote_events` com tipo `sienge_created`.
 - Eventos de erro ficam em `supplier_quote_events` com tipo `integration_error`.
 - A aba Sienge mostra as 10 integrações mais recentes da cotação e marca cada tema como `Integrado`, `Existente`, `Pronto` ou pendente conforme o histórico e os campos preenchidos.
+- O retorno das gravações confirmadas inclui `preflight` com consulta da cotação, consulta do fornecedor, hints de duplicidade e, quando aplicável, número da negociação já existente.
 - O backend nunca bloqueia `dryRun`; bloqueia apenas gravação confirmada que repete a mesma `integrationKey`.
 - Integrações antigas que não tinham `integrationKey` continuam aparecendo no histórico, mas não conseguem bloquear duplicidade retroativamente.
 

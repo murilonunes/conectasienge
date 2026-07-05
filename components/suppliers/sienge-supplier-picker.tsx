@@ -42,6 +42,26 @@ function documentLabel(supplier: SupplierOption) {
   return supplier.document.length > 11 ? `CNPJ ${supplier.document}` : `CPF ${supplier.document}`;
 }
 
+function supplierLocation(supplier: SupplierOption) {
+  return [supplier.city, supplier.state].filter(Boolean).join("/");
+}
+
+function supplierStatus(supplier: SupplierOption) {
+  if (supplier.active === true) return "Ativo";
+  if (supplier.active === false) return "Inativo";
+  return "Status não informado";
+}
+
+function supplierDetailLine(supplier: SupplierOption) {
+  return [
+    documentLabel(supplier),
+    `#${supplier.id}`,
+    supplier.tradeName ? `Fantasia: ${supplier.tradeName}` : undefined,
+    supplierLocation(supplier) || undefined,
+    supplierStatus(supplier)
+  ].filter(Boolean).join(" - ");
+}
+
 export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sienge", required = false, compact = false }: SiengeSupplierPickerProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -120,6 +140,12 @@ export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sien
         </div>
         <small>{selected ? selected.name : value ? `Fornecedor #${value}` : "Busque na base local ou informe o ID."}</small>
       </label>
+      {selected && (
+        <div className="supplier-picker-selected">
+          <strong>{selected.tradeName || selected.name}</strong>
+          <span>{supplierDetailLine(selected)}</span>
+        </div>
+      )}
 
       {open && (
         <section className="supplier-picker-panel">
@@ -141,7 +167,7 @@ export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sien
                 >
                   <span>
                     <strong>{supplier.name}</strong>
-                    <small>{documentLabel(supplier)} - #{supplier.id} - {supplier.source === "creditors" ? "Cadastro" : "Financeiro"}</small>
+                    <small>{supplierDetailLine(supplier)} - {supplier.source === "creditors" ? "Cadastro" : "Financeiro"}</small>
                   </span>
                   <b>Usar</b>
                 </button>
