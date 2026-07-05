@@ -74,6 +74,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Informe o valor do frete a pagar." }, { status: 400 });
     }
 
+    if (commercialTerms.offersCash === false && commercialTerms.offersTerm !== true) {
+      return NextResponse.json({ message: "Marque ao menos uma forma de pagamento: à vista, a prazo ou as duas." }, { status: 400 });
+    }
+
+    if (commercialTerms.offersTerm === true) {
+      const installments = Array.isArray(commercialTerms.installments) ? commercialTerms.installments : [];
+      const totalPercentage = installments.reduce((sum, installment) => sum + (Number(installment?.percentage) || 0), 0);
+      if (!installments.length || Math.abs(totalPercentage - 100) >= 0.01) {
+        return NextResponse.json({ message: "As parcelas do pagamento a prazo devem somar 100% do valor." }, { status: 400 });
+      }
+    }
+
     if (tokenDocument && tokenDocument !== document) {
       return NextResponse.json({ message: "Documento não corresponde ao link da cotação." }, { status: 403 });
     }

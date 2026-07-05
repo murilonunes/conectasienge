@@ -56,7 +56,7 @@ export function SiengeTab({
   const directItemDisabled = !form.directItemBuildingId || !form.directItemProductId || !form.directItemQuantity || !form.directItemUnity.trim() || loadingAction !== null;
   const requestItemReady = Boolean(form.purchaseRequestId && form.purchaseRequestItemNumber);
   const supplierReady = Boolean(form.supplierId && form.purchaseRequestItemNumber);
-  const directItemReady = !directItemDisabled || loadingAction !== null;
+  const directItemReady = Boolean(form.directItemBuildingId && form.directItemProductId && form.directItemQuantity && form.directItemUnity.trim());
 
   const topics: Array<{ key: SiengeTopic; label: string; title: string; description: string; status: string }> = [
     {

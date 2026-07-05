@@ -10,8 +10,7 @@ function extractResultMessage(json: string): string | undefined {
     if (Array.isArray(parsed)) {
       if (parsed.length > 1) {
         const okCount = parsed.filter((entry) => entry && typeof entry === "object" && entry.ok).length;
-        const operationText = parsed.length === 1 ? "operação concluída" : "operações concluídas";
-        return `${okCount} de ${parsed.length} ${operationText} com sucesso.`;
+        return `${okCount} de ${parsed.length} operações concluídas com sucesso.`;
       }
       const [first] = parsed;
       return first && typeof first.message === "string" ? first.message : undefined;

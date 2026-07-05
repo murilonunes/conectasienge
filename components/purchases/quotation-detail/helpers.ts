@@ -74,7 +74,7 @@ export function paymentSummary(terms: SupplierQuoteCommercialTerms) {
       .filter((installment) => installment.percentage > 0)
       .map((installment) => `${installment.percentage}% em ${installment.days}d`)
       .join(" + ");
-    options.push(termSummary || "A prazo");
+    options.push(termSummary ? `A prazo (${termSummary})` : "A prazo");
   }
   return options.join(" | ") || "Não informado";
 }

@@ -43,7 +43,7 @@ export function MapaTab({
   }).sort((left, right) => right.bestCount - left.bestCount || left.bestTotal - right.bestTotal || right.coverage - left.coverage);
   const leader = supplierAnalyses.find((analysis) => analysis.bestCount > 0);
   const fastest = [...supplierAnalyses]
-    .filter((analysis) => analysis.coverage > 0)
+    .filter((analysis) => analysis.coverage > 0 && analysis.averageDeadline > 0)
     .sort((left, right) => left.averageDeadline - right.averageDeadline || right.coverage - left.coverage)[0];
   const savingsRows = rowsWithBest
     .map((row) => {
