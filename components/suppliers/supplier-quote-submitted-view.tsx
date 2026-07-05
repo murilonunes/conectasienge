@@ -25,6 +25,7 @@ export function SupplierQuoteSubmittedView({
 }: SupplierQuoteSubmittedViewProps) {
   const [requestingLink, setRequestingLink] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
+  const [newLinkUrl, setNewLinkUrl] = useState("");
   const terms = response.commercialTerms;
   const attendedItems = response.items.filter((item) => item.attends);
   const responseItemsByNumber = new Map(response.items.map((item) => [item.itemNumber, item]));
@@ -44,9 +45,10 @@ export function SupplierQuoteSubmittedView({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token })
       });
-      const json = await result.json() as { message?: string };
+      const json = await result.json() as { message?: string; url?: string };
       if (!result.ok) throw new Error(json.message || "Não foi possível solicitar um novo link.");
-      setRequestMessage(json.message || "Solicitação enviada para a equipe de compras.");
+      if (json.url) setNewLinkUrl(json.url);
+      setRequestMessage(json.message || "Novo link gerado. Use-o para enviar a proposta revisada.");
     } catch (error) {
       setRequestMessage(error instanceof Error ? error.message : "Erro inesperado ao solicitar novo link.");
     } finally {
@@ -75,13 +77,22 @@ export function SupplierQuoteSubmittedView({
         </div>
         <div className="supplier-submitted-actions">
           <button className="button secondary" type="button" onClick={() => window.print()}>Imprimir / salvar PDF</button>
-          {canRequestNewLink && (
+          {canRequestNewLink && !newLinkUrl && (
             <button className="button" type="button" onClick={requestNewLink} disabled={requestingLink}>
-              {requestingLink ? "Solicitando..." : "Solicitar novo link"}
+              {requestingLink ? "Gerando novo link..." : "Solicitar novo link"}
             </button>
           )}
         </div>
         {requestMessage && <div className="settings-inline-message">{requestMessage}</div>}
+        {newLinkUrl && (
+          <div className="quotation-copy-link supplier-new-link">
+            <input readOnly value={newLinkUrl} onFocus={(event) => event.currentTarget.select()} />
+            <button className="button secondary" type="button" onClick={() => void navigator.clipboard.writeText(newLinkUrl).then(() => setRequestMessage("Link copiado."), () => setRequestMessage("Não foi possível copiar automaticamente. Selecione o texto e copie manualmente."))}>
+              Copiar
+            </button>
+            <a className="button" href={newLinkUrl}>Abrir novo link</a>
+          </div>
+        )}
       </div>
 
       <section className="card supplier-portal-card supplier-print-section">

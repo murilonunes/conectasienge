@@ -8,13 +8,17 @@ export function RespostasTab({
   supplierResponses,
   responseStats,
   loadingAction,
-  onSendNegotiation
+  onSendNegotiation,
+  onDeleteResponse,
+  message
 }: {
   quotation: QuotationSummary;
   supplierResponses: SupplierQuoteResponseSummary[];
   responseStats: { totalValue: number; attendedItems: number; pendingRegistrations: number; suppliers: number };
   loadingAction: string | null;
   onSendNegotiation: (response: SupplierQuoteResponseSummary, confirm: boolean) => void;
+  onDeleteResponse: (response: SupplierQuoteResponseSummary) => void;
+  message: string;
 }) {
   return (
     <section className="quotation-responses">
@@ -35,6 +39,8 @@ export function RespostasTab({
             Exportar respostas
           </button>
         </div>
+
+        {message && <div className="settings-inline-message">{message}</div>}
 
         {supplierResponses.length ? (
           <div className="quotation-response-list">
@@ -78,6 +84,9 @@ export function RespostasTab({
                   ) : (
                     <span className="table-muted">Crie o cadastro deste fornecedor no Sienge (aba Cadastros) para enviar a negociação.</span>
                   )}
+                  <button className="button danger" type="button" disabled={loadingAction !== null} onClick={() => onDeleteResponse(response)}>
+                    {loadingAction === `delete-response-${response.id}` ? "Excluindo..." : "Excluir resposta"}
+                  </button>
                 </div>
 
                 <div className="quotation-response-items">

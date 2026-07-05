@@ -22,13 +22,14 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A aba Aprovar virou uma central de decisão com recomendação automática, status de prontidão, análise do fornecedor escolhido, checklist e layout responsivo.
 - Textos das telas de cotação foram revisados para remover plurais técnicos como `item(ns)` e padronizar mensagens comerciais; o CSS das abas Mapa/Aprovar foi revisado para evitar sobrescritas antigas em telas médias.
 - Foi documentado o mapa real das conexões Sienge em cotações: telas abrem pelo espelho local, escritas passam por dry-run em `/api/sienge/purchase-quotations`, e o portal público do fornecedor não chama o Sienge diretamente.
+- O portal do fornecedor passou a validar forma de pagamento também no backend, gerar novo link automaticamente quando o fornecedor solicita revisão de uma proposta já enviada, e permitir que a equipe exclua uma resposta pela aba Respostas.
 
 ## Acesso e autenticação
 
 - O acesso ao sistema é protegido por senha única definida em `APP_ACCESS_PASSWORD` (mínimo de 12 caracteres) no `.env`; `APP_AUTH_SECRET` pode definir um segredo de assinatura separado.
 - O `middleware.ts` valida um cookie de sessão HMAC (`brasin_session`) em toda requisição; sessão dura 12 horas, cookie `httpOnly`, `sameSite lax` e `secure` em produção.
 - A tela `/login` faz o acesso e preserva a rota de destino; o botão Sair fica no topo do sistema.
-- Rotas públicas são uma lista explícita no middleware: `/login`, `/api/auth/*`, `/portal-cotacao/*`, `/api/supplier-portal/responses` e `/api/supplier-portal/suppliers`. Todo o resto exige sessão.
+- Rotas públicas são uma lista explícita no middleware: `/login`, `/api/auth/*`, `/portal-cotacao/*`, `/api/supplier-portal/responses`, `/api/supplier-portal/link-requests` e `/api/supplier-portal/suppliers`. Todo o resto exige sessão.
 - Ao criar uma nova rota pública de fornecedor, é preciso lembrar de adicioná-la à lista `publicPath` do middleware.
 - O login bloqueia força bruta: 8 falhas por 15 minutos por IP e teto global de 40 falhas por 15 minutos independente do IP informado (o cabeçalho `x-forwarded-for` pode ser forjado quando não há proxy confiável na frente).
 - As verificações de assinatura (sessão no middleware e senha no login) usam comparação em tempo constante.
@@ -52,16 +53,17 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Revogar um link registra o evento e bloqueia imediatamente o portal público e o envio de propostas por aquele token.
 - O portal público `/portal-cotacao/[token]` permite ao fornecedor informar, item a item: se atende, preço unitário, quantidade, prazo diferente do pedido e observação; preço zero informado é tratado como valor válido.
 - Itens parciais usam quantidade menor que a solicitada e destaque amarelo. Itens que o fornecedor não cotou aparecem separados no detalhe final/impressão, também com fundo amarelo.
-- Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF e, quando permitido, solicitar novo link. A proposta enviada não fica editável.
+- Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF. Quando o fornecedor solicita revisão, o portal gera automaticamente um novo link para envio de nova proposta; a proposta já enviada não fica editável.
+- A aba Respostas permite excluir uma resposta do fornecedor. A exclusão remove aprovações vinculadas àquela resposta, registra evento e libera o token original para novo envio caso o link ainda esteja válido e não revogado.
 - Quando o documento do fornecedor não existe na base local, a resposta entra com cadastro pendente para revisão (nome fantasia, cidade e estado), e a equipe pode preparar a criação do credor no Sienge.
 - O comparativo por item marca o melhor preço entre as respostas recebidas e alimenta a aba de aprovação.
 - A aba Mapa mostra leitura gerencial da cotação: melhor cesta por item, cobertura de preços, itens parciais, maiores economias e ranking por fornecedor.
 - A aprovação registra vencedor por cotação inteira ou por item, com justificativa obrigatória, salva no banco local.
 - A aba Aprovar mostra prontidão da decisão, recomendação automática, cobertura salva, checklist e análise do fornecedor selecionado antes de enviar a decisão ao Sienge.
-- A timeline de eventos registra: link enviado, link revogado, resposta recebida, fornecedor aprovado, erro de integração e criação no Sienge.
+- A timeline de eventos registra: link enviado, novo link solicitado, link revogado, resposta recebida, resposta excluída, fornecedor aprovado, erro de integração e criação no Sienge.
 - Respostas, convites, aprovações, revisões de cadastro e eventos ficam em `supplier-quotations.sqlite`, dentro de `.sienge-data`.
 - O segredo de assinatura vem de `SUPPLIER_PORTAL_SECRET` ou é gerado localmente uma única vez, com gravação atômica para evitar corrida entre processos.
-- Segurança das rotas públicas: envio de propostas limitado a 20 por 10 minutos por IP (200 global) e consulta de fornecedor a 30 por 10 minutos por IP (300 global); corpo do envio limitado a 128 KB e campos saneados antes de gravar.
+- Segurança das rotas públicas: envio de propostas limitado a 20 por 10 minutos por IP (200 global), solicitação de novo link a 8 por 10 minutos por IP (80 global) e consulta de fornecedor a 30 por 10 minutos por IP (300 global); corpo do envio limitado a 128 KB e campos saneados antes de gravar.
 - A integração com o Sienge cria a cotação (`/v1/purchase-quotations`), anexa itens da solicitação e inclui fornecedores por item, sempre com dry-run de conferência antes de confirmar a gravação.
 - As ações reais de escrita em cotações ficam concentradas em `/api/sienge/purchase-quotations`: criar cotação, vincular item de solicitação, incluir fornecedor por item, criar insumo direto, criar/atualizar negociação e autorizar a última negociação.
 - O PDF do mapa comparativo usa a rota interna `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`, que consulta o Sienge em `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`.
@@ -323,8 +325,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O limite de requisicoes das rotas publicas e em memoria, por processo: zera a cada reinicio e nao e compartilhado entre instancias. Suficiente para o app rodando em um unico processo; multiplas instancias exigiriam armazenamento compartilhado.
 - O token bruto dos links de fornecedor fica salvo na tabela de convites para permitir o botao Copiar; quem tiver acesso ao arquivo SQLite tem links validos. A revogacao mitiga, mas remover o token bruto e uma melhoria futura.
 - Se o sistema for exposto fora da rede local, e preciso colocar um proxy com TLS confiavel na frente; so entao o cabecalho `x-forwarded-for` passa a ser confiavel para o limite por IP.
-- O mesmo link de fornecedor aceita mais de uma resposta (a tela mostra a contagem); travar reenvio e uma decisao de negocio pendente.
-- O botão de PDF do Mapa da cotação depende de enviar `quotationId` corretamente para a rota interna; se o parâmetro for montado errado, a API retorna 400 antes de consultar o Sienge.
+- Cada link de fornecedor aceita apenas uma resposta; revisões devem usar novo link. Excluir uma resposta é uma ação administrativa destrutiva e remove aprovações vinculadas àquela resposta.
 - A ação `add-item`/Insumo direto está implementada, mas ainda deve ser validada contra o contrato oficial do Sienge antes de ser considerada pronta para produção, especialmente quanto à apropriação por obra (`buildingsApropriations`) no payload de criação de item.
 
 ## Configuracoes

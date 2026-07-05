@@ -97,6 +97,8 @@ Revisado nesta etapa:
 - `/cotacoes/[id]` foi conferido contra a declaração de abas em `types.ts`; as abas atuais são Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico.
 - As abas do detalhe continuam em arquivos próprios dentro de `components/purchases/quotation-detail/tabs`, com `index.tsx` apenas coordenando estado, ações e navegação.
 - O portal público do fornecedor foi revisado no fluxo final: após enviar proposta, o link reabre em modo somente consulta, com opção de imprimir/salvar PDF e solicitação de novo link quando aplicável.
+- A solicitação de novo link pelo fornecedor passou a gerar um link automaticamente, com limite por IP e global, mantendo a proposta já enviada apenas para consulta.
+- A aba Respostas ganhou exclusão administrativa de proposta recebida; a ação remove aprovações vinculadas, registra evento e permite novo envio pelo token original quando ele ainda estiver válido e não revogado.
 - Itens parciais e itens não cotados foram padronizados como atenção amarela; itens não cotados aparecem em card separado no detalhe final e na impressão.
 
 Resultado: o fluxo de cotações ficou documentado de ponta a ponta e os códigos das áreas principais ficaram separados por arquivo, reduzindo acoplamento visual dentro dos componentes maiores.
@@ -125,10 +127,22 @@ Revisado nesta etapa:
 
 Pontos de atenção registrados:
 
-- O PDF do Mapa depende do parâmetro interno `quotationId`; se a URL for montada sem `&quotationId`, a rota retorna 400 antes de chamar o Sienge.
 - A ação `add-item`/Insumo direto ainda precisa validação de contrato contra a API oficial antes de ser tratada como pronta para produção, especialmente quanto ao campo de apropriação por obra (`buildingsApropriations`).
 
 Resultado: ficou documentado o que de fato acontece em cotações e detalhamento de cotações, incluindo quais ações escrevem no Sienge e quais ficam apenas no banco local.
+
+### Etapa 13 revisada - Revisões de propostas do fornecedor
+
+Revisado nesta etapa:
+
+- O backend do envio de proposta passou a repetir a validação da forma de pagamento: ao menos uma opção marcada e, quando houver prazo, parcelas somando 100%.
+- Reabrir um link já respondido continua mostrando a proposta em modo somente consulta, com imprimir/salvar PDF.
+- A rota pública `/api/supplier-portal/link-requests` gera novo link automaticamente para o mesmo fornecedor e documento quando quem solicita possui o token de uma proposta já enviada.
+- A rota de novo link bloqueia token revogado e tem limite de requisições por IP e global.
+- A aba Respostas permite excluir uma resposta recebida; a rota dinâmica de exclusão permanece protegida por sessão, porque o middleware só libera a rota pública exata de envio de propostas.
+- A exclusão de resposta remove aprovações vinculadas e registra evento `response_deleted` na timeline.
+
+Resultado: revisão de proposta deixou de depender de edição do envio anterior. O fornecedor recebe um novo link para revisar, enquanto a equipe mantém controle para excluir uma resposta incorreta quando necessário.
 
 ### Etapa 9 revisada - Importação do dump em Configurações
 

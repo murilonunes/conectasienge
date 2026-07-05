@@ -90,6 +90,7 @@ export function QuotationDetail({
   const [invitations, setInvitations] = useState(supplierInvitations);
   const [events, setEvents] = useState(supplierEvents);
   const [linkMessage, setLinkMessage] = useState("");
+  const [responsesMessage, setResponsesMessage] = useState("");
 
   const bestSupplier = useMemo(() => {
     const valid = quotation.suppliers.filter((supplier) => supplier.totalValue > 0);
@@ -460,6 +461,24 @@ export function QuotationDetail({
     }
   }
 
+  async function deleteResponse(response: SupplierQuoteResponseSummary) {
+    const confirmed = window.confirm(
+      `Excluir a resposta #${response.id} de ${response.supplierName}?\n\nAs aprovações vinculadas a ela também serão removidas e o link original volta a aceitar uma nova proposta. Esta ação não pode ser desfeita.`
+    );
+    if (!confirmed) return;
+    setLoadingAction(`delete-response-${response.id}`);
+    setResponsesMessage("");
+    try {
+      const result = await fetch(`/api/supplier-portal/responses/${response.id}?quotationId=${quotation.id}`, { method: "DELETE" });
+      const json = await result.json() as { ok?: boolean; message?: string };
+      if (!result.ok) throw new Error(json.message || "Não foi possível excluir a resposta.");
+      window.location.reload();
+    } catch (error) {
+      setResponsesMessage(error instanceof Error ? error.message : "Erro inesperado ao excluir a resposta.");
+      setLoadingAction(null);
+    }
+  }
+
   async function copyInvitationLink(url: string) {
     try {
       await navigator.clipboard.writeText(url);
@@ -728,6 +747,8 @@ export function QuotationDetail({
           responseStats={responseStats}
           loadingAction={loadingAction}
           onSendNegotiation={(response, confirm) => void runNegotiationAction([{ response }], confirm, "Negociação enviada ao Sienge")}
+          onDeleteResponse={(response) => void deleteResponse(response)}
+          message={responsesMessage}
         />
       )}
 

@@ -106,6 +106,7 @@ export function eventTypeLabel(type: SupplierQuoteEventSummary["type"]) {
     link_requested: "Novo link solicitado",
     link_revoked: "Link revogado",
     response_received: "Resposta recebida",
+    response_deleted: "Resposta excluída",
     supplier_approved: "Fornecedor aprovado",
     integration_error: "Erro de integração",
     sienge_created: "Criação no Sienge"
@@ -114,7 +115,7 @@ export function eventTypeLabel(type: SupplierQuoteEventSummary["type"]) {
 }
 
 export function eventTypeClass(type: SupplierQuoteEventSummary["type"]) {
-  if (type === "integration_error" || type === "link_revoked") return "late";
+  if (type === "integration_error" || type === "link_revoked" || type === "response_deleted") return "late";
   if (type === "link_sent" || type === "link_requested") return "warn";
   return "";
 }

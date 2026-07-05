@@ -33,10 +33,11 @@ O portal público do fornecedor não chama o Sienge diretamente. Ele grava convi
 - Quando `/cotacoes` recebe uma solicitação de compra como origem, os botões de criação chamam `/api/sienge/purchase-quotations`: primeiro em `dryRun`, depois com `confirm: true`.
 - `/cotacoes/[id]` também abre pelo espelho local e pelas tabelas locais do portal do fornecedor; as ações que gravam no Sienge ficam nas abas Sienge, Respostas, Aprovar e Cadastros.
 - A aba Sienge prepara ou confirma criação da cotação, vínculo de itens de solicitação, inclusão de fornecedor por item e criação de insumo direto.
-- A aba Respostas envia uma proposta recebida pelo portal como negociação do fornecedor no Sienge.
+- A aba Respostas envia uma proposta recebida pelo portal como negociação do fornecedor no Sienge e permite excluir uma resposta local, removendo aprovações vinculadas.
 - A aba Aprovar salva a decisão localmente e, quando confirmado, envia a decisão como negociação autorizada.
 - A aba Cadastros cria fornecedor/credor no Sienge por `/api/sienge/suppliers`, que usa `/v1/creditors`.
 - A aba Mapa calcula análises localmente e pode buscar o PDF do mapa comparativo do Sienge.
+- O portal público do fornecedor salva propostas apenas no banco local. Depois do envio, a proposta fica somente para consulta; revisão de proposta usa novo link gerado por `/api/supplier-portal/link-requests`.
 
 ### Endpoints usados em cotações
 
@@ -54,5 +55,12 @@ O portal público do fornecedor não chama o Sienge diretamente. Ele grava convi
 
 ### Pontos de atenção atuais
 
-- O botão de PDF do Mapa no detalhe da cotação deve chamar `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`. Se o separador `&` for perdido, a rota recebe a cotação sem `quotationId` válido e retorna 400 antes de chegar ao Sienge.
 - O caminho de `add-item`/Insumo direto está implementado no app, mas deve ser validado campo a campo contra o contrato oficial do Sienge antes de ser tratado como pronto em produção. Em revisões anteriores, o campo de apropriação por obra (`buildingsApropriations`) apareceu como risco para `PurchaseQuotationItemInsert`.
+
+### Rotas locais do portal do fornecedor
+
+- `POST /api/supplier-portal/responses`: recebe a proposta pública, valida token ativo, bloqueia reenvio pelo mesmo token, valida e-mail, telefone, frete, prazo geral, forma de pagamento, parcelas e quantidades.
+- `DELETE /api/supplier-portal/responses/{responseId}?quotationId={id}`: rota protegida por sessão; exclui uma resposta recebida, remove aprovações vinculadas e registra evento local.
+- `POST /api/supplier-portal/link-requests`: rota pública com limite por IP e global; gera novo link para revisão quando o fornecedor possui o token de uma proposta já enviada e o token não está revogado.
+- `POST /api/supplier-portal/invitations`: rota protegida por sessão; gera links a partir da tela interna de cotações.
+- `DELETE /api/supplier-portal/invitations`: rota protegida por sessão; revoga links.

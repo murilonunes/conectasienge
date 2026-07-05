@@ -119,6 +119,7 @@ export type SupplierQuoteEventType =
   | "link_requested"
   | "link_revoked"
   | "response_received"
+  | "response_deleted"
   | "supplier_approved"
   | "integration_error"
   | "sienge_created";
@@ -395,6 +396,10 @@ export function verifySupplierQuoteToken(token: string): SupplierQuoteTokenPaylo
   }
 }
 
+export function isSupplierQuoteTokenRevoked(token: string) {
+  return tokenRevoked(token);
+}
+
 function tokenRevoked(token: string) {
   if (!supplierQuoteDatabaseExists()) return false;
   const db = database();
@@ -608,6 +613,46 @@ export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, pay
       metadata: { responseId: Number(result.lastInsertRowid), supplierId: payload.supplierId }
     });
     return { id: Number(result.lastInsertRowid), createdAt };
+  } finally {
+    db.close();
+  }
+}
+
+// Exclui a resposta e as aprovações vinculadas a ela. Como o índice único de
+// token passa a não ter mais resposta, o link original volta a aceitar um envio.
+export function deleteSupplierQuoteResponse(quotationId: number, responseId: number) {
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT id, supplier_name, document
+      FROM supplier_quote_responses
+      WHERE id = ? AND quotation_id = ?
+    `).get(responseId, quotationId) as { id: number; supplier_name: string; document: string } | undefined;
+
+    if (!row) throw new Error("Resposta não encontrada para esta cotação.");
+
+    db.exec("BEGIN");
+    try {
+      const removedAwards = Number(db.prepare(
+        "DELETE FROM supplier_quote_awards WHERE quotation_id = ? AND response_id = ?"
+      ).run(quotationId, responseId).changes);
+      db.prepare("DELETE FROM supplier_quote_responses WHERE id = ?").run(responseId);
+      insertSupplierQuoteEvent(db, {
+        quotationId,
+        type: "response_deleted",
+        title: "Resposta do fornecedor excluída",
+        description: removedAwards
+          ? `${removedAwards} aprovação(ões) vinculada(s) também removida(s). O link original volta a aceitar uma nova proposta.`
+          : "O link original volta a aceitar uma nova proposta.",
+        supplierName: row.supplier_name,
+        document: row.document,
+        metadata: { responseId, removedAwards }
+      });
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
   } finally {
     db.close();
   }
