@@ -48,7 +48,8 @@ export function IdentityStep({
     <section className="card supplier-portal-card supplier-identity-card">
       <div className="supplier-card-head">
         <span>Passo 1 de 5</span>
-        <h2>Identificação</h2>
+        <h2>Dados do fornecedor</h2>
+        <p className="supplier-card-note">Confirme os dados de contato que serão usados pela equipe de compras.</p>
       </div>
       <div className={`supplier-document-status ${hasLockedIdentity ? "locked" : supplierExists ? "found" : supplierExists === false ? "pending" : ""}`}>
         <strong>{hasLockedIdentity ? "Fornecedor definido" : checkingDocument ? "Consultando" : supplierExists ? "Cadastro localizado" : supplierExists === false ? "Cadastro pendente" : "CPF/CNPJ"}</strong>
@@ -60,7 +61,7 @@ export function IdentityStep({
           <input value={document} inputMode="numeric" readOnly={lockedFields?.document} onChange={(event) => onDocumentChange(event.target.value.replace(/\D/g, ""))} placeholder="00000000000000" />
         </label>
         <label>
-          <span>Razão social / Nome *</span>
+          <span>Razão social ou nome *</span>
           <input value={supplierName} readOnly={lockedFields?.supplierName} onChange={(event) => onSupplierNameChange(event.target.value)} placeholder="Nome do fornecedor" />
         </label>
         <label>

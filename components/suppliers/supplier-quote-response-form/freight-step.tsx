@@ -25,7 +25,8 @@ export function FreightStep({
     <section className="card supplier-portal-card">
       <div className="supplier-card-head">
         <span>Passo 4 de 5</span>
-        <h2>Frete e observações</h2>
+        <h2>Frete, entrega e observações</h2>
+        <p className="supplier-card-note">Informe a condição de frete e o prazo geral de entrega para esta proposta.</p>
       </div>
 
       <div className="supplier-portal-grid supplier-freight-grid">
@@ -34,7 +35,7 @@ export function FreightStep({
           <select value={freightType} onChange={(event) => onFreightTypeChange(event.target.value as FreightType)}>
             <option value="">Selecione</option>
             <option value="INCLUDED">Frete incluso</option>
-            <option value="PAID">Frete a pagar à parte</option>
+            <option value="PAID">Frete cobrado à parte</option>
             <option value="NONE">Sem frete</option>
           </select>
         </label>
@@ -44,7 +45,7 @@ export function FreightStep({
         </label>
         {freightType === "PAID" && (
           <label>
-            <span>Valor do frete</span>
+            <span>Valor do frete *</span>
             <input value={freightPrice} onChange={(event) => onFreightPriceChange(event.target.value)} type="number" min="0" step="0.01" placeholder="0,00" />
           </label>
         )}

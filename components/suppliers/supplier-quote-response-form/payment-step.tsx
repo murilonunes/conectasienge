@@ -204,7 +204,7 @@ export function PaymentStep({
                     <strong>Gerar parcelas automaticamente</strong>
                     <span>Use este bloco para montar a condição por quantidade, intervalo e percentual.</span>
                   </div>
-                  <button type="button" className="button secondary" onClick={applyInstallmentPlan}>Aplicar geração automática</button>
+                  <button type="button" className="button secondary supplier-helper-action" onClick={applyInstallmentPlan}>Gerar parcelas</button>
                 </div>
 
                 <div className="supplier-installment-builder">
@@ -219,7 +219,7 @@ export function PaymentStep({
                   <label>
                     <span>Intervalo</span>
                     <select value={intervalMode} onChange={(event) => setIntervalMode(event.target.value as "monthly" | "days")}>
-                      <option value="monthly">1 vez por mes</option>
+                      <option value="monthly">1 vez por mês</option>
                       <option value="days">Intervalo em dias</option>
                     </select>
                   </label>
@@ -270,12 +270,12 @@ export function PaymentStep({
                     <input value={installment.percentage} onChange={(event) => onInstallmentChange(index, "percentage", event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="100" />
                   </label>
                   {installments.length > 1 && (
-                    <button type="button" className="supplier-installment-remove" onClick={() => onRemoveInstallment(index)}>Remover</button>
+                    <button type="button" className="supplier-installment-remove" onClick={() => onRemoveInstallment(index)}>Remover parcela</button>
                   )}
                 </div>
               ))}
               <div className="supplier-installment-actions">
-                <button type="button" className="button secondary" onClick={onAddInstallment}>{installments.length ? "Adicionar parcela" : "Adicionar primeira parcela"}</button>
+                <button type="button" className="button secondary" onClick={onAddInstallment}>{installments.length ? "Adicionar parcela manual" : "Adicionar primeira parcela manual"}</button>
                 <span className={installments.length && installmentsTotalValid ? "done" : "warn"}>
                   {installments.length ? `Total: ${installmentsTotalPercentage}%${!installmentsTotalValid ? " (deve somar 100%)" : ""}` : "Nenhuma parcela informada"}
                 </span>
@@ -283,7 +283,7 @@ export function PaymentStep({
             </div>
           )}
           {termPaymentChoice === "no" && (
-            <div className="supplier-term-declined">Pagamento a prazo nao sera oferecido nesta proposta.</div>
+            <div className="supplier-term-declined">Pagamento a prazo não será oferecido nesta proposta.</div>
           )}
         </div>
       </div>

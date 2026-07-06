@@ -15,6 +15,7 @@ export function ItemsStep({ items, responseItems, onItemChange }: ItemsStepProps
       <div className="supplier-card-head">
         <span>Passo 2 de 5</span>
         <h2>Itens da cotação</h2>
+        <p className="supplier-card-note">Marque os itens que sua empresa consegue cotar. Use atendimento parcial apenas quando a quantidade for menor que a solicitada.</p>
       </div>
       <div className="supplier-quote-items">
         {items.map((item) => {
@@ -38,16 +39,16 @@ export function ItemsStep({ items, responseItems, onItemChange }: ItemsStepProps
                 <div className="supplier-item-side">
                   <label className="supplier-item-partial">
                     <input type="checkbox" disabled={!current.attends} checked={current.partial} onChange={(event) => onItemChange(item.itemNumber, "partial", event.target.checked)} />
-                    <span>Parcial</span>
+                    <span>Atendimento parcial</span>
                   </label>
-                  <strong className="supplier-item-total">{current.attends ? formatCurrency(total) : "Não atende"}</strong>
+                  <strong className="supplier-item-total">{current.attends ? formatCurrency(total) : "Não cotado"}</strong>
                 </div>
               </div>
               <div className="supplier-item-values">
                 <label><span>Valor unitário</span><input disabled={!current.attends} value={current.unitPrice} onChange={(event) => onItemChange(item.itemNumber, "unitPrice", event.target.value)} type="number" min="0" step="0.01" /></label>
-                <label><span>Quantidade</span><input disabled={!current.attends || !current.partial} value={current.quantity} onChange={(event) => onItemChange(item.itemNumber, "quantity", event.target.value)} type="number" min="0" max={item.quantity} step="0.01" /></label>
-                <label><span>Prazo diferente (dias)</span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => onItemChange(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" placeholder="Opcional" /></label>
-                <label><span>Observação</span><input disabled={!current.attends} value={current.notes} onChange={(event) => onItemChange(item.itemNumber, "notes", event.target.value)} /></label>
+                <label><span>Quantidade cotada</span><input disabled={!current.attends || !current.partial} value={current.quantity} onChange={(event) => onItemChange(item.itemNumber, "quantity", event.target.value)} type="number" min="0" max={item.quantity} step="0.01" /></label>
+                <label><span>Prazo diferente do pedido (dias)</span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => onItemChange(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" placeholder="Opcional" /></label>
+                <label><span>Observação do item</span><input disabled={!current.attends} value={current.notes} onChange={(event) => onItemChange(item.itemNumber, "notes", event.target.value)} /></label>
               </div>
             </article>
           );

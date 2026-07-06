@@ -51,16 +51,17 @@ export function ReviewStep({
       <div className="supplier-card-head">
         <span>Passo 5 de 5</span>
         <h2>Confira antes de enviar</h2>
+        <p className="supplier-card-note">Revise os dados da proposta. Se algo estiver incorreto, volte ao passo correspondente antes de enviar.</p>
       </div>
 
       <div className="supplier-review-section">
         <div className="supplier-review-section-head">
-          <h3>Identificação</h3>
-          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(1)}>Editar</button>
+          <h3>Dados do fornecedor</h3>
+          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(1)}>Editar dados</button>
         </div>
         <div className="supplier-review-grid">
           <span><strong>CPF/CNPJ</strong>{document ? formatDocument(document) : "Não informado"}</span>
-          <span><strong>Razão social / Nome</strong>{supplierName || "Não informado"}</span>
+          <span><strong>Razão social ou nome</strong>{supplierName || "Não informado"}</span>
           <span><strong>E-mail</strong>{email || "Não informado"}</span>
           <span><strong>Telefone</strong>{phone || "Não informado"}</span>
         </div>
@@ -68,13 +69,13 @@ export function ReviewStep({
 
       <div className="supplier-review-section">
         <div className="supplier-review-section-head">
-          <h3>Itens da cotação</h3>
-          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(2)}>Editar</button>
+          <h3>Itens cotados</h3>
+          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(2)}>Editar itens</button>
         </div>
         {quotedCount ? (
           <div className="supplier-review-items">
             <div className="supplier-review-items-row supplier-review-items-head">
-              <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Prazo dif.</span><span>Total</span>
+              <span>Insumo</span><span>Valor unitário</span><span>Quantidade</span><span>Prazo especial</span><span>Total</span>
             </div>
             {responseItems.filter((item) => item.attends).map((item) => {
               const original = items.find((current) => current.itemNumber === item.itemNumber);
@@ -97,7 +98,7 @@ export function ReviewStep({
       <div className="supplier-review-section">
         <div className="supplier-review-section-head">
           <h3>Pagamento</h3>
-          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(3)}>Editar</button>
+          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(3)}>Editar pagamento</button>
         </div>
         <div className="supplier-review-grid">
           {offersCash && <span><strong>À vista</strong>{cashSummaryText(cashDiscountPercentage, cashDiscountMode, cashDiscountValue)} - {formatCurrency(cashPrice)}</span>}
@@ -109,7 +110,7 @@ export function ReviewStep({
       <div className="supplier-review-section">
         <div className="supplier-review-section-head">
           <h3>Frete e observações</h3>
-          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(4)}>Editar</button>
+          <button type="button" className="supplier-review-edit" onClick={() => onEditStep(4)}>Editar frete</button>
         </div>
         <div className="supplier-review-grid">
           <span><strong>Frete e entrega</strong>{freightSummaryText(freightType, freightPrice, deliveryDays)}</span>

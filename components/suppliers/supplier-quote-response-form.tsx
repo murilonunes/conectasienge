@@ -14,11 +14,11 @@ import type { CashDiscountChoice, CashDiscountMode, FreightType, InstallmentRow,
 import { SupplierQuoteSubmittedView } from "./supplier-quote-submitted-view";
 
 const wizardSteps: Array<{ id: WizardStep; label: string }> = [
-  { id: 1, label: "Identificação" },
+  { id: 1, label: "Dados do fornecedor" },
   { id: 2, label: "Itens" },
   { id: 3, label: "Pagamento" },
-  { id: 4, label: "Frete" },
-  { id: 5, label: "Revisão" }
+  { id: 4, label: "Frete e entrega" },
+  { id: 5, label: "Conferência" }
 ];
 
 type SupplierQuoteResponseFormProps = {
@@ -211,6 +211,20 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     3: paymentStepMessage(),
     4: "Escolha uma opção de frete e informe o prazo geral de entrega em dias.",
     5: "Revise os passos anteriores: fornecedor, itens, pagamento e frete."
+  };
+  const nextActionLabels: Record<WizardStep, string> = {
+    1: "Continuar para itens",
+    2: "Continuar para pagamento",
+    3: "Continuar para frete",
+    4: "Continuar para conferência",
+    5: "Enviar proposta"
+  };
+  const backActionLabels: Record<WizardStep, string> = {
+    1: "",
+    2: "Voltar para dados",
+    3: "Voltar para itens",
+    4: "Voltar para pagamento",
+    5: "Voltar para frete"
   };
 
   function goToStep(target: WizardStep) {
@@ -533,13 +547,13 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           {message && <div className="settings-inline-message">{message}</div>}
           <div className={`supplier-step-actions ${step === 1 ? "single" : ""}`}>
             {step > 1 && (
-              <button className="button secondary" type="button" onClick={goBack}>Voltar</button>
+              <button className="button secondary supplier-step-secondary" type="button" onClick={goBack}>{backActionLabels[step]}</button>
             )}
             {step < 5 ? (
-              <button className="button" type="button" onClick={goNext}>Continuar</button>
+              <button className="button supplier-step-primary" type="button" onClick={goNext}>{nextActionLabels[step]}</button>
             ) : (
-              <button className="button" type="button" disabled={submitting || !canSubmit} onClick={submit}>
-                {submitting ? "Enviando..." : "Enviar proposta"}
+              <button className="button supplier-step-primary" type="button" disabled={submitting || !canSubmit} onClick={submit}>
+                {submitting ? "Enviando proposta..." : nextActionLabels[step]}
               </button>
             )}
           </div>

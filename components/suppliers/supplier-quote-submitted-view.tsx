@@ -48,7 +48,7 @@ export function SupplierQuoteSubmittedView({
       const json = await result.json() as { message?: string; url?: string };
       if (!result.ok) throw new Error(json.message || "Não foi possível solicitar um novo link.");
       if (json.url) setNewLinkUrl(json.url);
-      setRequestMessage(json.message || "Novo link gerado. Use-o para enviar a proposta revisada.");
+      setRequestMessage(json.message || "Novo link gerado. Abra o link para enviar uma proposta revisada.");
     } catch (error) {
       setRequestMessage(error instanceof Error ? error.message : "Erro inesperado ao solicitar novo link.");
     } finally {
@@ -73,13 +73,13 @@ export function SupplierQuoteSubmittedView({
       <div className="card supplier-portal-card supplier-print-actions">
         <div>
           <span>Detalhe da proposta</span>
-          <p>{message || "Este link já possui uma proposta enviada. A proposta fica disponível apenas para consulta."}</p>
+          <p>{message || "Este link já possui uma proposta enviada. A proposta abaixo está disponível apenas para consulta."}</p>
         </div>
         <div className="supplier-submitted-actions">
-          <button className="button secondary" type="button" onClick={() => window.print()}>Imprimir / salvar PDF</button>
+          <button className="button secondary supplier-print-button" type="button" onClick={() => window.print()}>Imprimir ou salvar PDF</button>
           {canRequestNewLink && !newLinkUrl && (
-            <button className="button" type="button" onClick={requestNewLink} disabled={requestingLink}>
-              {requestingLink ? "Gerando novo link..." : "Solicitar novo link"}
+            <button className="button supplier-new-link-button" type="button" onClick={requestNewLink} disabled={requestingLink}>
+              {requestingLink ? "Gerando link de revisão..." : "Solicitar link para revisar"}
             </button>
           )}
         </div>
@@ -88,7 +88,7 @@ export function SupplierQuoteSubmittedView({
           <div className="quotation-copy-link supplier-new-link">
             <input readOnly value={newLinkUrl} onFocus={(event) => event.currentTarget.select()} />
             <button className="button secondary" type="button" onClick={() => void navigator.clipboard.writeText(newLinkUrl).then(() => setRequestMessage("Link copiado."), () => setRequestMessage("Não foi possível copiar automaticamente. Selecione o texto e copie manualmente."))}>
-              Copiar
+              Copiar link
             </button>
             <a className="button" href={newLinkUrl}>Abrir novo link</a>
           </div>
@@ -128,7 +128,7 @@ export function SupplierQuoteSubmittedView({
         </div>
         <div className="supplier-review-items">
           <div className="supplier-review-items-row supplier-review-items-head">
-            <span>Insumo</span><span>Valor unit.</span><span>Qtd.</span><span>Prazo dif.</span><span>Total</span>
+            <span>Insumo</span><span>Valor unitário</span><span>Quantidade</span><span>Prazo especial</span><span>Total</span>
           </div>
           {quotedItems.map(({ original, item }) => {
             return (
@@ -160,7 +160,7 @@ export function SupplierQuoteSubmittedView({
           </div>
           <div className="supplier-review-items">
             <div className="supplier-review-items-row supplier-review-items-head">
-              <span>Insumo</span><span>Valor unit.</span><span>Qtd. solicitada</span><span>Prazo dif.</span><span>Total</span>
+              <span>Insumo</span><span>Situação</span><span>Quantidade solicitada</span><span>Prazo especial</span><span>Total</span>
             </div>
             {missingItems.map((original) => (
               <div className="supplier-review-items-row not-quoted" key={original.itemNumber}>
