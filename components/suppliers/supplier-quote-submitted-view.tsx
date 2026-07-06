@@ -134,7 +134,15 @@ export function SupplierQuoteSubmittedView({
               <strong>{proposalAttachment.fileName}</strong>
               <span>{proposalAttachment.mimeType === "application/pdf" ? "PDF" : "Imagem"} - {Math.max(1, Math.round(proposalAttachment.sizeBytes / 1024))} KB</span>
             </div>
-            <a className="button secondary" href={proposalAttachment.dataUrl} download={proposalAttachment.fileName}>Abrir anexo</a>
+            {(proposalAttachment.dataUrl || token) && (
+              <a
+                className="button secondary"
+                href={proposalAttachment.dataUrl || `/api/supplier-portal/attachments?token=${encodeURIComponent(token || "")}`}
+                download={proposalAttachment.fileName}
+              >
+                Abrir anexo
+              </a>
+            )}
           </div>
         </section>
       )}

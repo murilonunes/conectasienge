@@ -1459,6 +1459,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .quotation-responses { display: grid; gap: 16px; }
 .quotation-response-list { display: grid; gap: 14px; }
 .quotation-response-card { display: grid; gap: 14px; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+.quotation-response-card.superseded { opacity: .72; border-style: dashed; background: #f5f6f5; }
 .quotation-response-head { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: start; }
 .quotation-response-head h3 { margin: 4px 0; font-size: 16px; }
 .quotation-response-head span { color: var(--green); font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }

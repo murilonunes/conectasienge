@@ -41,7 +41,9 @@ export type SupplierQuoteProposalAttachment = {
   fileName: string;
   mimeType: string;
   sizeBytes: number;
-  dataUrl: string;
+  // Presente só na gravação e no download: os resumos das telas carregam apenas
+  // os metadados para a página não embutir o arquivo inteiro em base64.
+  dataUrl?: string;
   uploadedAt?: string;
 };
 
@@ -85,6 +87,9 @@ export type SupplierQuoteResponseSummary = {
   totalValue: number;
   commercialTerms: SupplierQuoteCommercialTerms;
   proposalAttachment?: SupplierQuoteProposalAttachment;
+  // Preenchido quando uma revisão mais nova do mesmo fornecedor substituiu esta
+  // resposta: ela sai do mapa e das decisões, mas continua visível como histórico.
+  supersededByResponseId?: number;
   createdAt: string;
 };
 
@@ -299,6 +304,29 @@ function database() {
     // Coluna já existe em bancos criados depois desta versão.
   }
   try {
+    db.exec("ALTER TABLE supplier_quote_responses ADD COLUMN superseded_by INTEGER");
+    // Primeira migração: para cada fornecedor com mais de uma resposta na mesma
+    // cotação, só a mais recente permanece ativa; as anteriores viram histórico.
+    db.exec(`
+      UPDATE supplier_quote_responses SET superseded_by = (
+        SELECT MAX(newer.id) FROM supplier_quote_responses newer
+        WHERE newer.quotation_id = supplier_quote_responses.quotation_id
+          AND newer.document = supplier_quote_responses.document
+          AND (datetime(newer.created_at) > datetime(supplier_quote_responses.created_at)
+            OR (datetime(newer.created_at) = datetime(supplier_quote_responses.created_at) AND newer.id > supplier_quote_responses.id))
+      )
+      WHERE EXISTS (
+        SELECT 1 FROM supplier_quote_responses newer
+        WHERE newer.quotation_id = supplier_quote_responses.quotation_id
+          AND newer.document = supplier_quote_responses.document
+          AND (datetime(newer.created_at) > datetime(supplier_quote_responses.created_at)
+            OR (datetime(newer.created_at) = datetime(supplier_quote_responses.created_at) AND newer.id > supplier_quote_responses.id))
+      )
+    `);
+  } catch {
+    // Coluna já existe em bancos criados depois desta versão.
+  }
+  try {
     // Cada link aceita uma única proposta; reenvio pelo mesmo token é bloqueado
     // na aplicação, e este índice é a garantia contra o caso de duas gravações
     // concorrentes com o mesmo link.
@@ -498,6 +526,7 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
         items_json,
         commercial_terms_json,
         proposal_attachment_json,
+        superseded_by,
         created_at
       FROM supplier_quote_responses
       WHERE token_hash = ?
@@ -514,6 +543,7 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
       items_json: string;
       commercial_terms_json: string | null;
       proposal_attachment_json: string | null;
+      superseded_by: number | null;
       created_at: string;
     } | undefined;
 
@@ -534,7 +564,8 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
       attendedCount: attendedItems.length,
       totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
       commercialTerms: normalizeCommercialTerms(parseJson<LegacyCommercialTermsInput>(row.commercial_terms_json, defaultCommercialTerms)),
-      proposalAttachment: parseJson<SupplierQuoteProposalAttachment | undefined>(row.proposal_attachment_json, undefined),
+      proposalAttachment: attachmentSummary(row.proposal_attachment_json),
+      supersededByResponseId: row.superseded_by ?? undefined,
       createdAt: row.created_at
     };
   } finally {
@@ -632,6 +663,25 @@ export function normalizeCommercialTerms(input?: LegacyCommercialTermsInput): Su
   };
 }
 
+// Recalcula qual resposta do fornecedor vale para a cotação: a mais recente
+// fica ativa e todas as anteriores apontam para ela como substituídas.
+function resupersedeResponses(db: DatabaseSync, quotationId: number, document: string) {
+  const rows = db.prepare(`
+    SELECT id FROM supplier_quote_responses
+    WHERE quotation_id = ? AND document = ?
+    ORDER BY datetime(created_at) DESC, id DESC
+  `).all(quotationId, document) as Array<{ id: number }>;
+  if (!rows.length) return { activeId: undefined, supersededIds: [] as number[] };
+
+  const activeId = rows[0].id;
+  const supersededIds = rows.slice(1).map((row) => row.id);
+  db.prepare("UPDATE supplier_quote_responses SET superseded_by = NULL WHERE id = ?").run(activeId);
+  supersededIds.forEach((id) => {
+    db.prepare("UPDATE supplier_quote_responses SET superseded_by = ? WHERE id = ?").run(activeId, id);
+  });
+  return { activeId, supersededIds };
+}
+
 export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, payload: SupplierQuoteTokenPayload) {
   const db = database();
   try {
@@ -669,16 +719,20 @@ export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, pay
       }
       throw error;
     }
+    const responseId = Number(result.lastInsertRowid);
+    const { supersededIds } = resupersedeResponses(db, payload.quotationId, document);
     insertSupplierQuoteEvent(db, {
       quotationId: payload.quotationId,
       type: "response_received",
-      title: "Resposta recebida do fornecedor",
-      description: `${input.items.filter((item) => item.attends).length} item(ns) atendido(s).`,
+      title: supersededIds.length ? "Revisão de proposta recebida do fornecedor" : "Resposta recebida do fornecedor",
+      description: supersededIds.length
+        ? `${input.items.filter((item) => item.attends).length} item(ns) atendido(s). Substitui a(s) resposta(s) #${supersededIds.join(", #")} no mapa e nas decisões.`
+        : `${input.items.filter((item) => item.attends).length} item(ns) atendido(s).`,
       supplierName: input.supplierName,
       document,
-      metadata: { responseId: Number(result.lastInsertRowid), supplierId: payload.supplierId }
+      metadata: { responseId, supplierId: payload.supplierId, supersededIds }
     });
-    return { id: Number(result.lastInsertRowid), createdAt };
+    return { id: responseId, createdAt };
   } finally {
     db.close();
   }
@@ -703,6 +757,8 @@ export function deleteSupplierQuoteResponse(quotationId: number, responseId: num
         "DELETE FROM supplier_quote_awards WHERE quotation_id = ? AND response_id = ?"
       ).run(quotationId, responseId).changes);
       db.prepare("DELETE FROM supplier_quote_responses WHERE id = ?").run(responseId);
+      // Se a resposta excluída era a ativa, a revisão anterior volta a valer.
+      resupersedeResponses(db, quotationId, row.document);
       insertSupplierQuoteEvent(db, {
         quotationId,
         type: "response_deleted",
@@ -733,6 +789,54 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
+// Só os metadados do anexo: o arquivo em base64 fica de fora dos resumos e é
+// servido sob demanda pelas rotas de download.
+function attachmentSummary(json: string | null): SupplierQuoteProposalAttachment | undefined {
+  const parsed = parseJson<SupplierQuoteProposalAttachment | undefined>(json, undefined);
+  if (!parsed) return undefined;
+  return {
+    fileName: parsed.fileName,
+    mimeType: parsed.mimeType,
+    sizeBytes: parsed.sizeBytes,
+    uploadedAt: parsed.uploadedAt
+  };
+}
+
+function attachmentWithFile(json: string | null): SupplierQuoteProposalAttachment | undefined {
+  const parsed = parseJson<SupplierQuoteProposalAttachment | undefined>(json, undefined);
+  return parsed?.dataUrl ? parsed : undefined;
+}
+
+export function loadSupplierQuoteAttachmentByResponse(quotationId: number, responseId: number): SupplierQuoteProposalAttachment | undefined {
+  if (!supplierQuoteDatabaseExists()) return undefined;
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT proposal_attachment_json FROM supplier_quote_responses
+      WHERE id = ? AND quotation_id = ?
+      LIMIT 1
+    `).get(responseId, quotationId) as { proposal_attachment_json: string | null } | undefined;
+    return row ? attachmentWithFile(row.proposal_attachment_json) : undefined;
+  } finally {
+    db.close();
+  }
+}
+
+export function loadSupplierQuoteAttachmentByToken(token: string): SupplierQuoteProposalAttachment | undefined {
+  if (!supplierQuoteDatabaseExists()) return undefined;
+  const db = database();
+  try {
+    const row = db.prepare(`
+      SELECT proposal_attachment_json FROM supplier_quote_responses
+      WHERE token_hash = ?
+      LIMIT 1
+    `).get(hashToken(token)) as { proposal_attachment_json: string | null } | undefined;
+    return row ? attachmentWithFile(row.proposal_attachment_json) : undefined;
+  } finally {
+    db.close();
+  }
+}
+
 export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteResponseSummary[] {
   if (!supplierQuoteDatabaseExists()) return [];
 
@@ -751,6 +855,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         items_json,
         commercial_terms_json,
         proposal_attachment_json,
+        superseded_by,
         created_at
       FROM supplier_quote_responses
       WHERE quotation_id = ?
@@ -767,6 +872,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
       items_json: string;
       commercial_terms_json: string | null;
       proposal_attachment_json: string | null;
+      superseded_by: number | null;
       created_at: string;
     }>;
 
@@ -787,7 +893,8 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         attendedCount: attendedItems.length,
         totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
         commercialTerms: normalizeCommercialTerms(parseJson<LegacyCommercialTermsInput>(row.commercial_terms_json, defaultCommercialTerms)),
-        proposalAttachment: parseJson<SupplierQuoteProposalAttachment | undefined>(row.proposal_attachment_json, undefined),
+        proposalAttachment: attachmentSummary(row.proposal_attachment_json),
+        supersededByResponseId: row.superseded_by ?? undefined,
         createdAt: row.created_at
       };
     });

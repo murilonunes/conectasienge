@@ -100,24 +100,32 @@ export function QuotationDetail({
     return valid.sort((left, right) => left.totalValue - right.totalValue)[0];
   }, [quotation.suppliers]);
 
+  // Revisões substituem a proposta anterior do fornecedor: só as respostas
+  // ativas entram no mapa, nas estatísticas e nas decisões. As substituídas
+  // seguem visíveis na aba Respostas como histórico.
+  const activeResponses = useMemo(
+    () => supplierResponses.filter((response) => !response.supersededByResponseId),
+    [supplierResponses]
+  );
+
   const responseStats = useMemo(() => {
-    const uniqueDocuments = new Set(supplierResponses.map((response) => response.document));
+    const uniqueDocuments = new Set(activeResponses.map((response) => response.document));
     return {
-      totalValue: supplierResponses.reduce((sum, response) => sum + response.totalValue, 0),
-      attendedItems: supplierResponses.reduce((sum, response) => sum + response.attendedCount, 0),
-      pendingRegistrations: supplierResponses.filter((response) => response.registrationPending).length,
+      totalValue: activeResponses.reduce((sum, response) => sum + response.totalValue, 0),
+      attendedItems: activeResponses.reduce((sum, response) => sum + response.attendedCount, 0),
+      pendingRegistrations: activeResponses.filter((response) => response.registrationPending).length,
       suppliers: uniqueDocuments.size
     };
-  }, [supplierResponses]);
+  }, [activeResponses]);
 
   const itemComparison = useMemo(() => {
     const itemNumbers = new Set<number>();
     quotation.items.forEach((item) => itemNumbers.add(item.itemNumber));
-    supplierResponses.forEach((response) => response.items.forEach((item) => itemNumbers.add(item.itemNumber)));
+    activeResponses.forEach((response) => response.items.forEach((item) => itemNumbers.add(item.itemNumber)));
 
     return Array.from(itemNumbers).sort((left, right) => left - right).map((itemNumber) => {
       const quotationItem = quotation.items.find((item) => item.itemNumber === itemNumber);
-      const offers = supplierResponses.map((response) => {
+      const offers = activeResponses.map((response) => {
         const quotedItem = response.items.find((item) => item.itemNumber === itemNumber);
         const attends = Boolean(quotedItem?.attends);
         const hasPrice = attends && quotedItem?.unitPrice != null;
@@ -147,11 +155,11 @@ export function QuotationDetail({
 
       return { itemNumber, item: quotationItem, offers, best };
     });
-  }, [quotation.items, supplierResponses]);
+  }, [quotation.items, activeResponses]);
 
   const pendingSuppliers = useMemo(() => {
     const byDocument = new Map<string, SupplierQuoteResponseSummary>();
-    supplierResponses
+    activeResponses
       .filter((response) => response.registrationPending)
       .forEach((response) => {
         const document = response.document.replace(/\D/g, "");
@@ -161,13 +169,13 @@ export function QuotationDetail({
         }
       });
     return Array.from(byDocument.values()).sort((left, right) => left.supplierName.localeCompare(right.supplierName));
-  }, [supplierResponses]);
+  }, [activeResponses]);
 
   const tabCounts: Partial<Record<DetailTab, number>> = {
     insumos: quotation.itemCount,
     fornecedores: quotation.supplierCount,
     links: invitations.length,
-    respostas: supplierResponses.length,
+    respostas: activeResponses.length,
     mapa: itemComparison.filter((row) => row.best).length,
     aprovacao: awards.length,
     cadastros: pendingSuppliers.length,
@@ -441,9 +449,14 @@ export function QuotationDetail({
 
     const dispatches: NegotiationDispatch[] = [];
     const missingSupplier: string[] = [];
+    const outdated: string[] = [];
     selectionsByResponse.forEach((selectedItems, responseId) => {
       const response = supplierResponses.find((current) => current.id === responseId);
       if (!response) return;
+      if (response.supersededByResponseId) {
+        outdated.push(`#${response.id} de ${response.supplierName} (substituída pela #${response.supersededByResponseId})`);
+        return;
+      }
       if (!response.supplierId) {
         missingSupplier.push(response.supplierName);
         return;
@@ -451,6 +464,9 @@ export function QuotationDetail({
       dispatches.push({ response, selectedItems, authorize: true });
     });
 
+    if (outdated.length) {
+      return { dispatches: [], error: `A aprovação aponta para proposta substituída por revisão: ${outdated.join("; ")}. Refaça a aprovação com a proposta mais recente antes de registrar no Sienge.` };
+    }
     if (missingSupplier.length) {
       return { dispatches: [], error: `Crie no Sienge o cadastro de: ${missingSupplier.join(", ")} (aba Cadastros) antes de registrar a decisão.` };
     }
@@ -573,7 +589,7 @@ export function QuotationDetail({
     try {
       const payloadAwards = approvalMode === "quotation"
         ? (() => {
-            const response = supplierResponses.find((item) => String(item.id) === approvalResponseId);
+            const response = activeResponses.find((item) => String(item.id) === approvalResponseId);
             if (!response) return [];
             return [{
               quotationId: quotation.id,
@@ -586,7 +602,7 @@ export function QuotationDetail({
           })()
         : itemComparison.flatMap((row) => {
             const selectedResponseId = itemAwardSelections[row.itemNumber] || String(row.best?.responseId || "");
-            const response = supplierResponses.find((item) => String(item.id) === selectedResponseId);
+            const response = activeResponses.find((item) => String(item.id) === selectedResponseId);
             const justification = itemAwardJustifications[row.itemNumber] || approvalJustification;
             if (!response || !justification.trim()) return [];
             return [{
@@ -747,7 +763,7 @@ export function QuotationDetail({
         </div>
         <div className="quotation-detail-hero-actions">
           <i className="badge">{quotation.status}</i>
-          <button className="button secondary" type="button" onClick={() => supplierResponses.length ? exportItemComparison(quotation, supplierResponses) : exportComparison(quotation)}>
+          <button className="button secondary" type="button" onClick={() => activeResponses.length ? exportItemComparison(quotation, activeResponses) : exportComparison(quotation)}>
             Exportar mapa
           </button>
         </div>
@@ -844,7 +860,7 @@ export function QuotationDetail({
       {tab === "mapa" && (
         <MapaTab
           quotation={quotation}
-          supplierResponses={supplierResponses}
+          supplierResponses={activeResponses}
           itemComparison={itemComparison}
           loadingAction={loadingAction}
           onExportPdf={() => void openComparisonMapPdf()}
@@ -853,7 +869,7 @@ export function QuotationDetail({
 
       {tab === "aprovacao" && (
         <AprovacaoTab
-          supplierResponses={supplierResponses}
+          supplierResponses={activeResponses}
           itemComparison={itemComparison}
           approvalMode={approvalMode}
           onApprovalModeChange={setApprovalMode}

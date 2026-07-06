@@ -20,10 +20,13 @@ export function RespostasTab({
   onDeleteResponse: (response: SupplierQuoteResponseSummary) => void;
   message: string;
 }) {
+  const activeCount = supplierResponses.filter((response) => !response.supersededByResponseId).length;
+  const supersededCount = supplierResponses.length - activeCount;
+
   return (
     <section className="quotation-responses">
       <div className="quotation-detail-stats">
-        <div className="card"><strong>{supplierResponses.length}</strong><span>Respostas recebidas</span></div>
+        <div className="card"><strong>{activeCount}</strong><span>{supersededCount ? `Respostas válidas (+${supersededCount} substituída${supersededCount === 1 ? "" : "s"})` : "Respostas recebidas"}</span></div>
         <div className="card"><strong>{responseStats.suppliers}</strong><span>Fornecedores únicos</span></div>
         <div className="card"><strong>{responseStats.attendedItems}</strong><span>Itens atendidos</span></div>
         <div className="card"><strong>{formatCurrency(responseStats.totalValue)}</strong><span>Total informado</span></div>
@@ -45,7 +48,7 @@ export function RespostasTab({
         {supplierResponses.length ? (
           <div className="quotation-response-list">
             {supplierResponses.map((response) => (
-              <article className="quotation-response-card" key={response.id}>
+              <article className={`quotation-response-card ${response.supersededByResponseId ? "superseded" : ""}`} key={response.id}>
                 <div className="quotation-response-head">
                   <div>
                     <span>Resposta #{response.id}</span>
@@ -54,9 +57,13 @@ export function RespostasTab({
                   </div>
                   <div>
                     <strong>{formatCurrency(response.totalValue)}</strong>
-                    <i className={`badge ${response.registrationPending ? "warn" : ""}`}>
-                      {response.registrationPending ? "Cadastro pendente" : "Cadastro local"}
-                    </i>
+                    {response.supersededByResponseId ? (
+                      <i className="badge muted">Substituída pela #{response.supersededByResponseId}</i>
+                    ) : (
+                      <i className={`badge ${response.registrationPending ? "warn" : ""}`}>
+                        {response.registrationPending ? "Cadastro pendente" : "Cadastro local"}
+                      </i>
+                    )}
                   </div>
                 </div>
 
@@ -69,7 +76,7 @@ export function RespostasTab({
                   {response.proposalAttachment && (
                     <span>
                       <strong>Proposta anexada</strong>
-                      <a className="quotation-response-attachment" href={response.proposalAttachment.dataUrl} download={response.proposalAttachment.fileName}>
+                      <a className="quotation-response-attachment" href={`/api/supplier-portal/responses/${response.id}/attachment?quotationId=${quotation.id}`}>
                         {response.proposalAttachment.fileName}
                       </a>
                     </span>
@@ -80,7 +87,9 @@ export function RespostasTab({
                 )}
 
                 <div className="quotation-operation-actions">
-                  {response.supplierId ? (
+                  {response.supersededByResponseId ? (
+                    <span className="table-muted">Proposta substituída pela revisão #{response.supersededByResponseId}: fora do mapa, das aprovações e do envio ao Sienge.</span>
+                  ) : response.supplierId ? (
                     <>
                       <button className="button secondary" type="button" disabled={loadingAction !== null} onClick={() => onSendNegotiation(response, false)}>
                         Preparar negociação
