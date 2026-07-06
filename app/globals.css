@@ -887,6 +887,18 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-payment-preview span { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
 .supplier-payment-preview strong { font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--green); }
 .supplier-installments { display: grid; gap: 8px; }
+.supplier-installment-helper { display: grid; gap: 10px; padding: 12px; border: 1px solid #d7e6dd; border-radius: 12px; background: #fff; }
+.supplier-helper-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.supplier-helper-head > div { display: grid; gap: 3px; min-width: 0; }
+.supplier-helper-head strong { color: var(--green); font-size: 12px; font-weight: 850; }
+.supplier-helper-head span { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.supplier-installment-builder { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.supplier-installment-builder label { display: grid; gap: 6px; color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+.supplier-installment-builder input, .supplier-installment-builder select { width: 100%; min-width: 0; height: 38px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 9px; color: var(--ink); font-size: 11px; outline: none; }
+.supplier-installment-builder input:focus, .supplier-installment-builder select:focus { border-color: #b8d5c7; box-shadow: 0 0 0 3px rgba(31,107,79,.09); }
+.supplier-installment-preview { display: flex; flex-wrap: wrap; gap: 6px; }
+.supplier-installment-preview span { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid #e3e9e5; border-radius: 999px; background: #fbfcfb; color: var(--muted); font-size: 10px; font-weight: 800; }
+.supplier-installment-preview strong { color: var(--green); font-size: 10px; }
 .supplier-installment-row { display: grid; grid-template-columns: 110px 110px auto; gap: 9px; align-items: end; }
 .supplier-installment-row label { display: grid; gap: 6px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .supplier-installment-row input { height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 10px; color: var(--ink); font-size: 12px; }
@@ -988,6 +1000,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .supplier-item-side { justify-content: flex-start; flex-wrap: wrap; }
   .supplier-item-total { justify-self: start; }
   .supplier-payment-fields { grid-template-columns: 1fr; }
+  .supplier-helper-head { align-items: stretch; flex-direction: column; }
+  .supplier-installment-builder { grid-template-columns: 1fr 1fr; }
   .supplier-installment-row { grid-template-columns: 1fr 1fr; }
   .supplier-installment-remove { grid-column: span 2; }
   .supplier-general-notes { grid-column: span 1; }

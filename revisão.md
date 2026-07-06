@@ -142,6 +142,7 @@ Revisado nesta etapa:
 - A rota de novo link bloqueia token revogado e tem limite de requisições por IP e global.
 - A criação inicial do link pela equipe fica concentrada na aba Fornecedores do detalhe da cotação, com modal para copiar/abrir o convite sem desviar o usuário para a aba Sienge.
 - Links gerados para fornecedor pré-definido carregam os dados conhecidos no portal público e travam nome, documento, e-mail e telefone quando esses valores vêm no convite/base local; a rota de envio também rejeita tentativa de alteração manual.
+- A etapa de pagamento a prazo do portal ganhou um facilitador para gerar parcelas mensais ou por intervalo de dias, com percentual igual ou entrada diferenciada, mantendo a tabela editável depois da geração.
 - A aba Respostas permite excluir uma resposta recebida; a rota dinâmica de exclusão permanece protegida por sessão, porque o middleware só libera a rota pública exata de envio de propostas.
 - A exclusão de resposta remove aprovações vinculadas e registra evento `response_deleted` na timeline.
 

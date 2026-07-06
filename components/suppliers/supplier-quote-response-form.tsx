@@ -121,6 +121,10 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     )));
   }
 
+  function replaceInstallments(nextInstallments: InstallmentRow[]) {
+    setInstallments(nextInstallments.length ? nextInstallments : defaultInstallments());
+  }
+
   const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
   const itemsValid = quotedCount > 0 && invalidQuotedCount === 0;
   const paymentValid = (offersCash || offersTerm) && (!offersTerm || installmentsTotalValid);
@@ -405,6 +409,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             onOffersTermChange={setOffersTerm}
             onCashDiscountPercentageChange={setCashDiscountPercentage}
             onInstallmentChange={updateInstallment}
+            onInstallmentsReplace={replaceInstallments}
             onAddInstallment={addInstallment}
             onRemoveInstallment={removeInstallment}
           />
