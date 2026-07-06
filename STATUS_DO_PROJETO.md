@@ -35,7 +35,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O login bloqueia força bruta: 8 falhas por 15 minutos por IP e teto global de 40 falhas por 15 minutos independente do IP informado (o cabeçalho `x-forwarded-for` pode ser forjado quando não há proxy confiável na frente).
 - As verificações de assinatura (sessão no middleware e senha no login) usam comparação em tempo constante.
 - Páginas públicas (`/login` e `/portal-cotacao`) não renderizam o shell interno de navegação.
-- O menu interno foi reorganizado por areas com submenus recolhiveis (Visao geral, Compras, Financeiro, Comercial/estoque, Analises e Administracao) e ganhou modo compacto para liberar largura nas telas operacionais.
+- O menu interno foi reorganizado por areas com submenus recolhiveis (Visao geral, Compras, Financeiro, Comercial/estoque, Analises e Administracao) e agora abre em modo compacto, com os grupos fechados para liberar largura nas telas operacionais.
 
 ## Solicitações de compra
 
@@ -144,7 +144,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A rota `/` nao abre mais o dashboard automaticamente.
 - A rota `/` agora e uma tela de boas-vindas leve, sem consulta ao Sienge e sem carregamento pesado de dados.
 - O menu lateral foi simplificado: `Inicio` saiu da lista e o logo/nome Brasin passou a ser o atalho para a tela inicial.
-- O shell principal agora possui submenus por area e botao de recolher/expandir, mantendo a navegacao mais curta na horizontal para telas densas como cotacoes, mapa e aprovacoes.
+- O shell principal agora possui submenus por area e botao de recolher/expandir; por padrao ele abre recolhido e com os grupos fechados, mantendo a navegacao mais curta na horizontal para telas densas como cotacoes, mapa e aprovacoes.
 - A tela inicial do dashboard agora traz uma visao geral com um pouco de cada portal.
 - O dashboard passou a abrir com periodo inicial curto de 7 dias para carregar e renderizar mais rapido.
 - O dashboard permite trocar a visao do periodo na propria tela, por botoes de Hoje, 7 dias, 15 dias, 30 dias, 60 dias, 90 dias, 6 meses, 12 meses e 24 meses.

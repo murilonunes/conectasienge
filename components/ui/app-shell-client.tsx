@@ -85,11 +85,11 @@ const navigationSections: NavigationSection[] = [
   }
 ];
 
-const collapsedStorageKey = "brasin-sidebar-collapsed";
-const sectionsStorageKey = "brasin-sidebar-sections";
+const collapsedStorageKey = "brasin-sidebar-collapsed-v2";
+const sectionsStorageKey = "brasin-sidebar-sections-v2";
 
 function defaultOpenSections() {
-  return Object.fromEntries(navigationSections.map((section) => [section.key, true])) as Record<string, boolean>;
+  return Object.fromEntries(navigationSections.map((section) => [section.key, false])) as Record<string, boolean>;
 }
 
 function isPathActive(pathname: string, href: string) {
@@ -98,7 +98,7 @@ function isPathActive(pathname: string, href: string) {
 
 export function AppShellClient({ children, settings }: { children: React.ReactNode; settings: ShellSettings }) {
   const pathname = usePathname() || "/";
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(defaultOpenSections);
 
   const activeSectionKey = useMemo(() => {
@@ -107,7 +107,8 @@ export function AppShellClient({ children, settings }: { children: React.ReactNo
 
   useEffect(() => {
     try {
-      setCollapsed(window.localStorage.getItem(collapsedStorageKey) === "true");
+      const storedCollapsed = window.localStorage.getItem(collapsedStorageKey);
+      setCollapsed(storedCollapsed === null ? true : storedCollapsed === "true");
       const storedSections = window.localStorage.getItem(sectionsStorageKey);
       if (storedSections) {
         setOpenSections({ ...defaultOpenSections(), ...JSON.parse(storedSections) });
@@ -116,11 +117,6 @@ export function AppShellClient({ children, settings }: { children: React.ReactNo
       setOpenSections(defaultOpenSections());
     }
   }, []);
-
-  useEffect(() => {
-    if (!activeSectionKey) return;
-    setOpenSections((current) => ({ ...current, [activeSectionKey]: true }));
-  }, [activeSectionKey]);
 
   useEffect(() => {
     try {
