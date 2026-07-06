@@ -130,10 +130,10 @@ export function PaymentStep({
               <div className="supplier-installment-helper">
                 <div className="supplier-helper-head">
                   <div>
-                    <strong>Facilitador de parcelas</strong>
-                    <span>Gere a condição automaticamente e ajuste a tabela se precisar.</span>
+                    <strong>Gerar parcelas automaticamente</strong>
+                    <span>Use este bloco para montar a condição por quantidade, intervalo e percentual.</span>
                   </div>
-                  <button type="button" className="button secondary" onClick={applyInstallmentPlan}>Gerar parcelas</button>
+                  <button type="button" className="button secondary" onClick={applyInstallmentPlan}>Aplicar geração automática</button>
                 </div>
 
                 <div className="supplier-installment-builder">
@@ -181,6 +181,11 @@ export function PaymentStep({
                     </span>
                   ))}
                 </div>
+              </div>
+
+              <div className="supplier-manual-installments">
+                <strong>Preencher ou ajustar manualmente</strong>
+                <span>Confira os dias e percentuais. Se precisar, altere uma parcela ou adicione outra linha.</span>
               </div>
 
               {installments.map((installment, index) => (

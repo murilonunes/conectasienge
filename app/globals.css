@@ -899,6 +899,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-installment-preview { display: flex; flex-wrap: wrap; gap: 6px; }
 .supplier-installment-preview span { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid #e3e9e5; border-radius: 999px; background: #fbfcfb; color: var(--muted); font-size: 10px; font-weight: 800; }
 .supplier-installment-preview strong { color: var(--green); font-size: 10px; }
+.supplier-manual-installments { display: grid; gap: 3px; padding: 10px 0 2px; border-top: 1px solid var(--line); }
+.supplier-manual-installments strong { color: var(--ink); font-size: 12px; font-weight: 850; }
+.supplier-manual-installments span { color: var(--muted); font-size: 10px; line-height: 1.4; }
 .supplier-installment-row { display: grid; grid-template-columns: 110px 110px auto; gap: 9px; align-items: end; }
 .supplier-installment-row label { display: grid; gap: 6px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .supplier-installment-row input { height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 10px; color: var(--ink); font-size: 12px; }
