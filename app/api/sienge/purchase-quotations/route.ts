@@ -99,6 +99,13 @@ type SiengePreflight = {
   supplier?: SiengeLookupSummary & { supplierInfo?: Record<string, unknown> };
   latestNegotiationNumber?: number;
   hints: string[];
+  // Sinalizações estruturadas usadas nos bloqueios de duplicidade (os hints são
+  // apenas texto para leitura humana e podem mudar sem quebrar a lógica).
+  existing: {
+    itemNumbers: number[];
+    productId: boolean;
+    supplierOnItem: boolean;
+  };
 };
 
 type SiengeLookupSummary = {
@@ -126,7 +133,7 @@ function siengeConfig() {
   const password = process.env.SIENGE_PASSWORD;
   if (!tenant || !username || !password) {
     return {
-      error: "Credenciais do Sienge nao configuradas. Preencha SIENGE_TENANT, SIENGE_USERNAME e SIENGE_PASSWORD."
+      error: "Credenciais do Sienge não configuradas. Preencha SIENGE_TENANT, SIENGE_USERNAME e SIENGE_PASSWORD."
     };
   }
   return { tenant, username, password };
@@ -284,14 +291,27 @@ function lookupSummary(result: SiengePostResult): SiengeLookupSummary {
   };
 }
 
-async function findLatestNegotiationNumber(tenant: string, username: string, password: string, purchaseQuotationId: number, supplierId: number) {
+function negotiationAuthorized(record: Record<string, unknown> | undefined) {
+  if (!record) return false;
+  if (record.authorized === true) return true;
+  const statusText = [record.situation, record.status, record.negotiationSituation, record.situationDescription]
+    .map((value) => String(value || ""))
+    .join(" ")
+    .toUpperCase();
+  return /AUTORIZAD|AUTHORIZED/.test(statusText);
+}
+
+async function findLatestNegotiation(tenant: string, username: string, password: string, purchaseQuotationId: number, supplierId: number): Promise<{ number: number; authorized: boolean } | undefined> {
   const result = await callSienge(tenant, username, password, "GET", `/v1/purchase-quotations/all/negotiations?quotationNumber=${purchaseQuotationId}`);
   if (!result.ok || !result.body || typeof result.body !== "object") return undefined;
-  const results = (result.body as { results?: Array<{ suppliers?: Array<{ supplierId?: number; latestNegotiation?: Array<{ negotiationId?: number }> }> }> }).results || [];
+  const results = (result.body as { results?: Array<{ suppliers?: Array<{ supplierId?: number; latestNegotiation?: Array<Record<string, unknown> & { negotiationId?: number }> }> }> }).results || [];
   for (const quotation of results) {
     const supplier = quotation.suppliers?.find((current) => Number(current.supplierId) === supplierId);
-    const negotiationId = Number(supplier?.latestNegotiation?.[0]?.negotiationId);
-    if (Number.isFinite(negotiationId) && negotiationId > 0) return negotiationId;
+    const latest = supplier?.latestNegotiation?.[0];
+    const negotiationId = Number(latest?.negotiationId);
+    if (Number.isFinite(negotiationId) && negotiationId > 0) {
+      return { number: negotiationId, authorized: negotiationAuthorized(latest) };
+    }
   }
   return undefined;
 }
@@ -299,12 +319,16 @@ async function findLatestNegotiationNumber(tenant: string, username: string, pas
 async function runPreflight(action: QuotationAction, body: QuotationCreateRequest, config: { tenant: string; username: string; password: string }): Promise<SiengePreflight> {
   const purchaseQuotationId = Number(body.purchaseQuotationId) || 0;
   const supplierId = Number(body.supplierId) || 0;
-  const itemNumber = Number(body.purchaseQuotationItemNumber || body.request?.items?.[0]?.purchaseRequestItemNumber) || 0;
+  const itemNumbers = Array.from(new Set([
+    Number(body.purchaseQuotationItemNumber) || 0,
+    ...(body.request?.items || []).map((item) => Number(item.purchaseRequestItemNumber) || 0)
+  ].filter((value) => value > 0)));
   const productId = Number(body.item?.productId) || 0;
   const preflight: SiengePreflight = {
     action,
     checkedAt: new Date().toISOString(),
-    hints: []
+    hints: [],
+    existing: { itemNumbers: [], productId: false, supplierOnItem: false }
   };
 
   if (purchaseQuotationId > 0) {
@@ -316,18 +340,23 @@ async function runPreflight(action: QuotationAction, body: QuotationCreateReques
       `/v1/purchase-quotations/all/negotiations?quotationNumber=${purchaseQuotationId}`
     ));
     if (preflight.quotation.exists) {
-      preflight.hints.push("Cotacao localizada no Sienge antes da gravacao.");
+      preflight.hints.push("Cotação localizada no Sienge antes da gravação.");
     }
-    if (itemNumber && containsNumberForKeys(preflight.quotation.body, ["quotationItemNumber", "purchaseQuotationItemNumber", "itemNumber", "purchaseRequestItemNumber"], itemNumber)) {
-      preflight.hints.push(`Item ${itemNumber} ja aparece nos dados retornados pelo Sienge.`);
-    }
+    itemNumbers.forEach((itemNumber) => {
+      if (containsNumberForKeys(preflight.quotation?.body, ["quotationItemNumber", "purchaseQuotationItemNumber", "itemNumber", "purchaseRequestItemNumber"], itemNumber)) {
+        preflight.existing.itemNumbers.push(itemNumber);
+        preflight.hints.push(`Item ${itemNumber} já aparece nos dados retornados pelo Sienge.`);
+      }
+    });
     if (productId && containsNumberForKeys(preflight.quotation.body, ["productId", "insumoId", "materialId"], productId)) {
-      preflight.hints.push(`Insumo ${productId} ja aparece nos dados retornados pelo Sienge.`);
+      preflight.existing.productId = true;
+      preflight.hints.push(`Insumo ${productId} já aparece nos dados retornados pelo Sienge.`);
     }
-    if (supplierId && itemNumber && containsSupplierForItem(preflight.quotation.body, supplierId, itemNumber)) {
-      preflight.hints.push(`Fornecedor ${supplierId} ja aparece no item ${itemNumber} desta cotacao no Sienge.`);
+    if (supplierId && itemNumbers.some((itemNumber) => containsSupplierForItem(preflight.quotation?.body, supplierId, itemNumber))) {
+      preflight.existing.supplierOnItem = true;
+      preflight.hints.push(`Fornecedor ${supplierId} já aparece no item informado desta cotação no Sienge.`);
     } else if (supplierId && containsNumberForKeys(preflight.quotation.body, ["supplierId", "creditorId"], supplierId)) {
-      preflight.hints.push(`Fornecedor ${supplierId} ja aparece nesta cotacao no Sienge.`);
+      preflight.hints.push(`Fornecedor ${supplierId} já aparece nesta cotação no Sienge.`);
     }
   }
 
@@ -344,9 +373,13 @@ async function runPreflight(action: QuotationAction, body: QuotationCreateReques
   }
 
   if (action === "send-negotiation" && purchaseQuotationId && supplierId) {
-    preflight.latestNegotiationNumber = await findLatestNegotiationNumber(config.tenant, config.username, config.password, purchaseQuotationId, supplierId);
-    if (preflight.latestNegotiationNumber) {
-      preflight.hints.push(`Negociacao ${preflight.latestNegotiationNumber} ja existe para este fornecedor e sera reutilizada.`);
+    const latest = await findLatestNegotiation(config.tenant, config.username, config.password, purchaseQuotationId, supplierId);
+    if (latest && !latest.authorized) {
+      preflight.latestNegotiationNumber = latest.number;
+      preflight.hints.push(`Negociação ${latest.number} já existe para este fornecedor e será reutilizada.`);
+    } else if (latest?.authorized) {
+      // Negociação autorizada não deve ser sobrescrita: uma nova rodada é criada.
+      preflight.hints.push(`A negociação ${latest.number} já está autorizada no Sienge; uma nova rodada será criada.`);
     }
   }
 
@@ -357,7 +390,7 @@ function dryRunResponse(body: QuotationCreateRequest, payload: Record<string, un
   return NextResponse.json({
     mode: "dry-run",
     action: body.action || "create",
-    message: "Payload pronto para conferencia. Confirme a gravacao para executar no Sienge.",
+    message: "Payload pronto para conferência. Confirme a gravação para executar no Sienge.",
     ...payload
   });
 }
@@ -473,7 +506,7 @@ function existingInSiengeResponse(message: string, preflight: SiengePreflight) {
 
 function preflightUnavailableResponse(preflight: SiengePreflight) {
   return NextResponse.json({
-    message: "Nao foi possivel consultar o Sienge antes da gravacao. Nada foi enviado.",
+    message: "Não foi possível consultar o Sienge antes da gravação. Nada foi enviado.",
     preflight
   }, { status: 502 });
 }
@@ -481,12 +514,12 @@ function preflightUnavailableResponse(preflight: SiengePreflight) {
 function alreadyExistingQuotationResponse(quotationId: number | undefined, force: boolean | undefined) {
   if (!quotationId || force === true) return undefined;
   return NextResponse.json({
-    message: `Esta cotacao ja existe no Sienge com ID ${quotationId}. A criacao de uma nova cotacao a partir do detalhe foi bloqueada para evitar duplicidade.`,
+    message: `Esta cotação já existe no Sienge com ID ${quotationId}. A criação de uma nova cotação a partir do detalhe foi bloqueada para evitar duplicidade.`,
     alreadyIntegrated: true,
     integration: {
       eventId: undefined,
-      title: "Cotacao ja existente no Sienge",
-      description: "Use a criacao apenas a partir de uma solicitacao ainda nao cotada ou force conscientemente a repeticao.",
+      title: "Cotação já existente no Sienge",
+      description: "Use a criação apenas a partir de uma solicitação ainda não cotada ou force conscientemente a repeticao.",
       createdAt: todayIso()
     }
   }, { status: 409 });
@@ -510,7 +543,7 @@ export async function GET(request: NextRequest) {
   const quotationId = Number(searchParams.get("quotationId"));
 
   if (!Number.isFinite(quotationId) || quotationId <= 0) {
-    return NextResponse.json({ message: "Informe uma cotacao valida." }, { status: 400 });
+    return NextResponse.json({ message: "Informe uma cotação válida." }, { status: 400 });
   }
 
   const config = siengeConfig();
@@ -521,7 +554,7 @@ export async function GET(request: NextRequest) {
   if (type === "comparison-map") {
     const result = await callSienge(config.tenant, config.username, config.password, "GET", `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId=${quotationId}`);
     if (!result.ok) {
-      return NextResponse.json({ message: "O Sienge nao retornou o mapa comparativo desta cotacao.", result }, { status: result.status });
+      return NextResponse.json({ message: "O Sienge não retornou o mapa comparativo desta cotação.", result }, { status: result.status });
     }
     const urls = ((result.body as { results?: Array<{ urlReport?: string }> })?.results || [])
       .map((item) => item.urlReport)
@@ -531,7 +564,7 @@ export async function GET(request: NextRequest) {
 
   const result = await callSienge(config.tenant, config.username, config.password, "GET", `/v1/purchase-quotations/all/negotiations?quotationNumber=${quotationId}`);
   if (!result.ok) {
-    return NextResponse.json({ message: "O Sienge nao retornou as negociacoes desta cotacao.", result }, { status: result.status });
+    return NextResponse.json({ message: "O Sienge não retornou as negociacoes desta cotação.", result }, { status: result.status });
   }
   return NextResponse.json({ negotiations: result.body });
 }
@@ -557,24 +590,19 @@ export async function POST(request: NextRequest) {
 
   if (action === "create" && !buyerId) {
     return NextResponse.json({
-      message: "Informe o comprador do Sienge para preparar a cotacao."
+      message: "Informe o comprador do Sienge para preparar a cotação."
     }, { status: 400 });
   }
 
   if (action === "create" && !isIsoDate(date)) {
     return NextResponse.json({
-      message: "Informe a data da cotacao no formato yyyy-MM-dd."
+      message: "Informe a data da cotação no formato yyyy-MM-dd."
     }, { status: 400 });
-  }
-
-  if (action === "create") {
-    const duplicateExisting = alreadyExistingQuotationResponse(eventQuotationId, body.force);
-    if (duplicateExisting) return duplicateExisting;
   }
 
   if (action !== "create" && !body.purchaseQuotationId) {
     return NextResponse.json({
-      message: "Informe o ID da cotacao do Sienge."
+      message: "Informe o ID da cotação do Sienge."
     }, { status: 400 });
   }
 
@@ -594,7 +622,7 @@ export async function POST(request: NextRequest) {
       quotationPayload,
       fallbackPayload: quotationFallbackPayload,
       itemPayloads: itemPayloads(body.request),
-      note: "Ao confirmar, a rota cria a cotacao e tenta vincular os itens da solicitacao com o ID retornado."
+      note: "Ao confirmar, a rota cria a cotação e tenta vincular os itens da solicitação com o ID retornado."
     });
   }
 
@@ -602,7 +630,7 @@ export async function POST(request: NextRequest) {
     const payloads = itemPayloads(body.request, body.purchaseQuotationId);
     if (!payloads.length) {
       return NextResponse.json({
-        message: "Informe ao menos um item de solicitacao com deliveryRequirementNumber."
+        message: "Informe ao menos um item de solicitação com deliveryRequirementNumber."
       }, { status: 400 });
     }
 
@@ -615,14 +643,14 @@ export async function POST(request: NextRequest) {
 
     const config = siengeConfig();
     if ("error" in config) {
-      recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+      recordIntegrationEvent("integration_error", "Erro de configuração do Sienge", config.error);
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
     const preflight = await runPreflight(action, body, config);
     if (preflight.quotation && !preflight.quotation.ok) return preflightUnavailableResponse(preflight);
-    if (body.force !== true && preflight.hints.some((hint) => hint.includes("Item"))) {
-      return existingInSiengeResponse("Este item ja aparece na consulta previa do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
+    if (body.force !== true && preflight.existing.itemNumbers.length) {
+      return existingInSiengeResponse(`O(s) item(ns) ${preflight.existing.itemNumbers.join(", ")} já aparece(m) na consulta prévia do Sienge. Nada foi enviado agora para evitar duplicidade.`, preflight);
     }
 
     const results = [];
@@ -632,12 +660,12 @@ export async function POST(request: NextRequest) {
 
     const failed = results.find((result) => !result.ok);
     if (failed) {
-      recordIntegrationEvent("integration_error", "Erro ao vincular item no Sienge", "Um ou mais itens nao foram aceitos pelo Sienge.", { preflight, results });
+      recordIntegrationEvent("integration_error", "Erro ao vincular item no Sienge", "Um ou mais itens não foram aceitos pelo Sienge.", { preflight, results });
     } else {
-      recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitacao foram vinculados a cotacao.", { integrationKey, preflight, results });
+      recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitação foram vinculados a cotação.", { integrationKey, preflight, results });
     }
     return NextResponse.json({
-      message: failed ? "Um ou mais itens nao foram aceitos pelo Sienge." : "Itens vinculados a cotacao no Sienge.",
+      message: failed ? "Um ou mais itens não foram aceitos pelo Sienge." : "Itens vinculados a cotação no Sienge.",
       preflight,
       results
     }, { status: failed ? failed.status : 201 });
@@ -649,7 +677,7 @@ export async function POST(request: NextRequest) {
     const supplierId = Number(body.supplierId);
     if (!purchaseQuotationItemNumber || !supplierId) {
       return NextResponse.json({
-        message: "Informe o item da cotacao e o fornecedor do Sienge."
+        message: "Informe o item da cotação e o fornecedor do Sienge."
       }, { status: 400 });
     }
 
@@ -666,7 +694,7 @@ export async function POST(request: NextRequest) {
 
     const config = siengeConfig();
     if ("error" in config) {
-      recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+      recordIntegrationEvent("integration_error", "Erro de configuração do Sienge", config.error);
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
@@ -674,32 +702,32 @@ export async function POST(request: NextRequest) {
     if ((preflight.quotation && !preflight.quotation.ok) || (preflight.supplier && !preflight.supplier.ok)) return preflightUnavailableResponse(preflight);
     if (preflight.supplier && !preflight.supplier.exists) {
       return NextResponse.json({
-        message: "Fornecedor nao encontrado no Sienge na consulta previa. Nada foi enviado.",
+        message: "Fornecedor não encontrado no Sienge na consulta prévia. Nada foi enviado.",
         preflight
       }, { status: 404 });
     }
-    if (body.force !== true && preflight.hints.some((hint) => hint.includes("Fornecedor") && hint.includes("no item"))) {
-      return existingInSiengeResponse("Este fornecedor ja aparece neste item na consulta previa do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
+    if (body.force !== true && preflight.existing.supplierOnItem) {
+      return existingInSiengeResponse("Este fornecedor já aparece neste item na consulta prévia do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
     }
 
     const result = await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body);
     if (!result.ok) {
-      recordIntegrationEvent("integration_error", "Erro ao incluir fornecedor no item", "O Sienge nao aceitou o fornecedor neste item da cotacao.", { preflight, result });
+      recordIntegrationEvent("integration_error", "Erro ao incluir fornecedor no item", "O Sienge não aceitou o fornecedor neste item da cotação.", { preflight, result });
       return NextResponse.json({
-        message: "O Sienge nao aceitou o fornecedor neste item da cotacao.",
+        message: "O Sienge não aceitou o fornecedor neste item da cotação.",
         preflight,
         result
       }, { status: result.status });
     }
 
-    recordIntegrationEvent("sienge_created", "Fornecedor vinculado no Sienge", "Fornecedor incluido em um item da cotacao.", {
+    recordIntegrationEvent("sienge_created", "Fornecedor vinculado no Sienge", "Fornecedor incluído em um item da cotação.", {
       integrationKey,
       preflight,
       endpoint: payload.endpoint,
       supplierId
     });
     return NextResponse.json({
-      message: "Fornecedor incluido no item da cotacao no Sienge.",
+      message: "Fornecedor incluído no item da cotação no Sienge.",
       preflight,
       result
     }, { status: 201 });
@@ -722,7 +750,7 @@ export async function POST(request: NextRequest) {
     }
     if (!appropriations.length || Math.abs(appropriationTotal - 100) >= 0.01) {
       return NextResponse.json({
-        message: "Informe a apropriacao de obra do insumo direto com unidade construtiva, referencia do orcamento e percentual total de 100%."
+        message: "Informe a apropriação de obra do insumo direto com unidade construtiva, referência do orçamento e percentual total de 100%."
       }, { status: 400 });
     }
 
@@ -757,34 +785,34 @@ export async function POST(request: NextRequest) {
 
     const config = siengeConfig();
     if ("error" in config) {
-      recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+      recordIntegrationEvent("integration_error", "Erro de configuração do Sienge", config.error);
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
     const preflight = await runPreflight(action, body, config);
     if (preflight.quotation && !preflight.quotation.ok) return preflightUnavailableResponse(preflight);
-    if (body.force !== true && preflight.hints.some((hint) => hint.includes("Insumo"))) {
-      return existingInSiengeResponse("Este insumo ja aparece na consulta previa do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
+    if (body.force !== true && preflight.existing.productId) {
+      return existingInSiengeResponse("Este insumo já aparece na consulta prévia do Sienge. Nada foi enviado agora para evitar duplicidade.", preflight);
     }
 
     const result = await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body);
     if (!result.ok) {
-      recordIntegrationEvent("integration_error", "Erro ao criar insumo na cotacao", "O Sienge nao aceitou o insumo direto nesta cotacao.", { preflight, result });
+      recordIntegrationEvent("integration_error", "Erro ao criar insumo na cotação", "O Sienge não aceitou o insumo direto nesta cotação.", { preflight, result });
       return NextResponse.json({
-        message: "O Sienge nao aceitou o insumo direto nesta cotacao.",
+        message: "O Sienge não aceitou o insumo direto nesta cotação.",
         preflight,
         result
       }, { status: result.status });
     }
 
-    recordIntegrationEvent("sienge_created", "Insumo criado na cotacao", "Insumo criado direto na cotacao, sem solicitacao de compra.", {
+    recordIntegrationEvent("sienge_created", "Insumo criado na cotação", "Insumo criado direto na cotação, sem solicitação de compra.", {
       integrationKey,
       preflight,
       endpoint: payload.endpoint,
       productId: payload.body.productId
     });
     return NextResponse.json({
-      message: "Insumo criado na cotacao do Sienge.",
+      message: "Insumo criado na cotação do Sienge.",
       preflight,
       result
     }, { status: 201 });
@@ -797,7 +825,7 @@ export async function POST(request: NextRequest) {
     const items = validNegotiationItems(negotiation);
     if (!purchaseQuotationId || !supplierId || !negotiation) {
       return NextResponse.json({
-        message: "Informe a cotacao, o fornecedor do Sienge e os dados da negociacao."
+        message: "Informe a cotação, o fornecedor do Sienge e os dados da negociação."
       }, { status: 400 });
     }
 
@@ -817,7 +845,7 @@ export async function POST(request: NextRequest) {
 
     if (body.dryRun !== false || !body.confirm) {
       return dryRunResponse(body, {
-        note: "Ao confirmar, a rota cria/atualiza a negociacao do fornecedor com os valores informados e, se solicitado, autoriza a ultima negociacao.",
+        note: "Ao confirmar, a rota cria/atualiza a negociação do fornecedor com os valores informados e, se solicitado, autoriza a última negociação.",
         ...plannedSteps
       });
     }
@@ -827,7 +855,7 @@ export async function POST(request: NextRequest) {
 
     const config = siengeConfig();
     if ("error" in config) {
-      recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+      recordIntegrationEvent("integration_error", "Erro de configuração do Sienge", config.error);
       return NextResponse.json({ message: config.error }, { status: 400 });
     }
 
@@ -835,7 +863,7 @@ export async function POST(request: NextRequest) {
     if ((preflight.quotation && !preflight.quotation.ok) || (preflight.supplier && !preflight.supplier.ok)) return preflightUnavailableResponse(preflight);
     if (preflight.supplier && !preflight.supplier.exists) {
       return NextResponse.json({
-        message: "Fornecedor nao encontrado no Sienge na consulta previa. Nada foi enviado.",
+        message: "Fornecedor não encontrado no Sienge na consulta prévia. Nada foi enviado.",
         preflight
       }, { status: 404 });
     }
@@ -847,15 +875,15 @@ export async function POST(request: NextRequest) {
       const created = await postSienge(config.tenant, config.username, config.password, basePath, {});
       steps.push(created);
       if (!created.ok) {
-        recordIntegrationEvent("integration_error", "Erro ao criar negociacao no Sienge", "O Sienge nao aceitou a criacao da negociacao para o fornecedor.", { preflight, steps });
-        return NextResponse.json({ message: "O Sienge nao aceitou a criacao da negociacao.", preflight, steps }, { status: created.status });
+        recordIntegrationEvent("integration_error", "Erro ao criar negociação no Sienge", "O Sienge não aceitou a criação da negociação para o fornecedor.", { preflight, steps });
+        return NextResponse.json({ message: "O Sienge não aceitou a criação da negociação.", preflight, steps }, { status: created.status });
       }
       negotiationNumber = parseIdFromLocation(created.location)
-        || await findLatestNegotiationNumber(config.tenant, config.username, config.password, purchaseQuotationId, supplierId);
+        || (await findLatestNegotiation(config.tenant, config.username, config.password, purchaseQuotationId, supplierId))?.number;
       if (!negotiationNumber) {
-        recordIntegrationEvent("integration_error", "Negociacao criada sem numero identificado", "A negociacao foi criada, mas o numero nao pode ser identificado para gravar os valores.", { preflight, steps });
+        recordIntegrationEvent("integration_error", "Negociação criada sem número identificado", "A negociação foi criada, mas o número não pode ser identificado para gravar os valores.", { preflight, steps });
         return NextResponse.json({
-          message: "Negociacao criada, mas o numero nao pode ser identificado. Atualize os dados e tente gravar os valores novamente.",
+          message: "Negociação criada, mas o número não pode ser identificado. Atualize os dados e tente gravar os valores novamente.",
           preflight,
           steps
         }, { status: 502 });
@@ -885,29 +913,34 @@ export async function POST(request: NextRequest) {
 
     const failed = steps.find((step) => !step.ok);
     if (failed) {
-      recordIntegrationEvent("integration_error", "Erro ao gravar negociacao no Sienge", "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge.", { preflight, negotiationNumber, steps });
+      recordIntegrationEvent("integration_error", "Erro ao gravar negociação no Sienge", "Uma ou mais etapas da negociação não foram aceitas pelo Sienge.", { preflight, negotiationNumber, steps });
     } else {
-      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociacao gravada e autorizada no Sienge" : "Negociacao gravada no Sienge", `Negociacao ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, preflight, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
+      recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociação gravada e autorizada no Sienge" : "Negociação gravada no Sienge", `Negociação ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, preflight, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
     }
 
     return NextResponse.json({
       message: failed
-        ? "Uma ou mais etapas da negociacao nao foram aceitas pelo Sienge."
+        ? "Uma ou mais etapas da negociação não foram aceitas pelo Sienge."
         : negotiation.authorize
-          ? "Negociacao gravada e autorizada no Sienge."
-          : "Negociacao gravada no Sienge.",
+          ? "Negociação gravada e autorizada no Sienge."
+          : "Negociação gravada no Sienge.",
       preflight,
       negotiationNumber,
       steps
     }, { status: failed ? failed.status : 200 });
   }
 
+  // O bloqueio de cotação já existente vale só para a gravação confirmada:
+  // a conferência (dry-run) sempre pode ser preparada acima.
+  const duplicateExisting = alreadyExistingQuotationResponse(eventQuotationId, body.force);
+  if (duplicateExisting) return duplicateExisting;
+
   const createDuplicate = duplicateIntegrationResponse(undefined, integrationKey, body.force);
   if (createDuplicate) return createDuplicate;
 
   const config = siengeConfig();
   if ("error" in config) {
-    recordIntegrationEvent("integration_error", "Erro de configuracao do Sienge", config.error);
+    recordIntegrationEvent("integration_error", "Erro de configuração do Sienge", config.error);
     return NextResponse.json({ message: config.error }, { status: 400 });
   }
 
@@ -920,16 +953,16 @@ export async function POST(request: NextRequest) {
   }
 
   if (!result.ok) {
-    recordIntegrationEvent("integration_error", "Erro ao criar cotacao no Sienge", "O Sienge nao aceitou a criacao da cotacao.", {
+    recordIntegrationEvent("integration_error", "Erro ao criar cotação no Sienge", "O Sienge não aceitou a criação da cotação.", {
       status: result.status,
       apiMessage: result.apiMessage,
       attempts
     });
     return NextResponse.json({
-      message: "O Sienge nao aceitou a criacao da cotacao.",
+      message: "O Sienge não aceitou a criação da cotação.",
       status: result.status,
       apiMessage: result.apiMessage,
-      hint: "Confira se o comprador existe como usuario do Sienge. A tela normaliza o codigo para maiusculas porque os compradores sincronizados aparecem assim.",
+      hint: "Confira se o comprador existe como usuário do Sienge. A tela normaliza o código para maiúsculas porque os compradores sincronizados aparecem assim.",
       attempts
     }, { status: result.status });
   }
@@ -949,8 +982,8 @@ export async function POST(request: NextRequest) {
     recordSupplierQuoteEvent({
       quotationId: createdEventQuotationId,
       type: "sienge_created",
-      title: "Cotacao criada no Sienge",
-      description: "Cotacao criada via /v1/purchase-quotations.",
+      title: "Cotação criada no Sienge",
+      description: "Cotação criada via /v1/purchase-quotations.",
       metadata: {
         action,
         integrationKey,
@@ -969,7 +1002,7 @@ export async function POST(request: NextRequest) {
       quotationId: purchaseQuotationId,
       type: "sienge_created",
       title: "Itens vinculados no Sienge",
-      description: "Itens da solicitacao foram vinculados junto com a criacao da cotacao.",
+      description: "Itens da solicitação foram vinculados junto com a criação da cotação.",
       metadata: {
         action: "attach-items",
         integrationKey: attachIntegrationKey,
@@ -980,8 +1013,8 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     message: failedItem
-      ? "Cotacao criada no Sienge, mas um ou mais itens nao foram vinculados."
-      : "Cotacao criada no Sienge.",
+      ? "Cotação criada no Sienge, mas um ou mais itens não foram vinculados."
+      : "Cotação criada no Sienge.",
     purchaseQuotationId,
     location: result.location,
     quotationPayload: attempts[attempts.length - 1].payload,

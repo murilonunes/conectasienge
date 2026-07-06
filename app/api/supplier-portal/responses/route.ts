@@ -209,13 +209,13 @@ export async function POST(request: Request) {
         freightType: commercialTerms.freightType,
         deliveryDays
       },
-      registration: localSupplier || lockedSupplier.locked ? undefined : input.registration
-        ? {
-            tradeName: text(input.registration.tradeName, 160),
-            city: text(input.registration.city, 80),
-            state: text(input.registration.state, 2).toUpperCase()
-          }
-        : undefined,
+      // Sem fornecedor na base local, o bloco de cadastro é sempre gravado (mesmo
+      // vazio): é ele que marca a resposta como pendente na aba Cadastros.
+      registration: localSupplier ? undefined : {
+        tradeName: text(input.registration?.tradeName, 160),
+        city: text(input.registration?.city, 80),
+        state: text(input.registration?.state, 2).toUpperCase()
+      },
       items: safeItems
     }, {
       ...payload,
@@ -226,9 +226,11 @@ export async function POST(request: Request) {
       message: "Proposta enviada com sucesso.",
       responseId: saved.id,
       createdAt: saved.createdAt,
-      supplierFound: Boolean(localSupplier || lockedSupplier.locked),
+      // Link travado não significa cadastro existente: sem fornecedor na base
+      // local, a resposta precisa aparecer na aba Cadastros para criação no Sienge.
+      supplierFound: Boolean(localSupplier),
       supplierId: lockedSupplier.supplierId || localSupplier?.id,
-      registrationPending: !localSupplier && !lockedSupplier.locked
+      registrationPending: !localSupplier
     }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível salvar a proposta.";

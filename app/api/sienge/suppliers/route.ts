@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     try {
       preflight = await findExistingCreditor(payload);
     } catch (error) {
-      const message = "Nao foi possivel consultar credores no Sienge antes da criacao.";
+      const message = "Não foi possível consultar credores no Sienge antes da criação.";
       if (confirm) {
         return NextResponse.json({
           message: `${message} Nada foi enviado.`,
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
 
     if (preflight?.exists && input.force !== true) {
       return NextResponse.json({
-        message: "Fornecedor ja localizado no Sienge pelo mesmo documento. Nada foi enviado agora para evitar cadastro duplicado.",
+        message: "Fornecedor já localizado no Sienge pelo mesmo documento. Nada foi enviado agora para evitar cadastro duplicado.",
         alreadyExistsInSienge: true,
         preflight
       }, { status: 409 });

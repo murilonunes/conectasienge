@@ -498,6 +498,32 @@ export function QuotationDetail({
     }
   }
 
+  // Regerar substitui o link: gera o novo primeiro e, dando certo, revoga o
+  // anterior para o fornecedor não ficar com dois convites ativos.
+  async function regenerateInvitation(invitation: SupplierQuoteInvitationSummary) {
+    const generated = await generateSupplierPortalLink({
+      supplierId: invitation.supplierId,
+      supplierName: invitation.supplierName,
+      document: invitation.document
+    });
+    if (!generated) return;
+    if (invitation.revokedAt || invitation.responseCount > 0) return;
+    try {
+      const response = await fetch("/api/supplier-portal/invitations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotationId: quotation.id, invitationId: invitation.id })
+      });
+      const json = await response.json() as { invitations?: SupplierQuoteInvitationSummary[]; message?: string };
+      if (!response.ok) throw new Error(json.message || "Não foi possível revogar o link anterior.");
+      if (json.invitations) setInvitations(json.invitations);
+      setLinkMessage("Novo link gerado e link anterior revogado.");
+      void refreshEvents();
+    } catch (error) {
+      setLinkMessage(`Novo link gerado, mas o anterior continua ativo: ${error instanceof Error ? error.message : "erro inesperado ao revogar"}.`);
+    }
+  }
+
   async function deleteResponse(response: SupplierQuoteResponseSummary) {
     const confirmed = window.confirm(
       `Excluir a resposta #${response.id} de ${response.supplierName}?\n\nAs aprovações vinculadas a ela também serão removidas e o link original volta a aceitar uma nova proposta. Esta ação não pode ser desfeita.`
@@ -790,11 +816,7 @@ export function QuotationDetail({
           loadingAction={loadingAction}
           onGoToTab={setTab}
           onCopyLink={copyInvitationLink}
-          onRegenerateLink={(invitation) => void generateSupplierPortalLink({
-            supplierId: invitation.supplierId,
-            supplierName: invitation.supplierName,
-            document: invitation.document
-          })}
+          onRegenerateLink={(invitation) => void regenerateInvitation(invitation)}
           onRevokeLink={revokeInvitation}
         />
       )}
