@@ -27,6 +27,7 @@ export function SupplierQuoteSubmittedView({
   const [requestMessage, setRequestMessage] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const terms = response.commercialTerms;
+  const proposalAttachment = response.proposalAttachment;
   const attendedItems = response.items.filter((item) => item.attends);
   const responseItemsByNumber = new Map(response.items.map((item) => [item.itemNumber, item]));
   const quotedItems = items.flatMap((original) => {
@@ -113,13 +114,30 @@ export function SupplierQuoteSubmittedView({
           <span>Condições</span>
           <h2>Pagamento, frete e entrega</h2>
         </div>
-        <div className="supplier-review-grid">
+        <div className="supplier-review-grid supplier-print-summary-grid">
           {terms.offersCash && <span><strong>À vista</strong>{cashSummaryText(String(terms.cashDiscountPercentage), terms.cashDiscountMode, terms.cashDiscountValue)}</span>}
           {terms.offersTerm && <span><strong>A prazo</strong>{termSummaryText(terms.installments.map((item) => ({ days: String(item.days), percentage: String(item.percentage) })))}</span>}
           <span><strong>Frete e entrega</strong>{freightSummaryText(terms.freightType, String(terms.freightPrice), terms.deliveryDays)}</span>
+          <span><strong>Valor total cotado</strong>{formatCurrency(response.totalValue)}</span>
         </div>
         {terms.generalNotes && <p className="quotation-response-notes">{terms.generalNotes}</p>}
       </section>
+
+      {proposalAttachment && (
+        <section className="card supplier-portal-card supplier-print-section supplier-attachment-print">
+          <div className="supplier-card-head">
+            <span>Anexo</span>
+            <h2>Proposta do sistema do fornecedor</h2>
+          </div>
+          <div className="supplier-attachment-card">
+            <div>
+              <strong>{proposalAttachment.fileName}</strong>
+              <span>{proposalAttachment.mimeType === "application/pdf" ? "PDF" : "Imagem"} - {Math.max(1, Math.round(proposalAttachment.sizeBytes / 1024))} KB</span>
+            </div>
+            <a className="button secondary" href={proposalAttachment.dataUrl} download={proposalAttachment.fileName}>Abrir anexo</a>
+          </div>
+        </section>
+      )}
 
       <section className="card supplier-portal-card supplier-print-section">
         <div className="supplier-card-head">

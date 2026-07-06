@@ -1,4 +1,5 @@
 import type { QuotationItemSummary } from "@/features/quotations/data";
+import type { SupplierQuoteProposalAttachment } from "@/lib/supplier-quote-portal";
 import { formatCurrency } from "@/lib/formatters";
 import { cashSummaryText, formatDocument, freightSummaryText, itemTotal, termSummaryText } from "./helpers";
 import type { FreightType, InstallmentRow, ResponseItem, WizardStep } from "./types";
@@ -22,6 +23,9 @@ type ReviewStepProps = {
   freightPrice: string;
   deliveryDays: string;
   generalNotes: string;
+  proposalAttachment?: SupplierQuoteProposalAttachment;
+  onProposalAttachmentChange: (file: File | undefined) => void;
+  onProposalAttachmentRemove: () => void;
   onEditStep: (step: WizardStep) => void;
 };
 
@@ -44,10 +48,17 @@ export function ReviewStep({
   freightPrice,
   deliveryDays,
   generalNotes,
+  proposalAttachment,
+  onProposalAttachmentChange,
+  onProposalAttachmentRemove,
   onEditStep
 }: ReviewStepProps) {
+  const attachmentSize = proposalAttachment
+    ? `${Math.max(1, Math.round(proposalAttachment.sizeBytes / 1024))} KB`
+    : "";
+
   return (
-    <section className="card supplier-portal-card">
+    <section className="card supplier-portal-card supplier-final-review-card">
       <div className="supplier-card-head">
         <span>Passo 5 de 5</span>
         <h2>Confira antes de enviar</h2>
@@ -116,6 +127,31 @@ export function ReviewStep({
           <span><strong>Frete e entrega</strong>{freightSummaryText(freightType, freightPrice, deliveryDays)}</span>
         </div>
         {generalNotes && <p className="quotation-response-notes">{generalNotes}</p>}
+      </div>
+
+      <div className="supplier-review-section supplier-attachment-section">
+        <div className="supplier-review-section-head">
+          <h3>Proposta do fornecedor</h3>
+          <label className="supplier-attachment-button">
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png"
+              onChange={(event) => onProposalAttachmentChange(event.target.files?.[0])}
+            />
+            Anexar proposta
+          </label>
+        </div>
+        {proposalAttachment ? (
+          <div className="supplier-attachment-card">
+            <div>
+              <strong>{proposalAttachment.fileName}</strong>
+              <span>{proposalAttachment.mimeType === "application/pdf" ? "PDF" : "Imagem"} - {attachmentSize}</span>
+            </div>
+            <button type="button" onClick={onProposalAttachmentRemove}>Remover anexo</button>
+          </div>
+        ) : (
+          <p className="supplier-attachment-empty">Opcional: anexe a proposta gerada no sistema do fornecedor em PDF, JPG ou PNG, até 2 MB.</p>
+        )}
       </div>
     </section>
   );

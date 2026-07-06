@@ -66,6 +66,14 @@ export function RespostasTab({
                   <span><strong>Itens atendidos</strong>{response.attendedCount} de {response.items.length}</span>
                   <span><strong>Pagamento</strong>{paymentSummary(response.commercialTerms)}</span>
                   <span><strong>Frete</strong>{freightSummary(response.commercialTerms)}</span>
+                  {response.proposalAttachment && (
+                    <span>
+                      <strong>Proposta anexada</strong>
+                      <a className="quotation-response-attachment" href={response.proposalAttachment.dataUrl} download={response.proposalAttachment.fileName}>
+                        {response.proposalAttachment.fileName}
+                      </a>
+                    </span>
+                  )}
                 </div>
                 {response.commercialTerms.generalNotes && (
                   <p className="quotation-response-notes">{response.commercialTerms.generalNotes}</p>

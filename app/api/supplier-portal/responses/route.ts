@@ -7,7 +7,9 @@ import { clientIp, rateLimited } from "@/lib/rate-limit";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const maxBodyBytes = 128 * 1024;
+const maxAttachmentBytes = 2 * 1024 * 1024;
+const maxBodyBytes = 3 * 1024 * 1024;
+const allowedAttachmentTypes = new Set(["application/pdf", "image/jpeg", "image/png"]);
 
 function text(value: unknown, max = 160) {
   return String(value || "").trim().slice(0, max);
@@ -76,6 +78,30 @@ function lockedIdentityViolation(
 
 function validFreightType(value: unknown) {
   return value === "INCLUDED" || value === "PAID" || value === "NONE";
+}
+
+function safeProposalAttachment(value: SupplierQuoteResponseInput["proposalAttachment"]) {
+  if (!value) return undefined;
+  const fileName = text(value.fileName, 180);
+  const mimeType = text(value.mimeType, 80);
+  const sizeBytes = Math.round(Number(value.sizeBytes) || 0);
+  const dataUrl = String(value.dataUrl || "");
+  if (!fileName || !allowedAttachmentTypes.has(mimeType)) {
+    throw new Error("Anexe a proposta em PDF, JPG ou PNG.");
+  }
+  if (sizeBytes <= 0 || sizeBytes > maxAttachmentBytes) {
+    throw new Error("O anexo da proposta deve ter no máximo 2 MB.");
+  }
+  if (!dataUrl.startsWith(`data:${mimeType};base64,`)) {
+    throw new Error("Não foi possível validar o arquivo anexado.");
+  }
+  return {
+    fileName,
+    mimeType,
+    sizeBytes,
+    dataUrl,
+    uploadedAt: new Date().toISOString()
+  };
 }
 
 export async function POST(request: Request) {
@@ -209,6 +235,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Informe valor e quantidade dos itens atendidos." }, { status: 400 });
     }
 
+    const proposalAttachment = safeProposalAttachment(input.proposalAttachment);
     const localSupplier: SupplierDirectoryItem | undefined = lockedSupplier.localSupplier || searchLocalSuppliers(document, 1).suppliers[0];
     const finalSupplierName = lockedSupplier.supplierName || text(input.supplierName);
     const finalDocument = (lockedSupplier.document || document).replace(/\D/g, "");
@@ -225,6 +252,7 @@ export async function POST(request: Request) {
         freightType: commercialTerms.freightType,
         deliveryDays
       },
+      proposalAttachment,
       // Sem fornecedor na base local, o bloco de cadastro é sempre gravado (mesmo
       // vazio): é ele que marca a resposta como pendente na aba Cadastros.
       registration: localSupplier ? undefined : {
@@ -250,6 +278,9 @@ export async function POST(request: Request) {
     }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível salvar a proposta.";
-    return NextResponse.json({ message }, { status: message.includes("já foi utilizado") ? 409 : 500 });
+    const validationError = message.startsWith("Anexe ")
+      || message.startsWith("O anexo ")
+      || message.startsWith("Não foi possível validar");
+    return NextResponse.json({ message }, { status: message.includes("já foi utilizado") ? 409 : validationError ? 400 : 500 });
   }
 }

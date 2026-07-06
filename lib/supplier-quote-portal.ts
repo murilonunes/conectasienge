@@ -37,6 +37,14 @@ export type SupplierQuoteCommercialTerms = {
   generalNotes: string;
 };
 
+export type SupplierQuoteProposalAttachment = {
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  dataUrl: string;
+  uploadedAt?: string;
+};
+
 // Formato antigo gravado antes de o portal aceitar as duas formas de pagamento ao mesmo tempo.
 type LegacyCommercialTermsInput = Partial<SupplierQuoteCommercialTerms> & { paymentType?: "cash" | "term" };
 
@@ -57,6 +65,7 @@ export type SupplierQuoteResponseInput = {
     notes?: string;
   }>;
   commercialTerms?: Partial<SupplierQuoteCommercialTerms>;
+  proposalAttachment?: SupplierQuoteProposalAttachment;
 };
 
 export type SupplierQuoteResponseItem = SupplierQuoteResponseInput["items"][number];
@@ -75,6 +84,7 @@ export type SupplierQuoteResponseSummary = {
   attendedCount: number;
   totalValue: number;
   commercialTerms: SupplierQuoteCommercialTerms;
+  proposalAttachment?: SupplierQuoteProposalAttachment;
   createdAt: string;
 };
 
@@ -284,6 +294,11 @@ function database() {
     // Coluna já existe em bancos criados depois desta versão.
   }
   try {
+    db.exec("ALTER TABLE supplier_quote_responses ADD COLUMN proposal_attachment_json TEXT");
+  } catch {
+    // Coluna já existe em bancos criados depois desta versão.
+  }
+  try {
     // Cada link aceita uma única proposta; reenvio pelo mesmo token é bloqueado
     // na aplicação, e este índice é a garantia contra o caso de duas gravações
     // concorrentes com o mesmo link.
@@ -482,6 +497,7 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
         registration_json,
         items_json,
         commercial_terms_json,
+        proposal_attachment_json,
         created_at
       FROM supplier_quote_responses
       WHERE token_hash = ?
@@ -497,6 +513,7 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
       registration_json: string | null;
       items_json: string;
       commercial_terms_json: string | null;
+      proposal_attachment_json: string | null;
       created_at: string;
     } | undefined;
 
@@ -517,6 +534,7 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
       attendedCount: attendedItems.length,
       totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
       commercialTerms: normalizeCommercialTerms(parseJson<LegacyCommercialTermsInput>(row.commercial_terms_json, defaultCommercialTerms)),
+      proposalAttachment: parseJson<SupplierQuoteProposalAttachment | undefined>(row.proposal_attachment_json, undefined),
       createdAt: row.created_at
     };
   } finally {
@@ -625,9 +643,9 @@ export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, pay
       result = db.prepare(`
         INSERT INTO supplier_quote_responses (
           token_hash, quotation_id, supplier_id, supplier_name, document, email, phone,
-          registration_json, items_json, commercial_terms_json, created_at
+          registration_json, items_json, commercial_terms_json, proposal_attachment_json, created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         hashToken(input.token),
         payload.quotationId,
@@ -639,6 +657,10 @@ export function saveSupplierQuoteResponse(input: SupplierQuoteResponseInput, pay
         input.registration ? JSON.stringify(input.registration) : null,
         JSON.stringify(input.items),
         JSON.stringify(commercialTerms),
+        input.proposalAttachment ? JSON.stringify({
+          ...input.proposalAttachment,
+          uploadedAt: input.proposalAttachment.uploadedAt || createdAt
+        }) : null,
         createdAt
       );
     } catch (error) {
@@ -728,6 +750,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         registration_json,
         items_json,
         commercial_terms_json,
+        proposal_attachment_json,
         created_at
       FROM supplier_quote_responses
       WHERE quotation_id = ?
@@ -743,6 +766,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
       registration_json: string | null;
       items_json: string;
       commercial_terms_json: string | null;
+      proposal_attachment_json: string | null;
       created_at: string;
     }>;
 
@@ -763,6 +787,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         attendedCount: attendedItems.length,
         totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
         commercialTerms: normalizeCommercialTerms(parseJson<LegacyCommercialTermsInput>(row.commercial_terms_json, defaultCommercialTerms)),
+        proposalAttachment: parseJson<SupplierQuoteProposalAttachment | undefined>(row.proposal_attachment_json, undefined),
         createdAt: row.created_at
       };
     });

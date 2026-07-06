@@ -144,6 +144,7 @@ Revisado nesta etapa:
 - Links gerados para fornecedor pré-definido carregam os dados conhecidos no portal público e travam nome, documento, e-mail e telefone quando esses valores vêm no convite/base local; a rota de envio também rejeita tentativa de alteração manual.
 - A etapa de pagamento à vista exige escolher Sim/Não para desconto sem padrão inicial; ao escolher Sim, o fornecedor seleciona porcentagem ou valor manual antes de informar o desconto.
 - A etapa de pagamento a prazo do portal exige escolher Sim/Não sem padrão inicial; ao escolher Sim, a tabela começa vazia e o fornecedor deve gerar parcelas automaticamente ou adicionar manualmente.
+- O resumo final do portal ganhou visual mais próprio para impressão e botão para anexar a proposta gerada no sistema do fornecedor; o arquivo fica disponível no detalhe enviado e na aba Respostas.
 - A aba Respostas permite excluir uma resposta recebida; a rota dinâmica de exclusão permanece protegida por sessão, porque o middleware só libera a rota pública exata de envio de propostas.
 - A exclusão de resposta remove aprovações vinculadas e registra evento `response_deleted` na timeline.
 

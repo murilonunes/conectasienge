@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
-import type { SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
+import type { SupplierQuoteProposalAttachment, SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 import { FreightStep } from "./supplier-quote-response-form/freight-step";
 import { IdentityStep } from "./supplier-quote-response-form/identity-step";
 import { ItemsStep } from "./supplier-quote-response-form/items-step";
@@ -69,6 +69,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [freightPrice, setFreightPrice] = useState("");
   const [deliveryDays, setDeliveryDays] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
+  const [proposalAttachment, setProposalAttachment] = useState<SupplierQuoteProposalAttachment | undefined>();
   const [checkingDocument, setCheckingDocument] = useState(false);
   const [supplierExists, setSupplierExists] = useState<boolean | undefined>(fixedSupplier ? true : undefined);
   const [message, setMessage] = useState("");
@@ -170,6 +171,41 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     setCashDiscountMode(value);
     setCashDiscountPercentage("");
     setCashDiscountValue("");
+  }
+
+  function arrayBufferToBase64(buffer: ArrayBuffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      const chunk = bytes.subarray(index, index + chunkSize);
+      for (let chunkIndex = 0; chunkIndex < chunk.length; chunkIndex += 1) {
+        binary += String.fromCharCode(chunk[chunkIndex]);
+      }
+    }
+    return window.btoa(binary);
+  }
+
+  async function attachSupplierProposal(file: File | undefined) {
+    if (!file) return;
+    const allowedTypes = new Set(["application/pdf", "image/jpeg", "image/png"]);
+    if (!allowedTypes.has(file.type)) {
+      setStepMessage("Anexe a proposta em PDF, JPG ou PNG.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setStepMessage("O anexo da proposta deve ter no máximo 2 MB.");
+      return;
+    }
+    const dataUrl = `data:${file.type};base64,${arrayBufferToBase64(await file.arrayBuffer())}`;
+    setProposalAttachment({
+      fileName: file.name,
+      mimeType: file.type,
+      sizeBytes: file.size,
+      dataUrl,
+      uploadedAt: new Date().toISOString()
+    });
+    setStepMessage("");
   }
 
   const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
@@ -357,7 +393,8 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           freightPrice: Number(freightPrice || 0),
           deliveryDays: Number(deliveryDays || 0),
           generalNotes
-        }
+        },
+        proposalAttachment
       };
       const response = await fetch("/api/supplier-portal/responses", {
         method: "POST",
@@ -391,6 +428,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           deliveryDays: Number(deliveryDays || 0),
           generalNotes
         },
+        proposalAttachment,
         createdAt
       });
       setSubmitted(true);
@@ -538,6 +576,9 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             freightPrice={freightPrice}
             deliveryDays={deliveryDays}
             generalNotes={generalNotes}
+            proposalAttachment={proposalAttachment}
+            onProposalAttachmentChange={(file) => void attachSupplierProposal(file)}
+            onProposalAttachmentRemove={() => setProposalAttachment(undefined)}
             onEditStep={goToStep}
           />
         )}
