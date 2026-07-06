@@ -303,14 +303,22 @@ export function QuotationDetail({
   function negotiationPayloadFromResponse(dispatch: NegotiationDispatch) {
     const selected = new Set(dispatch.selectedItems || []);
     const terms = dispatch.response.commercialTerms;
+    const rawDiscountValue = terms.cashDiscountMode === "value" && terms.cashDiscountValue > 0
+      ? terms.cashDiscountValue
+      : dispatch.response.totalValue * (terms.cashDiscountPercentage / 100);
     const discountValue = terms.offersCash
-      ? Math.round(dispatch.response.totalValue * (terms.cashDiscountPercentage / 100) * 100) / 100
+      ? Math.min(dispatch.response.totalValue, Math.round(rawDiscountValue * 100) / 100)
       : 0;
+    const cashDescription = terms.cashDiscountMode === "value" && terms.cashDiscountValue > 0
+      ? `À vista com ${formatCurrency(terms.cashDiscountValue)} de desconto`
+      : terms.cashDiscountPercentage > 0
+        ? `À vista com ${terms.cashDiscountPercentage}% de desconto`
+        : "À vista";
 
     const paymentOptions = [];
     if (terms.offersCash) {
       paymentOptions.push({
-        description: terms.cashDiscountPercentage > 0 ? `À vista com ${terms.cashDiscountPercentage}% de desconto` : "À vista",
+        description: cashDescription,
         selected: true,
         paymentTerms: [{ numberOfdays: 0, percentage: 100 }]
       });

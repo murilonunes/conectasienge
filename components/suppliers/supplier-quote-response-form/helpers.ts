@@ -33,13 +33,19 @@ export function itemTotal(item: ResponseItem) {
 export function termSummaryText(installments: InstallmentRow[]) {
   const parts = installments
     .filter((installment) => Number(installment.percentage) > 0)
-    .map((installment) => `${Number(installment.percentage) || 0}% em ${Number(installment.days) || 0} dia(s)`);
+    .map((installment) => {
+      const days = Number(installment.days) || 0;
+      return `${Number(installment.percentage) || 0}% em ${days} ${days === 1 ? "dia" : "dias"}`;
+    });
   return parts.length ? parts.join(" + ") : "A prazo";
 }
 
-export function cashSummaryText(cashDiscountPercentage: string) {
-  const discount = Number(cashDiscountPercentage) || 0;
-  return discount > 0 ? `À vista com ${discount}% de desconto` : "À vista";
+export function cashSummaryText(cashDiscountPercentage: string, cashDiscountMode?: string, cashDiscountValue?: string | number) {
+  const discountPercentage = Number(cashDiscountPercentage) || 0;
+  const discountValue = Number(cashDiscountValue) || 0;
+  if (cashDiscountMode === "value" && discountValue > 0) return `À vista com ${formatCurrency(discountValue)} de desconto`;
+  if (discountPercentage > 0) return `À vista com ${discountPercentage}% de desconto`;
+  return "À vista sem desconto";
 }
 
 export function freightSummaryText(freightType: FreightType, freightPrice: string, deliveryDays?: string | number) {
@@ -51,5 +57,5 @@ export function freightSummaryText(freightType: FreightType, freightPrice: strin
         ? "Sem frete"
         : "Não informado";
   const days = Number(deliveryDays || 0);
-  return days > 0 ? `${freightText} | Entrega em ${days} dia(s)` : freightText;
+  return days > 0 ? `${freightText} | Entrega em ${days} ${days === 1 ? "dia" : "dias"}` : freightText;
 }

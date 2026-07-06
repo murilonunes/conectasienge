@@ -886,11 +886,13 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-term-declined { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--muted); font-size: 11px; font-weight: 800; }
 .supplier-payment-fields { display: grid; grid-template-columns: minmax(160px, .72fr) minmax(180px, 1fr); gap: 10px; align-items: end; }
 .supplier-payment-fields label { display: grid; gap: 6px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
-.supplier-payment-fields input { min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 10px; color: var(--ink); font-size: 12px; outline: none; }
-.supplier-payment-fields input:focus { border-color: #b8d5c7; box-shadow: 0 0 0 3px rgba(31,107,79,.09); }
+.supplier-payment-fields input, .supplier-payment-fields select { min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 10px; color: var(--ink); font-size: 12px; outline: none; }
+.supplier-payment-fields input:focus, .supplier-payment-fields select:focus { border-color: #b8d5c7; box-shadow: 0 0 0 3px rgba(31,107,79,.09); }
+.supplier-cash-discount-choice { display: grid; gap: 6px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .supplier-payment-preview { display: grid; gap: 3px; align-content: center; min-height: 40px; padding: 8px 10px; border: 1px solid #cfe1d7; border-radius: 10px; background: #fff; }
 .supplier-payment-preview span { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
 .supplier-payment-preview strong { font-family: var(--font-display); font-size: 20px; font-weight: 750; color: var(--green); }
+.supplier-payment-preview small { color: var(--muted); font-size: 10px; font-weight: 800; }
 .supplier-installments { display: grid; gap: 8px; }
 .supplier-installment-helper { display: grid; gap: 10px; padding: 12px; border: 1px solid #d7e6dd; border-radius: 12px; background: #fff; }
 .supplier-helper-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

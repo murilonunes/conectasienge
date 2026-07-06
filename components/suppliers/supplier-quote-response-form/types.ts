@@ -15,6 +15,9 @@ export type InstallmentRow = {
 
 export type TermPaymentChoice = "" | "yes" | "no";
 
+export type CashDiscountChoice = "" | "yes" | "no";
+export type CashDiscountMode = "" | "percentage" | "value";
+
 export type FreightType = "" | "NONE" | "INCLUDED" | "PAID";
 
 export type RegistrationData = {

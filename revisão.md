@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-07-05
+Atualizado em: 2026-07-06
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -34,7 +34,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
 | Revisado | Alta | `/cotacoes` | `app/cotacoes/page.tsx`, `components/purchases/quotations-portal.tsx`, `components/purchases/quotations/*`, `app/api/sienge/purchase-quotations/route.ts` | Revisado: a tela lê o espelho local, mantém filtros/status/exportação CSV e chama o Sienge somente nos botões de preparo/confirmação de criação da cotação. |
 | Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*`, `app/api/sienge/purchase-quotations/route.ts`, `app/api/sienge/suppliers/route.ts`, `app/globals.css` | Revisado: o detalhe mantém 10 abas separadas por arquivo, com ações Sienge concentradas nas abas Sienge, Respostas, Aprovar, Mapa e Cadastros; Mapa/Aprovar seguem em layout de decisão. |
-| Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão e proposta enviada apenas para consulta. |
+| Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, desconto à vista por porcentagem ou valor manual sem seleção inicial, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão e proposta enviada apenas para consulta. |
 | Revisado | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx`, `features/inventory/data.ts` | Revisado e ampliado: tela virou visão estratégica de estoque, com carteira vendável, reservas/propostas, qualidade da base de valores, propriedade, mapa imobiliário e insumos quando configurados. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
 | Revisado | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | Revisado: a primeira leitura local é renderizada no servidor; a rota client-side com progresso ficou apenas para recarga explícita dos dados salvos. |
@@ -142,7 +142,8 @@ Revisado nesta etapa:
 - A rota de novo link bloqueia token revogado e tem limite de requisições por IP e global.
 - A criação inicial do link pela equipe fica concentrada na aba Fornecedores do detalhe da cotação, com modal para copiar/abrir o convite sem desviar o usuário para a aba Sienge.
 - Links gerados para fornecedor pré-definido carregam os dados conhecidos no portal público e travam nome, documento, e-mail e telefone quando esses valores vêm no convite/base local; a rota de envio também rejeita tentativa de alteração manual.
-- A etapa de pagamento a prazo do portal exige escolher Sim/Nao sem padrão inicial; ao escolher Sim, a tabela começa vazia e o fornecedor deve gerar parcelas automaticamente ou adicionar manualmente.
+- A etapa de pagamento à vista exige escolher Sim/Não para desconto sem padrão inicial; ao escolher Sim, o fornecedor seleciona porcentagem ou valor manual antes de informar o desconto.
+- A etapa de pagamento a prazo do portal exige escolher Sim/Não sem padrão inicial; ao escolher Sim, a tabela começa vazia e o fornecedor deve gerar parcelas automaticamente ou adicionar manualmente.
 - A aba Respostas permite excluir uma resposta recebida; a rota dinâmica de exclusão permanece protegida por sessão, porque o middleware só libera a rota pública exata de envio de propostas.
 - A exclusão de resposta remove aprovações vinculadas e registra evento `response_deleted` na timeline.
 

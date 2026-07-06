@@ -1,19 +1,26 @@
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/formatters";
-import type { InstallmentRow, TermPaymentChoice } from "./types";
+import type { CashDiscountChoice, CashDiscountMode, InstallmentRow, TermPaymentChoice } from "./types";
 
 type PaymentStepProps = {
   offersCash: boolean;
   offersTerm: boolean;
+  cashDiscountChoice: CashDiscountChoice;
+  cashDiscountMode: CashDiscountMode;
   termPaymentChoice: TermPaymentChoice;
   cashDiscountPercentage: string;
+  cashDiscountValue: string;
+  cashDiscountAmount: number;
   cashPrice: number;
   installments: InstallmentRow[];
   installmentsTotalPercentage: number;
   installmentsTotalValid: boolean;
   onOffersCashChange: (value: boolean) => void;
+  onCashDiscountChoiceChange: (value: CashDiscountChoice) => void;
+  onCashDiscountModeChange: (value: CashDiscountMode) => void;
   onTermPaymentChoiceChange: (value: TermPaymentChoice) => void;
   onCashDiscountPercentageChange: (value: string) => void;
+  onCashDiscountValueChange: (value: string) => void;
   onInstallmentChange: (index: number, field: keyof InstallmentRow, value: string) => void;
   onInstallmentsReplace: (installments: InstallmentRow[]) => void;
   onAddInstallment: () => void;
@@ -23,15 +30,22 @@ type PaymentStepProps = {
 export function PaymentStep({
   offersCash,
   offersTerm,
+  cashDiscountChoice,
+  cashDiscountMode,
   termPaymentChoice,
   cashDiscountPercentage,
+  cashDiscountValue,
+  cashDiscountAmount,
   cashPrice,
   installments,
   installmentsTotalPercentage,
   installmentsTotalValid,
   onOffersCashChange,
+  onCashDiscountChoiceChange,
+  onCashDiscountModeChange,
   onTermPaymentChoiceChange,
   onCashDiscountPercentageChange,
+  onCashDiscountValueChange,
   onInstallmentChange,
   onInstallmentsReplace,
   onAddInstallment,
@@ -107,13 +121,53 @@ export function PaymentStep({
           </label>
           {offersCash && (
             <div className="supplier-payment-fields">
-              <label>
-                <span>Desconto à vista (%)</span>
-                <input value={cashDiscountPercentage} onChange={(event) => onCashDiscountPercentageChange(event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="0" />
-              </label>
+              <div className="supplier-cash-discount-choice">
+                <span>Desconto à vista?</span>
+                <div className="supplier-term-choice" role="group" aria-label="Oferece desconto à vista?">
+                  <button
+                    className={cashDiscountChoice === "yes" ? "active" : ""}
+                    type="button"
+                    onClick={() => onCashDiscountChoiceChange("yes")}
+                  >
+                    Sim
+                  </button>
+                  <button
+                    className={cashDiscountChoice === "no" ? "active" : ""}
+                    type="button"
+                    onClick={() => onCashDiscountChoiceChange("no")}
+                  >
+                    Não
+                  </button>
+                </div>
+              </div>
+              {cashDiscountChoice === "yes" && (
+                <>
+                  <label>
+                    <span>Tipo de desconto</span>
+                    <select value={cashDiscountMode} onChange={(event) => onCashDiscountModeChange(event.target.value as CashDiscountMode)}>
+                      <option value="">Selecione</option>
+                      <option value="percentage">Porcentagem</option>
+                      <option value="value">Valor manual</option>
+                    </select>
+                  </label>
+                  {cashDiscountMode === "percentage" && (
+                    <label>
+                      <span>Desconto (%)</span>
+                      <input value={cashDiscountPercentage} onChange={(event) => onCashDiscountPercentageChange(event.target.value)} type="number" min="0.01" max="100" step="0.1" placeholder="Informe %" />
+                    </label>
+                  )}
+                  {cashDiscountMode === "value" && (
+                    <label>
+                      <span>Desconto (R$)</span>
+                      <input value={cashDiscountValue} onChange={(event) => onCashDiscountValueChange(event.target.value)} type="number" min="0.01" step="0.01" placeholder="Informe valor" />
+                    </label>
+                  )}
+                </>
+              )}
               <div className="supplier-payment-preview">
-                <span>Preço à vista</span>
+                <span>{cashDiscountChoice === "yes" ? "Preço à vista com desconto" : "Preço à vista"}</span>
                 <strong>{formatCurrency(cashPrice)}</strong>
+                {cashDiscountChoice === "yes" && cashDiscountAmount > 0 && <small>Desconto: {formatCurrency(cashDiscountAmount)}</small>}
               </div>
             </div>
           )}
@@ -123,7 +177,7 @@ export function PaymentStep({
           <div className="supplier-payment-option-head supplier-term-choice-head">
             <span>
               <strong>A prazo?</strong>
-              <small>Escolha Sim ou Nao. Se escolher Sim, gere parcelas automaticamente ou preencha manualmente.</small>
+              <small>Escolha Sim ou Não. Se escolher Sim, gere parcelas automaticamente ou preencha manualmente.</small>
             </span>
             <div className="supplier-term-choice" role="group" aria-label="Aceita pagamento a prazo?">
               <button
@@ -138,7 +192,7 @@ export function PaymentStep({
                 type="button"
                 onClick={() => onTermPaymentChoiceChange("no")}
               >
-                Nao
+                Não
               </button>
             </div>
           </div>
@@ -159,7 +213,7 @@ export function PaymentStep({
                     <input value={installmentCount} onChange={(event) => setInstallmentCount(event.target.value)} type="number" min="1" max="24" />
                   </label>
                   <label>
-                    <span>{distribution === "entry" ? "Entrada em dias" : "1a parcela em dias"}</span>
+                    <span>{distribution === "entry" ? "Entrada em dias" : "1ª parcela em dias"}</span>
                     <input value={firstDueDays} onChange={(event) => setFirstDueDays(event.target.value)} type="number" min="0" max="3650" />
                   </label>
                   <label>
@@ -194,7 +248,7 @@ export function PaymentStep({
                   {generatedPreview.map((installment, index) => (
                     <span key={`${installment.days}-${index}`}>
                       <strong>{installment.percentage}%</strong>
-                      {installment.days} dia(s)
+                      {installment.days} {Number(installment.days) === 1 ? "dia" : "dias"}
                     </span>
                   ))}
                 </div>

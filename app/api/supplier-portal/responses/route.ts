@@ -127,6 +127,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Marque ao menos uma forma de pagamento: à vista, a prazo ou as duas." }, { status: 400 });
     }
 
+    if (commercialTerms.offersCash !== false) {
+      const cashDiscountMode = commercialTerms.cashDiscountMode;
+      if (cashDiscountMode !== "none" && cashDiscountMode !== "percentage" && cashDiscountMode !== "value") {
+        return NextResponse.json({ message: "Informe se oferece desconto à vista: Sim ou Não." }, { status: 400 });
+      }
+      if (cashDiscountMode === "percentage") {
+        const cashDiscountPercentage = Number(commercialTerms.cashDiscountPercentage || 0);
+        if (cashDiscountPercentage <= 0 || cashDiscountPercentage > 100) {
+          return NextResponse.json({ message: "Informe um desconto à vista em porcentagem entre 0,01% e 100%." }, { status: 400 });
+        }
+      }
+      if (cashDiscountMode === "value" && Number(commercialTerms.cashDiscountValue || 0) <= 0) {
+        return NextResponse.json({ message: "Informe um desconto à vista em valor maior que zero." }, { status: 400 });
+      }
+    }
+
     if (commercialTerms.offersTerm === true) {
       const installments = Array.isArray(commercialTerms.installments) ? commercialTerms.installments : [];
       const totalPercentage = installments.reduce((sum, installment) => sum + (Number(installment?.percentage) || 0), 0);

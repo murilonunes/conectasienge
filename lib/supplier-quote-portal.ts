@@ -22,10 +22,13 @@ export type SupplierQuoteInstallment = {
 };
 
 export type SupplierQuoteFreightType = "NONE" | "INCLUDED" | "PAID";
+export type SupplierQuoteCashDiscountMode = "none" | "percentage" | "value";
 
 export type SupplierQuoteCommercialTerms = {
   offersCash: boolean;
+  cashDiscountMode: SupplierQuoteCashDiscountMode;
   cashDiscountPercentage: number;
+  cashDiscountValue: number;
   offersTerm: boolean;
   installments: SupplierQuoteInstallment[];
   freightType: SupplierQuoteFreightType;
@@ -559,9 +562,11 @@ export function revokeSupplierQuoteInvitation(quotationId: number, invitationId:
 
 export const defaultCommercialTerms: SupplierQuoteCommercialTerms = {
   offersCash: true,
+  cashDiscountMode: "none",
   cashDiscountPercentage: 0,
+  cashDiscountValue: 0,
   offersTerm: false,
-  installments: [{ days: 30, percentage: 100 }],
+  installments: [],
   freightType: "NONE",
   freightPrice: 0,
   deliveryDays: 0,
@@ -583,11 +588,25 @@ export function normalizeCommercialTerms(input?: LegacyCommercialTermsInput): Su
     }))
     .filter((installment) => installment.percentage > 0);
 
+  const cashDiscountPercentage = Math.max(0, Math.min(100, Number(input?.cashDiscountPercentage) || 0));
+  const cashDiscountValue = Math.max(0, Math.min(999999999, Number(input?.cashDiscountValue) || 0));
+  const cashDiscountMode = input?.cashDiscountMode === "value"
+    ? "value"
+    : input?.cashDiscountMode === "percentage"
+      ? "percentage"
+      : cashDiscountValue > 0
+        ? "value"
+        : cashDiscountPercentage > 0
+          ? "percentage"
+          : "none";
+
   return {
     offersCash,
-    cashDiscountPercentage: Math.max(0, Math.min(100, Number(input?.cashDiscountPercentage) || 0)),
+    cashDiscountMode,
+    cashDiscountPercentage: cashDiscountMode === "none" ? 0 : cashDiscountPercentage,
+    cashDiscountValue: cashDiscountMode === "none" ? 0 : cashDiscountValue,
     offersTerm,
-    installments: offersTerm && installments.length ? installments : defaultCommercialTerms.installments,
+    installments: offersTerm ? installments : [],
     freightType: input?.freightType === "INCLUDED" || input?.freightType === "PAID" ? input.freightType : "NONE",
     freightPrice: Math.max(0, Math.min(999999999, Number(input?.freightPrice) || 0)),
     deliveryDays: Math.max(0, Math.min(3650, Math.round(Number(input?.deliveryDays) || 0))),

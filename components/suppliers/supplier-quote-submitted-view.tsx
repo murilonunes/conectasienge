@@ -114,7 +114,7 @@ export function SupplierQuoteSubmittedView({
           <h2>Pagamento, frete e entrega</h2>
         </div>
         <div className="supplier-review-grid">
-          {terms.offersCash && <span><strong>À vista</strong>{cashSummaryText(String(terms.cashDiscountPercentage))}</span>}
+          {terms.offersCash && <span><strong>À vista</strong>{cashSummaryText(String(terms.cashDiscountPercentage), terms.cashDiscountMode, terms.cashDiscountValue)}</span>}
           {terms.offersTerm && <span><strong>A prazo</strong>{termSummaryText(terms.installments.map((item) => ({ days: String(item.days), percentage: String(item.percentage) })))}</span>}
           <span><strong>Frete e entrega</strong>{freightSummaryText(terms.freightType, String(terms.freightPrice), terms.deliveryDays)}</span>
         </div>

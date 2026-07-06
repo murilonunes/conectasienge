@@ -67,7 +67,12 @@ export function confirmSiengeWrite(question: string) {
 export function paymentSummary(terms: SupplierQuoteCommercialTerms) {
   const options: string[] = [];
   if (terms.offersCash) {
-    options.push(terms.cashDiscountPercentage > 0 ? `À vista, ${terms.cashDiscountPercentage}% de desconto` : "À vista");
+    const cashDiscount = terms.cashDiscountMode === "value" && terms.cashDiscountValue > 0
+      ? `${formatCurrency(terms.cashDiscountValue)} de desconto`
+      : terms.cashDiscountPercentage > 0
+        ? `${terms.cashDiscountPercentage}% de desconto`
+        : "";
+    options.push(cashDiscount ? `À vista, ${cashDiscount}` : "À vista");
   }
   if (terms.offersTerm) {
     const termSummary = terms.installments

@@ -14,6 +14,8 @@ type ReviewStepProps = {
   offersCash: boolean;
   offersTerm: boolean;
   cashDiscountPercentage: string;
+  cashDiscountMode?: string;
+  cashDiscountValue?: string;
   cashPrice: number;
   installments: InstallmentRow[];
   freightType: FreightType;
@@ -34,6 +36,8 @@ export function ReviewStep({
   offersCash,
   offersTerm,
   cashDiscountPercentage,
+  cashDiscountMode,
+  cashDiscountValue,
   cashPrice,
   installments,
   freightType,
@@ -96,7 +100,7 @@ export function ReviewStep({
           <button type="button" className="supplier-review-edit" onClick={() => onEditStep(3)}>Editar</button>
         </div>
         <div className="supplier-review-grid">
-          {offersCash && <span><strong>À vista</strong>{cashSummaryText(cashDiscountPercentage)} - {formatCurrency(cashPrice)}</span>}
+          {offersCash && <span><strong>À vista</strong>{cashSummaryText(cashDiscountPercentage, cashDiscountMode, cashDiscountValue)} - {formatCurrency(cashPrice)}</span>}
           {offersTerm && <span><strong>A prazo</strong>{termSummaryText(installments)}</span>}
           {!offersCash && !offersTerm && <span><strong>Pagamento</strong>Nenhuma forma marcada</span>}
         </div>

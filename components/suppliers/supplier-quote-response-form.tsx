@@ -10,7 +10,7 @@ import { ItemsStep } from "./supplier-quote-response-form/items-step";
 import { PaymentStep } from "./supplier-quote-response-form/payment-step";
 import { ReviewStep } from "./supplier-quote-response-form/review-step";
 import { defaultInstallments, initialItems, itemTotal } from "./supplier-quote-response-form/helpers";
-import type { FreightType, InstallmentRow, RegistrationData, ResponseItem, TermPaymentChoice, WizardStep } from "./supplier-quote-response-form/types";
+import type { CashDiscountChoice, CashDiscountMode, FreightType, InstallmentRow, RegistrationData, ResponseItem, TermPaymentChoice, WizardStep } from "./supplier-quote-response-form/types";
 import { SupplierQuoteSubmittedView } from "./supplier-quote-submitted-view";
 
 const wizardSteps: Array<{ id: WizardStep; label: string }> = [
@@ -58,7 +58,10 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [registration, setRegistration] = useState<RegistrationData>({ tradeName: "", city: "", state: "" });
   const [responseItems, setResponseItems] = useState(() => initialItems(items));
   const [offersCash, setOffersCash] = useState(true);
+  const [cashDiscountChoice, setCashDiscountChoice] = useState<CashDiscountChoice>("");
+  const [cashDiscountMode, setCashDiscountMode] = useState<CashDiscountMode>("");
   const [cashDiscountPercentage, setCashDiscountPercentage] = useState("");
+  const [cashDiscountValue, setCashDiscountValue] = useState("");
   const [termPaymentChoice, setTermPaymentChoice] = useState<TermPaymentChoice>("");
   const [offersTerm, setOffersTerm] = useState(false);
   const [installments, setInstallments] = useState<InstallmentRow[]>(() => defaultInstallments());
@@ -103,9 +106,21 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     [installments]
   );
   const installmentsTotalValid = Math.abs(installmentsTotalPercentage - 100) < 0.01;
+  const cashDiscountAmount = useMemo(() => {
+    if (cashDiscountChoice !== "yes") return 0;
+    if (cashDiscountMode === "value") return Math.min(quotedTotal, Math.max(0, Number(cashDiscountValue) || 0));
+    if (cashDiscountMode === "percentage") {
+      return quotedTotal * (Math.min(100, Math.max(0, Number(cashDiscountPercentage) || 0)) / 100);
+    }
+    return 0;
+  }, [cashDiscountChoice, cashDiscountMode, cashDiscountPercentage, cashDiscountValue, quotedTotal]);
+  const effectiveCashDiscountPercentage = useMemo(() => {
+    if (quotedTotal <= 0) return 0;
+    return Math.round((cashDiscountAmount / quotedTotal) * 10000) / 100;
+  }, [cashDiscountAmount, quotedTotal]);
   const cashPrice = useMemo(
-    () => quotedTotal * (1 - Math.min(100, Math.max(0, Number(cashDiscountPercentage) || 0)) / 100),
-    [quotedTotal, cashDiscountPercentage]
+    () => Math.max(0, quotedTotal - cashDiscountAmount),
+    [quotedTotal, cashDiscountAmount]
   );
 
   function addInstallment() {
@@ -132,11 +147,44 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     if (choice !== "yes") setInstallments([]);
   }
 
+  function chooseCashDiscount(choice: CashDiscountChoice) {
+    setCashDiscountChoice(choice);
+    if (choice !== "yes") {
+      setCashDiscountMode("");
+      setCashDiscountPercentage("");
+      setCashDiscountValue("");
+    }
+  }
+
+  function chooseOffersCash(value: boolean) {
+    setOffersCash(value);
+    if (!value) {
+      setCashDiscountChoice("");
+      setCashDiscountMode("");
+      setCashDiscountPercentage("");
+      setCashDiscountValue("");
+    }
+  }
+
+  function chooseCashDiscountMode(value: CashDiscountMode) {
+    setCashDiscountMode(value);
+    setCashDiscountPercentage("");
+    setCashDiscountValue("");
+  }
+
   const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
   const itemsValid = quotedCount > 0 && invalidQuotedCount === 0;
+  const cashDiscountDecisionValid = !offersCash || cashDiscountChoice === "yes" || cashDiscountChoice === "no";
+  const cashDiscountInputValid = !offersCash || cashDiscountChoice !== "yes" || (
+    cashDiscountMode === "percentage"
+      ? Number(cashDiscountPercentage) > 0 && Number(cashDiscountPercentage) <= 100
+      : cashDiscountMode === "value"
+        ? Number(cashDiscountValue) > 0 && Number(cashDiscountValue) <= quotedTotal
+        : false
+  );
   const termDecisionValid = termPaymentChoice === "yes" || termPaymentChoice === "no";
   const termInstallmentsValid = termPaymentChoice !== "yes" || (installments.length > 0 && installmentsTotalValid);
-  const paymentValid = termDecisionValid && (offersCash || offersTerm) && termInstallmentsValid;
+  const paymentValid = cashDiscountDecisionValid && cashDiscountInputValid && termDecisionValid && (offersCash || offersTerm) && termInstallmentsValid;
   const freightValid = Boolean(freightType) && Number(deliveryDays) > 0 && (freightType !== "PAID" || Number(freightPrice) > 0);
   const canSubmit = identityValid && itemsValid && paymentValid && freightValid;
 
@@ -149,10 +197,12 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   };
 
   function paymentStepMessage() {
-    if (!termDecisionValid) return "Informe se aceita pagamento a prazo: Sim ou Nao.";
+    if (!cashDiscountDecisionValid) return "Informe se oferece desconto à vista: Sim ou Não.";
+    if (!cashDiscountInputValid) return "Escolha percentual ou valor e informe um desconto à vista válido.";
+    if (!termDecisionValid) return "Informe se aceita pagamento a prazo: Sim ou Não.";
     if (offersTerm && !installments.length) return "Gere as parcelas automaticamente ou adicione ao menos uma parcela manualmente.";
     if (offersTerm && !installmentsTotalValid) return "As parcelas do pagamento a prazo devem somar 100% do valor.";
-    return "Marque ao menos uma forma de pagamento: a vista, a prazo ou as duas.";
+    return "Marque ao menos uma forma de pagamento: à vista, a prazo ou as duas.";
   }
 
   const stepMessages: Record<WizardStep, string> = {
@@ -281,7 +331,9 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         })),
         commercialTerms: {
           offersCash,
-          cashDiscountPercentage: Number(cashDiscountPercentage || 0),
+          cashDiscountMode: cashDiscountChoice === "yes" && cashDiscountMode ? cashDiscountMode : "none",
+          cashDiscountPercentage: effectiveCashDiscountPercentage,
+          cashDiscountValue: cashDiscountChoice === "yes" ? Math.round(cashDiscountAmount * 100) / 100 : 0,
           offersTerm,
           installments: installments.map((installment) => ({
             days: Number(installment.days || 0),
@@ -315,7 +367,9 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         totalValue: payload.items.reduce((sum, item) => sum + (item.attends ? item.unitPrice * item.quantity : 0), 0),
         commercialTerms: {
           offersCash,
-          cashDiscountPercentage: Number(cashDiscountPercentage || 0),
+          cashDiscountMode: cashDiscountChoice === "yes" && cashDiscountMode ? cashDiscountMode : "none",
+          cashDiscountPercentage: effectiveCashDiscountPercentage,
+          cashDiscountValue: cashDiscountChoice === "yes" ? Math.round(cashDiscountAmount * 100) / 100 : 0,
           offersTerm,
           installments: payload.commercialTerms.installments,
           freightType: freightType || "NONE",
@@ -413,16 +467,23 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         {step === 3 && (
           <PaymentStep
             offersCash={offersCash}
+            cashDiscountChoice={cashDiscountChoice}
+            cashDiscountMode={cashDiscountMode}
             offersTerm={offersTerm}
             termPaymentChoice={termPaymentChoice}
             cashDiscountPercentage={cashDiscountPercentage}
+            cashDiscountValue={cashDiscountValue}
+            cashDiscountAmount={cashDiscountAmount}
             cashPrice={cashPrice}
             installments={installments}
             installmentsTotalPercentage={installmentsTotalPercentage}
             installmentsTotalValid={installmentsTotalValid}
-            onOffersCashChange={setOffersCash}
+            onOffersCashChange={chooseOffersCash}
+            onCashDiscountChoiceChange={chooseCashDiscount}
+            onCashDiscountModeChange={chooseCashDiscountMode}
             onTermPaymentChoiceChange={chooseTermPayment}
             onCashDiscountPercentageChange={setCashDiscountPercentage}
+            onCashDiscountValueChange={setCashDiscountValue}
             onInstallmentChange={updateInstallment}
             onInstallmentsReplace={replaceInstallments}
             onAddInstallment={addInstallment}
@@ -454,7 +515,9 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             quotedCount={quotedCount}
             offersCash={offersCash}
             offersTerm={offersTerm}
-            cashDiscountPercentage={cashDiscountPercentage}
+            cashDiscountPercentage={String(effectiveCashDiscountPercentage)}
+            cashDiscountMode={cashDiscountChoice === "yes" && cashDiscountMode ? cashDiscountMode : "none"}
+            cashDiscountValue={cashDiscountChoice === "yes" ? String(Math.round(cashDiscountAmount * 100) / 100) : ""}
             cashPrice={cashPrice}
             installments={installments}
             freightType={freightType}
