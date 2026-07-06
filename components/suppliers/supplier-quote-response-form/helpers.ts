@@ -3,7 +3,7 @@ import { formatCurrency } from "@/lib/formatters";
 import type { FreightType, InstallmentRow, ResponseItem } from "./types";
 
 export function defaultInstallments(): InstallmentRow[] {
-  return [{ days: "30", percentage: "100" }];
+  return [];
 }
 
 export function initialItems(items: QuotationItemSummary[]): ResponseItem[] {

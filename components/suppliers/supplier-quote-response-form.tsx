@@ -10,7 +10,7 @@ import { ItemsStep } from "./supplier-quote-response-form/items-step";
 import { PaymentStep } from "./supplier-quote-response-form/payment-step";
 import { ReviewStep } from "./supplier-quote-response-form/review-step";
 import { defaultInstallments, initialItems, itemTotal } from "./supplier-quote-response-form/helpers";
-import type { FreightType, InstallmentRow, RegistrationData, ResponseItem, WizardStep } from "./supplier-quote-response-form/types";
+import type { FreightType, InstallmentRow, RegistrationData, ResponseItem, TermPaymentChoice, WizardStep } from "./supplier-quote-response-form/types";
 import { SupplierQuoteSubmittedView } from "./supplier-quote-submitted-view";
 
 const wizardSteps: Array<{ id: WizardStep; label: string }> = [
@@ -59,6 +59,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [responseItems, setResponseItems] = useState(() => initialItems(items));
   const [offersCash, setOffersCash] = useState(true);
   const [cashDiscountPercentage, setCashDiscountPercentage] = useState("");
+  const [termPaymentChoice, setTermPaymentChoice] = useState<TermPaymentChoice>("");
   const [offersTerm, setOffersTerm] = useState(false);
   const [installments, setInstallments] = useState<InstallmentRow[]>(() => defaultInstallments());
   const [freightType, setFreightType] = useState<FreightType>("");
@@ -122,12 +123,20 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   }
 
   function replaceInstallments(nextInstallments: InstallmentRow[]) {
-    setInstallments(nextInstallments.length ? nextInstallments : defaultInstallments());
+    setInstallments(nextInstallments.length ? nextInstallments : []);
+  }
+
+  function chooseTermPayment(choice: TermPaymentChoice) {
+    setTermPaymentChoice(choice);
+    setOffersTerm(choice === "yes");
+    if (choice !== "yes") setInstallments([]);
   }
 
   const identityValid = Boolean(supplierName.trim()) && validDocument(document) && validEmail(email) && validPhone(phone);
   const itemsValid = quotedCount > 0 && invalidQuotedCount === 0;
-  const paymentValid = (offersCash || offersTerm) && (!offersTerm || installmentsTotalValid);
+  const termDecisionValid = termPaymentChoice === "yes" || termPaymentChoice === "no";
+  const termInstallmentsValid = termPaymentChoice !== "yes" || (installments.length > 0 && installmentsTotalValid);
+  const paymentValid = termDecisionValid && (offersCash || offersTerm) && termInstallmentsValid;
   const freightValid = Boolean(freightType) && Number(deliveryDays) > 0 && (freightType !== "PAID" || Number(freightPrice) > 0);
   const canSubmit = identityValid && itemsValid && paymentValid && freightValid;
 
@@ -139,12 +148,17 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     5: canSubmit
   };
 
+  function paymentStepMessage() {
+    if (!termDecisionValid) return "Informe se aceita pagamento a prazo: Sim ou Nao.";
+    if (offersTerm && !installments.length) return "Gere as parcelas automaticamente ou adicione ao menos uma parcela manualmente.";
+    if (offersTerm && !installmentsTotalValid) return "As parcelas do pagamento a prazo devem somar 100% do valor.";
+    return "Marque ao menos uma forma de pagamento: a vista, a prazo ou as duas.";
+  }
+
   const stepMessages: Record<WizardStep, string> = {
     1: "Informe CPF/CNPJ válido, razão social ou nome, e-mail válido e telefone com DDD para continuar.",
     2: "Marque ao menos um item, informe valor e use Parcial quando a quantidade for menor que a solicitada.",
-    3: offersTerm && !installmentsTotalValid
-      ? "As parcelas do pagamento a prazo devem somar 100% do valor."
-      : "Marque ao menos uma forma de pagamento: à vista, a prazo ou as duas.",
+    3: paymentStepMessage(),
     4: "Escolha uma opção de frete e informe o prazo geral de entrega em dias.",
     5: "Revise os passos anteriores: fornecedor, itens, pagamento e frete."
   };
@@ -400,13 +414,14 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           <PaymentStep
             offersCash={offersCash}
             offersTerm={offersTerm}
+            termPaymentChoice={termPaymentChoice}
             cashDiscountPercentage={cashDiscountPercentage}
             cashPrice={cashPrice}
             installments={installments}
             installmentsTotalPercentage={installmentsTotalPercentage}
             installmentsTotalValid={installmentsTotalValid}
             onOffersCashChange={setOffersCash}
-            onOffersTermChange={setOffersTerm}
+            onTermPaymentChoiceChange={chooseTermPayment}
             onCashDiscountPercentageChange={setCashDiscountPercentage}
             onInstallmentChange={updateInstallment}
             onInstallmentsReplace={replaceInstallments}

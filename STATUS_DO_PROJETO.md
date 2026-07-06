@@ -55,7 +55,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A aba Links mostra validade, status (aguardando, respondido, vencido, revogado), contagem de respostas e ações de copiar, regerar e revogar; a criação inicial do convite fica concentrada na aba Fornecedores.
 - Revogar um link registra o evento e bloqueia imediatamente o portal público e o envio de propostas por aquele token.
 - O portal público `/portal-cotacao/[token]` permite ao fornecedor informar, item a item: se atende, preço unitário, quantidade, prazo diferente do pedido e observação; preço zero informado é tratado como valor válido.
-- No pagamento a prazo do portal, o fornecedor pode gerar parcelas automaticamente por quantidade, primeiro vencimento, uma vez por mês ou intervalo em dias, com percentual fixo igual ou entrada diferenciada.
+- No pagamento a prazo do portal, a pergunta `A prazo?` começa sem Sim/Nao selecionado e precisa ser respondida. Se marcar Sim, nenhuma parcela vem pronta: o fornecedor deve gerar automaticamente ou adicionar parcelas manualmente.
 - Itens parciais usam quantidade menor que a solicitada e destaque amarelo. Itens que o fornecedor não cotou aparecem separados no detalhe final/impressão, também com fundo amarelo.
 - Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF. Quando o fornecedor solicita revisão, o portal gera automaticamente um novo link para envio de nova proposta; a proposta já enviada não fica editável.
 - A aba Respostas permite excluir uma resposta do fornecedor. A exclusão remove aprovações vinculadas àquela resposta, registra evento e libera o token original para novo envio caso o link ainda esteja válido e não revogado.

@@ -13,6 +13,8 @@ export type InstallmentRow = {
   percentage: string;
 };
 
+export type TermPaymentChoice = "" | "yes" | "no";
+
 export type FreightType = "" | "NONE" | "INCLUDED" | "PAID";
 
 export type RegistrationData = {

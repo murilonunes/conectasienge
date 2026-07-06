@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/formatters";
-import type { InstallmentRow } from "./types";
+import type { InstallmentRow, TermPaymentChoice } from "./types";
 
 type PaymentStepProps = {
   offersCash: boolean;
   offersTerm: boolean;
+  termPaymentChoice: TermPaymentChoice;
   cashDiscountPercentage: string;
   cashPrice: number;
   installments: InstallmentRow[];
   installmentsTotalPercentage: number;
   installmentsTotalValid: boolean;
   onOffersCashChange: (value: boolean) => void;
-  onOffersTermChange: (value: boolean) => void;
+  onTermPaymentChoiceChange: (value: TermPaymentChoice) => void;
   onCashDiscountPercentageChange: (value: string) => void;
   onInstallmentChange: (index: number, field: keyof InstallmentRow, value: string) => void;
   onInstallmentsReplace: (installments: InstallmentRow[]) => void;
@@ -22,13 +23,14 @@ type PaymentStepProps = {
 export function PaymentStep({
   offersCash,
   offersTerm,
+  termPaymentChoice,
   cashDiscountPercentage,
   cashPrice,
   installments,
   installmentsTotalPercentage,
   installmentsTotalValid,
   onOffersCashChange,
-  onOffersTermChange,
+  onTermPaymentChoiceChange,
   onCashDiscountPercentageChange,
   onInstallmentChange,
   onInstallmentsReplace,
@@ -118,13 +120,28 @@ export function PaymentStep({
         </div>
 
         <div className={`supplier-payment-option ${offersTerm ? "enabled" : ""}`}>
-          <label className="supplier-payment-option-head">
-            <input type="checkbox" checked={offersTerm} onChange={(event) => onOffersTermChange(event.target.checked)} />
+          <div className="supplier-payment-option-head supplier-term-choice-head">
             <span>
-              <strong>A prazo</strong>
-              <small>Parcelado - informe os dias e o percentual de cada parcela</small>
+              <strong>A prazo?</strong>
+              <small>Escolha Sim ou Nao. Se escolher Sim, gere parcelas automaticamente ou preencha manualmente.</small>
             </span>
-          </label>
+            <div className="supplier-term-choice" role="group" aria-label="Aceita pagamento a prazo?">
+              <button
+                className={termPaymentChoice === "yes" ? "active" : ""}
+                type="button"
+                onClick={() => onTermPaymentChoiceChange("yes")}
+              >
+                Sim
+              </button>
+              <button
+                className={termPaymentChoice === "no" ? "active" : ""}
+                type="button"
+                onClick={() => onTermPaymentChoiceChange("no")}
+              >
+                Nao
+              </button>
+            </div>
+          </div>
           {offersTerm && (
             <div className="supplier-installments">
               <div className="supplier-installment-helper">
@@ -204,10 +221,15 @@ export function PaymentStep({
                 </div>
               ))}
               <div className="supplier-installment-actions">
-                <button type="button" className="button secondary" onClick={onAddInstallment}>Adicionar parcela</button>
-                <span className={installmentsTotalValid ? "done" : "warn"}>Total: {installmentsTotalPercentage}%{!installmentsTotalValid ? " (deve somar 100%)" : ""}</span>
+                <button type="button" className="button secondary" onClick={onAddInstallment}>{installments.length ? "Adicionar parcela" : "Adicionar primeira parcela"}</button>
+                <span className={installments.length && installmentsTotalValid ? "done" : "warn"}>
+                  {installments.length ? `Total: ${installmentsTotalPercentage}%${!installmentsTotalValid ? " (deve somar 100%)" : ""}` : "Nenhuma parcela informada"}
+                </span>
               </div>
             </div>
+          )}
+          {termPaymentChoice === "no" && (
+            <div className="supplier-term-declined">Pagamento a prazo nao sera oferecido nesta proposta.</div>
           )}
         </div>
       </div>

@@ -879,6 +879,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-payment-option-head span { display: grid; gap: 3px; min-width: 0; }
 .supplier-payment-option-head strong { font-family: var(--font-display); font-size: 14px; font-weight: 750; }
 .supplier-payment-option-head small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.supplier-term-choice-head { grid-template-columns: minmax(0, 1fr) auto; }
+.supplier-term-choice { display: inline-grid; grid-template-columns: repeat(2, minmax(54px, 1fr)); gap: 6px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.supplier-term-choice button { height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 850; }
+.supplier-term-choice button.active { background: var(--green); color: #fff; }
+.supplier-term-declined { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--muted); font-size: 11px; font-weight: 800; }
 .supplier-payment-fields { display: grid; grid-template-columns: minmax(160px, .72fr) minmax(180px, 1fr); gap: 10px; align-items: end; }
 .supplier-payment-fields label { display: grid; gap: 6px; color: var(--muted); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .supplier-payment-fields input { min-width: 0; height: 40px; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 0 10px; color: var(--ink); font-size: 12px; outline: none; }
@@ -1003,6 +1008,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .supplier-item-side { justify-content: flex-start; flex-wrap: wrap; }
   .supplier-item-total { justify-self: start; }
   .supplier-payment-fields { grid-template-columns: 1fr; }
+  .supplier-term-choice-head { grid-template-columns: 1fr; }
+  .supplier-term-choice { width: 100%; }
   .supplier-helper-head { align-items: stretch; flex-direction: column; }
   .supplier-installment-builder { grid-template-columns: 1fr 1fr; }
   .supplier-installment-row { grid-template-columns: 1fr 1fr; }
