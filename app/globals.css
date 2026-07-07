@@ -1891,8 +1891,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .users-manager { display: grid; gap: 16px; }
 .users-manager .panel { padding: 18px; }
 .users-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.users-toolbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .settings-modal-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .settings-modal-form label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.settings-modal-form .settings-checkline { display: flex; align-items: center; gap: 8px; align-self: end; min-height: 38px; text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 750; color: var(--ink); }
+.settings-modal-form .settings-checkline input { width: auto; padding: 0; }
 .settings-modal-form input,
 .settings-modal-form select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 11px; color: var(--ink); font-size: 12px; }
 .users-list { display: grid; gap: 12px; }
@@ -1908,6 +1911,13 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .permission-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .permission-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .permission-grid.modal-grid { max-height: 62vh; overflow: auto; padding-right: 4px; }
+.roles-modal-layout { display: grid; grid-template-columns: minmax(190px, .75fr) minmax(0, 1.6fr); gap: 14px; min-height: 420px; }
+.roles-list { display: grid; align-content: start; gap: 8px; max-height: 62vh; overflow: auto; padding-right: 4px; }
+.role-list-item { display: grid; gap: 3px; width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; color: var(--ink); text-align: left; cursor: pointer; }
+.role-list-item.active { border-color: var(--green); background: #f8fbf9; box-shadow: inset 3px 0 0 var(--green); }
+.role-list-item strong { font-size: 12px; }
+.role-list-item small { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.role-editor { display: grid; gap: 12px; min-width: 0; }
 .permission-toggle { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; min-height: 68px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; }
 .permission-toggle input { margin-top: 2px; }
 .permission-toggle span { display: grid; gap: 3px; min-width: 0; }
@@ -1926,6 +1936,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .user-card-head,
   .user-card-head.compact,
   .settings-modal-form,
+  .roles-modal-layout,
   .permission-grid,
   .permission-grid.compact { grid-template-columns: 1fr; }
   .users-toolbar,

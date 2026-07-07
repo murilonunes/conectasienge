@@ -19,6 +19,7 @@ const approvalModeLabels: Record<AppUser["approvalLimitMode"], string> = {
 
 type ModalState =
   | { type: "create" }
+  | { type: "roles" }
   | { type: "profile"; user: AppUser }
   | { type: "screens"; user: AppUser }
   | { type: "operations"; user: AppUser }
@@ -117,12 +118,14 @@ function ProfileModal({
   const [role, setRole] = useState(user.roles[0] || "comprador");
   const [approvalLimitMode, setApprovalLimitMode] = useState<AppUser["approvalLimitMode"]>(user.approvalLimitMode);
   const [approvalLimit, setApprovalLimit] = useState(user.approvalLimit !== null ? String(user.approvalLimit) : "");
+  const [inheritGroupPermissions, setInheritGroupPermissions] = useState(user.permissionsMode === "role");
   const currentRole = roles.find((current) => current.name === role);
 
   async function save() {
     const ok = await onSave({
       id: user.id,
       role,
+      permissionsMode: inheritGroupPermissions ? "role" : undefined,
       approvalLimitMode,
       approvalLimit: approvalLimitMode === "limited" ? Number(approvalLimit || 0) : null
     }, `Perfil e alçada de ${user.name} atualizados.`);
@@ -155,6 +158,10 @@ function ProfileModal({
             onChange={(event) => setApprovalLimit(event.target.value)}
             placeholder={currentRole?.approvalLimit !== null ? String(currentRole?.approvalLimit || 0) : "Sem limite"}
           />
+        </label>
+        <label className="settings-checkline">
+          <input type="checkbox" checked={inheritGroupPermissions} disabled={saving} onChange={(event) => setInheritGroupPermissions(event.target.checked)} />
+          <span>Usar permissões do grupo selecionado</span>
         </label>
       </div>
       <div className="settings-modal-actions">
@@ -230,8 +237,139 @@ function PermissionModal({
   );
 }
 
+function RolesModal({
+  roles,
+  saving,
+  onClose,
+  onSave
+}: {
+  roles: AppRole[];
+  saving: boolean;
+  onClose: () => void;
+  onSave: (method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, successMessage: string) => Promise<boolean>;
+}) {
+  const [selectedId, setSelectedId] = useState<number | "new">("new");
+  const selectedRole = selectedId === "new" ? undefined : roles.find((role) => role.id === selectedId);
+  const [name, setName] = useState("");
+  const [approvalLimit, setApprovalLimit] = useState("");
+  const [unlimited, setUnlimited] = useState(true);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const selected = new Set(permissions);
+
+  function editRole(role: AppRole) {
+    setSelectedId(role.id);
+    setName(role.name);
+    setUnlimited(role.approvalLimit === null);
+    setApprovalLimit(role.approvalLimit !== null ? String(role.approvalLimit) : "");
+    setPermissions(role.permissions);
+  }
+
+  function newRole() {
+    setSelectedId("new");
+    setName("");
+    setUnlimited(true);
+    setApprovalLimit("");
+    setPermissions([]);
+  }
+
+  function togglePermission(permission: string) {
+    setPermissions((current) => {
+      const next = new Set(current);
+      if (next.has(permission)) next.delete(permission);
+      else next.add(permission);
+      return Array.from(next).sort();
+    });
+  }
+
+  async function saveRole() {
+    const body = {
+      id: selectedId === "new" ? undefined : selectedId,
+      name,
+      permissions,
+      approvalLimit: unlimited ? null : Number(approvalLimit || 0)
+    };
+    const ok = await onSave(selectedId === "new" ? "POST" : "PATCH", body, selectedId === "new" ? "Grupo criado com sucesso." : "Grupo atualizado com sucesso.");
+    if (ok && selectedId === "new") newRole();
+  }
+
+  async function deleteRole() {
+    if (selectedId === "new" || !selectedRole) return;
+    const ok = await onSave("DELETE", { id: selectedId }, "Grupo excluído com sucesso.");
+    if (ok) newRole();
+  }
+
+  return (
+    <ModalShell title="Papéis e grupos" subtitle="Crie grupos com alçada e permissões próprias para atribuir aos usuários" onClose={onClose}>
+      <div className="roles-modal-layout">
+        <div className="roles-list">
+          <button className={`role-list-item ${selectedId === "new" ? "active" : ""}`} type="button" onClick={newRole}>
+            <strong>Novo grupo</strong>
+            <small>Cadastro em branco</small>
+          </button>
+          {roles.map((role) => (
+            <button className={`role-list-item ${selectedId === role.id ? "active" : ""}`} type="button" key={role.id} onClick={() => editRole(role)}>
+              <strong>{roleLabel(role.name)}</strong>
+              <small>{role.userCount} usuário(s) - {role.approvalLimit !== null ? formatCurrency(role.approvalLimit) : "sem limite"}</small>
+            </button>
+          ))}
+        </div>
+
+        <div className="role-editor">
+          <div className="settings-modal-form">
+            <label>
+              <span>Nome do grupo</span>
+              <input value={name} disabled={saving || Boolean(selectedRole?.system)} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Compras obra norte" />
+            </label>
+            <label>
+              <span>Alçada do grupo</span>
+              <select value={unlimited ? "unlimited" : "limited"} disabled={saving} onChange={(event) => setUnlimited(event.target.value === "unlimited")}>
+                <option value="unlimited">Sem limite</option>
+                <option value="limited">Limite por valor</option>
+              </select>
+            </label>
+            <label>
+              <span>Valor da alçada</span>
+              <input disabled={saving || unlimited} min="0" step="0.01" type="number" value={approvalLimit} onChange={(event) => setApprovalLimit(event.target.value)} placeholder="50000" />
+            </label>
+          </div>
+
+          <div className="permission-grid modal-grid">
+            {[...screenPermissionDefinitions, ...operationalPermissionDefinitions].map((permission) => (
+              <label className="permission-toggle" key={permission.permission}>
+                <input
+                  checked={selected.has(permission.permission)}
+                  disabled={saving}
+                  type="checkbox"
+                  onChange={() => togglePermission(permission.permission)}
+                />
+                <span>
+                  <strong>{permission.label}</strong>
+                  <small>{permission.description}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-modal-actions">
+        {selectedRole && !selectedRole.system && (
+          <button className="payable-review-button compact warn" type="button" disabled={saving || selectedRole.userCount > 0} onClick={() => void deleteRole()}>
+            Excluir grupo
+          </button>
+        )}
+        <button className="payable-review-button compact" type="button" onClick={onClose}>Fechar</button>
+        <button className="button" type="button" disabled={saving || !name.trim()} onClick={() => void saveRole()}>
+          {saving ? "Salvando..." : selectedId === "new" ? "Criar grupo" : "Salvar grupo"}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 export function UsersManager({ initialUsers, roles, currentUserId }: { initialUsers: AppUser[]; roles: AppRole[]; currentUserId: number }) {
   const [users, setUsers] = useState(initialUsers);
+  const [roleList, setRoleList] = useState(roles);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [modal, setModal] = useState<ModalState>(null);
@@ -245,9 +383,10 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-      const json = await response.json() as { users?: AppUser[]; message?: string };
+      const json = await response.json() as { users?: AppUser[]; roles?: AppRole[]; message?: string };
       if (!response.ok) throw new Error(json.message || "Não foi possível salvar.");
       if (json.users) setUsers(json.users);
+      if (json.roles) setRoleList(json.roles);
       setMessage(successMessage);
       return true;
     } catch (error) {
@@ -264,6 +403,29 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
     await callUsersApi("PATCH", { id: user.id, password: newPassword }, `Senha de ${user.name} atualizada.`);
   }
 
+  async function callRolesApi(method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, successMessage: string) {
+    setSaving(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/users/roles", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const json = await response.json() as { users?: AppUser[]; roles?: AppRole[]; message?: string };
+      if (!response.ok) throw new Error(json.message || "Não foi possível salvar o grupo.");
+      if (json.users) setUsers(json.users);
+      if (json.roles) setRoleList(json.roles);
+      setMessage(successMessage);
+      return true;
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section className="users-manager">
       <div className="users-toolbar card panel">
@@ -271,7 +433,10 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
           <h2 className="panel-title">Usuários e acessos</h2>
           <span className="panel-note">Edite cada responsabilidade em uma janela própria</span>
         </div>
-        <button className="button" type="button" onClick={() => setModal({ type: "create" })}>Novo usuário</button>
+        <div className="users-toolbar-actions">
+          <button className="button secondary" type="button" onClick={() => setModal({ type: "roles" })}>Papéis e grupos</button>
+          <button className="button" type="button" onClick={() => setModal({ type: "create" })}>Novo usuário</button>
+        </div>
       </div>
 
       {message && <div className="settings-inline-message">{message}</div>}
@@ -325,10 +490,13 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
       </div>
 
       {modal?.type === "create" && (
-        <CreateUserModal roles={roles} saving={saving} onClose={() => setModal(null)} onCreate={(body, success) => callUsersApi("POST", body, success)} />
+        <CreateUserModal roles={roleList} saving={saving} onClose={() => setModal(null)} onCreate={(body, success) => callUsersApi("POST", body, success)} />
+      )}
+      {modal?.type === "roles" && (
+        <RolesModal roles={roleList} saving={saving} onClose={() => setModal(null)} onSave={(method, body, success) => callRolesApi(method, body, success)} />
       )}
       {modal?.type === "profile" && (
-        <ProfileModal user={modal.user} roles={roles} saving={saving} onClose={() => setModal(null)} onSave={(body, success) => callUsersApi("PATCH", body, success)} />
+        <ProfileModal user={modal.user} roles={roleList} saving={saving} onClose={() => setModal(null)} onSave={(body, success) => callUsersApi("PATCH", body, success)} />
       )}
       {modal?.type === "screens" && (
         <PermissionModal user={modal.user} type="screens" saving={saving} onClose={() => setModal(null)} onSave={(body, success) => callUsersApi("PATCH", body, success)} />

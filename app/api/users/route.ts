@@ -56,6 +56,7 @@ export async function PATCH(request: Request) {
       active?: boolean;
       password?: string;
       permissions?: string[];
+      permissionsMode?: "role" | "custom";
       approvalLimitMode?: "role" | "limited" | "unlimited";
       approvalLimit?: number | null;
     };
@@ -69,6 +70,7 @@ export async function PATCH(request: Request) {
       active: typeof input.active === "boolean" ? input.active : undefined,
       password: typeof input.password === "string" && input.password ? input.password : undefined,
       permissions: Array.isArray(input.permissions) ? input.permissions : undefined,
+      permissionsMode: input.permissionsMode,
       approvalLimitMode: input.approvalLimitMode,
       approvalLimit: input.approvalLimit
     });
