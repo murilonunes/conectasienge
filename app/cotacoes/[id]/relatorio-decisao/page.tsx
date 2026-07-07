@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { formatDocument, freightSummary, paymentSummary, plural } from "@/components/purchases/quotation-detail/helpers";
 import { PrintButton } from "@/components/ui/print-button";
 import { loadQuotationDetail } from "@/features/quotations/data";
+import { getSessionUserFromCookieValue } from "@/lib/app-users";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import { loadSupplierQuoteAwards, loadSupplierQuoteResponses, type SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 
@@ -17,6 +19,22 @@ type ChosenOffer = {
 };
 
 export default async function QuotationDecisionReportPage({ params }: { params: { id: string } }) {
+  const user = getSessionUserFromCookieValue(cookies().get("brasin_session")?.value);
+  if (!user?.permissions.includes("screen.cotacoes")) {
+    return (
+      <main className="decision-report">
+        <section className="card panel access-denied-panel">
+          <div className="panel-head">
+            <div>
+              <h2 className="panel-title">Acesso não liberado</h2>
+              <span className="panel-note">Seu usuário não tem permissão para relatórios de cotação</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const id = Number(params.id);
   if (!Number.isFinite(id)) notFound();
 

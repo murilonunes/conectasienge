@@ -1891,17 +1891,40 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .users-manager { display: grid; gap: 16px; }
 .users-manager .panel { padding: 18px; }
 .users-manager-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: end; margin-top: 14px; }
-.users-manager-form label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.users-manager-form label,
+.user-access-head label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
 .users-manager-form input,
 .users-manager-form select,
-.users-manager-table select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 11px; color: var(--ink); font-size: 12px; }
-.users-manager-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.users-manager-table th { padding: 10px 12px; border-bottom: 2px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 850; text-align: left; text-transform: uppercase; letter-spacing: .05em; }
-.users-manager-table td { padding: 12px; border-top: 1px solid var(--line); font-size: 12px; vertical-align: middle; }
-.users-manager-table td .badge { margin-left: 8px; }
+.user-access-head input,
+.user-access-head select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 11px; color: var(--ink); font-size: 12px; }
+.users-list { display: grid; gap: 12px; }
+.user-card { display: grid; gap: 14px; }
+.user-card-head { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.2fr) auto; gap: 12px; align-items: start; }
+.user-card-head .badge { margin-left: 8px; }
+.user-card-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.user-card-summary span { display: grid; gap: 3px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; }
+.user-card-summary strong { font-size: 12px; overflow-wrap: anywhere; }
+.user-card-summary small { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .05em; }
 .users-manager-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.user-access-editor { display: grid; gap: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.user-access-head { display: grid; grid-template-columns: minmax(150px, .8fr) minmax(170px, .9fr) minmax(140px, .7fr) auto; gap: 10px; align-items: end; }
+.user-access-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.permission-matrix { display: grid; gap: 14px; }
+.permission-matrix h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 15px; font-weight: 750; letter-spacing: 0; }
+.permission-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.permission-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.permission-toggle { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; min-height: 68px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; }
+.permission-toggle input { margin-top: 2px; }
+.permission-toggle span { display: grid; gap: 3px; min-width: 0; }
+.permission-toggle strong { font-size: 12px; line-height: 1.25; }
+.permission-toggle small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.access-denied-panel { max-width: 720px; margin: 24px auto; }
 .auth-login-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
 @media (max-width: 900px) {
   .users-manager-form { grid-template-columns: 1fr; }
-  .users-manager-table { display: block; overflow-x: auto; }
+  .user-card-head,
+  .user-access-head,
+  .permission-grid,
+  .permission-grid.compact { grid-template-columns: 1fr; }
+  .user-card-summary { grid-template-columns: 1fr; }
 }

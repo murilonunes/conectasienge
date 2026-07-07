@@ -14,6 +14,7 @@ type NavigationItem = {
   label: string;
   href: string;
   icon: string;
+  permission: string;
 };
 
 type NavigationSection = {
@@ -29,8 +30,8 @@ const navigationSections: NavigationSection[] = [
     label: "Visao geral",
     icon: "VG",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: "D" },
-      { label: "Central financeira", href: "/financeiro", icon: "F" }
+      { label: "Dashboard", href: "/dashboard", icon: "D", permission: "screen.dashboard" },
+      { label: "Central financeira", href: "/financeiro", icon: "F", permission: "screen.financeiro" }
     ]
   },
   {
@@ -38,9 +39,9 @@ const navigationSections: NavigationSection[] = [
     label: "Compras",
     icon: "CP",
     items: [
-      { label: "Portal de compras", href: "/compras", icon: "PC" },
-      { label: "Solicitacoes", href: "/solicitacoes-compra", icon: "SC" },
-      { label: "Cotacoes", href: "/cotacoes", icon: "CT" }
+      { label: "Portal de compras", href: "/compras", icon: "PC", permission: "screen.compras" },
+      { label: "Solicitacoes", href: "/solicitacoes-compra", icon: "SC", permission: "screen.solicitacoes" },
+      { label: "Cotacoes", href: "/cotacoes", icon: "CT", permission: "screen.cotacoes" }
     ]
   },
   {
@@ -48,11 +49,11 @@ const navigationSections: NavigationSection[] = [
     label: "Financeiro",
     icon: "FI",
     items: [
-      { label: "Contas a pagar", href: "/contas-pagar", icon: "PG" },
-      { label: "Contas a receber", href: "/contas-receber", icon: "RC" },
-      { label: "Baixa a pagar", href: "/lancamentos/baixa", icon: "BP" },
-      { label: "Baixa a receber", href: "/lancamentos/baixa-receber", icon: "BR" },
-      { label: "Conciliacao", href: "/conciliacao", icon: "CC" }
+      { label: "Contas a pagar", href: "/contas-pagar", icon: "PG", permission: "screen.contas-pagar" },
+      { label: "Contas a receber", href: "/contas-receber", icon: "RC", permission: "screen.contas-receber" },
+      { label: "Baixa a pagar", href: "/lancamentos/baixa", icon: "BP", permission: "screen.baixa-pagar" },
+      { label: "Baixa a receber", href: "/lancamentos/baixa-receber", icon: "BR", permission: "screen.baixa-receber" },
+      { label: "Conciliacao", href: "/conciliacao", icon: "CC", permission: "screen.conciliacao" }
     ]
   },
   {
@@ -60,9 +61,9 @@ const navigationSections: NavigationSection[] = [
     label: "Comercial e estoque",
     icon: "CE",
     items: [
-      { label: "Portal de vendas", href: "/sales", icon: "VD" },
-      { label: "Contratos", href: "/contratos", icon: "CO" },
-      { label: "Bens em estoque", href: "/estoque", icon: "ES" }
+      { label: "Portal de vendas", href: "/sales", icon: "VD", permission: "screen.vendas" },
+      { label: "Contratos", href: "/contratos", icon: "CO", permission: "screen.contratos" },
+      { label: "Bens em estoque", href: "/estoque", icon: "ES", permission: "screen.estoque" }
     ]
   },
   {
@@ -70,9 +71,9 @@ const navigationSections: NavigationSection[] = [
     label: "Analises",
     icon: "AN",
     items: [
-      { label: "Relatorios", href: "/relatorios", icon: "RL" },
-      { label: "DRE POC", href: "/dre-gerencial", icon: "DR" },
-      { label: "Mapa Sienge", href: "/sienge", icon: "SI" }
+      { label: "Relatorios", href: "/relatorios", icon: "RL", permission: "screen.relatorios" },
+      { label: "DRE POC", href: "/dre-gerencial", icon: "DR", permission: "screen.dre" },
+      { label: "Mapa Sienge", href: "/sienge", icon: "SI", permission: "screen.sienge" }
     ]
   },
   {
@@ -80,8 +81,8 @@ const navigationSections: NavigationSection[] = [
     label: "Administracao",
     icon: "AD",
     items: [
-      { label: "Configuracoes", href: "/configuracoes", icon: "CF" },
-      { label: "Usuarios", href: "/configuracoes/usuarios", icon: "US" }
+      { label: "Configuracoes", href: "/configuracoes", icon: "CF", permission: "screen.configuracoes" },
+      { label: "Usuarios", href: "/configuracoes/usuarios", icon: "US", permission: "screen.usuarios" }
     ]
   }
 ];
@@ -97,14 +98,21 @@ function isPathActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppShellClient({ children, settings }: { children: React.ReactNode; settings: ShellSettings }) {
+export function AppShellClient({ children, settings, allowedPermissions }: { children: React.ReactNode; settings: ShellSettings; allowedPermissions?: string[] }) {
   const pathname = usePathname() || "/";
   const [collapsed, setCollapsed] = useState(true);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(defaultOpenSections);
+  const allowed = useMemo(() => new Set(allowedPermissions || []), [allowedPermissions]);
+  const visibleSections = useMemo(() => {
+    if (!allowedPermissions) return navigationSections;
+    return navigationSections
+      .map((section) => ({ ...section, items: section.items.filter((item) => allowed.has(item.permission)) }))
+      .filter((section) => section.items.length > 0);
+  }, [allowed, allowedPermissions]);
 
   const activeSectionKey = useMemo(() => {
-    return navigationSections.find((section) => section.items.some((item) => isPathActive(pathname, item.href)))?.key;
-  }, [pathname]);
+    return visibleSections.find((section) => section.items.some((item) => isPathActive(pathname, item.href)))?.key;
+  }, [pathname, visibleSections]);
 
   useEffect(() => {
     try {
@@ -159,7 +167,7 @@ export function AppShellClient({ children, settings }: { children: React.ReactNo
         </div>
 
         <nav className="sidebar-nav">
-          {navigationSections.map((section) => {
+          {visibleSections.map((section) => {
             const expanded = openSections[section.key];
             const sectionActive = activeSectionKey === section.key;
 

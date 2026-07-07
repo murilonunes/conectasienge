@@ -3,6 +3,7 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import { existsSync, mkdirSync } from "fs";
 import { DatabaseSync } from "node:sqlite";
 import path from "path";
+import { appPermissions, screenPermissionDefinitions } from "@/lib/app-permissions";
 
 // Usuários, papéis e permissões com a mesma modelagem do spatie/laravel-permission:
 // users, roles, permissions, model_has_roles, model_has_permissions e
@@ -16,8 +17,11 @@ export type AppUser = {
   active: boolean;
   roles: string[];
   permissions: string[];
-  // Alçada efetiva: maior limite entre os papéis; null = ilimitado.
+  permissionsMode: "role" | "custom";
+  // Alçada efetiva: valor do usuário, do papel ou null = ilimitado.
   approvalLimit: number | null;
+  approvalLimitMode: "role" | "limited" | "unlimited";
+  roleApprovalLimit: number | null;
   createdAt: string;
 };
 
@@ -33,21 +37,41 @@ const databasePath = path.join(dataDir, "app-users.sqlite");
 const modelType = "user";
 const guardName = "web";
 const sessionMaxAgeSeconds = 60 * 60 * 12;
-
-export const appPermissions = [
-  "quotations.view",
-  "quotations.manage",
-  "quotations.approve",
-  "sienge.write",
-  "users.manage"
-] as const;
+const userSelectColumns = "id, name, email, password, active, permissions_mode, approval_limit, approval_limit_mode, created_at";
 
 // Papéis padrão: admin gerencia tudo; aprovador decide sem limite; comprador
 // opera o dia a dia com alçada de aprovação limitada.
 const defaultRoles: Array<{ name: string; approvalLimit: number | null; permissions: string[] }> = [
   { name: "admin", approvalLimit: null, permissions: [...appPermissions] },
-  { name: "aprovador", approvalLimit: null, permissions: ["quotations.view", "quotations.manage", "quotations.approve", "sienge.write"] },
-  { name: "comprador", approvalLimit: 50000, permissions: ["quotations.view", "quotations.manage", "quotations.approve", "sienge.write"] }
+  {
+    name: "aprovador",
+    approvalLimit: null,
+    permissions: [
+      ...screenPermissionDefinitions
+        .filter((screen) => screen.permission !== "screen.usuarios")
+        .map((screen) => screen.permission),
+      "quotations.view",
+      "quotations.manage",
+      "quotations.approve",
+      "sienge.write"
+    ]
+  },
+  {
+    name: "comprador",
+    approvalLimit: 50000,
+    permissions: [
+      "screen.dashboard",
+      "screen.compras",
+      "screen.solicitacoes",
+      "screen.cotacoes",
+      "screen.relatorios",
+      "screen.sienge",
+      "quotations.view",
+      "quotations.manage",
+      "quotations.approve",
+      "sienge.write"
+    ]
+  }
 ];
 
 function authSecret() {
@@ -68,6 +92,9 @@ function database() {
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       active INTEGER NOT NULL DEFAULT 1,
+      permissions_mode TEXT NOT NULL DEFAULT 'role',
+      approval_limit REAL,
+      approval_limit_mode TEXT NOT NULL DEFAULT 'role',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -111,6 +138,21 @@ function database() {
       PRIMARY KEY (permission_id, role_id)
     );
   `);
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN permissions_mode TEXT NOT NULL DEFAULT 'role'");
+  } catch {
+    // Coluna já existe.
+  }
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN approval_limit REAL");
+  } catch {
+    // Coluna já existe.
+  }
+  try {
+    db.exec("ALTER TABLE users ADD COLUMN approval_limit_mode TEXT NOT NULL DEFAULT 'role'");
+  } catch {
+    // Coluna já existe.
+  }
   seed(db);
   return db;
 }
@@ -160,16 +202,26 @@ function verifyPassword(plain: string, stored: string) {
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
 
-type UserRow = { id: number; name: string; email: string; password: string; active: number; created_at: string };
+type UserRow = {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  active: number;
+  permissions_mode: string | null;
+  approval_limit: number | null;
+  approval_limit_mode: string | null;
+  created_at: string;
+};
 
-function loadUserPermissions(db: DatabaseSync, userId: number) {
+function loadUserPermissions(db: DatabaseSync, row: UserRow) {
   const roles = db.prepare(`
     SELECT roles.name, roles.approval_limit
     FROM model_has_roles
     JOIN roles ON roles.id = model_has_roles.role_id
     WHERE model_has_roles.model_type = ? AND model_has_roles.model_id = ?
     ORDER BY roles.name
-  `).all(modelType, userId) as Array<{ name: string; approval_limit: number | null }>;
+  `).all(modelType, row.id) as Array<{ name: string; approval_limit: number | null }>;
 
   const rolePermissions = db.prepare(`
     SELECT DISTINCT permissions.name
@@ -177,26 +229,34 @@ function loadUserPermissions(db: DatabaseSync, userId: number) {
     JOIN role_has_permissions ON role_has_permissions.role_id = model_has_roles.role_id
     JOIN permissions ON permissions.id = role_has_permissions.permission_id
     WHERE model_has_roles.model_type = ? AND model_has_roles.model_id = ?
-  `).all(modelType, userId) as Array<{ name: string }>;
+  `).all(modelType, row.id) as Array<{ name: string }>;
 
   const directPermissions = db.prepare(`
     SELECT DISTINCT permissions.name
     FROM model_has_permissions
     JOIN permissions ON permissions.id = model_has_permissions.permission_id
     WHERE model_has_permissions.model_type = ? AND model_has_permissions.model_id = ?
-  `).all(modelType, userId) as Array<{ name: string }>;
+  `).all(modelType, row.id) as Array<{ name: string }>;
 
-  const permissions = Array.from(new Set([...rolePermissions, ...directPermissions].map((row) => row.name))).sort();
-  // Alçada efetiva: qualquer papel sem limite libera; senão vale o maior limite.
-  const approvalLimit = roles.length && roles.every((role) => role.approval_limit !== null)
+  const permissionsMode: AppUser["permissionsMode"] = row.permissions_mode === "custom" ? "custom" : "role";
+  const permissionsSource = permissionsMode === "custom" ? directPermissions : [...rolePermissions, ...directPermissions];
+  const permissions = Array.from(new Set(permissionsSource.map((permission) => permission.name))).sort();
+  // Alçada do papel: qualquer papel sem limite libera; senão vale o maior limite.
+  const roleApprovalLimit = roles.length && roles.every((role) => role.approval_limit !== null)
     ? Math.max(...roles.map((role) => Number(role.approval_limit)))
     : roles.some((role) => role.approval_limit === null) ? null : 0;
+  const approvalLimitMode: AppUser["approvalLimitMode"] = row.approval_limit_mode === "limited" || row.approval_limit_mode === "unlimited" ? row.approval_limit_mode : "role";
+  const approvalLimit = approvalLimitMode === "unlimited"
+    ? null
+    : approvalLimitMode === "limited"
+      ? Math.max(0, Number(row.approval_limit) || 0)
+      : roleApprovalLimit;
 
-  return { roles: roles.map((role) => role.name), permissions, approvalLimit };
+  return { roles: roles.map((role) => role.name), permissions, permissionsMode, approvalLimit, approvalLimitMode, roleApprovalLimit };
 }
 
 function userSummary(db: DatabaseSync, row: UserRow): AppUser {
-  const access = loadUserPermissions(db, row.id);
+  const access = loadUserPermissions(db, row);
   return {
     id: row.id,
     name: row.name,
@@ -204,7 +264,10 @@ function userSummary(db: DatabaseSync, row: UserRow): AppUser {
     active: row.active === 1,
     roles: access.roles,
     permissions: access.permissions,
+    permissionsMode: access.permissionsMode,
     approvalLimit: access.approvalLimit,
+    approvalLimitMode: access.approvalLimitMode,
+    roleApprovalLimit: access.roleApprovalLimit,
     createdAt: row.created_at
   };
 }
@@ -212,7 +275,7 @@ function userSummary(db: DatabaseSync, row: UserRow): AppUser {
 export function authenticateUser(email: string, password: string): AppUser | undefined {
   const db = database();
   try {
-    const row = db.prepare("SELECT id, name, email, password, active, created_at FROM users WHERE email = ? AND active = 1")
+    const row = db.prepare(`SELECT ${userSelectColumns} FROM users WHERE email = ? AND active = 1`)
       .get(String(email || "").trim().toLowerCase()) as UserRow | undefined;
     if (!row || !verifyPassword(password, row.password)) return undefined;
     return userSummary(db, row);
@@ -230,7 +293,7 @@ export function authenticateLegacyMaster(password: string): AppUser | undefined 
   const db = database();
   try {
     const row = db.prepare(`
-      SELECT users.id, users.name, users.email, users.password, users.active, users.created_at
+      SELECT users.id, users.name, users.email, users.password, users.active, users.permissions_mode, users.approval_limit, users.approval_limit_mode, users.created_at
       FROM users
       JOIN model_has_roles ON model_has_roles.model_id = users.id AND model_has_roles.model_type = ?
       JOIN roles ON roles.id = model_has_roles.role_id AND roles.name = 'admin'
@@ -248,7 +311,7 @@ export function getAppUserById(id: number): AppUser | undefined {
   if (!Number.isFinite(id) || id <= 0) return undefined;
   const db = database();
   try {
-    const row = db.prepare("SELECT id, name, email, password, active, created_at FROM users WHERE id = ?").get(id) as UserRow | undefined;
+    const row = db.prepare(`SELECT ${userSelectColumns} FROM users WHERE id = ?`).get(id) as UserRow | undefined;
     return row ? userSummary(db, row) : undefined;
   } finally {
     db.close();
@@ -258,7 +321,7 @@ export function getAppUserById(id: number): AppUser | undefined {
 export function listAppUsers(): AppUser[] {
   const db = database();
   try {
-    const rows = db.prepare("SELECT id, name, email, password, active, created_at FROM users ORDER BY name").all() as UserRow[];
+    const rows = db.prepare(`SELECT ${userSelectColumns} FROM users ORDER BY name`).all() as UserRow[];
     return rows.map((row) => userSummary(db, row));
   } finally {
     db.close();
@@ -285,7 +348,54 @@ export function listAppRoles(): AppRole[] {
   }
 }
 
-export function createAppUser(input: { name: string; email: string; password: string; role: string }): AppUser {
+function normalizedPermissions(input?: string[]) {
+  if (!Array.isArray(input)) return undefined;
+  const allowed = new Set<string>(appPermissions);
+  return Array.from(new Set(input.map((permission) => String(permission || "").trim()).filter((permission) => allowed.has(permission)))).sort();
+}
+
+function replaceUserPermissions(db: DatabaseSync, userId: number, permissions: string[]) {
+  db.prepare("DELETE FROM model_has_permissions WHERE model_type = ? AND model_id = ?").run(modelType, userId);
+  const statement = db.prepare("INSERT OR IGNORE INTO model_has_permissions (permission_id, model_type, model_id) VALUES (?, ?, ?)");
+  permissions.forEach((permission) => {
+    const row = db.prepare("SELECT id FROM permissions WHERE name = ? AND guard_name = ?").get(permission, guardName) as { id: number } | undefined;
+    if (row) statement.run(row.id, modelType, userId);
+  });
+}
+
+function normalizeApprovalMode(value?: string) {
+  return value === "limited" || value === "unlimited" ? value : value === "role" ? "role" : undefined;
+}
+
+function normalizedApprovalLimit(mode: "role" | "limited" | "unlimited" | undefined, value?: number | null) {
+  if (mode !== "limited") return null;
+  const limit = Number(value);
+  if (!Number.isFinite(limit) || limit < 0) throw new Error("Informe uma alçada válida.");
+  return limit;
+}
+
+function activeUsersWithPermissionExcept(db: DatabaseSync, excludedUserId: number, permission: string) {
+  const rows = db.prepare(`SELECT ${userSelectColumns} FROM users WHERE active = 1 AND id != ?`).all(excludedUserId) as UserRow[];
+  return rows.filter((current) => userSummary(db, current).permissions.includes(permission)).length;
+}
+
+function assertKeepsUserManager(db: DatabaseSync, current: UserRow, nextActive: boolean, nextPermissions: string[]) {
+  const currentHasAccess = current.active === 1 && userSummary(db, current).permissions.includes("users.manage");
+  const nextHasAccess = nextActive && nextPermissions.includes("users.manage");
+  if (currentHasAccess && !nextHasAccess && activeUsersWithPermissionExcept(db, current.id, "users.manage") === 0) {
+    throw new Error("Mantenha ao menos um usuário ativo com permissão para gerenciar usuários.");
+  }
+}
+
+export function createAppUser(input: {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  permissions?: string[];
+  approvalLimitMode?: "role" | "limited" | "unlimited";
+  approvalLimit?: number | null;
+}): AppUser {
   const name = String(input.name || "").trim();
   const email = String(input.email || "").trim().toLowerCase();
   if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Informe nome e e-mail válidos.");
@@ -309,7 +419,17 @@ export function createAppUser(input: { name: string; email: string; password: st
     }
     const userId = Number(result.lastInsertRowid);
     db.prepare("INSERT INTO model_has_roles (role_id, model_type, model_id) VALUES (?, ?, ?)").run(role.id, modelType, userId);
-    const row = db.prepare("SELECT id, name, email, password, active, created_at FROM users WHERE id = ?").get(userId) as UserRow;
+    const permissions = normalizedPermissions(input.permissions);
+    if (permissions) {
+      replaceUserPermissions(db, userId, permissions);
+      db.prepare("UPDATE users SET permissions_mode = 'custom', updated_at = ? WHERE id = ?").run(stamp, userId);
+    }
+    const approvalLimitMode = normalizeApprovalMode(input.approvalLimitMode);
+    if (approvalLimitMode) {
+      db.prepare("UPDATE users SET approval_limit_mode = ?, approval_limit = ?, updated_at = ? WHERE id = ?")
+        .run(approvalLimitMode, normalizedApprovalLimit(approvalLimitMode, input.approvalLimit), stamp, userId);
+    }
+    const row = db.prepare(`SELECT ${userSelectColumns} FROM users WHERE id = ?`).get(userId) as UserRow;
     return userSummary(db, row);
   } finally {
     db.close();
@@ -336,13 +456,45 @@ function activeAdminCountExcept(db: DatabaseSync, userId: number) {
   return Number(row.total) || 0;
 }
 
-export function updateAppUser(id: number, input: { name?: string; role?: string; active?: boolean; password?: string }): AppUser {
+function permissionsForRole(db: DatabaseSync, roleName: string) {
+  return (db.prepare(`
+    SELECT permissions.name
+    FROM roles
+    JOIN role_has_permissions ON role_has_permissions.role_id = roles.id
+    JOIN permissions ON permissions.id = role_has_permissions.permission_id
+    WHERE roles.name = ? AND roles.guard_name = ?
+    ORDER BY permissions.name
+  `).all(roleName, guardName) as Array<{ name: string }>).map((permission) => permission.name);
+}
+
+export function updateAppUser(id: number, input: {
+  name?: string;
+  role?: string;
+  active?: boolean;
+  password?: string;
+  permissions?: string[];
+  approvalLimitMode?: "role" | "limited" | "unlimited";
+  approvalLimit?: number | null;
+}): AppUser {
   const db = database();
   try {
-    const row = db.prepare("SELECT id, name, email, password, active, created_at FROM users WHERE id = ?").get(id) as UserRow | undefined;
+    const row = db.prepare(`SELECT ${userSelectColumns} FROM users WHERE id = ?`).get(id) as UserRow | undefined;
     if (!row) throw new Error("Usuário não encontrado.");
 
     const stamp = nowIso();
+    const roleName = typeof input.role === "string" && input.role.trim() ? input.role.trim() : undefined;
+    const permissions = normalizedPermissions(input.permissions);
+    const approvalLimitMode = normalizeApprovalMode(input.approvalLimitMode);
+    const nextActive = typeof input.active === "boolean" ? input.active : row.active === 1;
+    let nextPermissions = userSummary(db, row).permissions;
+    if (roleName && row.permissions_mode !== "custom" && !permissions) {
+      nextPermissions = permissionsForRole(db, roleName);
+    }
+    if (permissions) {
+      nextPermissions = permissions;
+    }
+    assertKeepsUserManager(db, row, nextActive, nextPermissions);
+
     if (typeof input.name === "string" && input.name.trim()) {
       db.prepare("UPDATE users SET name = ?, updated_at = ? WHERE id = ?").run(input.name.trim(), stamp, id);
     }
@@ -356,8 +508,7 @@ export function updateAppUser(id: number, input: { name?: string; role?: string;
       }
       db.prepare("UPDATE users SET active = ?, updated_at = ? WHERE id = ?").run(input.active ? 1 : 0, stamp, id);
     }
-    if (typeof input.role === "string" && input.role.trim()) {
-      const roleName = input.role.trim();
+    if (roleName) {
       const role = db.prepare("SELECT id FROM roles WHERE name = ? AND guard_name = ?").get(roleName, guardName) as { id: number } | undefined;
       if (!role) throw new Error("Papel inválido. Use admin, aprovador ou comprador.");
       if (row.active === 1 && roleName !== "admin" && userHasRole(db, id, "admin") && activeAdminCountExcept(db, id) === 0) {
@@ -366,8 +517,16 @@ export function updateAppUser(id: number, input: { name?: string; role?: string;
       db.prepare("DELETE FROM model_has_roles WHERE model_type = ? AND model_id = ?").run(modelType, id);
       db.prepare("INSERT INTO model_has_roles (role_id, model_type, model_id) VALUES (?, ?, ?)").run(role.id, modelType, id);
     }
+    if (permissions) {
+      replaceUserPermissions(db, id, permissions);
+      db.prepare("UPDATE users SET permissions_mode = 'custom', updated_at = ? WHERE id = ?").run(stamp, id);
+    }
+    if (approvalLimitMode) {
+      db.prepare("UPDATE users SET approval_limit_mode = ?, approval_limit = ?, updated_at = ? WHERE id = ?")
+        .run(approvalLimitMode, normalizedApprovalLimit(approvalLimitMode, input.approvalLimit), stamp, id);
+    }
 
-    const updated = db.prepare("SELECT id, name, email, password, active, created_at FROM users WHERE id = ?").get(id) as UserRow;
+    const updated = db.prepare(`SELECT ${userSelectColumns} FROM users WHERE id = ?`).get(id) as UserRow;
     return userSummary(db, updated);
   } finally {
     db.close();
