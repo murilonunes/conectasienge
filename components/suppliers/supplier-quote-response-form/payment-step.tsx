@@ -15,6 +15,7 @@ type PaymentStepProps = {
   installments: InstallmentRow[];
   installmentsTotalPercentage: number;
   installmentsTotalValid: boolean;
+  showValidation?: boolean;
   onOffersCashChange: (value: boolean) => void;
   onCashDiscountChoiceChange: (value: CashDiscountChoice) => void;
   onCashDiscountModeChange: (value: CashDiscountMode) => void;
@@ -40,6 +41,7 @@ export function PaymentStep({
   installments,
   installmentsTotalPercentage,
   installmentsTotalValid,
+  showValidation = false,
   onOffersCashChange,
   onCashDiscountChoiceChange,
   onCashDiscountModeChange,
@@ -102,6 +104,25 @@ export function PaymentStep({
     onInstallmentsReplace(generatedPreview);
   }
 
+  const paymentMethodInvalid = showValidation && !offersCash && !offersTerm;
+  const quotedTotal = cashPrice + cashDiscountAmount;
+  const cashDiscountPercentageNumber = Number(cashDiscountPercentage);
+  const cashDiscountValueNumber = Number(cashDiscountValue);
+  const cashDiscountDecisionInvalid = showValidation && offersCash && cashDiscountChoice !== "yes" && cashDiscountChoice !== "no";
+  const cashDiscountModeInvalid = showValidation && offersCash && cashDiscountChoice === "yes" && !cashDiscountMode;
+  const cashDiscountPercentageInvalid = showValidation
+    && offersCash
+    && cashDiscountChoice === "yes"
+    && cashDiscountMode === "percentage"
+    && (!Number.isFinite(cashDiscountPercentageNumber) || cashDiscountPercentageNumber <= 0 || cashDiscountPercentageNumber > 100);
+  const cashDiscountValueInvalid = showValidation
+    && offersCash
+    && cashDiscountChoice === "yes"
+    && cashDiscountMode === "value"
+    && (!Number.isFinite(cashDiscountValueNumber) || cashDiscountValueNumber <= 0 || cashDiscountValueNumber > quotedTotal);
+  const termDecisionInvalid = showValidation && termPaymentChoice !== "yes" && termPaymentChoice !== "no";
+  const installmentsInvalid = showValidation && offersTerm && (!installments.length || !installmentsTotalValid);
+
   return (
     <section className="card supplier-portal-card">
       <div className="supplier-card-head">
@@ -111,8 +132,8 @@ export function PaymentStep({
       </div>
 
       <div className="supplier-payment-options">
-        <div className={`supplier-payment-option ${offersCash ? "enabled" : ""}`}>
-          <label className="supplier-payment-option-head">
+        <div className={`supplier-payment-option ${offersCash ? "enabled" : ""} ${paymentMethodInvalid || cashDiscountDecisionInvalid || cashDiscountModeInvalid || cashDiscountPercentageInvalid || cashDiscountValueInvalid ? "invalid" : ""}`}>
+          <label className={`supplier-payment-option-head ${paymentMethodInvalid ? "supplier-field-invalid" : ""}`}>
             <input type="checkbox" checked={offersCash} onChange={(event) => onOffersCashChange(event.target.checked)} />
             <span>
               <strong>À vista</strong>
@@ -121,7 +142,7 @@ export function PaymentStep({
           </label>
           {offersCash && (
             <div className="supplier-payment-fields">
-              <div className="supplier-cash-discount-choice">
+              <div className={`supplier-cash-discount-choice ${cashDiscountDecisionInvalid ? "supplier-field-invalid" : ""}`}>
                 <span>Desconto à vista?</span>
                 <div className="supplier-term-choice" role="group" aria-label="Oferece desconto à vista?">
                   <button
@@ -142,7 +163,7 @@ export function PaymentStep({
               </div>
               {cashDiscountChoice === "yes" && (
                 <>
-                  <label>
+                  <label className={cashDiscountModeInvalid ? "supplier-field-invalid" : ""}>
                     <span>Tipo de desconto</span>
                     <select value={cashDiscountMode} onChange={(event) => onCashDiscountModeChange(event.target.value as CashDiscountMode)}>
                       <option value="">Selecione</option>
@@ -151,13 +172,13 @@ export function PaymentStep({
                     </select>
                   </label>
                   {cashDiscountMode === "percentage" && (
-                    <label>
+                    <label className={cashDiscountPercentageInvalid ? "supplier-field-invalid" : ""}>
                       <span>Desconto (%)</span>
                       <input value={cashDiscountPercentage} onChange={(event) => onCashDiscountPercentageChange(event.target.value)} type="number" min="0.01" max="100" step="0.1" placeholder="Informe %" />
                     </label>
                   )}
                   {cashDiscountMode === "value" && (
-                    <label>
+                    <label className={cashDiscountValueInvalid ? "supplier-field-invalid" : ""}>
                       <span>Desconto (R$)</span>
                       <input value={cashDiscountValue} onChange={(event) => onCashDiscountValueChange(event.target.value)} type="number" min="0.01" step="0.01" placeholder="Informe valor" />
                     </label>
@@ -173,8 +194,8 @@ export function PaymentStep({
           )}
         </div>
 
-        <div className={`supplier-payment-option ${offersTerm ? "enabled" : ""}`}>
-          <div className="supplier-payment-option-head supplier-term-choice-head">
+        <div className={`supplier-payment-option ${offersTerm ? "enabled" : ""} ${paymentMethodInvalid || termDecisionInvalid || installmentsInvalid ? "invalid" : ""}`}>
+          <div className={`supplier-payment-option-head supplier-term-choice-head ${paymentMethodInvalid || termDecisionInvalid ? "supplier-field-invalid" : ""}`}>
             <span>
               <strong>A prazo?</strong>
               <small>Escolha Sim ou Não. Se escolher Sim, gere parcelas automaticamente ou preencha manualmente.</small>
@@ -197,7 +218,7 @@ export function PaymentStep({
             </div>
           </div>
           {offersTerm && (
-            <div className="supplier-installments">
+            <div className={`supplier-installments ${installmentsInvalid ? "supplier-section-invalid" : ""}`}>
               <div className="supplier-installment-helper">
                 <div className="supplier-helper-head">
                   <div>
@@ -259,21 +280,28 @@ export function PaymentStep({
                 <span>Confira os dias e percentuais. Se precisar, altere uma parcela ou adicione outra linha.</span>
               </div>
 
-              {installments.map((installment, index) => (
-                <div className="supplier-installment-row" key={index}>
-                  <label>
-                    <span>Dias</span>
-                    <input value={installment.days} onChange={(event) => onInstallmentChange(index, "days", event.target.value)} type="number" min="0" placeholder="30" />
-                  </label>
-                  <label>
-                    <span>% do valor</span>
-                    <input value={installment.percentage} onChange={(event) => onInstallmentChange(index, "percentage", event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="100" />
-                  </label>
-                  {installments.length > 1 && (
-                    <button type="button" className="supplier-installment-remove" onClick={() => onRemoveInstallment(index)}>Remover parcela</button>
-                  )}
-                </div>
-              ))}
+              {installments.map((installment, index) => {
+                const installmentDays = Number(installment.days);
+                const installmentPercentage = Number(installment.percentage);
+                const installmentDaysInvalid = showValidation && offersTerm && (installment.days === "" || !Number.isFinite(installmentDays) || installmentDays < 0);
+                const installmentPercentageInvalid = showValidation && offersTerm && (!Number.isFinite(installmentPercentage) || installmentPercentage <= 0 || installmentPercentage > 100);
+
+                return (
+                  <div className="supplier-installment-row" key={index}>
+                    <label className={installmentDaysInvalid ? "supplier-field-invalid" : ""}>
+                      <span>Dias</span>
+                      <input value={installment.days} onChange={(event) => onInstallmentChange(index, "days", event.target.value)} type="number" min="0" placeholder="30" />
+                    </label>
+                    <label className={installmentPercentageInvalid ? "supplier-field-invalid" : ""}>
+                      <span>% do valor</span>
+                      <input value={installment.percentage} onChange={(event) => onInstallmentChange(index, "percentage", event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="100" />
+                    </label>
+                    {installments.length > 1 && (
+                      <button type="button" className="supplier-installment-remove" onClick={() => onRemoveInstallment(index)}>Remover parcela</button>
+                    )}
+                  </div>
+                );
+              })}
               <div className="supplier-installment-actions">
                 <button type="button" className="button secondary" onClick={onAddInstallment}>{installments.length ? "Adicionar parcela manual" : "Adicionar primeira parcela manual"}</button>
                 <span className={installments.length && installmentsTotalValid ? "done" : "warn"}>

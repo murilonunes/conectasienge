@@ -83,6 +83,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
   const [step, setStep] = useState<WizardStep>(1);
   const [maxStepReached, setMaxStepReached] = useState<WizardStep>(1);
   const [stepMessage, setStepMessage] = useState("");
+  const [validationAttempts, setValidationAttempts] = useState<Partial<Record<WizardStep, boolean>>>({});
   const stepNavRef = useRef<HTMLDivElement>(null);
   const stepperRef = useRef<HTMLElement>(null);
   const previousStep = useRef<WizardStep>(1);
@@ -276,6 +277,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
 
   function goNext() {
     if (!stepValid[step]) {
+      setValidationAttempts((current) => ({ ...current, [step]: true }));
       setStepMessage(stepMessages[step]);
       window.setTimeout(() => stepNavRef.current?.scrollIntoView({ block: "nearest" }), 80);
       return;
@@ -504,6 +506,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             registration={registration}
             checkingDocument={checkingDocument}
             supplierExists={supplierExists}
+            showValidation={Boolean(validationAttempts[1])}
             lockedFields={{
               document: Boolean(fixedSupplier?.document),
               supplierName: Boolean(fixedSupplier?.supplierName),
@@ -522,6 +525,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
           <ItemsStep
             items={items}
             responseItems={responseItems}
+            showValidation={Boolean(validationAttempts[2])}
             onItemChange={updateItem}
           />
         )}
@@ -540,6 +544,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             installments={installments}
             installmentsTotalPercentage={installmentsTotalPercentage}
             installmentsTotalValid={installmentsTotalValid}
+            showValidation={Boolean(validationAttempts[3])}
             onOffersCashChange={chooseOffersCash}
             onCashDiscountChoiceChange={chooseCashDiscount}
             onCashDiscountModeChange={chooseCashDiscountMode}
@@ -559,6 +564,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             freightPrice={freightPrice}
             deliveryDays={deliveryDays}
             generalNotes={generalNotes}
+            showValidation={Boolean(validationAttempts[4])}
             onFreightTypeChange={setFreightType}
             onFreightPriceChange={setFreightPrice}
             onDeliveryDaysChange={setDeliveryDays}

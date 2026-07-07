@@ -5,6 +5,7 @@ type FreightStepProps = {
   freightPrice: string;
   deliveryDays: string;
   generalNotes: string;
+  showValidation?: boolean;
   onFreightTypeChange: (value: FreightType) => void;
   onFreightPriceChange: (value: string) => void;
   onDeliveryDaysChange: (value: string) => void;
@@ -16,11 +17,18 @@ export function FreightStep({
   freightPrice,
   deliveryDays,
   generalNotes,
+  showValidation = false,
   onFreightTypeChange,
   onFreightPriceChange,
   onDeliveryDaysChange,
   onGeneralNotesChange
 }: FreightStepProps) {
+  const deliveryDaysNumber = Number(deliveryDays);
+  const freightPriceNumber = Number(freightPrice);
+  const freightTypeInvalid = showValidation && !freightType;
+  const deliveryDaysInvalid = showValidation && (!Number.isFinite(deliveryDaysNumber) || deliveryDaysNumber <= 0);
+  const freightPriceInvalid = showValidation && freightType === "PAID" && (!Number.isFinite(freightPriceNumber) || freightPriceNumber <= 0);
+
   return (
     <section className="card supplier-portal-card">
       <div className="supplier-card-head">
@@ -30,7 +38,7 @@ export function FreightStep({
       </div>
 
       <div className="supplier-portal-grid supplier-freight-grid">
-        <label>
+        <label className={freightTypeInvalid ? "supplier-field-invalid" : ""}>
           <span>Frete *</span>
           <select value={freightType} onChange={(event) => onFreightTypeChange(event.target.value as FreightType)}>
             <option value="">Selecione</option>
@@ -39,12 +47,12 @@ export function FreightStep({
             <option value="NONE">Sem frete</option>
           </select>
         </label>
-        <label>
+        <label className={deliveryDaysInvalid ? "supplier-field-invalid" : ""}>
           <span>Dias de entrega *</span>
           <input value={deliveryDays} onChange={(event) => onDeliveryDaysChange(event.target.value)} type="number" min="1" step="1" placeholder="Ex.: 7" />
         </label>
         {freightType === "PAID" && (
-          <label>
+          <label className={freightPriceInvalid ? "supplier-field-invalid" : ""}>
             <span>Valor do frete *</span>
             <input value={freightPrice} onChange={(event) => onFreightPriceChange(event.target.value)} type="number" min="0" step="0.01" placeholder="0,00" />
           </label>

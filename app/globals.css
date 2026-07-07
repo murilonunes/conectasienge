@@ -922,6 +922,19 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supplier-installment-actions span { font-size: 10px; font-weight: 800; color: var(--muted); }
 .supplier-installment-actions span.done { color: var(--green); }
 .supplier-installment-actions span.warn { color: var(--amber); }
+.supplier-field-invalid > span,
+.supplier-field-invalid > span strong,
+.supplier-field-invalid > span small,
+.supplier-field-invalid > strong { color: var(--red) !important; }
+.supplier-field-invalid input:not([disabled]),
+.supplier-field-invalid select,
+.supplier-field-invalid textarea { border-color: #d14b3f !important; background: #fff7f5 !important; box-shadow: 0 0 0 3px rgba(209, 75, 63, .12); }
+.supplier-field-invalid .supplier-term-choice { border-color: #d14b3f; background: #fff7f5; box-shadow: 0 0 0 3px rgba(209, 75, 63, .08); }
+.supplier-field-invalid .supplier-term-choice button:not(.active) { border-color: #f1c9c3; color: var(--red); }
+.supplier-section-invalid,
+.supplier-payment-option.invalid,
+.supplier-quote-items article.invalid { border-color: #d14b3f !important; background: #fff7f5 !important; box-shadow: inset 3px 0 0 var(--red); }
+.supplier-installments.supplier-section-invalid { padding: 12px; border: 1px solid #d14b3f; border-radius: 12px; }
 .supplier-general-notes { grid-column: span 2; }
 .supplier-general-notes textarea { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: #fff; padding: 10px 11px; color: var(--ink); font-size: 12px; font-family: inherit; resize: vertical; }
 .supplier-stepper { display: flex; gap: 8px; margin-bottom: 10px; }
