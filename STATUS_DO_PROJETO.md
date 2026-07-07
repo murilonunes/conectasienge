@@ -294,6 +294,8 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Vendas sem vinculo com obra/contrato ficam fora da Receita POC e aparecem como item a revisar.
 - A tela mostra a base usada no POC: valor contratado, valor medido, contratos com medicao e ranking de avanco por obra.
 - O seletor anual usa somente anos com vendas ou contratos salvos; link antigo para ano sem base ajusta para o exercicio valido mais recente, informando o usuario.
+- A tela ganhou alternancia `Historico`/`Futuro`. A visao futura mostra a carteira ativa vendida, POC ja reconhecido pela medicao atual, receita POC remanescente a reconhecer, contratos sem vinculo de obra, caixa futuro aberto por contas a receber/pagar e agrupamento por faixa de vencimento.
+- A visao futura deixa claro que a receita POC remanescente e backlog por empreendimento, nao cronograma mensal contabil, porque ainda falta historico/planejamento de medicoes futuras por obra e unidade.
 - A tela apresenta cards executivos, graficos mensais, ranking de custos por fornecedor, ranking de vendas por empreendimento e tabela mes a mes.
 - Os saldos a receber e a pagar sao acumulados ate o fim do exercicio selecionado, nao apenas movimentos do ano.
 - A DRE nao carrega compras na abertura, porque compras nao entram no calculo exibido; custos e despesas vem de contas a pagar.

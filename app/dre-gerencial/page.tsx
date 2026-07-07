@@ -3,7 +3,7 @@ import { CashFlowChart } from "@/components/charts/cash-flow-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
-import { loadDreGerencial, loadDreYearOptions, normalizeDreYear, type DreMonthlyItem } from "@/features/dre/data";
+import { loadDreGerencial, loadDreYearOptions, normalizeDreYear, type DreFutureGroup, type DreMonthlyItem } from "@/features/dre/data";
 import { formatCompactCurrency, formatCurrency } from "@/lib/formatters";
 
 export const dynamic = "force-dynamic";
@@ -11,14 +11,17 @@ export const dynamic = "force-dynamic";
 type DreGerencialPageProps = {
   searchParams?: {
     ano?: string | string[];
+    visao?: string | string[];
   };
 };
+
+type DreGerencialData = Awaited<ReturnType<typeof loadDreGerencial>>;
 
 function formatPercent(value: number) {
   return `${value.toFixed(1).replace(".", ",")}%`;
 }
 
-function IntegrationSummary({ integrations }: { integrations: Awaited<ReturnType<typeof loadDreGerencial>>["integrations"] }) {
+function IntegrationSummary({ integrations }: { integrations: DreGerencialData["integrations"] }) {
   return (
     <section className="card dre-integration-panel">
       {integrations.map((item) => (
@@ -36,6 +39,11 @@ function IntegrationSummary({ integrations }: { integrations: Awaited<ReturnType
       ))}
     </section>
   );
+}
+
+function normalizeView(value: unknown) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  return rawValue === "futuro" ? "futuro" : "historico";
 }
 
 function ResultTrend({ monthly }: { monthly: DreMonthlyItem[] }) {
@@ -116,9 +124,136 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
   );
 }
 
+function FutureGroups({ groups }: { groups: DreFutureGroup[] }) {
+  return (
+    <section className="card table-card dre-monthly-table">
+      <div className="table-head">
+        <h2 className="panel-title">Futuro financeiro da carteira POC</h2>
+        <span className="panel-note">Parcelas abertas a receber e a pagar, agrupadas pelo vencimento a partir de hoje</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Faixa</th>
+            <th>A receber aberto</th>
+            <th>Parcelas a receber</th>
+            <th>A pagar aberto</th>
+            <th>Parcelas a pagar</th>
+            <th>Saldo de caixa</th>
+          </tr>
+        </thead>
+        <tbody>
+          {groups.map((item) => (
+            <tr key={item.key}>
+              <td><strong>{item.label}</strong></td>
+              <td>{formatCurrency(item.receivableOpen)}</td>
+              <td>{item.receivableCount}</td>
+              <td>{formatCurrency(item.payableOpen)}</td>
+              <td>{item.payableCount}</td>
+              <td className={item.netCash < 0 ? "negative-cell" : "positive-cell"}>{formatCurrency(item.netCash)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function FuturePocView({ dre }: { dre: DreGerencialData }) {
+  const hasFutureMargin = dre.futureRemainingPocRevenue - dre.futureOpenPayables >= 0;
+  const matchedShare = dre.futureContractedRevenue ? (dre.futurePocMatchedRevenue / dre.futureContractedRevenue) * 100 : 0;
+
+  return (
+    <>
+      <section className={`card dashboard-executive dre-executive ${hasFutureMargin ? "" : "warning"}`}>
+        <div className="dashboard-executive-main">
+          <span>{hasFutureMargin ? "Potencial POC futuro positivo" : "Potencial POC futuro pressionado"}</span>
+          <h2>{formatCompactCurrency(dre.futureRemainingPocRevenue)}</h2>
+          <p>
+            Receita POC ainda a reconhecer pela carteira ativa, considerando o percentual de avanço salvo hoje.
+            Essa leitura não cria cronograma de medição; ela mostra o estoque de resultado ainda não reconhecido.
+          </p>
+        </div>
+        <div className="dashboard-executive-grid">
+          <div>
+            <span>POC já reconhecido</span>
+            <strong>{formatCompactCurrency(dre.futureCurrentPocRevenue)}</strong>
+            <small>{formatPercent(dre.futurePocCoverage)} da carteira ativa já está reconhecida pela base atual.</small>
+          </div>
+          <div>
+            <span>Saldo futuro de caixa</span>
+            <strong className={dre.futureCashResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.futureCashResult)}</strong>
+            <small>{formatCompactCurrency(dre.futureOpenReceivables)} a receber e {formatCompactCurrency(dre.futureOpenPayables)} a pagar.</small>
+          </div>
+          <div>
+            <span>Sem vínculo POC</span>
+            <strong className={dre.futurePocUnmatchedCount > 0 ? "negative" : ""}>{formatCompactCurrency(dre.futurePocUnmatchedRevenue)}</strong>
+            <small>{dre.futurePocUnmatchedCount} contrato(s) ativos sem obra/contrato de fornecimento vinculado.</small>
+          </div>
+        </div>
+      </section>
+
+      <div className="stats dre-stats">
+        <StatCard label="Carteira ativa" value={formatCompactCurrency(dre.futureContractedRevenue)} delta={`${dre.futurePocContractCount} contratos ativos analisados`} icon="CA" />
+        <StatCard label="A reconhecer POC" value={formatCompactCurrency(dre.futureRemainingPocRevenue)} delta={`${dre.futurePocMatchedCount} contratos com vínculo de obra`} icon="PR" />
+        <StatCard label="Cobertura POC" value={formatPercent(matchedShare)} delta="Parcela da carteira com vínculo para cálculo do avanço" warn={matchedShare < 90} icon="%" />
+        <StatCard label="Contratos completos" value={String(dre.futurePocCompletedCount)} delta="Sem saldo POC estimado a reconhecer" icon="OK" />
+        <StatCard label="A receber futuro" value={formatCompactCurrency(dre.futureOpenReceivables)} delta={`${dre.futureOpenReceivablesCount} parcelas abertas`} icon="AR" />
+        <StatCard label="A pagar futuro" value={formatCompactCurrency(dre.futureOpenPayables)} delta={`${dre.futureOpenPayablesCount} parcelas abertas`} warn={dre.futureOpenPayables > dre.futureOpenReceivables} icon="AP" />
+      </div>
+
+      <FutureGroups groups={dre.futureGroups} />
+
+      <div className="grid-main equal-grid">
+        <RankingChart title="POC a reconhecer por empreendimento" note="Receita potencial ainda não reconhecida pela medição atual" data={dre.futurePocByEnterprise} countLabel="contrato" />
+        <RankingChart title="Recebíveis futuros por cliente" note="Maiores saldos abertos a receber" data={dre.futureReceivablesByClient} countLabel="parcela" />
+      </div>
+
+      <div className="grid-main equal-grid">
+        <RankingChart title="Compromissos futuros por fornecedor" note="Maiores saldos abertos a pagar" data={dre.futurePayablesByCreditor} countLabel="parcela" />
+        <section className="card panel">
+          <div className="panel-head">
+            <div>
+              <h2 className="panel-title">Leitura da visão futura</h2>
+              <span className="panel-note">A projeção usa a base salva, sem consultar o Sienge na abertura</span>
+            </div>
+          </div>
+          <div className="dashboard-period-list">
+            <div>
+              <span>Data base</span>
+              <strong>{dre.baseDate}</strong>
+              <small><span>Referência</span><span>Vencimentos futuros partem desta data.</span></small>
+            </div>
+            <div>
+              <span>Receita remanescente</span>
+              <strong>{formatCompactCurrency(dre.futureRemainingPocRevenue)}</strong>
+              <small><span>POC</span><span>Carteira vendida menos POC reconhecido pela última medição.</span></small>
+            </div>
+            <div>
+              <span>Sem cronograma mensal</span>
+              <strong>Estimativa</strong>
+              <small><span>Limite</span><span>Falta histórico de medições futuras por obra/unidade.</span></small>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="card methodology dre-methodology">
+        <strong>Como ler o futuro da DRE POC</strong>
+        <p>
+          A visão futura parte da carteira ativa de vendas e calcula o que ainda falta reconhecer no POC usando o avanço atual dos contratos de fornecimento.
+          O caixa futuro vem das parcelas abertas de contas a receber e contas a pagar. Como ainda não há cronograma mensal de medições futuras,
+          a receita POC futura aparece como backlog por empreendimento, não como previsão mensal contábil.
+        </p>
+      </section>
+    </>
+  );
+}
+
 export default async function DreGerencialPage({ searchParams }: DreGerencialPageProps) {
   const availableYears = loadDreYearOptions();
   const selectedYear = normalizeDreYear(searchParams?.ano, availableYears);
+  const selectedView = normalizeView(searchParams?.visao);
   const requestedYearParam = Array.isArray(searchParams?.ano) ? searchParams?.ano[0] : searchParams?.ano;
   const requestedYear = Number(requestedYearParam);
   const yearWasAdjusted = Boolean(requestedYearParam && Number.isInteger(requestedYear) && requestedYear !== selectedYear);
@@ -129,9 +264,11 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
   return (
     <>
       <PageHeading
-        eyebrow="Resultado histórico"
+        eyebrow={selectedView === "futuro" ? "Resultado futuro" : "Resultado histórico"}
         title="DRE POC estimada"
-        subtitle="Análise gerencial anual: estima receita por avanço da obra, compara custos e separa o caixa realizado."
+        subtitle={selectedView === "futuro"
+          ? "Visão futura da carteira POC: receita ainda a reconhecer, caixa aberto e compromissos por vencimento."
+          : "Análise gerencial anual: estima receita por avanço da obra, compara custos e separa o caixa realizado."}
         action="Atualizar dados"
         actionHref="/configuracoes"
       />
@@ -143,11 +280,15 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
           <small>{dre.range.start} até {dre.range.end}</small>
         </div>
         <div className="dashboard-view-controls">
+          <div className="dashboard-direction-options" aria-label="Visão da DRE POC">
+            <Link href={`/dre-gerencial?ano=${selectedYear}&visao=historico`} className={selectedView === "historico" ? "active" : ""}>Histórico</Link>
+            <Link href={`/dre-gerencial?ano=${selectedYear}&visao=futuro`} className={selectedView === "futuro" ? "active" : ""}>Futuro</Link>
+          </div>
           <div className="dashboard-view-options compact" aria-label="Ano da DRE">
             {availableYears.map((year) => (
               <Link
                 key={year}
-                href={`/dre-gerencial?ano=${year}`}
+                href={`/dre-gerencial?ano=${year}&visao=${selectedView}`}
                 className={year === selectedYear ? "active" : ""}
               >
                 {year}
@@ -192,6 +333,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         </section>
       )}
 
+      {selectedView === "futuro" ? <FuturePocView dre={dre} /> : <>
       <section className={`card dashboard-executive dre-executive ${hasProfit ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
           <span>{hasProfit ? "Lucro POC estimado" : "Prejuízo POC estimado"}</span>
@@ -294,6 +436,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
           Sem histórico mensal de medições e sem apropriação por unidade vendida, a receita POC é uma estimativa anual baseada na última medição salva.
         </p>
       </section>
+      </>}
     </>
   );
 }

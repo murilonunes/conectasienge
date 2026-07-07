@@ -26,6 +26,16 @@ export type DreMonthlyItem = {
   cashResult: number;
 };
 
+export type DreFutureGroup = {
+  key: string;
+  label: string;
+  receivableOpen: number;
+  receivableCount: number;
+  payableOpen: number;
+  payableCount: number;
+  netCash: number;
+};
+
 type SalesContract = {
   id?: number;
   number?: string;
@@ -68,6 +78,15 @@ type PocProgressResult = {
   measuredCost: number;
   averagePercent: number;
 };
+
+const futureBuckets = [
+  { key: "d30", label: "Hoje a 30 dias", min: 0, max: 30 },
+  { key: "d60", label: "31 a 60 dias", min: 31, max: 60 },
+  { key: "d90", label: "61 a 90 dias", min: 61, max: 90 },
+  { key: "d180", label: "91 a 180 dias", min: 91, max: 180 },
+  { key: "d365", label: "181 a 365 dias", min: 181, max: 365 },
+  { key: "future", label: "Acima de 365 dias", min: 366, max: Number.POSITIVE_INFINITY }
+] as const;
 
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const dbFiles = {
@@ -165,6 +184,49 @@ function rowsToMonthlyMap(rows: Row[], valueKey = "value") {
   const map = new Map<string, number>();
   rows.forEach((row) => addMonthlyValue(map, String(row.month || ""), money(row[valueKey])));
   return map;
+}
+
+function daysBetween(start: string, end: string) {
+  const startTime = new Date(`${start}T12:00:00`).getTime();
+  const endTime = new Date(`${end}T12:00:00`).getTime();
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return undefined;
+  return Math.floor((endTime - startTime) / 86_400_000);
+}
+
+function emptyFutureGroups(): DreFutureGroup[] {
+  return futureBuckets.map((bucket) => ({
+    key: bucket.key,
+    label: bucket.label,
+    receivableOpen: 0,
+    receivableCount: 0,
+    payableOpen: 0,
+    payableCount: 0,
+    netCash: 0
+  }));
+}
+
+function bucketForDueDate(baseDate: string, dueDate: unknown) {
+  const days = daysBetween(baseDate, String(dueDate || "").slice(0, 10));
+  if (days === undefined || days < 0) return undefined;
+  return futureBuckets.find((bucket) => days >= bucket.min && days <= bucket.max);
+}
+
+function addFutureOpen(groups: DreFutureGroup[], kind: "receivable" | "payable", baseDate: string, rows: Row[]) {
+  rows.forEach((row) => {
+    const bucket = bucketForDueDate(baseDate, row.dueDate);
+    if (!bucket) return;
+    const current = groups.find((item) => item.key === bucket.key);
+    if (!current) return;
+    const value = money(row.value);
+    if (kind === "receivable") {
+      current.receivableOpen += value;
+      current.receivableCount += 1;
+    } else {
+      current.payableOpen += value;
+      current.payableCount += 1;
+    }
+    current.netCash = current.receivableOpen - current.payableOpen;
+  });
 }
 
 function sourceStatus(databasePath: string, table: string, label: string, endpoint?: string) {
@@ -419,6 +481,80 @@ function loadSales(start: string, end: string, pocProgress: Map<string, PocProgr
   };
 }
 
+function loadFuturePocBacklog(pocProgress: Map<string, PocProgress>) {
+  const database = openDatabase(dbFiles.sales);
+  const enterprises = new Map<string, ChartItem>();
+  let contractedRevenue = 0;
+  let currentPocRevenue = 0;
+  let remainingPocRevenue = 0;
+  let matchedRevenue = 0;
+  let unmatchedRevenue = 0;
+  let contractCount = 0;
+  let matchedCount = 0;
+  let unmatchedCount = 0;
+  let completedCount = 0;
+  let unavailable = false;
+
+  if (!database) unavailable = true;
+  try {
+    if (!database || !tableExists(database, "sienge_records")) unavailable = true;
+    const rows = database && tableExists(database, "sienge_records")
+      ? database.prepare("SELECT raw_json FROM sienge_records WHERE endpoint = '/v1/sales-contracts'").all() as JsonRow[]
+      : [];
+
+    rows.forEach((row) => {
+      const contract = safeJson<SalesContract>(row.raw_json);
+      if (!contract) return;
+      const cancelled = /cancelad|distrat/i.test(contract.situation || "") || Boolean(contract.cancellationDate);
+      if (cancelled) return;
+      const value = money(contract.totalSellingValue || contract.value);
+      if (value <= 0) return;
+      const progress = progressForSale(contract, pocProgress);
+      const pocPercent = progress?.percent || 0;
+      const recognizedValue = value * pocPercent;
+      const remainingValue = Math.max(0, value - recognizedValue);
+
+      contractedRevenue += value;
+      currentPocRevenue += recognizedValue;
+      contractCount += 1;
+
+      if (progress) {
+        matchedRevenue += value;
+        matchedCount += 1;
+        remainingPocRevenue += remainingValue;
+        if (remainingValue <= 0) completedCount += 1;
+        const label = contract.enterpriseName || contract.companyName || "Empreendimento não informado";
+        const current = enterprises.get(label) || { label, value: 0, count: 0 };
+        current.value += remainingValue;
+        current.count += 1;
+        enterprises.set(label, current);
+      } else {
+        unmatchedRevenue += value;
+        unmatchedCount += 1;
+      }
+    });
+  } finally {
+    database?.close();
+  }
+
+  return {
+    contractedRevenue,
+    currentPocRevenue,
+    remainingPocRevenue,
+    matchedRevenue,
+    unmatchedRevenue,
+    contractCount,
+    matchedCount,
+    unmatchedCount,
+    completedCount,
+    enterprises: Array.from(enterprises.values())
+      .filter((item) => item.value > 0)
+      .sort((left, right) => right.value - left.value)
+      .slice(0, 10),
+    unavailable
+  };
+}
+
 function loadPayables(start: string, end: string) {
   const database = openDatabase(dbFiles.payables);
   const empty = {
@@ -572,6 +708,90 @@ function loadReceivables(start: string, end: string) {
   }
 }
 
+function loadFutureReceivables(baseDate: string) {
+  const database = openDatabase(dbFiles.receivables);
+  const empty = {
+    openReceivables: 0,
+    openReceivablesCount: 0,
+    futureRows: [] as Row[],
+    clients: [] as ChartItem[],
+    unavailable: true
+  };
+  if (!database) return empty;
+  try {
+    if (!tableExists(database, "bulk_income_installments")) return empty;
+    const amountExpression = "COALESCE(correctedBalanceAmount, balanceAmount, originalAmount, 0)";
+    const rows = database.prepare(`
+      SELECT dueDate, ${amountExpression} AS value
+      FROM bulk_income_installments
+      WHERE dueDate >= ? AND ${amountExpression} > 0
+    `).all(baseDate) as Row[];
+    const clients = (database.prepare(`
+      SELECT COALESCE(clientName, 'Cliente não informado') AS label, SUM(${amountExpression}) AS value, COUNT(*) AS count
+      FROM bulk_income_installments
+      WHERE dueDate >= ? AND ${amountExpression} > 0
+      GROUP BY COALESCE(clientName, 'Cliente não informado')
+      ORDER BY value DESC
+      LIMIT 10
+    `).all(baseDate) as Row[]).map((row) => ({
+      label: String(row.label),
+      value: money(row.value),
+      count: Number(row.count || 0)
+    }));
+    return {
+      openReceivables: rows.reduce((sum, row) => sum + money(row.value), 0),
+      openReceivablesCount: rows.length,
+      futureRows: rows,
+      clients,
+      unavailable: false
+    };
+  } finally {
+    database.close();
+  }
+}
+
+function loadFuturePayables(baseDate: string) {
+  const database = openDatabase(dbFiles.payables);
+  const empty = {
+    openPayables: 0,
+    openPayablesCount: 0,
+    futureRows: [] as Row[],
+    creditors: [] as ChartItem[],
+    unavailable: true
+  };
+  if (!database) return empty;
+  try {
+    if (!tableExists(database, "bulk_outcome_installments")) return empty;
+    const amountExpression = "COALESCE(correctedBalanceAmount, balanceAmount, originalAmount, 0)";
+    const rows = database.prepare(`
+      SELECT dueDate, ${amountExpression} AS value
+      FROM bulk_outcome_installments
+      WHERE dueDate >= ? AND ${amountExpression} > 0
+    `).all(baseDate) as Row[];
+    const creditors = (database.prepare(`
+      SELECT COALESCE(creditorName, 'Fornecedor não informado') AS label, SUM(${amountExpression}) AS value, COUNT(*) AS count
+      FROM bulk_outcome_installments
+      WHERE dueDate >= ? AND ${amountExpression} > 0
+      GROUP BY COALESCE(creditorName, 'Fornecedor não informado')
+      ORDER BY value DESC
+      LIMIT 10
+    `).all(baseDate) as Row[]).map((row) => ({
+      label: String(row.label),
+      value: money(row.value),
+      count: Number(row.count || 0)
+    }));
+    return {
+      openPayables: rows.reduce((sum, row) => sum + money(row.value), 0),
+      openPayablesCount: rows.length,
+      futureRows: rows,
+      creditors,
+      unavailable: false
+    };
+  } finally {
+    database.close();
+  }
+}
+
 function buildMonthly({
   sales,
   payables,
@@ -620,23 +840,36 @@ function buildMonthly({
 export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
   const start = `${year}-01-01`;
   const end = `${year}-12-31`;
+  const baseDate = todayIso();
   const poc = loadPocProgress();
   const sales = loadSales(start, end, poc.progress);
   const payables = loadPayables(start, end);
   const receivables = loadReceivables(start, end);
+  const futurePoc = loadFuturePocBacklog(poc.progress);
+  const futureReceivables = loadFutureReceivables(baseDate);
+  const futurePayables = loadFuturePayables(baseDate);
+  const futureGroups = emptyFutureGroups();
+  addFutureOpen(futureGroups, "receivable", baseDate, futureReceivables.futureRows);
+  addFutureOpen(futureGroups, "payable", baseDate, futurePayables.futureRows);
   const monthly = buildMonthly({ sales, payables, receivables });
   const netResult = sales.netRevenue - payables.costs;
   const cashResult = receivables.received - payables.paid;
   const margin = sales.netRevenue ? (netResult / sales.netRevenue) * 100 : 0;
+  const futureCashResult = futureReceivables.openReceivables - futurePayables.openPayables;
+  const futureCoverage = futurePoc.contractedRevenue ? (futurePoc.currentPocRevenue / futurePoc.contractedRevenue) * 100 : 0;
 
   return {
     year,
     range: { start, end },
+    baseDate,
     unavailable: [
       sales.unavailable ? "vendas" : undefined,
       payables.unavailable ? "contas a pagar" : undefined,
       receivables.unavailable ? "contas a receber" : undefined,
-      poc.unavailable ? "contratos de fornecimento para POC" : undefined
+      poc.unavailable ? "contratos de fornecimento para POC" : undefined,
+      futurePoc.unavailable ? "carteira comercial para futuro POC" : undefined,
+      futureReceivables.unavailable ? "contas a receber futuras" : undefined,
+      futurePayables.unavailable ? "contas a pagar futuras" : undefined
     ].filter(Boolean) as string[],
     contractedRevenue: sales.contractedRevenue,
     pocRevenue: sales.pocRevenue,
@@ -660,6 +893,25 @@ export async function loadDreGerencial(year = Number(todayIso().slice(0, 4))) {
     pocMatchedCount: sales.pocMatchedCount,
     pocUnmatchedCount: sales.pocUnmatchedCount,
     averagePoc: sales.averagePoc,
+    futureContractedRevenue: futurePoc.contractedRevenue,
+    futureCurrentPocRevenue: futurePoc.currentPocRevenue,
+    futureRemainingPocRevenue: futurePoc.remainingPocRevenue,
+    futurePocMatchedRevenue: futurePoc.matchedRevenue,
+    futurePocUnmatchedRevenue: futurePoc.unmatchedRevenue,
+    futurePocContractCount: futurePoc.contractCount,
+    futurePocMatchedCount: futurePoc.matchedCount,
+    futurePocUnmatchedCount: futurePoc.unmatchedCount,
+    futurePocCompletedCount: futurePoc.completedCount,
+    futurePocCoverage: futureCoverage,
+    futureOpenReceivables: futureReceivables.openReceivables,
+    futureOpenReceivablesCount: futureReceivables.openReceivablesCount,
+    futureOpenPayables: futurePayables.openPayables,
+    futureOpenPayablesCount: futurePayables.openPayablesCount,
+    futureCashResult,
+    futureGroups,
+    futurePocByEnterprise: futurePoc.enterprises,
+    futureReceivablesByClient: futureReceivables.clients,
+    futurePayablesByCreditor: futurePayables.creditors,
     pocSourceContractCount: poc.contractCount,
     pocSourcePlannedCost: poc.plannedCost,
     pocSourceMeasuredCost: poc.measuredCost,
