@@ -7,7 +7,7 @@ import {
   normalizeDashboardDays,
   normalizeDashboardDirection
 } from "@/features/dashboard/data";
-import { loadContractsReportSummary, loadDreReportSummary } from "@/features/reports/data";
+import { loadContractsReportSummary, loadDreReportSummary, loadFinancialDreReportSummary } from "@/features/reports/data";
 import { getSiengeScreenUpdateHistory } from "@/lib/api/sienge-history";
 import { formatCompactCurrency } from "@/lib/formatters";
 import { reportUpdateAreas } from "@/lib/sienge-update-areas";
@@ -58,13 +58,15 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
   const overview = await loadDashboardOverview(days, direction, "period");
   const contracts = loadContractsReportSummary();
   const dre = loadDreReportSummary();
+  const financialDre = loadFinancialDreReportSummary();
   const history = getSiengeScreenUpdateHistory();
   const updateStatuses = buildUpdateAreaStatuses(history, reportUpdateAreas);
   const isPast = direction === "past";
   const unavailable = [
     ...overview.unavailable,
     contracts.totalCount === 0 ? "contratos" : undefined,
-    dre.baseCount === 0 ? "base da DRE" : undefined
+    dre.baseCount === 0 ? "base da DRE POC" : undefined,
+    financialDre.baseCount === 0 ? "base da DRE financeira" : undefined
   ].filter(Boolean) as string[];
 
   const receivablePending = isPast ? overview.receivableSummary.periodOpenAmount : overview.receivableSummary.totalOpen;
@@ -86,6 +88,17 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
     },
     {
       icon: "=",
+      title: "DRE financeiro",
+      description: "Apura resultado anual e futuro agrupado usando somente contas a receber e contas a pagar.",
+      href: `/dre-financeiro?ano=${financialDre.year}`,
+      scope: `Exercício ${financialDre.year}`,
+      primaryMetric: String(financialDre.availableYears.length),
+      primaryLabel: financialDre.availableYears.length === 1 ? "ano com contas salvas" : "anos com contas salvas",
+      secondaryMetric: String(financialDre.baseCount),
+      secondaryLabel: "parcelas para apuração"
+    },
+    {
+      icon: "P%",
       title: "DRE POC estimada",
       description: "Abre a apuração anual por avanço da obra, custos e caixa realizado.",
       href: `/dre-gerencial?ano=${dre.year}`,

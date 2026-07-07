@@ -61,5 +61,6 @@ export type SalesSummary = {
   exchangeContractCount: number;
   byEnterprise: { label: string; value: number; count: number }[];
   bySituation: { label: string; value: number; count: number }[];
-  monthlySales: { label: string; value: number; count: number }[];
+  // value = caixa (a prazo/à vista/financiamento); exchangeValue = permuta (bem recebido, sem caixa).
+  monthlySales: { label: string; value: number; exchangeValue: number; count: number }[];
 };

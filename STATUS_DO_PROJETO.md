@@ -247,10 +247,12 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 - Foi criado o portal `/sales`, lendo contratos de venda salvos em `commercial-sales.sqlite`, sem consultar o Sienge automaticamente.
 - A listagem exibe por ordem de venda, com grafico de vendas por mes.
-- A tela tem seletor de periodo no mesmo padrao visual do Dashboard (Hoje, 7, 15, 30, 60, 90 dias, 6, 12 e 24 meses, visao passada ou futura), abrindo por padrao em 12 meses passados.
-- Cards, grafico mensal, ranking, situacao dos contratos e listagem respeitam o recorte selecionado.
-- A tela separa valor bruto contratado, permutas e carteira liquida comercial: condicoes de pagamento do tipo `PE` ou com nome de permuta nao inflam os indicadores, evitando contar duas vezes bens dados em outros negocios.
-- Cards, graficos e rankings usam valor liquido comercial; o detalhe do contrato mostra bruto, permuta abatida e valor liquido para conferencia.
+- A tela tem seletor de periodo no mesmo padrao visual do Dashboard (Hoje, 7, 15, 30, 60, 90 dias, 6, 12, 24, 36 e 48 meses), sempre olhando para vendas ja realizadas; a visao de futuro foi removida desta tela porque uma venda nao acontece no futuro, abrindo por padrao em 12 meses passados.
+- Cards, grafico mensal, ranking, situacao dos contratos e listagem respeitam o recorte selecionado, sempre pela data de emissao/contrato da venda.
+- A tela separa valor bruto contratado, permutas e valor em caixa: condicoes de pagamento do tipo `PE` ou com nome de permuta nao inflam os indicadores de caixa, evitando contar duas vezes bens dados em outros negocios.
+- Os cards de resumo (`sales-stats`) foram ampliados para 6 indicadores, cada um com rotulo e nota explicando exatamente o que representa: `Contratos no recorte`, `Total vendido (bruto)`, `Valor em caixa`, `Valor em permuta`, `Ja recebido em caixa` e `Saldo em caixa a receber`; os dois ultimos deixam explicito que somam o contrato inteiro (todas as parcelas, vencidas ou nao), e nao apenas o que vence dentro do periodo escolhido.
+- O grafico `Vendas por mes` mostra a barra empilhada com a parte em caixa e a parte em permuta (mais a quantidade de contratos), e o ranking por empreendimento e a situacao dos contratos usam sempre o valor em caixa, deixando isso no titulo/nota.
+- Um contrato 100% permuta (sem nenhuma condicao em dinheiro) aparece na listagem com o valor bruto e o aviso `100% permuta - sem entrada de caixa`, em vez de mostrar `R$ 0,00` como se fosse uma venda sem valor.
 - A listagem enxuta preserva `conditionTypeId`, `totalValue` e `totalValueInterest`, garantindo que permutas continuem sendo identificadas no detalhe.
 - A busca/listagem recebe todos os contratos locais enxutos, com paginacao na tela.
 
@@ -265,11 +267,21 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 ## Relatórios
 
 - A tela `/relatorios` funciona como central de relatorios geraveis, separada do Dashboard, lendo somente dados salvos.
-- A central apresenta cartoes para financeiro por periodo, contas a pagar, contas a receber, compras, vendas, contratos, estoque e DRE POC estimada.
+- A central apresenta cartoes para financeiro por periodo, contas a pagar, contas a receber, compras, vendas, contratos, estoque, DRE financeiro e DRE POC estimada.
 - Cada relatorio mostra escopo, metricas rapidas e botao para abrir o portal detalhado; a exportacao PDF/Excel esta sinalizada como proxima etapa.
 - A central nao monta mais a DRE completa nem a listagem completa de contratos ao abrir; usa resumos locais leves de `features/reports/data.ts` e delega o relatorio completo para cada tela.
 - A central permite escolher o periodo padrao e a visao passado/futuro, e pode iniciar em segundo plano a atualizacao dos dados usados nos relatorios.
 - A atualizacao "Todos os relatorios" carrega financeiro, contas a receber, vendas, contratos, estoque e compras sem puxar conciliacao junto.
+
+## DRE financeiro
+
+- Foi criada a rota `/dre-financeiro`, separada da DRE POC, lendo somente os dados salvos de contas a receber e contas a pagar.
+- A DRE financeira nao usa vendas, contratos de fornecimento, compras, estoque ou POC; a metodologia da tela deixa isso explicito.
+- A visao anual consolida por exercicio: contas a receber previstas por vencimento, recebimentos baixados, contas a pagar previstas por vencimento, pagamentos baixados, resultado previsto, resultado realizado e saldo aberto liquido.
+- A tela mostra selecao de ano, cards executivos, grafico previsto por vencimento, grafico realizado por baixa, ranking de clientes, ranking de fornecedores e tabela mes a mes.
+- A visao de futuro agrupa parcelas abertas a partir da data atual nas faixas Hoje a 30 dias, 31 a 60, 61 a 90, 91 a 180, 181 a 365 e acima de 365 dias, mostrando saldo futuro liquido por faixa.
+- A tela tambem destaca contas vencidas abertas a receber e a pagar para separar atraso de previsao futura.
+- O menu, a tela inicial, a central financeira, a central de relatorios e as permissoes ganharam a entrada propria `DRE financeiro`.
 
 ## DRE POC estimada
 
@@ -327,7 +339,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - `lib/supplier-quote-portal.ts` concentra tokens, respostas, convites, aprovacoes e eventos do portal do fornecedor; `lib/rate-limit.ts` concentra o limite de requisicoes das rotas publicas.
 - `lib/app-users.ts` concentra usuários, papéis, permissões, sessão e alçadas; `lib/app-permissions.ts` define as permissões por tela e as permissões operacionais usadas pelo menu, páginas e APIs.
 - `lib/quotation-deadline.ts` concentra as regras de prazo de resposta (data de corte, contagem de dias restantes e limite de validade de link) usadas pelo portal, pelos convites e pelas respostas.
-- `features/quotations` e `features/suppliers` concentram as leituras locais de cotacoes e fornecedores; `features/reports/data.ts` concentra resumos leves de relatorios.
+- `features/quotations` e `features/suppliers` concentram as leituras locais de cotacoes e fornecedores; `features/reports/data.ts` concentra resumos leves de relatorios; `features/dre-financeiro/data.ts` concentra a DRE baseada em contas.
 - `components/purchases/quotations` concentra os blocos da tela `/cotacoes`; `components/purchases/quotation-detail/tabs` concentra as abas do detalhe da cotação.
 - As listas principais exibem `Integrado em ...` por registro, padronizado no componente `IntegrationStamp`; a formatacao de datas opcionais esta centralizada em `formatOptionalDate`.
 - Separadores especiais foram trocados por hifen simples para evitar caracteres quebrados em Windows/terminal.

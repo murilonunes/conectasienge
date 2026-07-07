@@ -236,6 +236,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .report-card-actions span { color: var(--muted); font-size: 10px; font-weight: 800; }
 .dre-executive { margin-bottom: 20px; }
 .dre-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.sales-stats { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .dre-integration-panel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 14px; margin-bottom: 20px; }
 .dre-integration-panel div { display: grid; gap: 5px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; min-width: 0; }
 .dre-integration-panel span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
@@ -610,10 +611,14 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .sales-monthly-column > span { color: var(--muted); font-size: 9px; align-self: end; }
 .sales-monthly-column > strong { color: var(--muted); font-size: 9px; text-transform: capitalize; }
 .sales-monthly-bars { display: flex; align-items: flex-end; justify-content: center; gap: 4px; min-height: 190px; border-bottom: 1px solid var(--line); background: linear-gradient(to top, #f8faf9, transparent); }
-.sales-monthly-bars i { width: 24%; max-width: 19px; min-height: 4px; border-radius: 5px 5px 0 0; position: relative; }
-.sales-value-bar { background: linear-gradient(to top, var(--green), #4c9878); }
+.sales-monthly-bars > i { width: 24%; max-width: 19px; min-height: 4px; border-radius: 5px 5px 0 0; position: relative; }
+.sales-value-stack { width: 24%; max-width: 19px; min-height: 4px; border-radius: 5px 5px 0 0; overflow: hidden; display: flex; flex-direction: column-reverse; }
+.sales-value-stack i { width: 100%; }
+.sales-cash-bar { background: linear-gradient(to top, var(--green), #4c9878); }
+.sales-exchange-bar { background: linear-gradient(to top, #8d7baf, #ab9bc4); }
 .sales-count-bar { background: #d6a04e; }
 .sales-count-bar b { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); color: #9b641d; font-size: 8px; }
+.dot.exchange { background: #8d7baf; }
 .inventory-executive { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 18px; padding: 0; background: var(--line); }
 .inventory-executive div { display: grid; gap: 7px; padding: 18px; background: #fff; min-width: 0; }
 .inventory-executive span, .inventory-quality-grid span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
@@ -1650,6 +1655,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .dre-integration-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dre-grid-wide { grid-template-columns: 1fr; }
   .sienge-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sales-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sienge-priority-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sienge-module-grid { grid-template-columns: 1fr; }
   .dashboard-view-switch { grid-template-columns: 1fr; }
@@ -1734,6 +1740,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .stats { grid-template-columns: 1fr; }
   .dre-stats, .dre-integration-panel { grid-template-columns: 1fr; }
   .sienge-stats, .sienge-priority-list, .sienge-module-metrics, .sienge-module-purpose, .sienge-module-footer { grid-template-columns: 1fr; }
+  .sales-stats { grid-template-columns: 1fr; }
   .sienge-module-head, .sienge-module-action { align-items: flex-start; flex-direction: column; }
   .sienge-endpoints > div { grid-template-columns: 1fr; }
   .sienge-endpoints b, .sienge-endpoints > div > div:last-child small { text-align: left; }

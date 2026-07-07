@@ -63,6 +63,7 @@ export function SalesExplorer({
               : "contratos - venda mais recente primeiro"}
           </span>
           <strong>{formatCompactCurrency(total)}</strong>
+          <span>em caixa, sem permutas</span>
         </div>
       </div>
       <LocalDataList
@@ -82,12 +83,13 @@ export function SalesExplorer({
               const net = salesContractNetValue(contract);
               const open = financialConditions.reduce((sum, item) => sum + (item.outstandingBalance || 0), 0);
               const paid = financialConditions.reduce((sum, item) => sum + (item.amountPaid || 0), 0);
+              const fullExchange = gross > 0 && net <= 0 && exchange > 0;
               return (
                 <article className="card sales-contract" key={contract.id}>
                   <button className="sales-contract-main" onClick={() => setExpanded(expanded === contract.id ? undefined : contract.id)}>
                     <span className="sales-code">{contract.number || `#${contract.id}`}</span>
                     <span><strong>{customer?.name || "Cliente não informado"}</strong><small>{unit?.name || "Unidade não informada"} - {contract.enterpriseName || "Empreendimento não informado"}</small></span>
-                    <span><strong>{formatCurrency(net)}</strong><small>{exchange > 0 ? `${formatCompactCurrency(exchange)} em permuta abatida` : "Valor líquido"}</small></span>
+                    <span><strong>{formatCurrency(fullExchange ? gross : net)}</strong><small>{fullExchange ? "100% permuta - sem entrada de caixa" : exchange > 0 ? `${formatCompactCurrency(exchange)} em permuta, restante em caixa` : "Valor em caixa"}</small></span>
                     <span><strong>{contract.issueDate ? formatDate(contract.issueDate) : contract.contractDate ? formatDate(contract.contractDate) : "-"}</strong><small>Data da venda</small></span>
                     <span><strong><IntegrationStamp record={contract} /></strong><small>Integração</small></span>
                     <span><i className={`sales-status ${/cancelad|distrat/i.test(contract.situation || "") ? "cancelled" : ""}`}>{contract.situation || "Não informada"}</i></span>

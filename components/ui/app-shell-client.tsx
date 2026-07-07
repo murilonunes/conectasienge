@@ -72,6 +72,7 @@ const navigationSections: NavigationSection[] = [
     icon: "AN",
     items: [
       { label: "Relatorios", href: "/relatorios", icon: "RL", permission: "screen.relatorios" },
+      { label: "DRE financeiro", href: "/dre-financeiro", icon: "DF", permission: "screen.dre-financeiro" },
       { label: "DRE POC", href: "/dre-gerencial", icon: "DR", permission: "screen.dre" },
       { label: "Mapa Sienge", href: "/sienge", icon: "SI", permission: "screen.sienge" }
     ]

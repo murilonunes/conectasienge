@@ -21,7 +21,9 @@ export type DreReportSummary = {
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const dbFiles = {
   sales: path.join(dataDir, "commercial-sales.sqlite"),
-  contracts: path.join(dataDir, "contracts-supply.sqlite")
+  contracts: path.join(dataDir, "contracts-supply.sqlite"),
+  payables: path.join(dataDir, "finance-payables.sqlite"),
+  receivables: path.join(dataDir, "finance-receivables.sqlite")
 };
 
 function todayYear() {
@@ -127,5 +129,28 @@ export function loadDreReportSummary(): DreReportSummary {
     year: availableYears[0] || todayYear(),
     availableYears,
     baseCount: salesCount + contractsCount
+  };
+}
+
+export function loadFinancialDreReportSummary(): DreReportSummary {
+  const years = new Set<number>();
+  const receivableCount = addYearsFromDatabase(
+    dbFiles.receivables,
+    "endpoint = '/bulk-data/v1/income'",
+    ["dueDate", "issueDate", "billDate"],
+    years
+  );
+  const payableCount = addYearsFromDatabase(
+    dbFiles.payables,
+    "endpoint = '/bulk-data/v1/outcome'",
+    ["dueDate", "issueDate", "billDate"],
+    years
+  );
+  if (!years.size) years.add(todayYear());
+  const availableYears = Array.from(years).sort((left, right) => right - left);
+  return {
+    year: availableYears.includes(todayYear()) ? todayYear() : availableYears[0] || todayYear(),
+    availableYears,
+    baseCount: receivableCount + payableCount
   };
 }

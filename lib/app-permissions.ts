@@ -14,6 +14,7 @@ export const screenPermissionDefinitions = [
   { permission: "screen.contratos", label: "Contratos", description: "Contratos comerciais", paths: ["/contratos"] },
   { permission: "screen.estoque", label: "Bens em estoque", description: "Estoque e bens", paths: ["/estoque"] },
   { permission: "screen.relatorios", label: "Relatórios", description: "Relatórios gerenciais", paths: ["/relatorios"] },
+  { permission: "screen.dre-financeiro", label: "DRE financeiro", description: "DRE por contas a pagar e receber", paths: ["/dre-financeiro"] },
   { permission: "screen.dre", label: "DRE POC", description: "DRE gerencial", paths: ["/dre-gerencial"] },
   { permission: "screen.sienge", label: "Mapa Sienge", description: "Cobertura e integração Sienge", paths: ["/sienge"] },
   { permission: "screen.configuracoes", label: "Configurações", description: "Parâmetros do sistema", paths: ["/configuracoes"] },

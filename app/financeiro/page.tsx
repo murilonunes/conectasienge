@@ -18,6 +18,11 @@ const mainShortcuts = [
     note: "Previsão de recebimentos, parcelas em aberto e valores recebidos."
   },
   {
+    title: "DRE financeiro",
+    href: "/dre-financeiro",
+    note: "Resultado anual e futuro agrupado usando só contas a pagar e receber."
+  },
+  {
     title: "Conciliação",
     href: "/conciliacao",
     note: "Visão mensal dos movimentos conciliados, pendentes e avulsos."

@@ -18,10 +18,8 @@ export type SalesResult = {
   error?: SiengeErrorDetails;
 };
 
-export type SalesPeriodDirection = "future" | "past";
 export type SalesPeriodRange = {
   days: number;
-  direction: SalesPeriodDirection;
   start: string;
   end: string;
   label: string;
@@ -36,7 +34,9 @@ export const SALES_PERIOD_OPTIONS = [
   { days: 90, label: "90 dias" },
   { days: 180, label: "6 meses" },
   { days: 365, label: "12 meses" },
-  { days: 730, label: "24 meses" }
+  { days: 730, label: "24 meses" },
+  { days: 1095, label: "36 meses" },
+  { days: 1460, label: "48 meses" }
 ] as const;
 
 type SqlRow = {
@@ -96,6 +96,8 @@ function addDays(date: Date, days: number) {
 }
 
 function salesPeriodLabel(days: number) {
+  const known = SALES_PERIOD_OPTIONS.find((option) => option.days === days);
+  if (known) return known.label.toLowerCase();
   if (days === 1) return "hoje";
   if (days < 30) return `${days} dias`;
   if (days === 30) return "30 dias";
@@ -109,20 +111,13 @@ export function normalizeSalesDays(value: unknown) {
   return SALES_PERIOD_OPTIONS.some((option) => option.days === days) ? days : 365;
 }
 
-export function normalizeSalesDirection(value: unknown): SalesPeriodDirection {
-  const rawValue = Array.isArray(value) ? value[0] : value;
-  return rawValue === "future" ? "future" : "past";
-}
-
-export function salesPeriodRange(days: number, direction: SalesPeriodDirection): SalesPeriodRange {
+export function salesPeriodRange(days: number): SalesPeriodRange {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-  const current = iso(today);
   return {
     days,
-    direction,
-    start: direction === "past" ? iso(addDays(today, -(days - 1))) : current,
-    end: direction === "past" ? current : iso(addDays(today, days - 1)),
+    start: iso(addDays(today, -(days - 1))),
+    end: iso(today),
     label: salesPeriodLabel(days)
   };
 }
@@ -239,7 +234,7 @@ export function analyzeSales(contracts: SalesContract[]): SalesSummary {
   const conditions = contracts.flatMap(salesFinancialConditions);
   const outstandingBalance = conditions.reduce((sum, condition) => sum + (condition.outstandingBalance || 0), 0);
   const amountPaid = conditions.reduce((sum, condition) => sum + (condition.amountPaid || 0), 0);
-  const monthlyMap = new Map<string, { label: string; value: number; count: number; order: number }>();
+  const monthlyMap = new Map<string, { label: string; value: number; exchangeValue: number; count: number; order: number }>();
   contracts.forEach((contract) => {
     const rawDate = contract.issueDate || contract.contractDate;
     if (!rawDate) return;
@@ -249,10 +244,13 @@ export function analyzeSales(contracts: SalesContract[]): SalesSummary {
     const current = monthlyMap.get(label) || {
       label,
       value: 0,
+      exchangeValue: 0,
       count: 0,
       order: date.getFullYear() * 12 + date.getMonth()
     };
+    // value = caixa (gross menos permuta); exchangeValue = permuta (bem recebido, sem caixa).
     current.value += salesContractNetValue(contract);
+    current.exchangeValue += salesContractExchangeValue(contract);
     current.count += 1;
     monthlyMap.set(label, current);
   });
