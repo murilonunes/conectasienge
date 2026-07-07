@@ -103,6 +103,8 @@ export type SupplierQuoteAwardInput = {
   supplierName: string;
   document: string;
   justification: string;
+  // Nome do usuário logado que registrou a decisão (trilha de auditoria).
+  createdBy?: string;
 };
 
 export type SupplierQuoteAwardSummary = SupplierQuoteAwardInput & {
@@ -300,6 +302,11 @@ function database() {
   }
   try {
     db.exec("ALTER TABLE supplier_quote_responses ADD COLUMN proposal_attachment_json TEXT");
+  } catch {
+    // Coluna já existe em bancos criados depois desta versão.
+  }
+  try {
+    db.exec("ALTER TABLE supplier_quote_awards ADD COLUMN created_by TEXT");
   } catch {
     // Coluna já existe em bancos criados depois desta versão.
   }
@@ -994,9 +1001,9 @@ export function saveSupplierQuoteAwards(quotationId: number, scope: SupplierQuot
       db.prepare("DELETE FROM supplier_quote_awards WHERE quotation_id = ? AND scope = ?").run(quotationId, scope);
       const statement = db.prepare(`
         INSERT INTO supplier_quote_awards (
-          quotation_id, scope, item_number, response_id, supplier_name, document, justification, created_at
+          quotation_id, scope, item_number, response_id, supplier_name, document, justification, created_by, created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       validAwards.forEach((award) => {
         statement.run(
@@ -1007,16 +1014,17 @@ export function saveSupplierQuoteAwards(quotationId: number, scope: SupplierQuot
           award.supplierName.trim(),
           award.document.replace(/\D/g, ""),
           award.justification.trim(),
+          award.createdBy?.trim() || null,
           createdAt
         );
         insertSupplierQuoteEvent(db, {
           quotationId,
           type: "supplier_approved",
           title: scope === "item" ? "Fornecedor aprovado por item" : "Fornecedor aprovado para a cotação",
-          description: award.justification,
+          description: award.createdBy ? `${award.justification} (aprovado por ${award.createdBy})` : award.justification,
           supplierName: award.supplierName,
           document: award.document,
-          metadata: { scope, itemNumber: award.itemNumber, responseId: award.responseId }
+          metadata: { scope, itemNumber: award.itemNumber, responseId: award.responseId, createdBy: award.createdBy }
         });
       });
       db.exec("COMMIT");
@@ -1046,6 +1054,7 @@ export function loadSupplierQuoteAwards(quotationId: number): SupplierQuoteAward
         supplier_name,
         document,
         justification,
+        created_by,
         created_at
       FROM supplier_quote_awards
       WHERE quotation_id = ?
@@ -1059,6 +1068,7 @@ export function loadSupplierQuoteAwards(quotationId: number): SupplierQuoteAward
       supplier_name: string;
       document: string;
       justification: string;
+      created_by: string | null;
       created_at: string;
     }>;
 
@@ -1071,6 +1081,7 @@ export function loadSupplierQuoteAwards(quotationId: number): SupplierQuoteAward
       supplierName: row.supplier_name,
       document: row.document,
       justification: row.justification,
+      createdBy: row.created_by ?? undefined,
       createdAt: row.created_at
     }));
   } finally {

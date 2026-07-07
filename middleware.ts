@@ -45,10 +45,13 @@ function timingSafeEqualStr(left: string, right: string) {
 
 async function validSession(raw?: string) {
   if (!raw || !authSecret()) return false;
-  const [expires, signature] = raw.split(".");
+  // Formato: userId.expira.assinatura — o usuário e as permissões são checados
+  // nas rotas/páginas; aqui só a assinatura e a validade.
+  const [userId, expires, signature] = raw.split(".");
   const expiresAt = Number(expires);
+  if (!Number.isFinite(Number(userId)) || Number(userId) <= 0) return false;
   if (!Number.isFinite(expiresAt) || expiresAt < Math.floor(Date.now() / 1000)) return false;
-  return timingSafeEqualStr(signature || "", await hmac(expires));
+  return timingSafeEqualStr(signature || "", await hmac(`${userId}.${expires}`));
 }
 
 function withPathHeader(request: NextRequest) {

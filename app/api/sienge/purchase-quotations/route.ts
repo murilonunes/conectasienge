@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { guardPermission } from "@/lib/app-users";
 import { findSupplierQuoteIntegration, findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -577,6 +578,15 @@ export async function POST(request: NextRequest) {
   const eventQuotationId = Number(body.purchaseQuotationId) || undefined;
   const integrationKey = integrationKeyFor(action, body);
 
+  // Conferência (dry-run) é liberada para qualquer sessão; gravar no Sienge
+  // exige a permissão sienge.write do usuário logado.
+  const confirmedWrite = body.confirm === true && body.dryRun === false;
+  const actor = guardPermission(request, "sienge.write");
+  if (confirmedWrite && (!actor.user || actor.status)) {
+    return NextResponse.json({ message: actor.message }, { status: actor.status || 403 });
+  }
+  const actorName = actor.user?.name;
+
   function recordIntegrationEvent(type: "integration_error" | "sienge_created", title: string, description?: string, metadata?: Record<string, unknown>) {
     if (!eventQuotationId) return;
     recordSupplierQuoteEvent({
@@ -584,7 +594,7 @@ export async function POST(request: NextRequest) {
       type,
       title,
       description: description || "Evento de integracao registrado.",
-      metadata: { action, ...metadata }
+      metadata: { action, actor: actorName, ...metadata }
     });
   }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardPermission } from "@/lib/app-users";
 import { deleteSupplierQuoteResponse, loadSupplierQuoteResponses } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +8,11 @@ export const runtime = "nodejs";
 // Rota protegida por sessão (o middleware só libera "/api/supplier-portal/responses" exato).
 export async function DELETE(request: Request, { params }: { params: { responseId: string } }) {
   try {
+    const guard = guardPermission(request, "quotations.manage");
+    if (!guard.user || guard.status) {
+      return NextResponse.json({ message: guard.message }, { status: guard.status || 403 });
+    }
+
     const responseId = Number(params.responseId);
     const quotationId = Number(new URL(request.url).searchParams.get("quotationId"));
 

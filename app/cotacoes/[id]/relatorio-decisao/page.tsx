@@ -86,8 +86,8 @@ export default async function QuotationDecisionReportPage({ params }: { params: 
         <span><strong>Data da cotação</strong>{formatOptionalDate(quotation.date)}</span>
         <span><strong>Prazo de respostas</strong>{formatOptionalDate(quotation.deadline)}</span>
         <span><strong>Decisão salva em</strong>{decidedAt ? formatOptionalDate(decidedAt) : "Sem decisão salva"}</span>
+        <span><strong>Aprovado por</strong>{awards.find((award) => award.createdBy)?.createdBy || "Não registrado"}</span>
         <span><strong>Modalidade</strong>{quotationAward ? "Cotação inteira" : itemAwards.size ? "Por item" : "Não definida"}</span>
-        <span><strong>Melhor cesta teórica</strong>{formatCurrency(bestTotal)}</span>
       </section>
 
       <section className="decision-report-block">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { credoresApi } from "@/lib/api/financeiro";
 import { SiengeApiError } from "@/lib/api/sienge";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
+import { guardPermission } from "@/lib/app-users";
 import { findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -78,6 +79,12 @@ export async function POST(request: Request) {
   try {
     const input = await request.json().catch(() => ({})) as Record<string, unknown>;
     const confirm = input.confirm === true;
+    if (confirm) {
+      const guard = guardPermission(request, "sienge.write");
+      if (!guard.user || guard.status) {
+        return NextResponse.json({ message: guard.message }, { status: guard.status || 403 });
+      }
+    }
     quotationId = Number(input.quotationId) || undefined;
     const payload = supplierPayload(input);
     eventDocument = payload.cnpj || payload.cpf || "";

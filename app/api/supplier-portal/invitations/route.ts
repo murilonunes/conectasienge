@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardPermission } from "@/lib/app-users";
 import { loadQuotationDetail } from "@/features/quotations/data";
 import { getLocalSupplierById, searchLocalSuppliers } from "@/features/suppliers/data";
 import { cappedExpiresInDays, quotationClosedForResponses, quotationDeadlineEnd } from "@/lib/quotation-deadline";
@@ -20,6 +21,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const guard = guardPermission(request, "quotations.manage");
+    if (!guard.user || guard.status) {
+      return NextResponse.json({ message: guard.message }, { status: guard.status || 403 });
+    }
+
     const input = await request.json().catch(() => ({})) as {
       quotationId?: number;
       supplierId?: number;
@@ -97,6 +103,11 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const guard = guardPermission(request, "quotations.manage");
+    if (!guard.user || guard.status) {
+      return NextResponse.json({ message: guard.message }, { status: guard.status || 403 });
+    }
+
     const input = await request.json().catch(() => ({})) as { quotationId?: number; invitationId?: number };
     const quotationId = Number(input.quotationId);
     const invitationId = Number(input.invitationId);

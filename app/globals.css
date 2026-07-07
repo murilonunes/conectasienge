@@ -1885,3 +1885,23 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .decision-report-table th { background: #f4f7f5; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .decision-report-block, .decision-report-winners article { break-inside: avoid; page-break-inside: avoid; }
 }
+
+/* Gestão de usuários e alçadas (modelagem spatie/laravel-permission) */
+.users-page { display: grid; gap: 16px; }
+.users-manager { display: grid; gap: 16px; }
+.users-manager .panel { padding: 18px; }
+.users-manager-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: end; margin-top: 14px; }
+.users-manager-form label { display: grid; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.users-manager-form input,
+.users-manager-form select,
+.users-manager-table select { border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 11px; color: var(--ink); font-size: 12px; }
+.users-manager-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.users-manager-table th { padding: 10px 12px; border-bottom: 2px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 850; text-align: left; text-transform: uppercase; letter-spacing: .05em; }
+.users-manager-table td { padding: 12px; border-top: 1px solid var(--line); font-size: 12px; vertical-align: middle; }
+.users-manager-table td .badge { margin-left: 8px; }
+.users-manager-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.auth-login-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+@media (max-width: 900px) {
+  .users-manager-form { grid-template-columns: 1fr; }
+  .users-manager-table { display: block; overflow-x: auto; }
+}

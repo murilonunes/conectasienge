@@ -80,7 +80,8 @@ const navigationSections: NavigationSection[] = [
     label: "Administracao",
     icon: "AD",
     items: [
-      { label: "Configuracoes", href: "/configuracoes", icon: "CF" }
+      { label: "Configuracoes", href: "/configuracoes", icon: "CF" },
+      { label: "Usuarios", href: "/configuracoes/usuarios", icon: "US" }
     ]
   }
 ];
