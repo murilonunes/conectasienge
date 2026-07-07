@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { operationalPermissionDefinitions, screenPermissionDefinitions } from "@/lib/app-permissions";
 import type { AppRole, AppUser } from "@/lib/app-users";
 import { formatCurrency } from "@/lib/formatters";
@@ -17,6 +17,13 @@ const approvalModeLabels: Record<AppUser["approvalLimitMode"], string> = {
   unlimited: "Sem limite"
 };
 
+type ModalState =
+  | { type: "create" }
+  | { type: "profile"; user: AppUser }
+  | { type: "screens"; user: AppUser }
+  | { type: "operations"; user: AppUser }
+  | null;
+
 function roleLabel(name: string) {
   return roleLabels[name] || name;
 }
@@ -29,75 +36,114 @@ function approvalText(user: AppUser) {
   return user.approvalLimit !== null ? formatCurrency(user.approvalLimit) : "R$ 0,00";
 }
 
-function permissionsFromRole(roles: AppRole[], roleName: string) {
-  return roles.find((role) => role.name === roleName)?.permissions || [];
+function ModalShell({ title, subtitle, onClose, children }: { title: string; subtitle: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="settings-modal-backdrop" role="presentation">
+      <section className="settings-modal" role="dialog" aria-modal="true" aria-label={title}>
+        <div className="settings-modal-head">
+          <div>
+            <h2>{title}</h2>
+            <span>{subtitle}</span>
+          </div>
+          <button className="payable-review-button compact" type="button" onClick={onClose}>Fechar</button>
+        </div>
+        {children}
+      </section>
+    </div>
+  );
 }
 
-function UserAccessEditor({
+function CreateUserModal({
+  roles,
+  saving,
+  onClose,
+  onCreate
+}: {
+  roles: AppRole[];
+  saving: boolean;
+  onClose: () => void;
+  onCreate: (body: Record<string, unknown>, successMessage: string) => Promise<boolean>;
+}) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("comprador");
+
+  async function submit() {
+    const created = await onCreate({ name, email, password, role }, "Usuário criado com sucesso.");
+    if (created) onClose();
+  }
+
+  return (
+    <ModalShell title="Novo usuário" subtitle="Crie o acesso inicial; permissões finas podem ser editadas depois" onClose={onClose}>
+      <div className="settings-modal-form">
+        <label><span>Nome</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome completo" /></label>
+        <label><span>E-mail</span><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="pessoa@brasin.com.br" /></label>
+        <label><span>Senha inicial</span><input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="Mínimo 8 caracteres" /></label>
+        <label>
+          <span>Papel inicial</span>
+          <select value={role} onChange={(event) => setRole(event.target.value)}>
+            {roles.map((current) => (
+              <option value={current.name} key={current.id}>
+                {roleLabel(current.name)}{current.approvalLimit !== null ? ` - alçada ${formatCurrency(current.approvalLimit)}` : " - sem limite"}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="settings-modal-actions">
+        <button className="payable-review-button compact" type="button" onClick={onClose}>Cancelar</button>
+        <button className="button" type="button" disabled={saving || !name || !email || !password} onClick={() => void submit()}>
+          {saving ? "Salvando..." : "Criar usuário"}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function ProfileModal({
   user,
   roles,
   saving,
+  onClose,
   onSave
 }: {
   user: AppUser;
   roles: AppRole[];
   saving: boolean;
+  onClose: () => void;
   onSave: (body: Record<string, unknown>, successMessage: string) => Promise<boolean>;
 }) {
   const [role, setRole] = useState(user.roles[0] || "comprador");
-  const [permissions, setPermissions] = useState<string[]>(user.permissions);
   const [approvalLimitMode, setApprovalLimitMode] = useState<AppUser["approvalLimitMode"]>(user.approvalLimitMode);
   const [approvalLimit, setApprovalLimit] = useState(user.approvalLimit !== null ? String(user.approvalLimit) : "");
-  const selected = useMemo(() => new Set(permissions), [permissions]);
   const currentRole = roles.find((current) => current.name === role);
 
-  function togglePermission(permission: string) {
-    setPermissions((current) => {
-      const next = new Set(current);
-      if (next.has(permission)) next.delete(permission);
-      else next.add(permission);
-      return Array.from(next).sort();
-    });
-  }
-
-  function useRolePermissions() {
-    setPermissions(permissionsFromRole(roles, role));
-    setApprovalLimitMode("role");
-    setApprovalLimit("");
-  }
-
-  async function saveAccess() {
+  async function save() {
     const ok = await onSave({
       id: user.id,
       role,
-      permissions,
       approvalLimitMode,
       approvalLimit: approvalLimitMode === "limited" ? Number(approvalLimit || 0) : null
-    }, `Acessos de ${user.name} atualizados.`);
-    if (!ok) return;
+    }, `Perfil e alçada de ${user.name} atualizados.`);
+    if (ok) onClose();
   }
 
   return (
-    <div className="user-access-editor">
-      <div className="user-access-head">
+    <ModalShell title="Perfil e alçada" subtitle={user.name} onClose={onClose}>
+      <div className="settings-modal-form">
         <label>
           <span>Papel</span>
           <select value={role} disabled={saving} onChange={(event) => setRole(event.target.value)}>
-            {roles.map((current) => (
-              <option value={current.name} key={current.id}>
-                {roleLabel(current.name)}
-              </option>
-            ))}
+            {roles.map((current) => <option value={current.name} key={current.id}>{roleLabel(current.name)}</option>)}
           </select>
         </label>
-
         <label>
           <span>Alçada</span>
           <select value={approvalLimitMode} disabled={saving} onChange={(event) => setApprovalLimitMode(event.target.value as AppUser["approvalLimitMode"])}>
             {Object.entries(approvalModeLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
           </select>
         </label>
-
         <label>
           <span>Valor da alçada</span>
           <input
@@ -110,70 +156,85 @@ function UserAccessEditor({
             placeholder={currentRole?.approvalLimit !== null ? String(currentRole?.approvalLimit || 0) : "Sem limite"}
           />
         </label>
-
-        <div className="user-access-actions">
-          <button className="payable-review-button compact" type="button" disabled={saving} onClick={useRolePermissions}>
-            Usar padrão do papel
-          </button>
-          <button className="button" type="button" disabled={saving || (approvalLimitMode === "limited" && Number(approvalLimit || 0) < 0)} onClick={() => void saveAccess()}>
-            {saving ? "Salvando..." : "Salvar acessos"}
-          </button>
-        </div>
       </div>
-
-      <div className="permission-matrix">
-        <div>
-          <h3>Telas liberadas</h3>
-          <div className="permission-grid">
-            {screenPermissionDefinitions.map((permission) => (
-              <label className="permission-toggle" key={permission.permission}>
-                <input
-                  checked={selected.has(permission.permission)}
-                  disabled={saving}
-                  type="checkbox"
-                  onChange={() => togglePermission(permission.permission)}
-                />
-                <span>
-                  <strong>{permission.label}</strong>
-                  <small>{permission.description}</small>
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3>Permissões operacionais</h3>
-          <div className="permission-grid compact">
-            {operationalPermissionDefinitions.map((permission) => (
-              <label className="permission-toggle" key={permission.permission}>
-                <input
-                  checked={selected.has(permission.permission)}
-                  disabled={saving}
-                  type="checkbox"
-                  onChange={() => togglePermission(permission.permission)}
-                />
-                <span>
-                  <strong>{permission.label}</strong>
-                  <small>{permission.description}</small>
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
+      <div className="settings-modal-actions">
+        <button className="payable-review-button compact" type="button" onClick={onClose}>Cancelar</button>
+        <button className="button" type="button" disabled={saving || (approvalLimitMode === "limited" && Number(approvalLimit || 0) < 0)} onClick={() => void save()}>
+          {saving ? "Salvando..." : "Salvar perfil"}
+        </button>
       </div>
-    </div>
+    </ModalShell>
+  );
+}
+
+function PermissionModal({
+  user,
+  type,
+  saving,
+  onClose,
+  onSave
+}: {
+  user: AppUser;
+  type: "screens" | "operations";
+  saving: boolean;
+  onClose: () => void;
+  onSave: (body: Record<string, unknown>, successMessage: string) => Promise<boolean>;
+}) {
+  const definitions = type === "screens" ? screenPermissionDefinitions : operationalPermissionDefinitions;
+  const title = type === "screens" ? "Telas liberadas" : "Permissões operacionais";
+  const subtitle = type === "screens"
+    ? "Controle quais páginas aparecem no menu e podem ser abertas"
+    : "Controle ações sensíveis dentro das telas liberadas";
+  const [permissions, setPermissions] = useState<string[]>(user.permissions);
+  const selected = new Set(permissions);
+
+  function togglePermission(permission: string) {
+    setPermissions((current) => {
+      const next = new Set(current);
+      if (next.has(permission)) next.delete(permission);
+      else next.add(permission);
+      return Array.from(next).sort();
+    });
+  }
+
+  async function save() {
+    const ok = await onSave({ id: user.id, permissions }, `${title} de ${user.name} atualizadas.`);
+    if (ok) onClose();
+  }
+
+  return (
+    <ModalShell title={title} subtitle={`${user.name} - ${subtitle}`} onClose={onClose}>
+      <div className={`permission-grid modal-grid${type === "operations" ? " compact" : ""}`}>
+        {definitions.map((permission) => (
+          <label className="permission-toggle" key={permission.permission}>
+            <input
+              checked={selected.has(permission.permission)}
+              disabled={saving}
+              type="checkbox"
+              onChange={() => togglePermission(permission.permission)}
+            />
+            <span>
+              <strong>{permission.label}</strong>
+              <small>{permission.description}</small>
+            </span>
+          </label>
+        ))}
+      </div>
+      <div className="settings-modal-actions">
+        <button className="payable-review-button compact" type="button" onClick={onClose}>Cancelar</button>
+        <button className="button" type="button" disabled={saving} onClick={() => void save()}>
+          {saving ? "Salvando..." : "Salvar permissões"}
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 
 export function UsersManager({ initialUsers, roles, currentUserId }: { initialUsers: AppUser[]; roles: AppRole[]; currentUserId: number }) {
   const [users, setUsers] = useState(initialUsers);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("comprador");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [modal, setModal] = useState<ModalState>(null);
 
   async function callUsersApi(method: "POST" | "PATCH", body: Record<string, unknown>, successMessage: string) {
     setSaving(true);
@@ -197,16 +258,6 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
     }
   }
 
-  async function createUser() {
-    const created = await callUsersApi("POST", { name, email, password, role }, "Usuário criado com sucesso.");
-    if (created) {
-      setName("");
-      setEmail("");
-      setPassword("");
-      setRole("comprador");
-    }
-  }
-
   async function resetPassword(user: AppUser) {
     const newPassword = window.prompt(`Nova senha para ${user.name} (mínimo 8 caracteres):`);
     if (!newPassword) return;
@@ -215,38 +266,20 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
 
   return (
     <section className="users-manager">
-      <div className="card panel">
-        <div className="panel-head">
-          <div>
-            <h2 className="panel-title">Novo usuário</h2>
-            <span className="panel-note">Crie o usuário com um papel inicial; depois ajuste telas, operações e alçada no card dele</span>
-          </div>
+      <div className="users-toolbar card panel">
+        <div>
+          <h2 className="panel-title">Usuários e acessos</h2>
+          <span className="panel-note">Edite cada responsabilidade em uma janela própria</span>
         </div>
-        <div className="users-manager-form">
-          <label><span>Nome</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome completo" /></label>
-          <label><span>E-mail</span><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="pessoa@brasin.com.br" /></label>
-          <label><span>Senha inicial</span><input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="Mínimo 8 caracteres" /></label>
-          <label>
-            <span>Papel inicial</span>
-            <select value={role} onChange={(event) => setRole(event.target.value)}>
-              {roles.map((current) => (
-                <option value={current.name} key={current.id}>
-                  {roleLabel(current.name)}{current.approvalLimit !== null ? ` - alçada ${formatCurrency(current.approvalLimit)}` : " - sem limite"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="button" type="button" disabled={saving || !name || !email || !password} onClick={() => void createUser()}>
-            {saving ? "Salvando..." : "Criar usuário"}
-          </button>
-        </div>
-        {message && <div className="settings-inline-message">{message}</div>}
+        <button className="button" type="button" onClick={() => setModal({ type: "create" })}>Novo usuário</button>
       </div>
+
+      {message && <div className="settings-inline-message">{message}</div>}
 
       <div className="users-list">
         {users.map((user) => (
-          <article className="card panel user-card" key={user.id}>
-            <div className="user-card-head">
+          <article className="card panel user-card compact" key={user.id}>
+            <div className="user-card-head compact">
               <div>
                 <h2 className="panel-title">
                   {user.name}
@@ -256,13 +289,22 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
                 <span className="panel-note">{user.email}</span>
               </div>
               <div className="user-card-summary">
-                <span><strong>{roleLabel(user.roles[0] || "Sem papel")}</strong><small>Papel atual</small></span>
-                <span><strong>{approvalText(user)}</strong><small>Alçada efetiva</small></span>
-                <span><strong>{user.permissions.length}</strong><small>Permissões</small></span>
+                <span><strong>{roleLabel(user.roles[0] || "Sem papel")}</strong><small>Papel</small></span>
+                <span><strong>{approvalText(user)}</strong><small>Alçada</small></span>
+                <span><strong>{user.permissions.filter((permission) => permission.startsWith("screen.")).length}</strong><small>Telas</small></span>
               </div>
               <div className="users-manager-actions">
+                <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => setModal({ type: "profile", user })}>
+                  Perfil e alçada
+                </button>
+                <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => setModal({ type: "screens", user })}>
+                  Telas
+                </button>
+                <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => setModal({ type: "operations", user })}>
+                  Operações
+                </button>
                 <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => void resetPassword(user)}>
-                  Redefinir senha
+                  Senha
                 </button>
                 <button
                   className={`payable-review-button compact ${user.active ? "warn" : ""}`}
@@ -274,15 +316,26 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
                 </button>
               </div>
             </div>
-
-            <UserAccessEditor user={user} roles={roles} saving={saving} onSave={(body, success) => callUsersApi("PATCH", body, success)} />
           </article>
         ))}
       </div>
 
       <div className="advanced-search-hint">
-        A lista "Telas liberadas" controla quais páginas aparecem no menu e quais URLs podem ser abertas. As permissões operacionais controlam ações sensíveis, como aprovar cotação, gerar links, gerenciar usuários e gravar no Sienge.
+        Telas controlam menu e acesso por URL. Operações controlam ações sensíveis dentro das telas, como aprovar cotação, gerar links, gerenciar usuários e gravar no Sienge.
       </div>
+
+      {modal?.type === "create" && (
+        <CreateUserModal roles={roles} saving={saving} onClose={() => setModal(null)} onCreate={(body, success) => callUsersApi("POST", body, success)} />
+      )}
+      {modal?.type === "profile" && (
+        <ProfileModal user={modal.user} roles={roles} saving={saving} onClose={() => setModal(null)} onSave={(body, success) => callUsersApi("PATCH", body, success)} />
+      )}
+      {modal?.type === "screens" && (
+        <PermissionModal user={modal.user} type="screens" saving={saving} onClose={() => setModal(null)} onSave={(body, success) => callUsersApi("PATCH", body, success)} />
+      )}
+      {modal?.type === "operations" && (
+        <PermissionModal user={modal.user} type="operations" saving={saving} onClose={() => setModal(null)} onSave={(body, success) => callUsersApi("PATCH", body, success)} />
+      )}
     </section>
   );
 }
