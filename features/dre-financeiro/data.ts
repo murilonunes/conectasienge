@@ -102,9 +102,9 @@ function addYearsFromTable(databasePath: string, table: string, dateColumns: str
 
 export function loadFinancialDreYearOptions() {
   const years = new Set<number>();
-  addYearsFromTable(dbFiles.receivables, "bulk_income_installments", ["dueDate", "issueDate", "billDate"], years);
+  addYearsFromTable(dbFiles.receivables, "bulk_income_installments", ["dueDate"], years);
   addYearsFromTable(dbFiles.receivables, "bulk_income_receipts", ["paymentDate"], years);
-  addYearsFromTable(dbFiles.payables, "bulk_outcome_installments", ["dueDate", "issueDate", "billDate"], years);
+  addYearsFromTable(dbFiles.payables, "bulk_outcome_installments", ["dueDate"], years);
   addYearsFromTable(dbFiles.payables, "bulk_outcome_payments", ["paymentDate"], years);
   if (!years.size) years.add(Number(todayIso().slice(0, 4)));
   return Array.from(years).sort((left, right) => right - left);

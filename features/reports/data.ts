@@ -88,6 +88,19 @@ function addYearsFromDatabase(databasePath: string, endpointSql: string, dateFie
   }
 }
 
+function addYearsFromTable(databasePath: string, table: string, dateFields: string[], years: Set<number>) {
+  const database = openDatabase(databasePath);
+  if (!database) return 0;
+  try {
+    if (!tableExists(database, table)) return 0;
+    const rows = database.prepare(`SELECT ${dateFields.join(", ")} FROM ${table}`).all() as Row[];
+    rows.forEach((row) => dateFields.forEach((field) => addYear(years, row[field])));
+    return rows.length;
+  } finally {
+    database.close();
+  }
+}
+
 export function loadContractsReportSummary(): ContractsReportSummary {
   const database = openDatabase(dbFiles.contracts);
   if (!database) return { totalValue: 0, activeCount: 0, totalCount: 0 };
@@ -134,23 +147,30 @@ export function loadDreReportSummary(): DreReportSummary {
 
 export function loadFinancialDreReportSummary(): DreReportSummary {
   const years = new Set<number>();
-  const receivableCount = addYearsFromDatabase(
+  const receivableCount = addYearsFromTable(
     dbFiles.receivables,
-    "endpoint = '/bulk-data/v1/income'",
-    ["dueDate", "issueDate", "billDate"],
+    "bulk_income_installments",
+    ["dueDate"],
     years
   );
-  const payableCount = addYearsFromDatabase(
+  const receiptCount = addYearsFromTable(
+    dbFiles.receivables,
+    "bulk_income_receipts",
+    ["paymentDate"],
+    years
+  );
+  const payableCount = addYearsFromTable(
     dbFiles.payables,
-    "endpoint = '/bulk-data/v1/outcome'",
-    ["dueDate", "issueDate", "billDate"],
+    "bulk_outcome_installments",
+    ["dueDate"],
     years
   );
+  const paymentCount = addYearsFromTable(dbFiles.payables, "bulk_outcome_payments", ["paymentDate"], years);
   if (!years.size) years.add(todayYear());
   const availableYears = Array.from(years).sort((left, right) => right - left);
   return {
     year: availableYears.includes(todayYear()) ? todayYear() : availableYears[0] || todayYear(),
     availableYears,
-    baseCount: receivableCount + payableCount
+    baseCount: receivableCount + receiptCount + payableCount + paymentCount
   };
 }
