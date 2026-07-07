@@ -26,6 +26,9 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A integração Sienge de cotações mantém histórico de gravações na própria aba Sienge, bloqueia envios confirmados duplicados por chave de operação e faz pré-consulta ao Sienge antes das escritas confirmadas.
 - A gestão de usuários evoluiu para papéis/grupos com permissões por tela, permissões operacionais e alçada de aprovação herdada do grupo ou definida por usuário.
 - O portal público de cotação passou a destacar em vermelho os campos obrigatórios ou inválidos quando o fornecedor tenta avançar uma etapa incompleta.
+- A cotação passou a respeitar o prazo de resposta: prazo vencido bloqueia envio de proposta, pedido de novo link e convite além da data, e o portal público mostra aviso de prazo encerrado em vez do formulário.
+- Foi criado o relatório de decisão da cotação em PDF (impressão do navegador), com mapa por item, vencedores, justificativas, propostas consideradas e quem aprovou.
+- Uma nova proposta enviada pelo mesmo fornecedor passa a substituir a anterior (revisão), que fica marcada como superada em vez de excluída; mapa, aprovação, envio ao Sienge, exportação do mapa comparativo e relatório usam a proposta ativa mais recente, enquanto a aba Respostas mantém o histórico visível.
 
 ## Acesso e autenticação
 
@@ -73,9 +76,11 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - No pagamento a prazo do portal, a pergunta `A prazo?` começa sem Sim/Não selecionado e precisa ser respondida. Se marcar Sim, nenhuma parcela vem pronta: o fornecedor deve gerar automaticamente ou adicionar parcelas manualmente.
 - Ao tentar avançar com uma etapa incompleta, o portal destaca em vermelho o campo obrigatório ou inválido: identidade, item marcado sem valor/quantidade válida, escolha de desconto, escolha de prazo, parcelas, frete e dias de entrega.
 - Itens parciais usam quantidade menor que a solicitada e destaque amarelo. Itens que o fornecedor não cotou aparecem separados no detalhe final/impressão, também com fundo amarelo.
-- No resumo final, o fornecedor pode anexar a proposta gerada no próprio sistema em PDF, JPG ou PNG até 2 MB; o anexo fica salvo junto da resposta e aparece no detalhe da proposta e na aba Respostas.
-- Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF. Quando o fornecedor solicita revisão, o portal gera automaticamente um novo link para envio de nova proposta; a proposta já enviada não fica editável.
+- No resumo final, o fornecedor pode anexar a proposta gerada no próprio sistema em PDF, JPG ou PNG até 2 MB; o anexo fica salvo junto da resposta e aparece no detalhe da proposta e na aba Respostas. O arquivo não trafega mais dentro do resumo da resposta: fica disponível por download nas rotas `/api/supplier-portal/responses/[responseId]/attachment` (equipe) e `/api/supplier-portal/attachments` (portal público, por token).
+- Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF. Quando o fornecedor solicita revisão, o portal gera automaticamente um novo link para envio de nova proposta; a proposta anterior não fica editável, mas passa a ficar marcada como substituída (revisão) em vez de ser perdida.
 - A aba Respostas permite excluir uma resposta do fornecedor. A exclusão remove aprovações vinculadas àquela resposta, registra evento e libera o token original para novo envio caso o link ainda esteja válido e não revogado.
+- O prazo de resposta da cotação passa a ser respeitado em toda a cadeia: envio de proposta, pedido de novo link e criação/renovação de convite são bloqueados após o prazo; o portal público mostra cartão de prazo encerrado sem abrir o formulário, e o formulário mostra a contagem de dias restantes.
+- A partir da decisão registrada (aprovação por cotação inteira ou por item), a cotação pode gerar um relatório de decisão em PDF na rota `/cotacoes/[id]/relatorio-decisao`: cabeçalho com totais, vencedores e justificativas, mapa de decisão por item comparando com o menor preço, lista de propostas ativas consideradas (com aviso de quantas foram substituídas por revisão), campo "Aprovado por" e assinaturas, pronto para impressão/salvar PDF.
 - Quando o documento do fornecedor não existe na base local, a resposta entra com cadastro pendente para revisão (nome fantasia, cidade e estado), e a equipe pode preparar a criação do credor no Sienge.
 - Fornecedor pré-definido no convite não vira cadastro pendente no portal, porque a identidade vem travada pelo link.
 - O comparativo por item marca o melhor preço entre as respostas recebidas e alimenta a aba de aprovação.
@@ -321,6 +326,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A camada `lib/api` centraliza chamadas ao Sienge, espelho local e persistencia.
 - `lib/supplier-quote-portal.ts` concentra tokens, respostas, convites, aprovacoes e eventos do portal do fornecedor; `lib/rate-limit.ts` concentra o limite de requisicoes das rotas publicas.
 - `lib/app-users.ts` concentra usuários, papéis, permissões, sessão e alçadas; `lib/app-permissions.ts` define as permissões por tela e as permissões operacionais usadas pelo menu, páginas e APIs.
+- `lib/quotation-deadline.ts` concentra as regras de prazo de resposta (data de corte, contagem de dias restantes e limite de validade de link) usadas pelo portal, pelos convites e pelas respostas.
 - `features/quotations` e `features/suppliers` concentram as leituras locais de cotacoes e fornecedores; `features/reports/data.ts` concentra resumos leves de relatorios.
 - `components/purchases/quotations` concentra os blocos da tela `/cotacoes`; `components/purchases/quotation-detail/tabs` concentra as abas do detalhe da cotação.
 - As listas principais exibem `Integrado em ...` por registro, padronizado no componente `IntegrationStamp`; a formatacao de datas opcionais esta centralizada em `formatOptionalDate`.
@@ -338,6 +344,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Validacoes recentes
 
+- Em 07/07/2026, a documentação foi revisada contra os commits reais (usuários/papéis/alçadas, grupos, permissões por tela, prazo de cotação, relatório de decisão, revisões/anexos de proposta e obrigatórios do portal); `tsc --noEmit --incremental false` passou limpo.
 - Em 07/07/2026, foram revisados os commits recentes de permissões/papéis e portal de cotação; `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram após o ajuste visual dos obrigatórios no portal.
 - Em 05/07/2026, a revisão das conexões Sienge de cotações passou em `tsc --noEmit --incremental false` e atualizou a documentação técnica (`lib/api/README.md`) com endpoints, telas envolvidas e pontos de atenção.
 - TypeScript passou com `tsc --noEmit` e a build passou com `next build` apos as mudancas de autenticacao, cotacoes, seguranca, portal do fornecedor e separacao dos componentes de abas/blocos de cotacao.
