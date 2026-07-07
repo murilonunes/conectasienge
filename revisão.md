@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-07-06
+Atualizado em: 2026-07-07
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -34,7 +34,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Alta | `/compras` | `app/compras/page.tsx`, `components/purchases/purchases-portal.tsx` | Corrigida a aba Registros: deixou de receber só 500 itens e passou a buscar páginas filtradas em `/api/purchases/records`, lendo somente o SQLite local. |
 | Revisado | Alta | `/cotacoes` | `app/cotacoes/page.tsx`, `components/purchases/quotations-portal.tsx`, `components/purchases/quotations/*`, `app/api/sienge/purchase-quotations/route.ts` | Revisado: a tela lê o espelho local, mantém filtros/status/exportação CSV e chama o Sienge somente nos botões de preparo/confirmação de criação da cotação. |
 | Revisado | Alta | `/cotacoes/[id]` | `components/purchases/quotation-detail/index.tsx`, `components/purchases/quotation-detail/types.ts`, `components/purchases/quotation-detail/tabs/*`, `app/api/sienge/purchase-quotations/route.ts`, `app/api/sienge/suppliers/route.ts`, `app/globals.css` | Revisado: o detalhe mantém 10 abas separadas por arquivo, com ações Sienge concentradas nas abas Sienge, Respostas, Aprovar, Mapa e Cadastros; Mapa/Aprovar seguem em layout de decisão. |
-| Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, desconto à vista por porcentagem ou valor manual sem seleção inicial, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão e proposta enviada apenas para consulta. |
+| Revisado | Alta | `/portal-cotacao/[token]` | `app/portal-cotacao/[token]/page.tsx`, `components/suppliers/*`, `lib/supplier-quote-portal.ts` | Revisado: portal público sem login, com validação de e-mail/telefone, frete obrigatório sem opção pré-selecionada, desconto à vista por porcentagem ou valor manual sem seleção inicial, itens parciais em amarelo, itens não cotados separados no detalhe final/impressão, proposta enviada apenas para consulta e campos obrigatórios destacados em vermelho ao tentar avançar etapa incompleta. |
 | Revisado | Média | `/estoque` | `app/estoque/page.tsx`, `components/inventory/inventory-explorer.tsx`, `features/inventory/data.ts` | Revisado e ampliado: tela virou visão estratégica de estoque, com carteira vendável, reservas/propostas, qualidade da base de valores, propriedade, mapa imobiliário e insumos quando configurados. |
 | Revisado | Alta | `/contratos` | `app/contratos/page.tsx`, `features/contracts/data.ts` | Revisado: a abertura lê somente SQLite local e o estado vazio orienta atualizar Contratos em Configurações. A carga usa `/v1/supply-contracts/all` pelo job. |
 | Revisado | Alta | `/conciliacao` | `app/conciliacao/page.tsx`, `components/reconciliation/reconciliation-portal.tsx`, `app/api/sienge/reconciliation/route.ts` | Revisado: a primeira leitura local é renderizada no servidor; a rota client-side com progresso ficou apenas para recarga explícita dos dados salvos. |
@@ -47,6 +47,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 | Revisado | Alta | `/dre-gerencial` | `app/dre-gerencial/page.tsx`, `features/dre/data.ts` | Revisado: retirada carga de compras não usada, reforçada leitura de margem POC e separados saldos acumulados até o exercício do resultado anual. |
 | Revisado | Média | `/sienge` | `app/sienge/page.tsx`, `features/sienge-coverage/data.ts` | Revisado: mapa operacional confirmado como leitura local dos bancos e contagens por fonte, mantendo detalhe técnico apenas por ser uma tela de cobertura do Sienge. |
 | Revisado | Alta | `/configuracoes` | `app/configuracoes/page.tsx`, `components/settings/sienge-update-controls.tsx`, `components/settings/sienge-dump-import-control.tsx`, `lib/sienge-update-runner.ts`, `lib/sienge-dump-import.ts` | Revisado: status conta somente áreas atualizáveis, job mostra falhas de loaders e subcargas em lote, e a tela agora importa dump `.dmpc` para SQLite com progresso em etapas. |
+| Revisado | Alta | `/configuracoes/usuarios` | `app/configuracoes/usuarios/page.tsx`, `components/settings/users-manager.tsx`, `lib/app-users.ts`, `lib/app-permissions.ts`, `app/api/users/route.ts`, `app/api/users/roles/route.ts` | Revisado: usuários, papéis/grupos, permissões por tela, permissões operacionais e alçada ficam em modais separados; o menu e ações sensíveis respeitam permissões locais e papéis podem ser cadastrados para atribuição aos usuários. |
 
 ## Achados transversais
 
@@ -176,6 +177,32 @@ Revisado nesta etapa:
 - `/api/sienge/suppliers` passou a consultar `/v1/creditors` por CPF/CNPJ antes de criar credor, retornando `409` quando o documento já existe.
 
 Resultado: a operação ficou mais clara na tela e as gravações confirmadas passaram a consultar o Sienge antes de escrever, reduzindo o risco de duplicidade fora do histórico local.
+
+### Etapa 16 revisada - Usuários, papéis e alçadas
+
+Revisado nesta etapa:
+
+- `/configuracoes/usuarios` passou a ser a tela de administração de acessos, separando responsabilidades em modais: criação de usuário, perfil/alçada, telas liberadas, operações e papéis/grupos.
+- `lib/app-users.ts` passou a persistir usuários, papéis, permissões, vínculos e alçadas em `app-users.sqlite`, com papéis padrão `admin`, `aprovador` e `comprador`.
+- `lib/app-permissions.ts` define permissões por tela (`screen.*`) e permissões operacionais para cotações, Sienge e gestão de usuários.
+- O menu lateral filtra telas conforme as permissões do usuário, e páginas/rotas sensíveis checam permissões antes de permitir ações como aprovar cotação, gerar links, gravar no Sienge e gerenciar usuários.
+- A alçada pode vir do grupo, ser limitada no usuário ou ficar sem limite; aprovações de cotação validam permissão e limite antes de salvar.
+- A rota `/api/users/roles` permite criar e editar grupos com permissões e alçada; grupos sistêmicos não têm nome editável e grupos em uso não são excluídos pela interface.
+
+Resultado: o sistema deixou de depender apenas da senha única para o uso interno e passou a ter controle local por usuário, grupo, tela, operação e alçada.
+
+### Etapa 17 revisada - Obrigatórios do portal de cotação
+
+Revisado nesta etapa:
+
+- O wizard do `/portal-cotacao/[token]` agora guarda a tentativa de avanço por etapa e só mostra o destaque vermelho depois que o fornecedor tenta seguir com dados incompletos.
+- Identidade destaca CPF/CNPJ, razão social/nome, e-mail e telefone quando vazios ou inválidos.
+- Itens destaca o card quando nenhum item foi marcado e marca valor unitário/quantidade quando o item cotado não atende às regras de quantidade solicitada, parcial ou total.
+- Pagamento destaca escolha de forma de pagamento, desconto à vista, tipo/valor do desconto, decisão de prazo e parcelas inválidas.
+- Frete destaca tipo de frete, dias de entrega e valor do frete quando o frete cobrado à parte foi escolhido.
+- O CSS do portal centraliza os estados `supplier-field-invalid`, `supplier-section-invalid` e cards inválidos, preservando o amarelo de parcial quando não há erro.
+
+Resultado: o fornecedor recebe feedback visual direto nos campos que bloqueiam o avanço, sem deixar a tela vermelha antes da primeira tentativa.
 
 ### Etapa 9 revisada - Importação do dump em Configurações
 

@@ -1,6 +1,6 @@
 # Status do projeto Brasin
 
-Atualizado em: 06/07/2026
+Atualizado em: 07/07/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
@@ -24,6 +24,8 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Foi documentado o mapa real das conexões Sienge em cotações: telas abrem pelo espelho local, escritas passam por dry-run em `/api/sienge/purchase-quotations`, e o portal público do fornecedor não chama o Sienge diretamente.
 - O portal do fornecedor passou a validar forma de pagamento também no backend, gerar novo link automaticamente quando o fornecedor solicita revisão de uma proposta já enviada, e permitir que a equipe exclua uma resposta pela aba Respostas.
 - A integração Sienge de cotações mantém histórico de gravações na própria aba Sienge, bloqueia envios confirmados duplicados por chave de operação e faz pré-consulta ao Sienge antes das escritas confirmadas.
+- A gestão de usuários evoluiu para papéis/grupos com permissões por tela, permissões operacionais e alçada de aprovação herdada do grupo ou definida por usuário.
+- O portal público de cotação passou a destacar em vermelho os campos obrigatórios ou inválidos quando o fornecedor tenta avançar uma etapa incompleta.
 
 ## Acesso e autenticação
 
@@ -36,6 +38,18 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - As verificações de assinatura (sessão no middleware e senha no login) usam comparação em tempo constante.
 - Páginas públicas (`/login` e `/portal-cotacao`) não renderizam o shell interno de navegação.
 - O menu interno foi reorganizado por areas com submenus recolhiveis (Visao geral, Compras, Financeiro, Comercial/estoque, Analises e Administracao) e agora abre em modo compacto, com os grupos fechados para liberar largura nas telas operacionais.
+- A sessão passou a identificar o usuário local salvo em `app-users.sqlite`; rotas e telas sensíveis usam permissões do usuário para liberar menu, página e ações.
+
+## Usuários, papéis e permissões
+
+- A tela `/configuracoes/usuarios` concentra o cadastro de usuários, papéis/grupos, permissões por tela, permissões operacionais, senha inicial/reset, ativação/desativação e alçada.
+- O modelo local segue a estrutura de papéis/permissões: usuários, papéis, permissões, vínculo usuário-papel, vínculo usuário-permissão e vínculo papel-permissão. A extensão própria é a alçada (`approval_limit`) do papel ou do usuário.
+- Papéis padrão são criados automaticamente: `admin`, `aprovador` e `comprador`; o primeiro usuário administrador nasce a partir da senha mestre quando ainda não existe usuário local.
+- Cada tela do sistema possui permissão própria (`screen.*`). Essa permissão controla o que aparece no menu e também bloqueia abertura direta por URL quando a tela aplica a conferência.
+- Permissões operacionais controlam ações sensíveis: visualizar/gerenciar/aprovar cotações, gravar no Sienge e gerenciar usuários.
+- A alçada efetiva pode vir do papel, ser limitada por valor no usuário ou ficar sem limite; aprovações de cotação validam a permissão e a alçada antes de gravar a decisão.
+- A tela de usuários foi simplificada para mostrar menos informação na lista e abrir responsabilidades diferentes em modais: perfil/alçada, telas liberadas, operações e papéis/grupos.
+- O endpoint `/api/users/roles` permite criar, editar e excluir grupos não sistêmicos; grupos em uso não podem ser excluídos pela interface.
 
 ## Solicitações de compra
 
@@ -57,6 +71,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O portal público `/portal-cotacao/[token]` permite ao fornecedor informar, item a item: se atende, preço unitário, quantidade, prazo diferente do pedido e observação; preço zero informado é tratado como valor válido.
 - No pagamento à vista do portal, a pergunta `Desconto à vista?` começa sem Sim/Não selecionado. Se marcar Sim, o fornecedor escolhe entre desconto por porcentagem ou valor manual; se marcar Não, nenhum desconto é gravado.
 - No pagamento a prazo do portal, a pergunta `A prazo?` começa sem Sim/Não selecionado e precisa ser respondida. Se marcar Sim, nenhuma parcela vem pronta: o fornecedor deve gerar automaticamente ou adicionar parcelas manualmente.
+- Ao tentar avançar com uma etapa incompleta, o portal destaca em vermelho o campo obrigatório ou inválido: identidade, item marcado sem valor/quantidade válida, escolha de desconto, escolha de prazo, parcelas, frete e dias de entrega.
 - Itens parciais usam quantidade menor que a solicitada e destaque amarelo. Itens que o fornecedor não cotou aparecem separados no detalhe final/impressão, também com fundo amarelo.
 - No resumo final, o fornecedor pode anexar a proposta gerada no próprio sistema em PDF, JPG ou PNG até 2 MB; o anexo fica salvo junto da resposta e aparece no detalhe da proposta e na aba Respostas.
 - Depois que a proposta é enviada, reabrir o link mostra somente o detalhe da proposta, com ação de imprimir/salvar PDF. Quando o fornecedor solicita revisão, o portal gera automaticamente um novo link para envio de nova proposta; a proposta já enviada não fica editável.
@@ -305,6 +320,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O componente padrao `LocalDataList` cuida das listas de dados salvos com paginacao inicial de 100 registros, troca de quantidade e exportacao CSV opcional; e usado em compras, conciliacao, estoque, vendas, buscas avancadas e tabela financeira generica.
 - A camada `lib/api` centraliza chamadas ao Sienge, espelho local e persistencia.
 - `lib/supplier-quote-portal.ts` concentra tokens, respostas, convites, aprovacoes e eventos do portal do fornecedor; `lib/rate-limit.ts` concentra o limite de requisicoes das rotas publicas.
+- `lib/app-users.ts` concentra usuários, papéis, permissões, sessão e alçadas; `lib/app-permissions.ts` define as permissões por tela e as permissões operacionais usadas pelo menu, páginas e APIs.
 - `features/quotations` e `features/suppliers` concentram as leituras locais de cotacoes e fornecedores; `features/reports/data.ts` concentra resumos leves de relatorios.
 - `components/purchases/quotations` concentra os blocos da tela `/cotacoes`; `components/purchases/quotation-detail/tabs` concentra as abas do detalhe da cotação.
 - As listas principais exibem `Integrado em ...` por registro, padronizado no componente `IntegrationStamp`; a formatacao de datas opcionais esta centralizada em `formatOptionalDate`.
@@ -322,6 +338,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Validacoes recentes
 
+- Em 07/07/2026, foram revisados os commits recentes de permissões/papéis e portal de cotação; `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram após o ajuste visual dos obrigatórios no portal.
 - Em 05/07/2026, a revisão das conexões Sienge de cotações passou em `tsc --noEmit --incremental false` e atualizou a documentação técnica (`lib/api/README.md`) com endpoints, telas envolvidas e pontos de atenção.
 - TypeScript passou com `tsc --noEmit` e a build passou com `next build` apos as mudancas de autenticacao, cotacoes, seguranca, portal do fornecedor e separacao dos componentes de abas/blocos de cotacao.
 - O fluxo do portal do fornecedor foi testado de ponta a ponta: link ativo abre o portal, link revogado retorna 404 no portal e 401 no envio de proposta.
