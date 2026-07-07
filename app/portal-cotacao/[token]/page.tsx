@@ -3,6 +3,7 @@ import { SupplierQuoteResponseForm } from "@/components/suppliers/supplier-quote
 import { SupplierQuoteSubmittedView } from "@/components/suppliers/supplier-quote-submitted-view";
 import { loadQuotationDetail } from "@/features/quotations/data";
 import { getLocalSupplierById, searchLocalSuppliers } from "@/features/suppliers/data";
+import { quotationClosedForResponses, quotationDeadlineEnd } from "@/lib/quotation-deadline";
 import { loadSupplierQuoteResponseByToken, verifyActiveSupplierQuoteToken } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +57,24 @@ export default async function SupplierQuotePortalPage({ params }: { params: { to
 
   const quotation = await loadQuotationDetail(payload.quotationId);
   if (!quotation) notFound();
+
+  // Prazo vencido: o link pode até ser válido, mas a cotação não aceita mais propostas.
+  if (quotationClosedForResponses(quotation.deadline)) {
+    const deadlineEnd = quotationDeadlineEnd(quotation.deadline);
+    return (
+      <section className="supplier-public-shell">
+        <div className="card supplier-portal-success supplier-portal-error">
+          <span>Portal de cotação</span>
+          <h2>Prazo encerrado</h2>
+          <p>
+            O prazo para envio de propostas da cotação #{quotation.code} encerrou em {deadlineEnd?.toLocaleDateString("pt-BR")}.
+            Entre em contato com o comprador para verificar uma prorrogação.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   const localSupplier = payload.supplierId
     ? getLocalSupplierById(payload.supplierId)
     : payload.document
@@ -77,6 +96,7 @@ export default async function SupplierQuotePortalPage({ params }: { params: { to
         quotationCode={quotation.code}
         items={quotation.items}
         initialSupplier={initialSupplier}
+        responseDeadline={quotation.deadline}
       />
     </section>
   );

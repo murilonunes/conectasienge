@@ -38,7 +38,8 @@ export function AprovacaoTab({
   onSaveAward,
   awards,
   onSendAwardsToSienge,
-  loadingAction
+  loadingAction,
+  reportHref
 }: {
   supplierResponses: SupplierQuoteResponseSummary[];
   itemComparison: ItemComparisonRow[];
@@ -58,6 +59,7 @@ export function AprovacaoTab({
   awards: SupplierQuoteAwardSummary[];
   onSendAwardsToSienge: (confirm: boolean) => void;
   loadingAction: string | null;
+  reportHref: string;
 }) {
   const rowsWithBest = itemComparison.filter((row) => row.best);
   const rowsWithoutPrice = itemComparison.filter((row) => !row.best);
@@ -252,6 +254,11 @@ export function AprovacaoTab({
           <button className="button sienge-write" type="button" disabled={!awards.length || loadingAction !== null} onClick={() => onSendAwardsToSienge(true)}>
             {loadingAction === "negotiation-confirm" ? "Registrando..." : "Registrar decisão no Sienge"}
           </button>
+          {awards.length > 0 && (
+            <a className="button secondary" href={reportHref} target="_blank" rel="noreferrer">
+              Relatório de decisão (PDF)
+            </a>
+          )}
           {!supplierResponses.length && <span className="table-muted">Receba respostas de fornecedores antes de aprovar.</span>}
         </div>
       </div>

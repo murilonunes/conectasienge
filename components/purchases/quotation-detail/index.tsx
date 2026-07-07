@@ -887,6 +887,7 @@ export function QuotationDetail({
           awards={awards}
           onSendAwardsToSienge={(confirm) => void sendAwardsToSienge(confirm)}
           loadingAction={loadingAction}
+          reportHref={`/cotacoes/${quotation.id}/relatorio-decisao`}
         />
       )}
 

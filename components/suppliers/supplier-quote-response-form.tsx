@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
+import { daysUntilQuotationDeadline, quotationDeadlineEnd } from "@/lib/quotation-deadline";
 import type { SupplierQuoteProposalAttachment, SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 import { FreightStep } from "./supplier-quote-response-form/freight-step";
 import { IdentityStep } from "./supplier-quote-response-form/identity-step";
@@ -33,6 +34,7 @@ type SupplierQuoteResponseFormProps = {
     phone?: string;
     locked?: boolean;
   };
+  responseDeadline?: string;
 };
 
 function validEmail(value: string) {
@@ -49,8 +51,10 @@ function validDocument(value: string) {
   return digits.length === 11 || digits.length === 14;
 }
 
-export function SupplierQuoteResponseForm({ token, quotationCode, items, initialSupplier }: SupplierQuoteResponseFormProps) {
+export function SupplierQuoteResponseForm({ token, quotationCode, items, initialSupplier, responseDeadline }: SupplierQuoteResponseFormProps) {
   const fixedSupplier = initialSupplier?.locked ? initialSupplier : undefined;
+  const deadlineDaysLeft = daysUntilQuotationDeadline(responseDeadline);
+  const deadlineEnd = quotationDeadlineEnd(responseDeadline);
   const [supplierName, setSupplierName] = useState(initialSupplier?.supplierName || "");
   const [document, setDocument] = useState(initialSupplier?.document || "");
   const [email, setEmail] = useState(initialSupplier?.email || "");
@@ -461,6 +465,12 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         <div>
           <span>Portal de cotação</span>
           <h1>Cotação #{quotationCode}</h1>
+          {deadlineEnd && deadlineDaysLeft !== undefined && deadlineDaysLeft >= 0 && (
+            <p className={`supplier-deadline-note ${deadlineDaysLeft <= 1 ? "warn" : ""}`}>
+              Prazo para envio: {deadlineEnd.toLocaleDateString("pt-BR")}
+              {deadlineDaysLeft === 0 ? " — encerra hoje" : deadlineDaysLeft === 1 ? " — falta 1 dia" : ` — faltam ${deadlineDaysLeft} dias`}
+            </p>
+          )}
         </div>
         <div className="supplier-public-hero-metrics">
           <strong className="count">{items.length}<small>Itens</small></strong>

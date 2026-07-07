@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hasSupplierQuoteResponse, saveSupplierQuoteResponse, verifyActiveSupplierQuoteToken, type SupplierQuoteResponseInput } from "@/lib/supplier-quote-portal";
 import { getLocalSupplierById, searchLocalSuppliers, type SupplierDirectoryItem } from "@/features/suppliers/data";
 import { loadQuotationDetail } from "@/features/quotations/data";
+import { quotationClosedForResponses, quotationDeadlineEnd } from "@/lib/quotation-deadline";
 import { clientIp, rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -198,6 +199,14 @@ export async function POST(request: Request) {
     const quotation = await loadQuotationDetail(payload.quotationId);
     if (!quotation) {
       return NextResponse.json({ message: "Cotação não encontrada." }, { status: 404 });
+    }
+
+    // Cotação com prazo vencido não aceita mais propostas, mesmo com link válido.
+    if (quotationClosedForResponses(quotation.deadline)) {
+      const deadlineEnd = quotationDeadlineEnd(quotation.deadline);
+      return NextResponse.json({
+        message: `O prazo desta cotação encerrou em ${deadlineEnd?.toLocaleDateString("pt-BR")}. Entre em contato com o comprador para verificar uma prorrogação.`
+      }, { status: 403 });
     }
 
     const quotationItems = new Map(quotation.items.map((item) => [item.itemNumber, item]));

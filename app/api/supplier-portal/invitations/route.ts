@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { loadQuotationDetail } from "@/features/quotations/data";
 import { getLocalSupplierById, searchLocalSuppliers } from "@/features/suppliers/data";
+import { cappedExpiresInDays, quotationClosedForResponses, quotationDeadlineEnd } from "@/lib/quotation-deadline";
 import { createSupplierQuoteToken, loadSupplierQuoteInvitations, revokeSupplierQuoteInvitation, saveSupplierQuoteInvitation, verifySupplierQuoteToken } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +34,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Informe uma cotação válida para gerar o link." }, { status: 400 });
     }
 
-    const expiresInDays = Number.isFinite(Number(input.expiresInDays)) && Number(input.expiresInDays) > 0
-      ? Number(input.expiresInDays)
-      : 7;
+    // O prazo da cotação governa os convites: cotação encerrada não gera link
+    // novo, e a validade do link nunca passa do fim do prazo.
+    const quotation = await loadQuotationDetail(quotationId);
+    if (quotationClosedForResponses(quotation?.deadline)) {
+      const deadlineEnd = quotationDeadlineEnd(quotation?.deadline);
+      return NextResponse.json({
+        message: `O prazo desta cotação encerrou em ${deadlineEnd?.toLocaleDateString("pt-BR")}. Ajuste o prazo no Sienge e atualize o espelho local para voltar a gerar links.`
+      }, { status: 409 });
+    }
+
+    const expiresInDays = cappedExpiresInDays(Number(input.expiresInDays), quotation?.deadline);
     const supplierId = Number(input.supplierId) || undefined;
     const inputDocument = input.document?.replace(/\D/g, "") || undefined;
     const localSupplier = supplierId

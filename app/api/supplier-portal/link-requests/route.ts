@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { loadQuotationDetail } from "@/features/quotations/data";
+import { cappedExpiresInDays, quotationClosedForResponses, quotationDeadlineEnd } from "@/lib/quotation-deadline";
 import {
   createSupplierQuoteToken,
   isSupplierQuoteTokenRevoked,
@@ -33,6 +35,15 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
+    // Cotação com prazo encerrado não aceita revisão automática.
+    const quotation = await loadQuotationDetail(response.quotationId);
+    if (quotationClosedForResponses(quotation?.deadline)) {
+      const deadlineEnd = quotationDeadlineEnd(quotation?.deadline);
+      return NextResponse.json({
+        message: `O prazo desta cotação encerrou em ${deadlineEnd?.toLocaleDateString("pt-BR")}. Entre em contato com o comprador para verificar uma prorrogação.`
+      }, { status: 403 });
+    }
+
     // Gera o novo link na hora, amarrado ao mesmo fornecedor e documento,
     // em vez de deixar a solicitação pendente para a equipe de compras.
     const token = createSupplierQuoteToken({
@@ -42,7 +53,7 @@ export async function POST(request: Request) {
       document: response.document,
       email: response.email,
       phone: response.phone,
-      expiresInDays: 7
+      expiresInDays: cappedExpiresInDays(7, quotation?.deadline)
     });
     const payload = verifySupplierQuoteToken(token);
     if (!payload) {
