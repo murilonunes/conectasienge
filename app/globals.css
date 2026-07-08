@@ -1997,6 +1997,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-price-cell strong { margin-bottom: 3px; color: var(--ink); font-family: var(--font-display); font-size: 14px; }
 .map-report-price-cell small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.3; }
 .map-report-price-cell span { color: var(--muted); font-size: 10px; font-weight: 750; }
+.map-report-price-details { display: grid; gap: 2px; margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); }
 .map-report-price-cell.partial { background: #fffaf1; }
 .map-report-price-cell.partial strong, .map-report-price-cell.partial small { color: #80591f; }
 .map-report-price-cell.best { background: var(--green-soft); }

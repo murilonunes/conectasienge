@@ -145,9 +145,11 @@ export default async function QuotationMapPdfPage({
                           {offer?.attends ? (
                             <>
                               <strong>{formatCurrency(offer.unitPrice)}</strong>
-                              <small>Total {formatCurrency(offer.total)}</small>
-                              <small>{offer.partial ? `Parcial: ${offer.quantity}` : `Qtd. ${offer.quantity}`}</small>
-                              <small>{offer.deadlineDays ? plural(offer.deadlineDays, "dia", "dias") : "Prazo geral"}</small>
+                              <div className="map-report-price-details">
+                                <small>Total {formatCurrency(offer.total)}</small>
+                                <small>{offer.partial ? `Parcial: ${offer.quantity}` : `Qtd. ${offer.quantity}`}</small>
+                                <small>{offer.deadlineDays ? plural(offer.deadlineDays, "dia", "dias") : "Prazo geral"}</small>
+                              </div>
                             </>
                           ) : (
                             <span>{offer?.hasResponse ? "Não atende" : "Sem resposta"}</span>
@@ -171,10 +173,12 @@ export default async function QuotationMapPdfPage({
                   {supplierColumns.map(({ response, total, coverageCount, bestCount }) => (
                     <td className="map-report-price-cell" key={`total-${response.id}`}>
                       <strong>{formatCurrency(total)}</strong>
-                      <small>{coverageCount}/{rows.length} itens com preço</small>
-                      <small>{bestCount ? plural(bestCount, "melhor preço", "melhores preços") : "Sem menor preço"}</small>
-                      <small>{paymentSummary(response.commercialTerms)}</small>
-                      <small>{freightSummary(response.commercialTerms)}</small>
+                      <div className="map-report-price-details">
+                        <small>{coverageCount}/{rows.length} itens com preço</small>
+                        <small>{bestCount ? plural(bestCount, "melhor preço", "melhores preços") : "Sem menor preço"}</small>
+                        <small>{paymentSummary(response.commercialTerms)}</small>
+                        <small>{freightSummary(response.commercialTerms)}</small>
+                      </div>
                     </td>
                   ))}
                   <td className="map-report-choice-col total">
