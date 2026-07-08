@@ -219,7 +219,7 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
           actionHref="/configuracoes"
         />
 
-        <section className="reports-filter card">
+        <section className="reports-filter dre-filter card">
           <div>
             <span>Visão</span>
             <strong>Consolidado</strong>
@@ -280,7 +280,7 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
         actionHref="/configuracoes"
       />
 
-      <section className="reports-filter card">
+      <section className="reports-filter dre-filter card">
         <div>
           <span>Exercício</span>
           <strong>{selectedYear}</strong>
