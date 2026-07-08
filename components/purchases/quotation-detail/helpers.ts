@@ -1,7 +1,49 @@
-import type { QuotationSummary } from "@/features/quotations/data";
+import type { QuotationItemSummary, QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
 import type { SupplierQuoteCommercialTerms, SupplierQuoteEventSummary, SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
-import type { SiengeAction } from "./types";
+import type { ItemComparisonRow, SiengeAction } from "./types";
+
+// Monta o mapa item a item cruzando os insumos da cotação com as respostas ativas
+// (revisões substituídas já ficam fora de `activeResponses`). Usado tanto no detalhe
+// da cotação (client) quanto no relatório de mapa em PDF (server).
+export function buildItemComparison(items: QuotationItemSummary[], activeResponses: SupplierQuoteResponseSummary[]): ItemComparisonRow[] {
+  const itemNumbers = new Set<number>();
+  items.forEach((item) => itemNumbers.add(item.itemNumber));
+  activeResponses.forEach((response) => response.items.forEach((item) => itemNumbers.add(item.itemNumber)));
+
+  return Array.from(itemNumbers).sort((left, right) => left - right).map((itemNumber) => {
+    const quotationItem = items.find((item) => item.itemNumber === itemNumber);
+    const offers = activeResponses.map((response) => {
+      const quotedItem = response.items.find((item) => item.itemNumber === itemNumber);
+      const attends = Boolean(quotedItem?.attends);
+      const hasPrice = attends && quotedItem?.unitPrice != null;
+      const unitPrice = attends ? quotedItem?.unitPrice || 0 : 0;
+      const quantity = attends ? quotedItem?.quantity || 0 : 0;
+      const deadlineDays = attends ? quotedItem?.deadlineDays || 0 : 0;
+
+      return {
+        responseId: response.id,
+        supplierName: response.supplierName,
+        document: response.document,
+        registrationPending: response.registrationPending,
+        hasResponse: Boolean(quotedItem),
+        attends,
+        partial: Boolean(quotedItem?.partial),
+        hasPrice,
+        unitPrice,
+        quantity,
+        deadlineDays,
+        total: unitPrice * quantity,
+        notes: quotedItem?.notes || ""
+      };
+    });
+    const best = offers
+      .filter((offer) => offer.attends && offer.hasPrice)
+      .sort((left, right) => left.unitPrice - right.unitPrice || left.deadlineDays - right.deadlineDays)[0];
+
+    return { itemNumber, item: quotationItem, offers, best };
+  });
+}
 
 export function csvCell(value: string | number) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;

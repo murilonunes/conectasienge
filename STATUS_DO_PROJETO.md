@@ -85,6 +85,8 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Fornecedor pré-definido no convite não vira cadastro pendente no portal, porque a identidade vem travada pelo link.
 - O comparativo por item marca o melhor preço entre as respostas recebidas e alimenta a aba de aprovação.
 - A aba Mapa mostra leitura gerencial da cotação: melhor cesta por item, cobertura de preços, itens parciais, maiores economias e ranking por fornecedor.
+- A aba Mapa ganhou o botão `Mapa em PDF`, independente do Sienge (ao lado do `Mapa do Sienge (PDF)` que já existia): abre um modal para escolher todos os itens, somente os itens marcados manualmente ou somente os itens que já receberam proposta com preço válido, e gera o relatório na rota `/cotacoes/[id]/mapa-pdf` (sem shell/menu, com botão `Imprimir / salvar PDF`, no mesmo padrão do relatório de decisão). O relatório mostra cabeçalho executivo, dados da cotação e uma matriz horizontal: cada item aparece em uma linha, fornecedores aparecem uma vez como colunas e cada célula mostra preço, total, quantidade e prazo; no final da linha, a coluna `Melhor cesta` mostra apenas o menor valor unitário entre todos os fornecedores, com o total consolidado no rodapé. O verde fica reservado às células de melhor preço.
+- `buildItemComparison` (em `components/purchases/quotation-detail/helpers.ts`) concentra o cálculo do mapa item a item; é usado tanto no detalhe da cotação (client) quanto no relatório de mapa em PDF (server), para os dois não divergirem.
 - A aprovação registra vencedor por cotação inteira ou por item, com justificativa obrigatória, salva no banco local.
 - A aba Aprovar mostra prontidão da decisão, recomendação automática, cobertura salva, checklist e análise do fornecedor selecionado antes de enviar a decisão ao Sienge.
 - A timeline de eventos registra: link enviado, novo link solicitado, link revogado, resposta recebida, resposta excluída, fornecedor aprovado, erro de integração e criação no Sienge.
@@ -98,7 +100,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Antes das escritas confirmadas em cotação, a rota consulta a cotação/negociações no Sienge, consulta o credor quando há fornecedor, reaproveita negociação já existente e retorna o bloco `preflight` com os indícios encontrados.
 - A aba Sienge mostra o histórico de integrações e erros da cotação, marca temas já integrados, deixa o menu de temas mais compacto e prioriza a área operacional maior.
 - O insumo direto exige apropriação de obra antes de confirmar: unidade construtiva, referência do item de orçamento e percentual total de 100%.
-- O PDF do mapa comparativo usa a rota interna `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`, que consulta o Sienge em `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`.
+- O PDF do mapa comparativo do Sienge usa a rota interna `/api/sienge/purchase-quotations?type=comparison-map&quotationId={id}`, que consulta o Sienge em `/v1/purchase-quotations/comparison-map/pdf?purchaseQuotationId={id}`.
 - A criação de fornecedor pendente usa `/api/sienge/suppliers`, com dry-run antes da confirmação real em `/v1/creditors`.
 - A rota `/api/sienge/suppliers` busca credores no Sienge e, antes de criar credor por cadastro pendente, consulta `/v1/creditors` por CPF/CNPJ para bloquear cadastro duplicado.
 - Configurações ganhou a área de atualização `Fornecedores`, que espelha os credores do Sienge (`/v1/creditors`) usados para localizar e vincular fornecedores nas cotações.

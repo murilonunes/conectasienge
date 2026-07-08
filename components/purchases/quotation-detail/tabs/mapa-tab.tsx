@@ -3,6 +3,7 @@ import { formatCurrency } from "@/lib/formatters";
 import type { SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 import { exportItemComparison, formatDocument, paymentSummary, plural } from "../helpers";
 import type { ItemComparisonRow } from "../types";
+import { MapaPdfModal } from "./mapa-pdf-modal";
 
 export function MapaTab({
   quotation,
@@ -78,6 +79,7 @@ export function MapaTab({
             <button className="button secondary" type="button" onClick={onExportPdf} disabled={loadingAction !== null}>
               {loadingAction === "comparison-map" ? "Gerando..." : "Mapa do Sienge (PDF)"}
             </button>
+            <MapaPdfModal quotationId={quotation.id} items={itemComparison} />
           </div>
         </div>
 

@@ -5,7 +5,7 @@ import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteAwardSummary, SupplierQuoteEventSummary, SupplierQuoteInvitationSummary, SupplierQuoteResponseSummary, SupplierRegistrationReview } from "@/lib/supplier-quote-portal";
 import type { OperationResultKind } from "../operation-result-panel";
-import { confirmSiengeWrite, exportComparison, exportItemComparison, numberOrUndefined, plural, registrationText, siengeActionQuestions } from "./helpers";
+import { buildItemComparison, confirmSiengeWrite, exportComparison, exportItemComparison, numberOrUndefined, plural, registrationText, siengeActionQuestions } from "./helpers";
 import { AprovacaoTab } from "./tabs/aprovacao-tab";
 import { CadastrosTab } from "./tabs/cadastros-tab";
 import { FornecedoresTab } from "./tabs/fornecedores-tab";
@@ -118,44 +118,10 @@ export function QuotationDetail({
     };
   }, [activeResponses]);
 
-  const itemComparison = useMemo(() => {
-    const itemNumbers = new Set<number>();
-    quotation.items.forEach((item) => itemNumbers.add(item.itemNumber));
-    activeResponses.forEach((response) => response.items.forEach((item) => itemNumbers.add(item.itemNumber)));
-
-    return Array.from(itemNumbers).sort((left, right) => left - right).map((itemNumber) => {
-      const quotationItem = quotation.items.find((item) => item.itemNumber === itemNumber);
-      const offers = activeResponses.map((response) => {
-        const quotedItem = response.items.find((item) => item.itemNumber === itemNumber);
-        const attends = Boolean(quotedItem?.attends);
-        const hasPrice = attends && quotedItem?.unitPrice != null;
-        const unitPrice = attends ? quotedItem?.unitPrice || 0 : 0;
-        const quantity = attends ? quotedItem?.quantity || 0 : 0;
-        const deadlineDays = attends ? quotedItem?.deadlineDays || 0 : 0;
-
-        return {
-          responseId: response.id,
-          supplierName: response.supplierName,
-          document: response.document,
-          registrationPending: response.registrationPending,
-          hasResponse: Boolean(quotedItem),
-          attends,
-          partial: Boolean(quotedItem?.partial),
-          hasPrice,
-          unitPrice,
-          quantity,
-          deadlineDays,
-          total: unitPrice * quantity,
-          notes: quotedItem?.notes || ""
-        };
-      });
-      const best = offers
-        .filter((offer) => offer.attends && offer.hasPrice)
-        .sort((left, right) => left.unitPrice - right.unitPrice || left.deadlineDays - right.deadlineDays)[0];
-
-      return { itemNumber, item: quotationItem, offers, best };
-    });
-  }, [quotation.items, activeResponses]);
+  const itemComparison = useMemo(
+    () => buildItemComparison(quotation.items, activeResponses),
+    [quotation.items, activeResponses]
+  );
 
   const pendingSuppliers = useMemo(() => {
     const byDocument = new Map<string, SupplierQuoteResponseSummary>();

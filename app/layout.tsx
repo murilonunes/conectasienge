@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const path = headers().get("x-current-path") || "";
-  // O relatório de decisão continua protegido por sessão, mas renderiza sem o
-  // shell (menu/topbar) para sair limpo na impressão em PDF.
-  const publicExperience = path.startsWith("/portal-cotacao") || path.startsWith("/login") || path.endsWith("/relatorio-decisao");
+  // O relatório de decisão e o mapa em PDF continuam protegidos por sessão, mas
+  // renderizam sem o shell (menu/topbar) para sair limpos na impressão em PDF.
+  const publicExperience = path.startsWith("/portal-cotacao") || path.startsWith("/login") || path.endsWith("/relatorio-decisao") || path.endsWith("/mapa-pdf");
 
   return (
     <html lang="pt-BR">
