@@ -128,8 +128,10 @@ export default async function QuotationMapPdfPage({
                   <tr key={row.itemNumber}>
                     <td className="map-report-item-row-col">
                       <span>#{row.item?.productId || row.itemNumber}</span>
-                      <strong>{row.item?.name || `Item ${row.itemNumber}`}</strong>
-                      {row.item?.detail && <small>{row.item.detail}</small>}
+                      <strong>
+                        {row.item?.name || `Item ${row.itemNumber}`}
+                        {row.item?.detail ? ` - ${row.item.detail}` : ""}
+                      </strong>
                     </td>
                     <td className="map-report-quantity-col">
                       <strong>{row.item ? row.item.quantity || 0 : "-"}</strong>
