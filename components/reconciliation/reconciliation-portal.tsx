@@ -99,6 +99,11 @@ function monthSortValue(key: string) {
   return (year || 0) * 12 + (month || 0);
 }
 
+function monthYearKey(key: string) {
+  const year = Number(key.slice(0, 4));
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? String(year) : "sem-data";
+}
+
 function monthPercent(month?: ReconciliationMonthlySummary) {
   if (!month?.totalCount) return 0;
   return Math.round((month.reconciledCount / month.totalCount) * 100);
@@ -165,6 +170,19 @@ function buildMonthlySummary(movements: BankMovement[]) {
     months.set(key, month);
   });
   return Array.from(months.values()).sort((left, right) => monthSortValue(right.key) - monthSortValue(left.key));
+}
+
+function buildYearOptions(months: ReconciliationMonthlySummary[]) {
+  return Array.from(new Set(months.map((month) => monthYearKey(month.key))))
+    .sort((left, right) => {
+      if (left === "sem-data") return 1;
+      if (right === "sem-data") return -1;
+      return Number(right) - Number(left);
+    });
+}
+
+function yearLabel(year: string) {
+  return year === "sem-data" ? "Sem data" : year;
 }
 
 function buildAccountRanking(movements: BankMovement[]) {
@@ -248,13 +266,19 @@ function ErrorPanel({ error }: { error: SiengeErrorDetails }) {
 
 function MonthlyReconciliationPanel({
   months,
+  years,
+  selectedYear,
   selectedMonth,
   accountLabel,
+  onSelectYear,
   onSelect
 }: {
   months: ReconciliationMonthlySummary[];
+  years: string[];
+  selectedYear: string;
   selectedMonth: string;
   accountLabel: string;
+  onSelectYear: (year: string) => void;
   onSelect: (month: string) => void;
 }) {
   return (
@@ -264,11 +288,26 @@ function MonthlyReconciliationPanel({
           <h2 className="panel-title">Visão mensal da conciliação</h2>
           <span className="panel-note">Conta analisada: {accountLabel}. Clique em um mês para ver cards e registros daquele período</span>
         </div>
-        {months.length > 0 && (
-          <select value={selectedMonth} onChange={(event) => onSelect(event.target.value)}>
-            <option value="all">Todos os meses</option>
-            {months.map((month) => <option value={month.key} key={month.key}>{month.label}</option>)}
-          </select>
+        {(years.length > 0 || months.length > 0) && (
+          <div className="reconciliation-month-selectors">
+            {years.length > 0 && (
+              <label>
+                <span>Ano</span>
+                <select value={selectedYear} onChange={(event) => onSelectYear(event.target.value)}>
+                  {years.map((year) => <option value={year} key={year}>{yearLabel(year)}</option>)}
+                </select>
+              </label>
+            )}
+            {months.length > 0 && (
+              <label>
+                <span>Mês</span>
+                <select value={selectedMonth} onChange={(event) => onSelect(event.target.value)}>
+                  <option value="all">Todos os meses do ano</option>
+                  {months.map((month) => <option value={month.key} key={month.key}>{month.label}</option>)}
+                </select>
+              </label>
+            )}
+          </div>
         )}
       </div>
 
@@ -322,6 +361,7 @@ export function ReconciliationPortal({
   const [error, setError] = useState<SiengeErrorDetails | undefined>(initialPayload.error);
   const [progress, setProgress] = useState<ServerProgress>();
   const [elapsed, setElapsed] = useState(0);
+  const [selectedYear, setSelectedYear] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -383,13 +423,30 @@ export function ReconciliationPortal({
     return payload.movements.filter((movement) => movement.accountNumber && accountSet.has(movement.accountNumber));
   }, [payload, selectedAccounts]);
   const accountLabel = configuredAccountsLabel(selectedAccounts);
-  const months = useMemo(() => buildMonthlySummary(accountMovements), [accountMovements]);
+  const allMonths = useMemo(() => buildMonthlySummary(accountMovements), [accountMovements]);
+  const years = useMemo(() => buildYearOptions(allMonths), [allMonths]);
+  const activeYear = selectedYear || years[0] || "";
+  const months = useMemo(() => {
+    if (!activeYear) return [];
+    return allMonths.filter((month) => monthYearKey(month.key) === activeYear);
+  }, [activeYear, allMonths]);
   const accountRanking = useMemo(() => buildAccountRanking(accountMovements), [accountMovements]);
 
   useEffect(() => {
-    if (!months.length) return;
+    if (!years.length) {
+      setSelectedYear("");
+      return;
+    }
+    setSelectedYear((current) => current && years.includes(current) ? current : years[0]);
+  }, [years]);
+
+  useEffect(() => {
+    if (!activeYear || !months.length) {
+      setSelectedMonth("");
+      return;
+    }
     setSelectedMonth((current) => current && (current === "all" || months.some((month) => month.key === current)) ? current : months[0].key);
-  }, [months]);
+  }, [activeYear, months]);
 
   const selectedMonthSummary = useMemo(() => {
     if (!months.length) return emptyMonthSummary;
@@ -398,9 +455,11 @@ export function ReconciliationPortal({
   }, [months, selectedMonth]);
 
   const visibleMovements = useMemo(() => {
-    if (!selectedMonth || selectedMonth === "all") return accountMovements;
-    return accountMovements.filter((movement) => movementMonthKey(movement) === selectedMonth);
-  }, [accountMovements, selectedMonth]);
+    if (!activeYear) return accountMovements;
+    const yearMovements = accountMovements.filter((movement) => monthYearKey(movementMonthKey(movement)) === activeYear);
+    if (!selectedMonth || selectedMonth === "all") return yearMovements;
+    return yearMovements.filter((movement) => movementMonthKey(movement) === selectedMonth);
+  }, [accountMovements, activeYear, selectedMonth]);
 
   const loadedMessage = useMemo(() => {
     if (!payload) return "";
@@ -437,7 +496,15 @@ export function ReconciliationPortal({
         <span>{loadedMessage} Conta em análise: {accountLabel}. Para trocar, ajuste em Configurações.</span>
       </div>
 
-      <MonthlyReconciliationPanel months={months} selectedMonth={selectedMonth || selectedMonthSummary.key} accountLabel={accountLabel} onSelect={setSelectedMonth} />
+      <MonthlyReconciliationPanel
+        months={months}
+        years={years}
+        selectedYear={activeYear}
+        selectedMonth={selectedMonth || selectedMonthSummary.key}
+        accountLabel={accountLabel}
+        onSelectYear={setSelectedYear}
+        onSelect={setSelectedMonth}
+      />
 
       <div className="reconciliation-period-head">
         <div>
