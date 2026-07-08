@@ -17,6 +17,10 @@ export function isLinked(item: BankMovement) {
   return Boolean(item.billId || item.installmentId || item.creditorId || item.clientId);
 }
 
+export function hasTitleLink(item: BankMovement) {
+  return Boolean(item.billId || item.installmentId);
+}
+
 export function movementParty(item: BankMovement) {
   return item.creditorName || item.clientName || item.companyName || "Parte não informada";
 }

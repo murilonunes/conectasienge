@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import type { BankMovement } from "@/features/reconciliation/types";
-import { isReconciled, movementAmount, movementDocument, movementParty, reconciliationStatus } from "@/features/reconciliation/utils";
+import { hasTitleLink, isReconciled, movementAmount, movementDocument, movementParty, reconciliationStatus } from "@/features/reconciliation/utils";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 function movementKey(movement: BankMovement, index: number) {
@@ -31,7 +31,7 @@ export function ReconciliationExplorer({ movements, periodLabel }: { movements: 
     ].filter(Boolean).join(" ").toLowerCase();
     const matchesText = text.includes(search.toLowerCase());
     const currentStatus = reconciliationStatus(movement);
-    const matchesStatus = !status || currentStatus === status;
+    const matchesStatus = !status || (status === "Sem título/parcela" ? !hasTitleLink(movement) : currentStatus === status);
     const matchesAccount = !account || movement.accountNumber === account;
     return matchesText && matchesStatus && matchesAccount;
   }), [movements, search, status, account]);
@@ -45,6 +45,7 @@ export function ReconciliationExplorer({ movements, periodLabel }: { movements: 
           <option>Conciliado</option>
           <option>Vinculado, não conciliado</option>
           <option>Avulso</option>
+          <option>Sem título/parcela</option>
         </select>
         <select value={account} onChange={(event) => setAccount(event.target.value)}>
           <option value="">Todas as contas</option>

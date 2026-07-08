@@ -715,8 +715,14 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .reconciliation-period-head div { display: grid; gap: 4px; }
 .reconciliation-period-head span { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
 .reconciliation-period-head strong { font-size: 18px; }
+.reconciliation-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .reconciliation-mini-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .reconciliation-mini-stats span { padding: 7px 9px; border-radius: 999px; background: #f8faf9; color: var(--muted); font-size: 10px; font-weight: 800; }
+.reconciliation-untitled-panel { margin-bottom: 18px; }
+.reconciliation-untitled-summary { display: grid; gap: 2px; justify-items: end; min-width: 110px; }
+.reconciliation-untitled-summary strong { color: var(--red); font-family: Georgia, serif; font-size: 25px; font-weight: 500; }
+.reconciliation-untitled-summary span { color: var(--muted); font-size: 10px; font-weight: 800; }
+.reconciliation-untitled-table { overflow-x: auto; }
 .reconciliation-loaded-note { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 12px; margin-bottom: 12px; background: #f8fbf9; border-color: #dcebe3; }
 .reconciliation-loaded-note strong { color: var(--green); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 .reconciliation-loaded-note span { color: var(--muted); font-size: 10px; }

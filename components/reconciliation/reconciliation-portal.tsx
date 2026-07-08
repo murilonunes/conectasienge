@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ReconciliationExplorer } from "@/components/reconciliation/reconciliation-explorer";
+import { LocalDataList } from "@/components/ui/local-data-list";
 import { StatCard } from "@/components/ui/stat-card";
 import type { BankMovement, ReconciliationMonthlySummary, ReconciliationSummary } from "@/features/reconciliation/types";
-import { isLinked, isReconciled, movementAmount } from "@/features/reconciliation/utils";
-import { formatCompactCurrency } from "@/lib/formatters";
+import { hasTitleLink, isLinked, isReconciled, movementAmount, movementDocument, movementParty } from "@/features/reconciliation/utils";
+import { formatCompactCurrency, formatCurrency, formatDate } from "@/lib/formatters";
 
 type SiengeErrorDetails = {
   status?: number;
@@ -337,6 +338,64 @@ function MonthlyReconciliationPanel({
   );
 }
 
+function UntitledMovementsPanel({ movements, periodLabel }: { movements: BankMovement[]; periodLabel: string }) {
+  const amount = movements.reduce((sum, movement) => sum + Math.abs(movementAmount(movement)), 0);
+
+  return (
+    <section className="card panel reconciliation-untitled-panel">
+      <div className="panel-head">
+        <div>
+          <h2 className="panel-title">Movimentos sem título/parcela</h2>
+          <span className="panel-note">Movimentos do recorte {periodLabel} sem billId nem installmentId; podem ter cliente, fornecedor ou empresa informados</span>
+        </div>
+        <div className="reconciliation-untitled-summary">
+          <strong>{movements.length}</strong>
+          <span>{formatCompactCurrency(amount)}</span>
+        </div>
+      </div>
+      <LocalDataList
+        items={movements}
+        itemLabel="sem título"
+        defaultPageSize={25}
+        pageSizeOptions={[25, 50, 100, 200]}
+        resetKey={periodLabel}
+        emptyMessage="Nenhum movimento sem título/parcela no recorte atual."
+        csvExport={{
+          fileName: "movimentos-sem-titulo.csv",
+          buttonLabel: "Exportar sem título",
+          columns: [
+            { header: "Movimento", value: (item) => (item as BankMovement).bankMovementId },
+            { header: "Data", value: (item) => (item as BankMovement).bankMovementDate },
+            { header: "Valor", value: (item) => movementAmount(item as BankMovement) },
+            { header: "Conta", value: (item) => (item as BankMovement).accountNumber },
+            { header: "Parte", value: (item) => movementParty(item as BankMovement) },
+            { header: "Historico", value: (item) => (item as BankMovement).bankMovementHistoricName || (item as BankMovement).bankMovementOperationName }
+          ]
+        }}
+        renderItems={(pageItems) => (
+          <div className="table-card reconciliation-untitled-table">
+            <table>
+              <thead><tr><th>Movimento</th><th>Data</th><th>Valor</th><th>Conta</th><th>Parte</th><th>Histórico</th></tr></thead>
+              <tbody>
+                {pageItems.map((movement, index) => (
+                  <tr key={`${movement.bankMovementId || index}-sem-titulo`}>
+                    <td><strong>{movementDocument(movement)}</strong><br /><span className="table-muted">Movimento #{movement.bankMovementId || "sem código"}</span></td>
+                    <td>{movement.bankMovementDate ? formatDate(movement.bankMovementDate) : "Não informada"}</td>
+                    <td><strong>{formatCurrency(movementAmount(movement))}</strong><br /><span className="table-muted">{movement.bankMovementOperationType || "Tipo não informado"}</span></td>
+                    <td>{movement.accountNumber || "Não informada"}<br /><span className="table-muted">{movement.companyName || ""}</span></td>
+                    <td>{movementParty(movement)}</td>
+                    <td>{movement.bankMovementHistoricName || movement.bankMovementOperationName || "Não informado"}<br /><span className="table-muted">{movement.bankMovementOriginId || ""}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      />
+    </section>
+  );
+}
+
 function configuredAccounts(value: string) {
   return value
     .split(",")
@@ -460,6 +519,7 @@ export function ReconciliationPortal({
     if (!selectedMonth || selectedMonth === "all") return yearMovements;
     return yearMovements.filter((movement) => movementMonthKey(movement) === selectedMonth);
   }, [accountMovements, activeYear, selectedMonth]);
+  const untitledMovements = useMemo(() => visibleMovements.filter((movement) => !hasTitleLink(movement)), [visibleMovements]);
 
   const loadedMessage = useMemo(() => {
     if (!payload) return "";
@@ -483,6 +543,7 @@ export function ReconciliationPortal({
   const monthDonePercent = monthPercent(selectedMonthSummary);
   const linkedInView = visibleMovements.filter(isLinked).length;
   const reconciledInView = visibleMovements.filter(isReconciled).length;
+  const untitledAmount = untitledMovements.reduce((sum, movement) => sum + Math.abs(movementAmount(movement)), 0);
 
   return (
     <>
@@ -520,11 +581,12 @@ export function ReconciliationPortal({
         </button>
       </div>
 
-      <div className="stats">
+      <div className="stats reconciliation-stats">
         <StatCard label="Conciliados" value={String(selectedMonthSummary.reconciledCount)} delta={formatCompactCurrency(selectedMonthSummary.reconciledAmount)} icon="C" />
         <StatCard label="A conciliar" value={String(selectedMonthSummary.unreconciledCount)} delta={formatCompactCurrency(selectedMonthSummary.unreconciledAmount)} warn={selectedMonthSummary.unreconciledCount > 0} icon="!" />
         <StatCard label="Vinculados" value={String(selectedMonthSummary.linkedCount)} delta="Ligados a título, parcela, credor ou cliente" icon="V" />
         <StatCard label="Avulsos" value={String(selectedMonthSummary.detachedCount)} delta="Sem vínculo aparente para conferência" warn={selectedMonthSummary.detachedCount > 0} icon="A" />
+        <StatCard label="Sem título" value={String(untitledMovements.length)} delta={formatCompactCurrency(untitledAmount)} warn={untitledMovements.length > 0} icon="ST" />
       </div>
 
       {error && <ErrorPanel error={error} />}
@@ -551,6 +613,8 @@ export function ReconciliationPortal({
           </div>
         </section>
       </div>
+
+      <UntitledMovementsPanel movements={untitledMovements} periodLabel={selectedLabel} />
 
       <ReconciliationExplorer movements={visibleMovements} periodLabel={selectedLabel} />
     </>
