@@ -34,6 +34,16 @@ export type FinancialDreFutureGroup = {
   netResult: number;
 };
 
+export type FinancialDreYearlyItem = {
+  year: number;
+  receivableDue: number;
+  payableDue: number;
+  projectedResult: number;
+  receivableReceived: number;
+  payablePaid: number;
+  realizedResult: number;
+};
+
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const dbFiles = {
   payables: path.join(dataDir, "finance-payables.sqlite"),
@@ -270,8 +280,8 @@ function loadReceivables(start: string, end: string, baseDate: string) {
     const overdueRow = database.prepare(`
       SELECT COUNT(*) AS count, SUM(${openAmount}) AS total
       FROM bulk_income_installments
-      WHERE dueDate < ? AND ${openAmount} > 0
-    `).get(baseDate) as Row;
+      WHERE dueDate BETWEEN ? AND ? AND dueDate < ? AND ${openAmount} > 0
+    `).get(start, end, baseDate) as Row;
     const clients = chartRows(database.prepare(`
       SELECT COALESCE(clientName, 'Cliente não informado') AS label, SUM(${installmentAmount}) AS value, COUNT(*) AS count
       FROM bulk_income_installments
@@ -379,8 +389,8 @@ function loadPayables(start: string, end: string, baseDate: string) {
     const overdueRow = database.prepare(`
       SELECT COUNT(*) AS count, SUM(${openAmount}) AS total
       FROM bulk_outcome_installments
-      WHERE dueDate < ? AND ${openAmount} > 0
-    `).get(baseDate) as Row;
+      WHERE dueDate BETWEEN ? AND ? AND dueDate < ? AND ${openAmount} > 0
+    `).get(start, end, baseDate) as Row;
     const creditors = chartRows(database.prepare(`
       SELECT COALESCE(creditorName, 'Fornecedor não informado') AS label, SUM(${installmentAmount}) AS value, COUNT(*) AS count
       FROM bulk_outcome_installments
@@ -515,6 +525,59 @@ export async function loadFinancialDre(year = Number(todayIso().slice(0, 4))) {
       sourceStatus(dbFiles.payables, "bulk_outcome_payments", "Pagamentos")
     ]
   };
+}
+
+function yearlyAmountMap(databasePath: string, table: string, dateColumn: string, amountExpression: string) {
+  const map = new Map<number, number>();
+  const database = openDatabase(databasePath);
+  if (!database) return map;
+  try {
+    if (!tableExists(database, table)) return map;
+    const rows = database.prepare(`
+      SELECT substr(${dateColumn}, 1, 4) AS year, SUM(${amountExpression}) AS value
+      FROM ${table}
+      WHERE ${amountExpression} > 0
+      GROUP BY substr(${dateColumn}, 1, 4)
+    `).all() as Row[];
+    rows.forEach((row) => {
+      const year = Number(row.year);
+      if (Number.isInteger(year) && year >= 2000 && year <= 2100) map.set(year, money(row.value));
+    });
+    return map;
+  } finally {
+    database.close();
+  }
+}
+
+export function loadFinancialDreYearlySeries(): FinancialDreYearlyItem[] {
+  const installmentAmount = "COALESCE(originalAmount, correctedBalanceAmount, balanceAmount, 0)";
+  const receivableDueByYear = yearlyAmountMap(dbFiles.receivables, "bulk_income_installments", "dueDate", installmentAmount);
+  const receivableReceivedByYear = yearlyAmountMap(dbFiles.receivables, "bulk_income_receipts", "paymentDate", "COALESCE(netAmount, grossAmount, 0)");
+  const payableDueByYear = yearlyAmountMap(dbFiles.payables, "bulk_outcome_installments", "dueDate", installmentAmount);
+  const payablePaidByYear = yearlyAmountMap(dbFiles.payables, "bulk_outcome_payments", "paymentDate", "COALESCE(netAmount, correctedNetAmount, grossAmount, 0)");
+
+  const years = new Set<number>([
+    ...Array.from(receivableDueByYear.keys()),
+    ...Array.from(receivableReceivedByYear.keys()),
+    ...Array.from(payableDueByYear.keys()),
+    ...Array.from(payablePaidByYear.keys())
+  ]);
+
+  return Array.from(years).sort((left, right) => left - right).map((year) => {
+    const receivableDue = receivableDueByYear.get(year) || 0;
+    const payableDue = payableDueByYear.get(year) || 0;
+    const receivableReceived = receivableReceivedByYear.get(year) || 0;
+    const payablePaid = payablePaidByYear.get(year) || 0;
+    return {
+      year,
+      receivableDue,
+      payableDue,
+      projectedResult: receivableDue - payableDue,
+      receivableReceived,
+      payablePaid,
+      realizedResult: receivableReceived - payablePaid
+    };
+  });
 }
 
 export function loadFinancialDreReportSummary() {

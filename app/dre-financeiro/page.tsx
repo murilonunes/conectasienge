@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { CashFlowChart } from "@/components/charts/cash-flow-chart";
+import { DreYearlyStackedChart } from "@/components/charts/dre-yearly-stacked-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import {
   loadFinancialDre,
+  loadFinancialDreYearlySeries,
   loadFinancialDreYearOptions,
   normalizeFinancialDreYear,
   type FinancialDreFutureGroup,
@@ -17,8 +19,14 @@ export const dynamic = "force-dynamic";
 type FinancialDrePageProps = {
   searchParams?: {
     ano?: string | string[];
+    visao?: string | string[];
   };
 };
+
+function normalizeView(value?: string | string[]) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  return rawValue === "consolidado" ? "consolidado" : "ano";
+}
 
 function formatPercent(value: number) {
   if (!Number.isFinite(value)) return "0,0%";
@@ -122,6 +130,43 @@ function FutureGroups({ groups }: { groups: FinancialDreFutureGroup[] }) {
   );
 }
 
+function YearlyTable({ yearly }: { yearly: Awaited<ReturnType<typeof loadFinancialDreYearlySeries>> }) {
+  return (
+    <section className="card table-card dre-monthly-table">
+      <div className="table-head">
+        <h2 className="panel-title">Consolidado ano a ano</h2>
+        <span className="panel-note">Todos os exercícios com dados salvos em contas a pagar/receber, previsto por vencimento e realizado por baixa</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ano</th>
+            <th>A receber previsto</th>
+            <th>A pagar previsto</th>
+            <th>Resultado previsto</th>
+            <th>Recebido</th>
+            <th>Pago</th>
+            <th>Resultado realizado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {yearly.map((item) => (
+            <tr key={item.year}>
+              <td><strong>{item.year}</strong></td>
+              <td>{formatCurrency(item.receivableDue)}</td>
+              <td>{formatCurrency(item.payableDue)}</td>
+              <td className={item.projectedResult < 0 ? "negative-cell" : "positive-cell"}>{formatCurrency(item.projectedResult)}</td>
+              <td>{formatCurrency(item.receivableReceived)}</td>
+              <td>{formatCurrency(item.payablePaid)}</td>
+              <td className={item.realizedResult < 0 ? "negative-cell" : "positive-cell"}>{formatCurrency(item.realizedResult)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
 function ResultTrend({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
   const max = Math.max(...monthly.map((item) => Math.abs(item.projectedResult)), 1);
 
@@ -157,6 +202,65 @@ function ResultTrend({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
 export default async function FinancialDrePage({ searchParams }: FinancialDrePageProps) {
   const availableYears = loadFinancialDreYearOptions();
   const selectedYear = normalizeFinancialDreYear(searchParams?.ano, availableYears);
+  const selectedView = normalizeView(searchParams?.visao);
+
+  if (selectedView === "consolidado") {
+    const yearly = loadFinancialDreYearlySeries();
+    const projectedSeries = yearly.map((item) => ({ label: String(item.year), positive: item.receivableDue, negative: item.payableDue }));
+    const realizedSeries = yearly.map((item) => ({ label: String(item.year), positive: item.receivableReceived, negative: item.payablePaid }));
+
+    return (
+      <>
+        <PageHeading
+          eyebrow="Resultado financeiro"
+          title="DRE financeiro"
+          subtitle="Consolidado de todos os anos com dados salvos em contas a receber e contas a pagar."
+          action="Atualizar dados"
+          actionHref="/configuracoes"
+        />
+
+        <section className="reports-filter card">
+          <div>
+            <span>Visão</span>
+            <strong>Consolidado</strong>
+            <small>{yearly.length ? `${yearly[0].year} até ${yearly[yearly.length - 1].year}` : "Sem exercícios com dados salvos"}</small>
+          </div>
+          <div className="dashboard-view-controls">
+            <div className="dashboard-direction-options" aria-label="Modo de visão da DRE financeira">
+              <Link href={`/dre-financeiro?ano=${selectedYear}&visao=ano`}>Por ano</Link>
+              <Link href="/dre-financeiro?visao=consolidado" className="active">Consolidado (todos os anos)</Link>
+            </div>
+          </div>
+        </section>
+
+        <DreYearlyStackedChart
+          data={projectedSeries}
+          title="Previsto por vencimento - todos os anos"
+          note="A receber previsto empilhado com a pagar previsto, por ano; o número acima da coluna é o resultado (a receber menos a pagar)"
+          positiveLabel="A receber"
+          negativeLabel="A pagar"
+        />
+        <DreYearlyStackedChart
+          data={realizedSeries}
+          title="Realizado por baixa - todos os anos"
+          note="Recebido empilhado com pago, por ano; o número acima da coluna é o resultado realizado (recebido menos pago)"
+          positiveLabel="Recebido"
+          negativeLabel="Pago"
+        />
+
+        <YearlyTable yearly={yearly} />
+
+        <section className="card methodology dre-methodology">
+          <strong>Como ler esta visão consolidada</strong>
+          <p>
+            Cada coluna soma todas as parcelas de contas a receber e contas a pagar do ano indicado, usando data de vencimento
+            para o previsto e data de baixa para o realizado. Esta visão não depende do exercício selecionado na visão "Por ano".
+          </p>
+        </section>
+      </>
+    );
+  }
+
   const requestedYearParam = Array.isArray(searchParams?.ano) ? searchParams?.ano[0] : searchParams?.ano;
   const requestedYear = Number(requestedYearParam);
   const yearWasAdjusted = Boolean(requestedYearParam && Number.isInteger(requestedYear) && requestedYear !== selectedYear);
@@ -183,11 +287,15 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
           <small>{dre.range.start} até {dre.range.end}</small>
         </div>
         <div className="dashboard-view-controls">
+          <div className="dashboard-direction-options" aria-label="Modo de visão da DRE financeira">
+            <Link href={`/dre-financeiro?ano=${selectedYear}&visao=ano`} className="active">Por ano</Link>
+            <Link href="/dre-financeiro?visao=consolidado">Consolidado (todos os anos)</Link>
+          </div>
           <div className="dashboard-view-options compact" aria-label="Ano da DRE financeira">
             {availableYears.map((year) => (
               <Link
                 key={year}
-                href={`/dre-financeiro?ano=${year}`}
+                href={`/dre-financeiro?ano=${year}&visao=ano`}
                 className={year === selectedYear ? "active" : ""}
               >
                 {year}
@@ -244,8 +352,8 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
         <StatCard label="Recebido" value={formatCompactCurrency(dre.receivableReceived)} delta={`${formatPercent(receiptCoverage)} do previsto por vencimento`} icon="R" />
         <StatCard label="A pagar previsto" value={formatCompactCurrency(dre.payableDue)} delta={`${dre.payableDueCount} parcelas no ano`} warn={dre.payableDue > dre.receivableDue} icon="AP" />
         <StatCard label="Pago" value={formatCompactCurrency(dre.payablePaid)} delta={`${formatPercent(paymentCoverage)} do previsto por vencimento`} warn={dre.payablePaid > dre.receivableReceived} icon="P" />
-        <StatCard label="A receber em atraso" value={formatCompactCurrency(dre.overdueReceivables)} delta={`${dre.overdueReceivablesCount} parcelas vencidas abertas`} warn={dre.overdueReceivables > 0} icon="!" />
-        <StatCard label="A pagar em atraso" value={formatCompactCurrency(dre.overduePayables)} delta={`${dre.overduePayablesCount} parcelas vencidas abertas`} warn={dre.overduePayables > 0} icon="!" />
+        <StatCard label="A receber em atraso no ano" value={formatCompactCurrency(dre.overdueReceivables)} delta={`${dre.overdueReceivablesCount} parcelas de ${selectedYear} vencidas e ainda abertas`} warn={dre.overdueReceivables > 0} icon="!" />
+        <StatCard label="A pagar em atraso no ano" value={formatCompactCurrency(dre.overduePayables)} delta={`${dre.overduePayablesCount} parcelas de ${selectedYear} vencidas e ainda abertas`} warn={dre.overduePayables > 0} icon="!" />
       </div>
 
       <IntegrationSummary integrations={dre.integrations} />

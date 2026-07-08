@@ -253,6 +253,17 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .dre-result-track i { width: 58%; max-width: 30px; min-height: 5px; border-radius: 7px 7px 0 0; }
 .dre-result-track i.positive { background: linear-gradient(to top, var(--green), #4c9878); }
 .dre-result-track i.negative { background: linear-gradient(to top, var(--red), #e6a29b); }
+.dre-yearly-panel { margin-bottom: 20px; overflow: hidden; }
+.dre-yearly-chart { height: 260px; display: flex; gap: 10px; overflow-x: auto; padding-top: 6px; }
+.dre-yearly-column { min-width: 66px; flex: 1; display: grid; grid-template-rows: 28px 1fr 24px; gap: 5px; text-align: center; }
+.dre-yearly-column > span { color: var(--green); font-size: 10px; font-weight: 800; align-self: end; }
+.dre-yearly-column > span.negative { color: var(--red); }
+.dre-yearly-column > strong { color: var(--muted); font-size: 10px; font-weight: 800; }
+.dre-yearly-bars { display: flex; align-items: flex-end; justify-content: center; min-height: 170px; border-bottom: 1px solid var(--line); background: linear-gradient(to top, #f8faf9, transparent); }
+.dre-yearly-stack { width: 46%; max-width: 46px; min-height: 4px; border-radius: 6px 6px 0 0; overflow: hidden; display: flex; flex-direction: column-reverse; }
+.dre-yearly-stack i { width: 100%; }
+.dre-yearly-positive { background: linear-gradient(to top, var(--green), #4c9878); }
+.dre-yearly-negative { background: linear-gradient(to top, var(--red), #e6a29b); }
 .dre-monthly-table { margin-bottom: 20px; overflow-x: auto; }
 .dre-monthly-table .table-head { display: grid; gap: 5px; padding: 18px 18px 0; }
 .positive-cell { color: var(--green); font-weight: 800; }

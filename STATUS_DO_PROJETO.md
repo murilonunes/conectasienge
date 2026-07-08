@@ -280,7 +280,8 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A visao anual consolida por exercicio: contas a receber previstas por vencimento, recebimentos baixados, contas a pagar previstas por vencimento, pagamentos baixados, resultado previsto, resultado realizado e saldo aberto liquido.
 - A tela mostra selecao de ano, cards executivos, grafico previsto por vencimento, grafico realizado por baixa, ranking de clientes, ranking de fornecedores e tabela mes a mes.
 - A visao de futuro agrupa parcelas abertas a partir da data atual nas faixas Hoje a 30 dias, 31 a 60, 61 a 90, 91 a 180, 181 a 365 e acima de 365 dias, mostrando saldo futuro liquido por faixa.
-- A tela tambem destaca contas vencidas abertas a receber e a pagar para separar atraso de previsao futura.
+- A tela tambem destaca contas vencidas abertas a receber e a pagar; o atraso e calculado dentro do exercicio selecionado (vencimento no ano E ja vencido hoje), entao trocar de ano muda o valor mostrado em vez de repetir sempre o atraso total de hoje.
+- A tela ganhou o botao `Consolidado (todos os anos)`, ao lado da visao `Por ano`: mostra dois graficos de pilha (previsto por vencimento e realizado por baixa) com uma coluna por exercicio salvo, empilhando a receber/recebido (verde) com a pagar/pago (vermelho) e o resultado liquido do ano no topo da coluna, alem de uma tabela consolidada ano a ano. Essa visao nao usa o seletor de exercicio, porque olha todos os anos de uma vez.
 - O menu, a tela inicial, a central financeira, a central de relatorios e as permissoes ganharam a entrada propria `DRE financeiro`.
 
 ## DRE POC estimada
