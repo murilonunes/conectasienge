@@ -146,9 +146,9 @@ export default async function QuotationMapPdfPage({
                             <>
                               <strong>{formatCurrency(offer.unitPrice)}</strong>
                               <div className="map-report-price-details">
-                                <small>Total {formatCurrency(offer.total)}</small>
-                                <small>{offer.partial ? `Parcial: ${offer.quantity}` : `Qtd. ${offer.quantity}`}</small>
-                                <small>{offer.deadlineDays ? plural(offer.deadlineDays, "dia", "dias") : "Prazo geral"}</small>
+                                <span><b>Total</b><small>{formatCurrency(offer.total)}</small></span>
+                                <span><b>{offer.partial ? "Parcial" : "Qtd."}</b><small>{offer.quantity}</small></span>
+                                <span><b>Prazo</b><small>{offer.deadlineDays ? plural(offer.deadlineDays, "dia", "dias") : "Geral"}</small></span>
                               </div>
                             </>
                           ) : (
@@ -174,10 +174,10 @@ export default async function QuotationMapPdfPage({
                     <td className="map-report-price-cell" key={`total-${response.id}`}>
                       <strong>{formatCurrency(total)}</strong>
                       <div className="map-report-price-details">
-                        <small>{coverageCount}/{rows.length} itens com preço</small>
-                        <small>{bestCount ? plural(bestCount, "melhor preço", "melhores preços") : "Sem menor preço"}</small>
-                        <small>{paymentSummary(response.commercialTerms)}</small>
-                        <small>{freightSummary(response.commercialTerms)}</small>
+                        <span><b>Itens</b><small>{coverageCount}/{rows.length} com preço</small></span>
+                        <span><b>Melhores</b><small>{bestCount ? plural(bestCount, "preço", "preços") : "Nenhum"}</small></span>
+                        <span><b>Pagamento</b><small>{paymentSummary(response.commercialTerms)}</small></span>
+                        <span><b>Frete</b><small>{freightSummary(response.commercialTerms)}</small></span>
                       </div>
                     </td>
                   ))}
