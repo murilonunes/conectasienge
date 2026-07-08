@@ -112,15 +112,11 @@ export default async function QuotationMapPdfPage({
               <thead>
                 <tr>
                   <th className="map-report-item-row-col">Item</th>
-                  {supplierColumns.map(({ response, total, coverageCount, bestCount }) => (
+                  {supplierColumns.map(({ response }) => (
                     <th className="map-report-supplier-head" key={response.id}>
                       <strong>{response.supplierName}</strong>
                       <small>{formatDocument(response.document)}</small>
                       {response.registrationPending && <em>Cadastro pendente</em>}
-                      <span>{formatCurrency(total)} · {coverageCount}/{rows.length} itens</span>
-                      <span>{bestCount ? plural(bestCount, "melhor preço", "melhores preços") : "Sem menor preço"}</span>
-                      <span>{paymentSummary(response.commercialTerms)}</span>
-                      <span>{freightSummary(response.commercialTerms)}</span>
                     </th>
                   ))}
                   <th className="map-report-choice-col">Melhor cesta</th>
@@ -172,10 +168,13 @@ export default async function QuotationMapPdfPage({
               <tfoot>
                 <tr>
                   <td>Total cotado por fornecedor</td>
-                  {supplierColumns.map(({ response, total, coverageCount }) => (
+                  {supplierColumns.map(({ response, total, coverageCount, bestCount }) => (
                     <td className="map-report-price-cell" key={`total-${response.id}`}>
                       <strong>{formatCurrency(total)}</strong>
                       <small>{coverageCount}/{rows.length} itens com preço</small>
+                      <small>{bestCount ? plural(bestCount, "melhor preço", "melhores preços") : "Sem menor preço"}</small>
+                      <small>{paymentSummary(response.commercialTerms)}</small>
+                      <small>{freightSummary(response.commercialTerms)}</small>
                     </td>
                   ))}
                   <td className="map-report-choice-col total">

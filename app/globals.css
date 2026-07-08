@@ -1981,11 +1981,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-item-row-col strong { margin: 3px 0; color: var(--ink); font-size: 12px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
 .map-report-item-row-col small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.35; }
 .map-report-supplier-head { min-width: 150px; max-width: 185px; }
-.map-report-supplier-head strong, .map-report-supplier-head small, .map-report-supplier-head em, .map-report-supplier-head span { display: block; }
+.map-report-supplier-head strong, .map-report-supplier-head small, .map-report-supplier-head em { display: block; }
 .map-report-supplier-head strong { margin-bottom: 3px; color: var(--ink); font-size: 11px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
 .map-report-supplier-head small { color: var(--muted); font-size: 9px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
 .map-report-supplier-head em { margin: 4px 0; color: #9b641d; font-size: 8px; font-style: normal; font-weight: 800; text-transform: uppercase; }
-.map-report-supplier-head span { margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
 .map-report-choice-col { min-width: 150px; background: #fff; }
 .map-report-choice-col strong, .map-report-choice-col small, .map-report-choice-col span { display: block; }
 .map-report-choice-col strong { margin-bottom: 3px; color: var(--ink); font-family: var(--font-display); font-size: 14px; text-transform: none; letter-spacing: 0; }
