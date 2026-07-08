@@ -1980,6 +1980,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-item-row-col span { color: #80591f; font-size: 9px; font-weight: 900; }
 .map-report-item-row-col strong { margin: 3px 0; color: var(--ink); font-size: 12px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
 .map-report-item-row-col small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.map-report-quantity-col { width: 92px; min-width: 92px; text-align: center; background: #fff; }
+.map-report-quantity-col strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 14px; }
+.map-report-quantity-col small { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
 .map-report-supplier-head { min-width: 150px; max-width: 185px; }
 .map-report-supplier-head strong, .map-report-supplier-head small, .map-report-supplier-head em { display: block; }
 .map-report-supplier-head strong { margin-bottom: 3px; color: var(--ink); font-size: 11px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
@@ -1998,8 +2001,6 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-price-cell small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.3; }
 .map-report-price-cell span { color: var(--muted); font-size: 10px; font-weight: 750; }
 .map-report-price-details { display: grid; gap: 2px; margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); }
-.map-report-price-details span { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 6px; align-items: start; color: var(--muted); font-size: 9px; font-weight: 750; }
-.map-report-price-details b { color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
 .map-report-price-details small { margin-top: 0; min-width: 0; overflow-wrap: anywhere; text-align: left; }
 .map-report-price-cell.partial { background: #fffaf1; }
 .map-report-price-cell.partial strong, .map-report-price-cell.partial small { color: #80591f; }
@@ -2007,6 +2008,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-price-cell.best strong { color: var(--green); }
 .map-report-price-cell.best small { color: var(--green); }
 .map-report-matrix tfoot td { border-top: 2px solid var(--line); font-weight: 800; }
+.map-report-matrix tfoot .map-report-extra-row td { border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 700; line-height: 1.35; }
+.map-report-matrix tfoot .map-report-extra-row td:first-child { color: var(--ink); font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
 .map-report-empty { margin: 0; color: var(--muted); font-size: 12px; }
 .map-report-footer { padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 @media print {
@@ -2015,6 +2018,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .map-report-matrix-wrap { overflow: visible; box-shadow: none; }
   .map-report-matrix { min-width: 0; font-size: 9px; }
   .map-report-item-row-col { min-width: 150px; width: 150px; }
+  .map-report-quantity-col { min-width: 70px; width: 70px; }
   .map-report-supplier-head { min-width: 118px; }
   .map-report-choice-col { min-width: 118px; }
   .map-report-price-cell.best { background: var(--green-soft) !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }

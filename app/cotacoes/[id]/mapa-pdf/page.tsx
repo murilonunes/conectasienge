@@ -112,6 +112,7 @@ export default async function QuotationMapPdfPage({
               <thead>
                 <tr>
                   <th className="map-report-item-row-col">Item</th>
+                  <th className="map-report-quantity-col">Quantidade</th>
                   {supplierColumns.map(({ response }) => (
                     <th className="map-report-supplier-head" key={response.id}>
                       <strong>{response.supplierName}</strong>
@@ -128,8 +129,11 @@ export default async function QuotationMapPdfPage({
                     <td className="map-report-item-row-col">
                       <span>#{row.item?.productId || row.itemNumber}</span>
                       <strong>{row.item?.name || `Item ${row.itemNumber}`}</strong>
-                      <small>{row.item?.quantity || 0} {row.item?.unit || "un"} solicitados</small>
                       {row.item?.detail && <small>{row.item.detail}</small>}
+                    </td>
+                    <td className="map-report-quantity-col">
+                      <strong>{row.item ? row.item.quantity || 0 : "-"}</strong>
+                      <small>{row.item?.unit || "un"}</small>
                     </td>
                     {supplierColumns.map(({ response }) => {
                       const offer = row.offers.find((current) => current.responseId === response.id);
@@ -146,9 +150,8 @@ export default async function QuotationMapPdfPage({
                             <>
                               <strong>{formatCurrency(offer.unitPrice)}</strong>
                               <div className="map-report-price-details">
-                                <span><b>Total</b><small>{formatCurrency(offer.total)}</small></span>
-                                <span><b>{offer.partial ? "Parcial" : "Qtd."}</b><small>{offer.quantity}</small></span>
-                                <span><b>Prazo</b><small>{offer.deadlineDays ? plural(offer.deadlineDays, "dia", "dias") : "Geral"}</small></span>
+                                <small>Total {formatCurrency(offer.total)}</small>
+                                {offer.deadlineDays > 0 && <small>Prazo {plural(offer.deadlineDays, "dia", "dias")}</small>}
                               </div>
                             </>
                           ) : (
@@ -170,21 +173,48 @@ export default async function QuotationMapPdfPage({
               <tfoot>
                 <tr>
                   <td>Total cotado por fornecedor</td>
-                  {supplierColumns.map(({ response, total, coverageCount, bestCount }) => (
+                  <td></td>
+                  {supplierColumns.map(({ response, total }) => (
                     <td className="map-report-price-cell" key={`total-${response.id}`}>
                       <strong>{formatCurrency(total)}</strong>
-                      <div className="map-report-price-details">
-                        <span><b>Itens</b><small>{coverageCount}/{rows.length} com preço</small></span>
-                        <span><b>Melhores</b><small>{bestCount ? plural(bestCount, "preço", "preços") : "Nenhum"}</small></span>
-                        <span><b>Pagamento</b><small>{paymentSummary(response.commercialTerms)}</small></span>
-                        <span><b>Frete</b><small>{freightSummary(response.commercialTerms)}</small></span>
-                      </div>
                     </td>
                   ))}
                   <td className="map-report-choice-col total">
                     <strong>{formatCurrency(bestBasketTotal)}</strong>
                     <small>Menor cesta item a item</small>
                   </td>
+                </tr>
+                <tr className="map-report-extra-row">
+                  <td>Itens</td>
+                  <td></td>
+                  {supplierColumns.map(({ response, coverageCount }) => (
+                    <td key={`coverage-${response.id}`}>{coverageCount}/{rows.length} com preço</td>
+                  ))}
+                  <td></td>
+                </tr>
+                <tr className="map-report-extra-row">
+                  <td>Melhores</td>
+                  <td></td>
+                  {supplierColumns.map(({ response, bestCount }) => (
+                    <td key={`best-count-${response.id}`}>{bestCount ? plural(bestCount, "preço", "preços") : "Nenhum"}</td>
+                  ))}
+                  <td></td>
+                </tr>
+                <tr className="map-report-extra-row">
+                  <td>Pagamento</td>
+                  <td></td>
+                  {supplierColumns.map(({ response }) => (
+                    <td key={`payment-${response.id}`}>{paymentSummary(response.commercialTerms)}</td>
+                  ))}
+                  <td></td>
+                </tr>
+                <tr className="map-report-extra-row">
+                  <td>Frete</td>
+                  <td></td>
+                  {supplierColumns.map(({ response }) => (
+                    <td key={`freight-${response.id}`}>{freightSummary(response.commercialTerms)}</td>
+                  ))}
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
