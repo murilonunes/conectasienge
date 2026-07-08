@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CashFlowChart } from "@/components/charts/cash-flow-chart";
 import { DreYearlyStackedChart } from "@/components/charts/dre-yearly-stacked-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
+import { CsvExportButton } from "@/components/ui/csv-export-button";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import {
@@ -9,7 +10,9 @@ import {
   loadFinancialDreYearlySeries,
   loadFinancialDreYearOptions,
   normalizeFinancialDreYear,
+  type FinancialDreFutureDetailRow,
   type FinancialDreFutureGroup,
+  type FinancialDreCalculationExportRow,
   type FinancialDreMonthlyItem
 } from "@/features/dre-financeiro/data";
 import { formatCompactCurrency, formatCurrency } from "@/lib/formatters";
@@ -95,12 +98,29 @@ function MonthlyTable({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
   );
 }
 
-function FutureGroups({ groups }: { groups: FinancialDreFutureGroup[] }) {
+function FutureGroups({ groups, details }: { groups: FinancialDreFutureGroup[]; details: FinancialDreFutureDetailRow[] }) {
   return (
     <section className="card table-card dre-monthly-table">
-      <div className="table-head">
-        <h2 className="panel-title">Futuro agrupado</h2>
-        <span className="panel-note">Somente parcelas abertas com vencimento a partir de hoje, agrupadas por distância do vencimento</span>
+      <div className="table-head table-head-row">
+        <div>
+          <h2 className="panel-title">Futuro agrupado</h2>
+          <span className="panel-note">Somente parcelas abertas com vencimento a partir de hoje, agrupadas por distância do vencimento</span>
+        </div>
+        <CsvExportButton
+          fileName="dre-financeiro-saldo-futuro-detalhado.csv"
+          label="Exportar CSV detalhado"
+          headers={["Tipo", "Faixa", "Cliente/Fornecedor", "Documento", "Título", "Parcela", "Vencimento", "Valor em aberto"]}
+          rows={details.map((item) => [
+            item.kind === "receivable" ? "A receber" : "A pagar",
+            item.bucketLabel,
+            item.name,
+            item.document,
+            item.billId,
+            item.installmentId,
+            item.dueDate,
+            item.value
+          ])}
+        />
       </div>
       <table>
         <thead>
@@ -126,6 +146,58 @@ function FutureGroups({ groups }: { groups: FinancialDreFutureGroup[] }) {
           ))}
         </tbody>
       </table>
+    </section>
+  );
+}
+
+const dreExportHeaders = ["Grupo", "Origem", "Cliente/Fornecedor", "Documento", "Título", "Parcela", "Vencimento", "Data da baixa", "Tipo da baixa", "Código do tipo", "Valor"];
+
+function dreExportRows(rows: FinancialDreCalculationExportRow[]) {
+  return rows.map((item) => [
+    item.group,
+    item.source,
+    item.name,
+    item.document,
+    item.billId,
+    item.installmentId,
+    item.dueDate,
+    item.cashDate,
+    item.operationTypeName,
+    item.operationTypeId,
+    item.value
+  ]);
+}
+
+function CalculationExports({
+  year,
+  receivables,
+  payables
+}: {
+  year: number;
+  receivables: FinancialDreCalculationExportRow[];
+  payables: FinancialDreCalculationExportRow[];
+}) {
+  return (
+    <section className="card dre-export-panel">
+      <div>
+        <span>Auditoria do cálculo</span>
+        <strong>Exportar linhas usadas no DRE de {year}</strong>
+        <small>Inclui parcelas previstas por vencimento e baixas de dinheiro real usadas nos cards, gráficos e tabela mensal.</small>
+      </div>
+      <div className="dre-export-actions">
+        <CsvExportButton
+          fileName={`dre-financeiro-${year}-a-receber.csv`}
+          label={`Exportar a receber (${receivables.length})`}
+          headers={dreExportHeaders}
+          rows={dreExportRows(receivables)}
+        />
+        <CsvExportButton
+          fileName={`dre-financeiro-${year}-a-pagar.csv`}
+          label={`Exportar a pagar (${payables.length})`}
+          headers={dreExportHeaders}
+          rows={dreExportRows(payables)}
+        />
+      </div>
     </section>
   );
 }
@@ -305,6 +377,12 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
         </div>
       </section>
 
+      <CalculationExports
+        year={selectedYear}
+        receivables={dre.receivableCalculationRows}
+        payables={dre.payableCalculationRows}
+      />
+
       {yearWasAdjusted && (
         <section className="card data-notice">
           <strong>Ano ajustado</strong>
@@ -378,7 +456,7 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
         <RankingChart title="Maiores fornecedores no ano" note="Contas a pagar previstas por vencimento" data={dre.creditors} countLabel="parcela" />
       </div>
 
-      <FutureGroups groups={dre.futureGroups} />
+      <FutureGroups groups={dre.futureGroups} details={dre.futureDetails} />
       <MonthlyTable monthly={dre.monthly} />
 
       <section className="card methodology dre-methodology">

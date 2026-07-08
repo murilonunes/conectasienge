@@ -603,11 +603,14 @@ function loadPayables(start: string, end: string) {
     }));
 
     const hasPayments = tableExists(database, "bulk_outcome_payments");
+    // Só "Pagamento" (1) e "Adiantamento" (10) são dinheiro de verdade; substituição, cancelamento e
+    // permuta ("Por Bens") são baixas contábeis sem caixa novo e não devem contar como pago.
     const paidRow = hasPayments
       ? database.prepare(`
         SELECT COUNT(*) AS count, SUM(COALESCE(netAmount, correctedNetAmount, grossAmount, 0)) AS total
         FROM bulk_outcome_payments
         WHERE paymentDate BETWEEN ? AND ?
+          AND operationTypeId IN (1, 10)
           AND COALESCE(netAmount, correctedNetAmount, grossAmount, 0) > 0
       `).get(start, end) as Row
       : { count: 0, total: 0 };
@@ -616,6 +619,7 @@ function loadPayables(start: string, end: string) {
         SELECT substr(paymentDate, 1, 7) AS month, SUM(COALESCE(netAmount, correctedNetAmount, grossAmount, 0)) AS value
         FROM bulk_outcome_payments
         WHERE paymentDate BETWEEN ? AND ?
+          AND operationTypeId IN (1, 10)
           AND COALESCE(netAmount, correctedNetAmount, grossAmount, 0) > 0
         GROUP BY substr(paymentDate, 1, 7)
         ORDER BY month ASC
@@ -669,11 +673,14 @@ function loadReceivables(start: string, end: string) {
   try {
     if (!tableExists(database, "bulk_income_installments")) return empty;
     const hasReceipts = tableExists(database, "bulk_income_receipts");
+    // Só "Recebimento" (2) é dinheiro de verdade; permuta ("Por Bens"), substituição, distrato,
+    // reparcelamento e cancelamento são baixas contábeis sem caixa novo e não devem contar como recebido.
     const receivedRow = hasReceipts
       ? database.prepare(`
         SELECT COUNT(*) AS count, SUM(COALESCE(netAmount, grossAmount, 0)) AS total
         FROM bulk_income_receipts
         WHERE paymentDate BETWEEN ? AND ?
+          AND operationTypeId = 2
           AND COALESCE(netAmount, grossAmount, 0) > 0
       `).get(start, end) as Row
       : { count: 0, total: 0 };
@@ -682,6 +689,7 @@ function loadReceivables(start: string, end: string) {
         SELECT substr(paymentDate, 1, 7) AS month, SUM(COALESCE(netAmount, grossAmount, 0)) AS value
         FROM bulk_income_receipts
         WHERE paymentDate BETWEEN ? AND ?
+          AND operationTypeId = 2
           AND COALESCE(netAmount, grossAmount, 0) > 0
         GROUP BY substr(paymentDate, 1, 7)
         ORDER BY month ASC

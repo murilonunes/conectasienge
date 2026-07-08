@@ -519,6 +519,8 @@ function createIncomeTables(database: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_bulk_income_installments_dueDate ON bulk_income_installments(dueDate);
     CREATE INDEX IF NOT EXISTS idx_bulk_income_installments_clientId ON bulk_income_installments(clientId);
     CREATE INDEX IF NOT EXISTS idx_bulk_income_installments_billId ON bulk_income_installments(billId);
+    CREATE INDEX IF NOT EXISTS idx_bulk_income_receipts_paymentDate ON bulk_income_receipts(paymentDate);
+    CREATE INDEX IF NOT EXISTS idx_bulk_income_receipts_parent ON bulk_income_receipts(tenant, billId, installmentId);
   `);
 }
 

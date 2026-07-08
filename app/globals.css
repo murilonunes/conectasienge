@@ -241,6 +241,12 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .dre-filter .dashboard-direction-options a { text-align: center; }
 .dre-filter .dashboard-view-options.compact { width: 100%; max-width: 100%; justify-content: flex-end; overflow-x: auto; padding: 2px 0 6px; }
 .dre-filter .dashboard-view-options.compact a { padding: 7px 10px; }
+.dre-export-panel { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px; margin: -4px 0 18px; }
+.dre-export-panel > div:first-child { display: grid; gap: 4px; }
+.dre-export-panel span { color: var(--green); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.dre-export-panel strong { font-size: 13px; }
+.dre-export-panel small { color: var(--muted); font-size: 10px; }
+.dre-export-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .dre-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
 .sales-stats { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .dre-integration-panel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 14px; margin-bottom: 20px; }
@@ -272,6 +278,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .dre-yearly-negative { background: linear-gradient(to top, var(--red), #e6a29b); }
 .dre-monthly-table { margin-bottom: 20px; overflow-x: auto; }
 .dre-monthly-table .table-head { display: grid; gap: 5px; padding: 18px 18px 0; }
+.table-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.table-head-row > div:first-child { display: grid; gap: 5px; }
 .positive-cell { color: var(--green); font-weight: 800; }
 .negative-cell { color: var(--red); font-weight: 800; }
 .dre-methodology { margin-top: 0; }
@@ -1678,6 +1686,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .reports-filter, .reports-intro { grid-template-columns: 1fr; }
   .dre-filter .dashboard-direction-options { justify-self: start; }
   .dre-filter .dashboard-view-options.compact { justify-content: flex-start; }
+  .dre-export-panel { align-items: flex-start; flex-direction: column; }
+  .dre-export-actions { justify-content: flex-start; }
   .reports-intro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .report-catalog { grid-template-columns: 1fr; }
   .dre-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }

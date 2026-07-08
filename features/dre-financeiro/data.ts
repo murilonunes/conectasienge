@@ -34,6 +34,31 @@ export type FinancialDreFutureGroup = {
   netResult: number;
 };
 
+export type FinancialDreFutureDetailRow = {
+  kind: "receivable" | "payable";
+  bucketLabel: string;
+  name: string;
+  document: string;
+  billId: number;
+  installmentId: number;
+  dueDate: string;
+  value: number;
+};
+
+export type FinancialDreCalculationExportRow = {
+  group: "Previsto" | "Realizado";
+  source: string;
+  name: string;
+  document: string;
+  billId: number;
+  installmentId: number;
+  dueDate: string;
+  cashDate: string;
+  operationTypeId: number;
+  operationTypeName: string;
+  value: number;
+};
+
 export type FinancialDreYearlyItem = {
   year: number;
   receivableDue: number;
@@ -68,6 +93,23 @@ function openDatabase(databasePath: string) {
 
 function tableExists(database: DatabaseSync, table: string) {
   return Boolean(database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(table));
+}
+
+// As consultas de "previsto" cruzam com as tabelas de baixa (bulk_income_receipts/bulk_outcome_payments)
+// via NOT EXISTS correlacionado; sem indice em (tenant, billId, installmentId) e sem estatisticas
+// atualizadas (ANALYZE), o SQLite pode escolher varrer a tabela inteira a cada linha e travar a tela
+// em bases maiores. Garante isso uma vez por tabela a cada processo, sem custo em leituras seguintes.
+const cashLookupPerformanceEnsured = new Set<string>();
+function ensureCashLookupPerformance(database: DatabaseSync, table: string) {
+  if (cashLookupPerformanceEnsured.has(table)) return;
+  try {
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_cash_lookup ON ${table}(tenant, billId, installmentId);`);
+    database.exec(`ANALYZE ${table};`);
+  } catch {
+    // A leitura continua funcionando sem o indice/estatisticas; so fica mais lenta em bases grandes.
+  } finally {
+    cashLookupPerformanceEnsured.add(table);
+  }
 }
 
 function money(value: unknown) {
@@ -225,6 +267,42 @@ function addFutureOpen(groups: FinancialDreFutureGroup[], kind: "receivable" | "
   });
 }
 
+function buildFutureDetails(kind: "receivable" | "payable", baseDate: string, rows: Row[]): FinancialDreFutureDetailRow[] {
+  return rows
+    .map((row) => {
+      const bucket = bucketForDueDate(baseDate, row.dueDate);
+      if (!bucket) return undefined;
+      const detail: FinancialDreFutureDetailRow = {
+        kind,
+        bucketLabel: String(bucket.label),
+        name: String(row.name || (kind === "receivable" ? "Cliente não informado" : "Fornecedor não informado")),
+        document: String(row.document || ""),
+        billId: Number(row.billId) || 0,
+        installmentId: Number(row.installmentId) || 0,
+        dueDate: String(row.dueDate || "").slice(0, 10),
+        value: money(row.value)
+      };
+      return detail;
+    })
+    .filter((row): row is FinancialDreFutureDetailRow => Boolean(row));
+}
+
+function calculationRows(rows: Row[]): FinancialDreCalculationExportRow[] {
+  return rows.map((row) => ({
+    group: row.group === "Realizado" ? "Realizado" : "Previsto",
+    source: String(row.source || ""),
+    name: String(row.name || ""),
+    document: String(row.document || ""),
+    billId: Number(row.billId) || 0,
+    installmentId: Number(row.installmentId) || 0,
+    dueDate: String(row.dueDate || "").slice(0, 10),
+    cashDate: String(row.cashDate || "").slice(0, 10),
+    operationTypeId: Number(row.operationTypeId) || 0,
+    operationTypeName: String(row.operationTypeName || ""),
+    value: money(row.value)
+  }));
+}
+
 function loadReceivables(start: string, end: string, baseDate: string) {
   const database = openDatabase(dbFiles.receivables);
   const empty = {
@@ -242,6 +320,7 @@ function loadReceivables(start: string, end: string, baseDate: string) {
     monthlyDueCount: new Map<string, number>(),
     clients: [] as ChartItem[],
     futureRows: [] as Row[],
+    calculationRows: [] as FinancialDreCalculationExportRow[],
     unavailable: true
   };
   if (!database) return empty;
@@ -249,21 +328,34 @@ function loadReceivables(start: string, end: string, baseDate: string) {
     if (!tableExists(database, "bulk_income_installments")) return empty;
     const installmentAmount = "COALESCE(originalAmount, correctedBalanceAmount, balanceAmount, 0)";
     const openAmount = "COALESCE(correctedBalanceAmount, balanceAmount, 0)";
+    const hasReceipts = tableExists(database, "bulk_income_receipts");
+    if (hasReceipts) ensureCashLookupPerformance(database, "bulk_income_receipts");
+    // Uma parcela ja baixada por permuta, substituicao, distrato, reparcelamento ou cancelamento
+    // nao e mais dinheiro esperado; so tira do previsto quando ja existe baixa comprovando isso,
+    // porque enquanto a parcela estiver aberta nao da pra saber como sera quitada.
+    const cashOnlyFilter = hasReceipts
+      ? `AND NOT EXISTS (
+          SELECT 1 FROM bulk_income_receipts r
+          WHERE r.tenant = bulk_income_installments.tenant
+            AND r.billId = bulk_income_installments.billId AND r.installmentId = bulk_income_installments.installmentId
+            AND r.operationTypeId NOT IN (2)
+        )`
+      : "";
     const dueRow = database.prepare(`
       SELECT COUNT(*) AS count, SUM(${installmentAmount}) AS total
       FROM bulk_income_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
     `).get(start, end) as Row;
     const monthlyDue = rowsToMonthlyMap(database.prepare(`
       SELECT substr(dueDate, 1, 7) AS month, SUM(${installmentAmount}) AS value
       FROM bulk_income_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
       GROUP BY substr(dueDate, 1, 7)
     `).all(start, end) as Row[]);
     const monthlyDueCount = rowsToMonthlyCount(database.prepare(`
       SELECT substr(dueDate, 1, 7) AS month, COUNT(*) AS count
       FROM bulk_income_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
       GROUP BY substr(dueDate, 1, 7)
     `).all(start, end) as Row[]);
     const monthlyOpen = rowsToMonthlyMap(database.prepare(`
@@ -285,32 +377,56 @@ function loadReceivables(start: string, end: string, baseDate: string) {
     const clients = chartRows(database.prepare(`
       SELECT COALESCE(clientName, 'Cliente não informado') AS label, SUM(${installmentAmount}) AS value, COUNT(*) AS count
       FROM bulk_income_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
       GROUP BY COALESCE(clientName, 'Cliente não informado')
       ORDER BY value DESC
       LIMIT 10
     `).all(start, end) as Row[]);
     const futureRows = database.prepare(`
-      SELECT dueDate, ${openAmount} AS value
+      SELECT dueDate, ${openAmount} AS value, billId, installmentId,
+        COALESCE(clientName, 'Cliente não informado') AS name, COALESCE(documentNumber, '') AS document
       FROM bulk_income_installments
       WHERE dueDate >= ? AND ${openAmount} > 0
     `).all(baseDate) as Row[];
-    const hasReceipts = tableExists(database, "bulk_income_receipts");
+    const dueCalculationRows = calculationRows(database.prepare(`
+      SELECT 'Previsto' AS "group", 'A receber previsto por vencimento' AS source,
+        COALESCE(clientName, 'Cliente não informado') AS name, COALESCE(documentNumber, '') AS document,
+        billId, installmentId, dueDate, NULL AS cashDate, NULL AS operationTypeId, NULL AS operationTypeName,
+        ${installmentAmount} AS value
+      FROM bulk_income_installments
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
+      ORDER BY dueDate, billId, installmentId
+    `).all(start, end) as Row[]);
+    // Só "Recebimento" (operationTypeId 2) conta como dinheiro de verdade; permuta ("Por Bens"),
+    // substituição, distrato, cancelamento e reparcelamento são baixas contábeis sem caixa novo.
     const receivedRow = hasReceipts
       ? database.prepare(`
         SELECT COUNT(*) AS count, SUM(COALESCE(netAmount, grossAmount, 0)) AS total
         FROM bulk_income_receipts
-        WHERE paymentDate BETWEEN ? AND ? AND COALESCE(netAmount, grossAmount, 0) > 0
+        WHERE paymentDate BETWEEN ? AND ? AND operationTypeId = 2 AND COALESCE(netAmount, grossAmount, 0) > 0
       `).get(start, end) as Row
       : { count: 0, total: 0 };
     const monthlyReceived = hasReceipts
       ? rowsToMonthlyMap(database.prepare(`
         SELECT substr(paymentDate, 1, 7) AS month, SUM(COALESCE(netAmount, grossAmount, 0)) AS value
         FROM bulk_income_receipts
-        WHERE paymentDate BETWEEN ? AND ? AND COALESCE(netAmount, grossAmount, 0) > 0
+        WHERE paymentDate BETWEEN ? AND ? AND operationTypeId = 2 AND COALESCE(netAmount, grossAmount, 0) > 0
         GROUP BY substr(paymentDate, 1, 7)
       `).all(start, end) as Row[])
       : new Map<string, number>();
+    const receivedCalculationRows = hasReceipts
+      ? calculationRows(database.prepare(`
+        SELECT 'Realizado' AS "group", 'Recebido por baixa' AS source,
+          COALESCE(i.clientName, 'Cliente não informado') AS name, COALESCE(i.documentNumber, '') AS document,
+          r.billId, r.installmentId, i.dueDate, r.paymentDate AS cashDate,
+          r.operationTypeId, r.operationTypeName, COALESCE(r.netAmount, r.grossAmount, 0) AS value
+        FROM bulk_income_receipts r
+        LEFT JOIN bulk_income_installments i
+          ON i.tenant = r.tenant AND i.billId = r.billId AND i.installmentId = r.installmentId
+        WHERE r.paymentDate BETWEEN ? AND ? AND r.operationTypeId = 2 AND COALESCE(r.netAmount, r.grossAmount, 0) > 0
+        ORDER BY r.paymentDate, r.billId, r.installmentId
+      `).all(start, end) as Row[])
+      : [];
 
     return {
       due: money(dueRow.total),
@@ -327,6 +443,7 @@ function loadReceivables(start: string, end: string, baseDate: string) {
       monthlyDueCount,
       clients,
       futureRows,
+      calculationRows: [...dueCalculationRows, ...receivedCalculationRows],
       unavailable: false
     };
   } finally {
@@ -351,6 +468,7 @@ function loadPayables(start: string, end: string, baseDate: string) {
     monthlyDueCount: new Map<string, number>(),
     creditors: [] as ChartItem[],
     futureRows: [] as Row[],
+    calculationRows: [] as FinancialDreCalculationExportRow[],
     unavailable: true
   };
   if (!database) return empty;
@@ -358,21 +476,33 @@ function loadPayables(start: string, end: string, baseDate: string) {
     if (!tableExists(database, "bulk_outcome_installments")) return empty;
     const installmentAmount = "COALESCE(originalAmount, correctedBalanceAmount, balanceAmount, 0)";
     const openAmount = "COALESCE(correctedBalanceAmount, balanceAmount, 0)";
+    const hasPayments = tableExists(database, "bulk_outcome_payments");
+    if (hasPayments) ensureCashLookupPerformance(database, "bulk_outcome_payments");
+    // Uma parcela ja baixada por permuta, substituicao ou cancelamento nao e mais uma saida de
+    // dinheiro esperada; so tira do previsto quando ja existe baixa comprovando isso.
+    const cashOnlyFilter = hasPayments
+      ? `AND NOT EXISTS (
+          SELECT 1 FROM bulk_outcome_payments p
+          WHERE p.tenant = bulk_outcome_installments.tenant
+            AND p.billId = bulk_outcome_installments.billId AND p.installmentId = bulk_outcome_installments.installmentId
+            AND p.operationTypeId NOT IN (1, 10)
+        )`
+      : "";
     const dueRow = database.prepare(`
       SELECT COUNT(*) AS count, SUM(${installmentAmount}) AS total
       FROM bulk_outcome_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
     `).get(start, end) as Row;
     const monthlyDue = rowsToMonthlyMap(database.prepare(`
       SELECT substr(dueDate, 1, 7) AS month, SUM(${installmentAmount}) AS value
       FROM bulk_outcome_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
       GROUP BY substr(dueDate, 1, 7)
     `).all(start, end) as Row[]);
     const monthlyDueCount = rowsToMonthlyCount(database.prepare(`
       SELECT substr(dueDate, 1, 7) AS month, COUNT(*) AS count
       FROM bulk_outcome_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
       GROUP BY substr(dueDate, 1, 7)
     `).all(start, end) as Row[]);
     const monthlyOpen = rowsToMonthlyMap(database.prepare(`
@@ -394,32 +524,56 @@ function loadPayables(start: string, end: string, baseDate: string) {
     const creditors = chartRows(database.prepare(`
       SELECT COALESCE(creditorName, 'Fornecedor não informado') AS label, SUM(${installmentAmount}) AS value, COUNT(*) AS count
       FROM bulk_outcome_installments
-      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
       GROUP BY COALESCE(creditorName, 'Fornecedor não informado')
       ORDER BY value DESC
       LIMIT 10
     `).all(start, end) as Row[]);
     const futureRows = database.prepare(`
-      SELECT dueDate, ${openAmount} AS value
+      SELECT dueDate, ${openAmount} AS value, billId, installmentId,
+        COALESCE(creditorName, 'Fornecedor não informado') AS name, COALESCE(documentNumber, '') AS document
       FROM bulk_outcome_installments
       WHERE dueDate >= ? AND ${openAmount} > 0
     `).all(baseDate) as Row[];
-    const hasPayments = tableExists(database, "bulk_outcome_payments");
+    const dueCalculationRows = calculationRows(database.prepare(`
+      SELECT 'Previsto' AS "group", 'A pagar previsto por vencimento' AS source,
+        COALESCE(creditorName, 'Fornecedor não informado') AS name, COALESCE(documentNumber, '') AS document,
+        billId, installmentId, dueDate, NULL AS cashDate, NULL AS operationTypeId, NULL AS operationTypeName,
+        ${installmentAmount} AS value
+      FROM bulk_outcome_installments
+      WHERE dueDate BETWEEN ? AND ? AND ${installmentAmount} > 0 ${cashOnlyFilter}
+      ORDER BY dueDate, billId, installmentId
+    `).all(start, end) as Row[]);
+    // Só "Pagamento" (1) e "Adiantamento" (10) são dinheiro de verdade; substituição, cancelamento,
+    // permuta ("Por Bens") e abatimento de adiantamento (aplicação de um adiantamento já pago) não são.
     const paidRow = hasPayments
       ? database.prepare(`
         SELECT COUNT(*) AS count, SUM(COALESCE(netAmount, correctedNetAmount, grossAmount, 0)) AS total
         FROM bulk_outcome_payments
-        WHERE paymentDate BETWEEN ? AND ? AND COALESCE(netAmount, correctedNetAmount, grossAmount, 0) > 0
+        WHERE paymentDate BETWEEN ? AND ? AND operationTypeId IN (1, 10) AND COALESCE(netAmount, correctedNetAmount, grossAmount, 0) > 0
       `).get(start, end) as Row
       : { count: 0, total: 0 };
     const monthlyPaid = hasPayments
       ? rowsToMonthlyMap(database.prepare(`
         SELECT substr(paymentDate, 1, 7) AS month, SUM(COALESCE(netAmount, correctedNetAmount, grossAmount, 0)) AS value
         FROM bulk_outcome_payments
-        WHERE paymentDate BETWEEN ? AND ? AND COALESCE(netAmount, correctedNetAmount, grossAmount, 0) > 0
+        WHERE paymentDate BETWEEN ? AND ? AND operationTypeId IN (1, 10) AND COALESCE(netAmount, correctedNetAmount, grossAmount, 0) > 0
         GROUP BY substr(paymentDate, 1, 7)
       `).all(start, end) as Row[])
       : new Map<string, number>();
+    const paidCalculationRows = hasPayments
+      ? calculationRows(database.prepare(`
+        SELECT 'Realizado' AS "group", 'Pago por baixa' AS source,
+          COALESCE(i.creditorName, 'Fornecedor não informado') AS name, COALESCE(i.documentNumber, '') AS document,
+          p.billId, p.installmentId, i.dueDate, p.paymentDate AS cashDate,
+          p.operationTypeId, p.operationTypeName, COALESCE(p.netAmount, p.correctedNetAmount, p.grossAmount, 0) AS value
+        FROM bulk_outcome_payments p
+        LEFT JOIN bulk_outcome_installments i
+          ON i.tenant = p.tenant AND i.billId = p.billId AND i.installmentId = p.installmentId
+        WHERE p.paymentDate BETWEEN ? AND ? AND p.operationTypeId IN (1, 10) AND COALESCE(p.netAmount, p.correctedNetAmount, p.grossAmount, 0) > 0
+        ORDER BY p.paymentDate, p.billId, p.installmentId
+      `).all(start, end) as Row[])
+      : [];
 
     return {
       due: money(dueRow.total),
@@ -436,6 +590,7 @@ function loadPayables(start: string, end: string, baseDate: string) {
       monthlyDueCount,
       creditors,
       futureRows,
+      calculationRows: [...dueCalculationRows, ...paidCalculationRows],
       unavailable: false
     };
   } finally {
@@ -475,6 +630,10 @@ export async function loadFinancialDre(year = Number(todayIso().slice(0, 4))) {
   const futureGroups = emptyFutureGroups();
   addFutureOpen(futureGroups, "receivable", baseDate, receivables.futureRows);
   addFutureOpen(futureGroups, "payable", baseDate, payables.futureRows);
+  const futureDetails = [
+    ...buildFutureDetails("receivable", baseDate, receivables.futureRows),
+    ...buildFutureDetails("payable", baseDate, payables.futureRows)
+  ].sort((left, right) => left.dueDate.localeCompare(right.dueDate));
 
   const projectedResult = receivables.due - payables.due;
   const realizedResult = receivables.received - payables.paid;
@@ -498,6 +657,8 @@ export async function loadFinancialDre(year = Number(todayIso().slice(0, 4))) {
     payableDueCount: payables.dueCount,
     payablePaid: payables.paid,
     payablePaidCount: payables.paidCount,
+    receivableCalculationRows: receivables.calculationRows,
+    payableCalculationRows: payables.calculationRows,
     projectedResult,
     realizedResult,
     openReceivables: receivables.open,
@@ -513,6 +674,7 @@ export async function loadFinancialDre(year = Number(todayIso().slice(0, 4))) {
     futurePayableOpen,
     futureNetResult: futureReceivableOpen - futurePayableOpen,
     futureGroups,
+    futureDetails,
     monthly,
     projectedFlow: monthly.map((item) => ({ label: item.label, income: Math.max(0, item.receivableDue), outcome: Math.max(0, item.payableDue) })),
     realizedFlow: monthly.map((item) => ({ label: item.label, income: Math.max(0, item.receivableReceived), outcome: Math.max(0, item.payablePaid) })),
@@ -527,16 +689,31 @@ export async function loadFinancialDre(year = Number(todayIso().slice(0, 4))) {
   };
 }
 
-function yearlyAmountMap(databasePath: string, table: string, dateColumn: string, amountExpression: string) {
+function yearlyAmountMap(
+  databasePath: string,
+  table: string,
+  dateColumn: string,
+  amountExpression: string,
+  extraWhere = "",
+  cashCheck?: { table: string; cashOperationTypes: number[] }
+) {
   const map = new Map<number, number>();
   const database = openDatabase(databasePath);
   if (!database) return map;
   try {
     if (!tableExists(database, table)) return map;
+    const cashOnlyFilter = cashCheck && tableExists(database, cashCheck.table)
+      ? `AND NOT EXISTS (
+          SELECT 1 FROM ${cashCheck.table} x
+          WHERE x.tenant = ${table}.tenant
+            AND x.billId = ${table}.billId AND x.installmentId = ${table}.installmentId
+            AND x.operationTypeId NOT IN (${cashCheck.cashOperationTypes.join(", ")})
+        )`
+      : "";
     const rows = database.prepare(`
       SELECT substr(${dateColumn}, 1, 4) AS year, SUM(${amountExpression}) AS value
       FROM ${table}
-      WHERE ${amountExpression} > 0
+      WHERE ${amountExpression} > 0 ${extraWhere} ${cashOnlyFilter}
       GROUP BY substr(${dateColumn}, 1, 4)
     `).all() as Row[];
     rows.forEach((row) => {
@@ -551,10 +728,14 @@ function yearlyAmountMap(databasePath: string, table: string, dateColumn: string
 
 export function loadFinancialDreYearlySeries(): FinancialDreYearlyItem[] {
   const installmentAmount = "COALESCE(originalAmount, correctedBalanceAmount, balanceAmount, 0)";
-  const receivableDueByYear = yearlyAmountMap(dbFiles.receivables, "bulk_income_installments", "dueDate", installmentAmount);
-  const receivableReceivedByYear = yearlyAmountMap(dbFiles.receivables, "bulk_income_receipts", "paymentDate", "COALESCE(netAmount, grossAmount, 0)");
-  const payableDueByYear = yearlyAmountMap(dbFiles.payables, "bulk_outcome_installments", "dueDate", installmentAmount);
-  const payablePaidByYear = yearlyAmountMap(dbFiles.payables, "bulk_outcome_payments", "paymentDate", "COALESCE(netAmount, correctedNetAmount, grossAmount, 0)");
+  // Uma parcela ja baixada por permuta/substituicao/distrato/reparcelamento/cancelamento nao e mais
+  // dinheiro esperado, entao sai do previsto assim que existir uma baixa comprovando isso.
+  const receivableDueByYear = yearlyAmountMap(dbFiles.receivables, "bulk_income_installments", "dueDate", installmentAmount, "", { table: "bulk_income_receipts", cashOperationTypes: [2] });
+  // Só "Recebimento" (2) e "Pagamento"/"Adiantamento" (1, 10) são dinheiro de verdade; o resto
+  // (permuta, substituição, distrato, cancelamento, abatimento de adiantamento) é baixa contábil sem caixa novo.
+  const receivableReceivedByYear = yearlyAmountMap(dbFiles.receivables, "bulk_income_receipts", "paymentDate", "COALESCE(netAmount, grossAmount, 0)", "AND operationTypeId = 2");
+  const payableDueByYear = yearlyAmountMap(dbFiles.payables, "bulk_outcome_installments", "dueDate", installmentAmount, "", { table: "bulk_outcome_payments", cashOperationTypes: [1, 10] });
+  const payablePaidByYear = yearlyAmountMap(dbFiles.payables, "bulk_outcome_payments", "paymentDate", "COALESCE(netAmount, correctedNetAmount, grossAmount, 0)", "AND operationTypeId IN (1, 10)");
 
   const years = new Set<number>([
     ...Array.from(receivableDueByYear.keys()),

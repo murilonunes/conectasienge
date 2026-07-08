@@ -435,11 +435,6 @@ function normalizeBuyerId(value: string) {
   return value.trim().toUpperCase();
 }
 
-function unreadableContentError(value: unknown) {
-  const text = typeof value === "string" ? value : JSON.stringify(value || {});
-  return /content could not be read|empty or invalid/i.test(text);
-}
-
 // Chave de deduplicação: identifica "a mesma operação" para bloquear um
 // segundo envio idêntico ao Sienge (a menos que o usuário force a repetição).
 function integrationKeyFor(action: QuotationAction, body: QuotationCreateRequest): string | undefined {
@@ -616,12 +611,9 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
   }
 
+  // O Sienge rejeita o payload com "createdBy" (400 "conteúdo não pôde ser lido"),
+  // porque o endpoint não reconhece esse campo; só buyerId e date são aceitos.
   const quotationPayload = {
-    buyerId,
-    date,
-    createdBy: buyerId
-  };
-  const quotationFallbackPayload = {
     buyerId,
     date
   };
@@ -630,7 +622,6 @@ export async function POST(request: NextRequest) {
     return dryRunResponse(body, {
       endpoint: "/v1/purchase-quotations",
       quotationPayload,
-      fallbackPayload: quotationFallbackPayload,
       itemPayloads: itemPayloads(body.request),
       note: "Ao confirmar, a rota cria a cotação e tenta vincular os itens da solicitação com o ID retornado."
     });
@@ -954,26 +945,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: config.error }, { status: 400 });
   }
 
-  const attempts = [];
-  let result = await postSienge(config.tenant, config.username, config.password, "/v1/purchase-quotations", quotationPayload);
-  attempts.push({ name: "documented", payload: quotationPayload, result });
-  if (!result.ok && result.status === 400 && unreadableContentError(result.apiMessage)) {
-    result = await postSienge(config.tenant, config.username, config.password, "/v1/purchase-quotations", quotationFallbackPayload);
-    attempts.push({ name: "withoutCreatedBy", payload: quotationFallbackPayload, result });
-  }
+  const result = await postSienge(config.tenant, config.username, config.password, "/v1/purchase-quotations", quotationPayload);
 
   if (!result.ok) {
     recordIntegrationEvent("integration_error", "Erro ao criar cotação no Sienge", "O Sienge não aceitou a criação da cotação.", {
       status: result.status,
       apiMessage: result.apiMessage,
-      attempts
+      quotationPayload
     });
     return NextResponse.json({
       message: "O Sienge não aceitou a criação da cotação.",
       status: result.status,
       apiMessage: result.apiMessage,
-      hint: "Confira se o comprador existe como usuário do Sienge. A tela normaliza o código para maiúsculas porque os compradores sincronizados aparecem assim.",
-      attempts
+      hint: "Confira se \"" + buyerId + "\" existe exatamente assim como usuário/login do comprador no Sienge (Cadastros > Usuários). A tela normaliza o código para maiúsculas, mas não valida se o comprador existe antes de tentar gravar.",
+      quotationPayload
     }, { status: result.status });
   }
 
@@ -1027,7 +1012,7 @@ export async function POST(request: NextRequest) {
       : "Cotação criada no Sienge.",
     purchaseQuotationId,
     location: result.location,
-    quotationPayload: attempts[attempts.length - 1].payload,
+    quotationPayload,
     itemPayloads: payloads,
     itemResults
   }, { status: failedItem ? 207 : 201 });
