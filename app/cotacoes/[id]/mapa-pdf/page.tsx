@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { buildItemComparison, formatDocument, freightSummary, paymentSummary, plural } from "@/components/purchases/quotation-detail/helpers";
+import { buildItemComparison, formatDocument, freightSummary, plural } from "@/components/purchases/quotation-detail/helpers";
 import { PrintButton } from "@/components/ui/print-button";
 import { loadQuotationDetail } from "@/features/quotations/data";
 import { getSessionUserFromCookieValue } from "@/lib/app-users";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
+import type { SupplierQuoteCommercialTerms } from "@/lib/supplier-quote-portal";
 import { loadSupplierQuoteResponses } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,47 @@ const scopeLabels: Record<string, string> = {
 
 function firstSupplierName(name: string) {
   return name.trim().split(/\s+/)[0] || name;
+}
+
+function formatPercentage(value: number) {
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(".", ",");
+}
+
+function formatMapTermPayment(terms: SupplierQuoteCommercialTerms) {
+  const installments = terms.installments.filter((installment) => installment.percentage > 0);
+  if (!installments.length) return "A prazo";
+  if (installments.length === 1) return `A prazo (1x em ${installments[0].days}d)`;
+
+  const percentages = installments.map((installment) => installment.percentage);
+  const minPercentage = Math.min(...percentages);
+  const maxPercentage = Math.max(...percentages);
+  if (maxPercentage - minPercentage <= 0.1) {
+    return `A prazo (${installments.length}x e 1º em ${installments[0].days}d)`;
+  }
+
+  const [entry, ...remaining] = installments;
+  const hasEntry = entry.days >= 0
+    && entry.days <= 3
+    && remaining.length > 0
+    && remaining.some((installment) => Math.abs(installment.percentage - entry.percentage) > 0.1);
+  if (hasEntry) {
+    const remainingText = remaining
+      .map((installment) => `${formatPercentage(installment.percentage)}% em ${installment.days}d`)
+      .join(" + ");
+    return `A prazo (entrada em ${entry.days}d ${formatPercentage(entry.percentage)}%${remainingText ? ` + ${remainingText}` : ""})`;
+  }
+
+  const installmentText = installments
+    .map((installment) => `${formatPercentage(installment.percentage)}% em ${installment.days}d`)
+    .join(" + ");
+  return `A prazo (${installmentText})`;
+}
+
+function mapPaymentSummary(terms: SupplierQuoteCommercialTerms) {
+  if (terms.offersTerm) return formatMapTermPayment(terms);
+  if (terms.offersCash) return "À vista";
+  return "Não informado";
 }
 
 export default async function QuotationMapPdfPage({
@@ -210,7 +252,7 @@ export default async function QuotationMapPdfPage({
                   <td>Pagamento</td>
                   <td></td>
                   {supplierColumns.map(({ response }) => (
-                    <td key={`payment-${response.id}`}>{paymentSummary(response.commercialTerms)}</td>
+                    <td key={`payment-${response.id}`}>{mapPaymentSummary(response.commercialTerms)}</td>
                   ))}
                   <td></td>
                 </tr>
