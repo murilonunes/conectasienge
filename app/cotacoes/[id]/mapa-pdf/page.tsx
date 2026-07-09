@@ -15,6 +15,10 @@ const scopeLabels: Record<string, string> = {
   proposta: "Somente itens com proposta"
 };
 
+function firstSupplierName(name: string) {
+  return name.trim().split(/\s+/)[0] || name;
+}
+
 export default async function QuotationMapPdfPage({
   params,
   searchParams
@@ -164,7 +168,7 @@ export default async function QuotationMapPdfPage({
                     })}
                     <td className="map-report-choice-col">
                       {row.best ? (
-                        <strong>{formatCurrency(row.best.unitPrice)}</strong>
+                        <strong>{firstSupplierName(row.best.supplierName)}</strong>
                       ) : (
                         <span>Sem preço</span>
                       )}
