@@ -127,7 +127,7 @@ export default async function QuotationMapPdfPage({
         <div>
           <span>Brasin Empreendimentos - Compras</span>
           <h1>Mapa comparativo de cotação</h1>
-          <p>Cotação #{quotation.code} - {scopeLabel} - gerado em {new Date().toLocaleDateString("pt-BR")}, sem consultar o Sienge</p>
+          <p>Cotação #{quotation.code} - {scopeLabel} - gerado em {new Date().toLocaleDateString("pt-BR")}</p>
         </div>
         <div className="map-report-summary">
           <span><strong>{rows.length}</strong><small>Itens no mapa</small></span>
@@ -149,7 +149,6 @@ export default async function QuotationMapPdfPage({
             <span>Comparativo horizontal</span>
             <h2>Itens por linha, fornecedores por coluna</h2>
           </div>
-          <small>O destaque verde aparece somente no menor preço unitário de cada item.</small>
         </div>
 
         {rows.length ? (
@@ -273,7 +272,7 @@ export default async function QuotationMapPdfPage({
       </section>
 
       <footer className="map-report-footer">
-        Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor para a cotação #{quotation.code}. Este mapa não consulta o Sienge.
+        Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor para a cotação #{quotation.code}.
       </footer>
     </main>
   );
