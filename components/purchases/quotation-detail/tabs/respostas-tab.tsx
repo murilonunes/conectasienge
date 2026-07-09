@@ -10,7 +10,9 @@ export function RespostasTab({
   loadingAction,
   onSendNegotiation,
   onDeleteResponse,
-  message
+  message,
+  syncableCount,
+  onSyncAll
 }: {
   quotation: QuotationSummary;
   supplierResponses: SupplierQuoteResponseSummary[];
@@ -19,6 +21,8 @@ export function RespostasTab({
   onSendNegotiation: (response: SupplierQuoteResponseSummary, confirm: boolean) => void;
   onDeleteResponse: (response: SupplierQuoteResponseSummary) => void;
   message: string;
+  syncableCount: number;
+  onSyncAll: (confirm: boolean) => void;
 }) {
   const activeCount = supplierResponses.filter((response) => !response.supersededByResponseId).length;
   const supersededCount = supplierResponses.length - activeCount;
@@ -38,10 +42,26 @@ export function RespostasTab({
             <h2 className="panel-title">Respostas dos fornecedores</h2>
             <span className="panel-note">Propostas recebidas pelo link protegido desta cotação</span>
           </div>
-          <button className="button secondary" type="button" onClick={() => exportSupplierResponses(quotation, supplierResponses)} disabled={!supplierResponses.length}>
-            Exportar respostas
-          </button>
+          <div className="quotation-operation-actions">
+            <button className="button secondary" type="button" onClick={() => exportSupplierResponses(quotation, supplierResponses)} disabled={!supplierResponses.length}>
+              Exportar respostas
+            </button>
+            <button className="button secondary" type="button" disabled={!syncableCount || loadingAction !== null} onClick={() => onSyncAll(false)}>
+              Conferir sincronização
+            </button>
+            <button className="button sienge-write" type="button" disabled={!syncableCount || loadingAction !== null} onClick={() => onSyncAll(true)}>
+              {loadingAction === "negotiation-confirm"
+                ? "Sincronizando..."
+                : `Sincronizar cotação com o Sienge${syncableCount ? ` (${syncableCount})` : ""}`}
+            </button>
+          </div>
         </div>
+
+        {!syncableCount && supplierResponses.length > 0 && (
+          <div className="advanced-search-hint">
+            Nenhuma resposta ativa tem fornecedor cadastrado no Sienge ainda. Cadastre o fornecedor na aba Cadastros para poder sincronizar.
+          </div>
+        )}
 
         {message && <div className="settings-inline-message">{message}</div>}
 

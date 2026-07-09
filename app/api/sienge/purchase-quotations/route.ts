@@ -128,6 +128,15 @@ function parseIdFromLocation(location: string | null) {
   return match ? Number(match[1]) : undefined;
 }
 
+// Diferente de parseIdFromLocation: para negociações o location termina em
+// .../purchase-quotations/{quotationId}/suppliers/{supplierId}/negotiations/{negotiationNumber},
+// então é preciso pegar o último segmento, não o primeiro número (que seria o id da cotação).
+function parseTrailingIdFromLocation(location: string | null) {
+  if (!location) return undefined;
+  const match = location.match(/\/(\d+)\/?$/);
+  return match ? Number(match[1]) : undefined;
+}
+
 function siengeConfig() {
   const tenant = process.env.SIENGE_TENANT;
   const username = process.env.SIENGE_USERNAME;
@@ -427,6 +436,30 @@ function postSienge(tenant: string, username: string, password: string, endpoint
   return callSienge(tenant, username, password, "POST", endpoint, body);
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// O Sienge limita a taxa de chamadas (429) quando várias gravações saem em sequência
+// rápida (ex.: vincular vários itens de uma solicitação). Espera um pouco entre
+// chamadas e tenta de novo com backoff quando toma 429 ou erro 5xx transitório.
+async function callSiengeWithBackoff(
+  tenant: string,
+  username: string,
+  password: string,
+  method: "POST" | "PUT" | "PATCH",
+  endpoint: string,
+  body: unknown,
+  attempts = 4
+): Promise<SiengePostResult> {
+  let result = await callSienge(tenant, username, password, method, endpoint, body);
+  for (let attempt = 1; attempt < attempts && !result.ok && (result.status === 429 || result.status >= 500); attempt++) {
+    await sleep(attempt * 700);
+    result = await callSienge(tenant, username, password, method, endpoint, body);
+  }
+  return result;
+}
+
 function isIsoDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
@@ -656,7 +689,8 @@ export async function POST(request: NextRequest) {
 
     const results = [];
     for (const payload of payloads) {
-      results.push(await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body));
+      if (results.length) await sleep(350);
+      results.push(await callSiengeWithBackoff(config.tenant, config.username, config.password, "POST", payload.endpoint, payload.body));
     }
 
     const failed = results.find((result) => !result.ok);
@@ -832,6 +866,8 @@ export async function POST(request: NextRequest) {
 
     const basePath = `/v1/purchase-quotations/${purchaseQuotationId}/suppliers/${supplierId}/negotiations`;
     const plannedSteps = {
+      linkSupplierToItems: Array.from(new Set(items.map((item) => item.quotationItemNumber)))
+        .map((itemNumber) => supplierPayload(purchaseQuotationId, itemNumber, supplierId)),
       createNegotiation: negotiation.negotiationNumber ? undefined : { endpoint: basePath, body: {} },
       updateNegotiation: {
         endpoint: `${basePath}/{negotiationNumber}`,
@@ -869,6 +905,17 @@ export async function POST(request: NextRequest) {
       }, { status: 404 });
     }
 
+    // O Sienge só cria negociação para fornecedor já associado a um item da cotação
+    // (br...negotiation.supplier.invalid.id). Garante a associação antes de tentar criar,
+    // sem bloquear o fluxo se o Sienge recusar por já existir a associação.
+    const linkSteps: SiengePostResult[] = [];
+    const itemNumbersForSupplier = Array.from(new Set(items.map((item) => item.quotationItemNumber)));
+    for (const itemNumber of itemNumbersForSupplier) {
+      if (linkSteps.length) await sleep(350);
+      const linkPayload = supplierPayload(purchaseQuotationId, itemNumber, supplierId);
+      linkSteps.push(await callSiengeWithBackoff(config.tenant, config.username, config.password, "POST", linkPayload.endpoint, linkPayload.body));
+    }
+
     const steps: SiengePostResult[] = [];
     let negotiationNumber = Number(negotiation.negotiationNumber) || preflight.latestNegotiationNumber || undefined;
 
@@ -876,16 +923,17 @@ export async function POST(request: NextRequest) {
       const created = await postSienge(config.tenant, config.username, config.password, basePath, {});
       steps.push(created);
       if (!created.ok) {
-        recordIntegrationEvent("integration_error", "Erro ao criar negociação no Sienge", "O Sienge não aceitou a criação da negociação para o fornecedor.", { preflight, steps });
-        return NextResponse.json({ message: "O Sienge não aceitou a criação da negociação.", preflight, steps }, { status: created.status });
+        recordIntegrationEvent("integration_error", "Erro ao criar negociação no Sienge", "O Sienge não aceitou a criação da negociação para o fornecedor.", { preflight, linkSteps, steps });
+        return NextResponse.json({ message: "O Sienge não aceitou a criação da negociação.", preflight, linkSteps, steps }, { status: created.status });
       }
-      negotiationNumber = parseIdFromLocation(created.location)
+      negotiationNumber = parseTrailingIdFromLocation(created.location)
         || (await findLatestNegotiation(config.tenant, config.username, config.password, purchaseQuotationId, supplierId))?.number;
       if (!negotiationNumber) {
-        recordIntegrationEvent("integration_error", "Negociação criada sem número identificado", "A negociação foi criada, mas o número não pode ser identificado para gravar os valores.", { preflight, steps });
+        recordIntegrationEvent("integration_error", "Negociação criada sem número identificado", "A negociação foi criada, mas o número não pode ser identificado para gravar os valores.", { preflight, linkSteps, steps });
         return NextResponse.json({
           message: "Negociação criada, mas o número não pode ser identificado. Atualize os dados e tente gravar os valores novamente.",
           preflight,
+          linkSteps,
           steps
         }, { status: 502 });
       }
@@ -895,14 +943,17 @@ export async function POST(request: NextRequest) {
     steps.push(updated);
 
     for (const item of items) {
-      steps.push(await callSienge(
-        config.tenant,
-        config.username,
-        config.password,
-        "PUT",
-        `${basePath}/${negotiationNumber}/items/${item.quotationItemNumber}`,
-        negotiationItemPayload(item)
-      ));
+      const itemEndpoint = `${basePath}/${negotiationNumber}/items/${item.quotationItemNumber}`;
+      const itemPayload = negotiationItemPayload(item);
+      let itemResult = await callSienge(config.tenant, config.username, config.password, "PUT", itemEndpoint, itemPayload);
+      // O Sienge às vezes devolve 500 sem detalhe num item logo após criar a negociação
+      // (parece uma falha transitória de indexação); um novo PUT idêntico é seguro (é
+      // sempre o mesmo estado final) e costuma resolver sem precisar repetir tudo.
+      if (!itemResult.ok && itemResult.status >= 500) {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        itemResult = await callSienge(config.tenant, config.username, config.password, "PUT", itemEndpoint, itemPayload);
+      }
+      steps.push(itemResult);
     }
 
     let authorized: SiengePostResult | undefined;
@@ -914,7 +965,7 @@ export async function POST(request: NextRequest) {
 
     const failed = steps.find((step) => !step.ok);
     if (failed) {
-      recordIntegrationEvent("integration_error", "Erro ao gravar negociação no Sienge", "Uma ou mais etapas da negociação não foram aceitas pelo Sienge.", { preflight, negotiationNumber, steps });
+      recordIntegrationEvent("integration_error", "Erro ao gravar negociação no Sienge", "Uma ou mais etapas da negociação não foram aceitas pelo Sienge.", { preflight, negotiationNumber, linkSteps, steps });
     } else {
       recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociação gravada e autorizada no Sienge" : "Negociação gravada no Sienge", `Negociação ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, preflight, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
     }
@@ -926,6 +977,7 @@ export async function POST(request: NextRequest) {
           ? "Negociação gravada e autorizada no Sienge."
           : "Negociação gravada no Sienge.",
       preflight,
+      linkSteps,
       negotiationNumber,
       steps
     }, { status: failed ? failed.status : 200 });
@@ -967,7 +1019,8 @@ export async function POST(request: NextRequest) {
   const itemResults = [];
   if (purchaseQuotationId && payloads.length) {
     for (const payload of payloads) {
-      itemResults.push(await postSienge(config.tenant, config.username, config.password, payload.endpoint, payload.body));
+      if (itemResults.length) await sleep(350);
+      itemResults.push(await callSiengeWithBackoff(config.tenant, config.username, config.password, "POST", payload.endpoint, payload.body));
     }
   }
   const failedItem = itemResults.find((itemResult) => !itemResult.ok);

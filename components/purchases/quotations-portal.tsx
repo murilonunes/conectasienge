@@ -83,12 +83,22 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
         date: quotationDate,
         request: data.request ? requestPayload(data.request) : undefined
       };
-      const response = await fetch("/api/sienge/purchase-quotations", {
+      let response = await fetch("/api/sienge/purchase-quotations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      const json = await response.json();
+      let json = await response.json();
+      if (response.status === 409 && json.alreadyIntegrated) {
+        if (window.confirm(`${json.message}\n\nDeseja repetir a criação mesmo assim?`)) {
+          response = await fetch("/api/sienge/purchase-quotations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, force: true })
+          });
+          json = await response.json();
+        }
+      }
       setInsertResult(JSON.stringify(json, null, 2));
       setInsertOk(response.ok);
     } finally {

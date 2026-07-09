@@ -342,9 +342,10 @@ export function QuotationDetail({
   async function runNegotiationAction(dispatches: NegotiationDispatch[], confirm: boolean, title: string) {
     if (confirm) {
       const suppliers = dispatches.map((dispatch) => dispatch.response.supplierName).join(", ");
+      const willAuthorize = dispatches.some((dispatch) => dispatch.authorize === true);
       const question = dispatches.length > 1
-        ? `Gravar e autorizar a negociação de ${plural(dispatches.length, "fornecedor", "fornecedores")} (${suppliers}) no Sienge agora?`
-        : `Gravar a negociação de ${suppliers} no Sienge agora?`;
+        ? `Gravar${willAuthorize ? " e autorizar" : ""} a negociação de ${plural(dispatches.length, "fornecedor", "fornecedores")} (${suppliers}) no Sienge agora?`
+        : `Gravar${willAuthorize ? " e autorizar" : ""} a negociação de ${suppliers} no Sienge agora?`;
       if (!confirmSiengeWrite(question)) return;
     }
     setLoadingAction(confirm ? "negotiation-confirm" : "negotiation-preview");
@@ -447,6 +448,22 @@ export function QuotationDetail({
     }
     setApprovalMessage("");
     await runNegotiationAction(dispatches, confirm, "Decisão registrada no Sienge");
+  }
+
+  const syncableResponses = useMemo(
+    () => activeResponses.filter((response) => response.supplierId),
+    [activeResponses]
+  );
+
+  async function syncAllResponses(confirm: boolean) {
+    if (!syncableResponses.length) {
+      setOperationTitle("Sincronizar cotação com o Sienge");
+      setOperationResult(JSON.stringify({ message: "Nenhuma resposta com fornecedor cadastrado no Sienge para sincronizar." }, null, 2));
+      setOperationKind("error");
+      setTab("sienge");
+      return;
+    }
+    await runNegotiationAction(syncableResponses.map((response) => ({ response })), confirm, "Cotação sincronizada com o Sienge");
   }
 
   async function openComparisonMapPdf() {
@@ -820,6 +837,8 @@ export function QuotationDetail({
           onSendNegotiation={(response, confirm) => void runNegotiationAction([{ response }], confirm, "Negociação enviada ao Sienge")}
           onDeleteResponse={(response) => void deleteResponse(response)}
           message={responsesMessage}
+          syncableCount={syncableResponses.length}
+          onSyncAll={(confirm) => void syncAllResponses(confirm)}
         />
       )}
 
