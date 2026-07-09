@@ -66,7 +66,7 @@ export default async function QuotationMapPdfPage({
   searchParams
 }: {
   params: { id: string };
-  searchParams?: { itens?: string; escopo?: string };
+  searchParams?: { itens?: string; escopo?: string; orientacao?: string };
 }) {
   const user = getSessionUserFromCookieValue(cookies().get("brasin_session")?.value);
   if (!user?.permissions.includes("screen.cotacoes")) {
@@ -102,6 +102,12 @@ export default async function QuotationMapPdfPage({
     ? fullComparison.filter((row) => requestedNumbers.includes(row.itemNumber))
     : fullComparison;
   const scopeLabel = scopeLabels[searchParams?.escopo || ""] || "Todos os itens";
+  const orientation = searchParams?.orientacao === "vertical" ? "vertical" : "horizontal";
+  const orientationParams = new URLSearchParams();
+  if (searchParams?.itens) orientationParams.set("itens", searchParams.itens);
+  if (searchParams?.escopo) orientationParams.set("escopo", searchParams.escopo);
+  orientationParams.set("orientacao", orientation === "horizontal" ? "vertical" : "horizontal");
+  const orientationHref = `/cotacoes/${id}/mapa-pdf?${orientationParams.toString()}`;
 
   const rowsWithBest = rows.filter((row) => row.best);
   const bestBasketTotal = rowsWithBest.reduce((sum, row) => sum + (row.best?.total || 0), 0);
@@ -117,22 +123,22 @@ export default async function QuotationMapPdfPage({
   });
 
   return (
-    <main className="map-report">
-      <div className="map-report-actions">
-        <Link className="button secondary" href={`/cotacoes/${id}`}>Voltar para a cotação</Link>
-        <PrintButton />
-      </div>
+    <>
+      <style>{`@page { size: A4 ${orientation === "horizontal" ? "landscape" : "portrait"}; margin: 10mm; }`}</style>
+      <main className={`map-report ${orientation === "horizontal" ? "map-report-horizontal" : "map-report-vertical"}`}>
+        <div className="map-report-actions">
+          <Link className="button secondary" href={`/cotacoes/${id}`}>Voltar para a cotação</Link>
+          <Link className="button secondary" href={orientationHref}>
+            {orientation === "horizontal" ? "Versão vertical" : "Versão horizontal"}
+          </Link>
+          <PrintButton />
+        </div>
 
       <header className="map-report-head">
         <div>
           <span>Brasin Empreendimentos - Compras</span>
           <h1>Mapa comparativo de cotação</h1>
           <p>Cotação #{quotation.code} - {scopeLabel} - gerado em {new Date().toLocaleDateString("pt-BR")}</p>
-        </div>
-        <div className="map-report-summary">
-          <span><strong>{rows.length}</strong><small>Itens no mapa</small></span>
-          <span><strong>{coverage}%</strong><small>Cobertura de preço</small></span>
-          <span><strong>{formatCurrency(bestBasketTotal)}</strong><small>Melhor cesta</small></span>
         </div>
       </header>
 
@@ -141,6 +147,9 @@ export default async function QuotationMapPdfPage({
         <span><strong>Data da cotação</strong>{formatOptionalDate(quotation.date)}</span>
         <span><strong>Prazo de respostas</strong>{formatOptionalDate(quotation.deadline)}</span>
         <span><strong>Fornecedores respondentes</strong>{respondingSuppliers}</span>
+        <span><strong>Itens no mapa</strong>{rows.length}</span>
+        <span><strong>Cobertura de preço</strong>{coverage}%</span>
+        <span><strong>Melhor cesta</strong>{formatCurrency(bestBasketTotal)}</span>
       </section>
 
       <section className="map-report-matrix-block">
@@ -171,8 +180,8 @@ export default async function QuotationMapPdfPage({
                 {rows.map((row) => (
                   <tr key={row.itemNumber}>
                     <td className="map-report-item-row-col">
-                      <span>#{row.item?.productId || row.itemNumber}</span>
                       <strong>
+                        <span className="map-report-item-code">#{row.item?.productId || row.itemNumber}</span>
                         {row.item?.name || `Item ${row.itemNumber}`}
                         {row.item?.detail ? ` - ${row.item.detail}` : ""}
                       </strong>
@@ -194,11 +203,15 @@ export default async function QuotationMapPdfPage({
                         <td className={className} key={`${response.id}-${row.itemNumber}`}>
                           {offer?.attends ? (
                             <>
-                              <strong>{formatCurrency(offer.unitPrice)}</strong>
-                              <div className="map-report-price-details">
+                              <div className="map-report-price-line">
+                                <strong>{formatCurrency(offer.unitPrice)}</strong>
                                 <small>Total {formatCurrency(offer.total)}</small>
-                                {offer.deadlineDays > 0 && <small>Prazo {plural(offer.deadlineDays, "dia", "dias")}</small>}
                               </div>
+                              {offer.deadlineDays > 0 && (
+                                <div className="map-report-price-details">
+                                  <small>Prazo {plural(offer.deadlineDays, "dia", "dias")}</small>
+                                </div>
+                              )}
                             </>
                           ) : (
                             <span>{offer?.hasResponse ? "Não atende" : "Sem resposta"}</span>
@@ -268,6 +281,7 @@ export default async function QuotationMapPdfPage({
       <footer className="map-report-footer">
         Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor para a cotação #{quotation.code}.
       </footer>
-    </main>
+      </main>
+    </>
   );
 }

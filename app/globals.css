@@ -1950,9 +1950,11 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 
 /* Mapa comparativo em PDF: relatório local, sem depender do Sienge */
 .map-report { width: min(1040px, 100%); margin: 0 auto; padding: 28px 22px 44px; display: grid; gap: 20px; color: var(--ink); }
+.map-report-horizontal { width: min(1480px, 100%); padding: 16px 18px 28px; gap: 12px; }
+.map-report-vertical { width: min(1040px, 100%); }
 .map-report-actions { display: flex; justify-content: flex-end; gap: 10px; }
 .map-report-actions .button:not(.secondary) { background: var(--ink); color: #fff; }
-.map-report-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: flex-end; padding-bottom: 16px; border-bottom: 2px solid #d9b36f; }
+.map-report-head { display: grid; gap: 18px; align-items: flex-end; padding-bottom: 16px; border-bottom: 2px solid #d9b36f; }
 .map-report-head span { color: #80591f; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .map-report-head h1 { margin: 5px 0; font-family: var(--font-display); font-size: 27px; font-weight: 750; letter-spacing: 0; color: var(--ink); }
 .map-report-head p { margin: 0; color: var(--muted); font-size: 12px; }
@@ -1961,7 +1963,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-summary strong { font-family: var(--font-display); font-size: 17px; font-weight: 750; color: var(--ink); }
 .map-report-summary small { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .map-report-block { display: grid; gap: 10px; }
-.map-report-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.map-report-grid { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
 .map-report-grid span { display: grid; gap: 4px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; font-size: 12px; }
 .map-report-grid strong { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
 .map-report-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
@@ -1979,6 +1981,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-item-row-col span, .map-report-item-row-col strong, .map-report-item-row-col small { display: block; }
 .map-report-item-row-col span { color: #80591f; font-size: 9px; font-weight: 900; }
 .map-report-item-row-col strong { margin: 3px 0; color: var(--ink); font-size: 12px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
+.map-report-item-row-col .map-report-item-code { display: inline; margin-right: 5px; white-space: nowrap; }
 .map-report-item-row-col small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.35; }
 .map-report-quantity-col { width: 92px; min-width: 92px; text-align: center; background: #fff; }
 .map-report-quantity-col strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 14px; }
@@ -2000,6 +2003,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-price-cell strong { margin-bottom: 3px; color: var(--ink); font-family: var(--font-display); font-size: 14px; }
 .map-report-price-cell small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.3; }
 .map-report-price-cell span { color: var(--muted); font-size: 10px; font-weight: 750; }
+.map-report-price-line { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; }
+.map-report-price-line strong { margin-bottom: 0; }
+.map-report-price-line small { margin-top: 0; }
 .map-report-price-details { display: grid; gap: 2px; margin-top: 7px; padding-top: 6px; border-top: 1px solid var(--line); }
 .map-report-price-details small { margin-top: 0; min-width: 0; overflow-wrap: anywhere; text-align: left; }
 .map-report-price-cell.partial { background: #fffaf1; }
@@ -2012,8 +2018,44 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-matrix tfoot .map-report-extra-row td:first-child { color: var(--ink); font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
 .map-report-empty { margin: 0; color: var(--muted); font-size: 12px; }
 .map-report-footer { padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.map-report-horizontal .map-report-actions { gap: 8px; }
+.map-report-horizontal .map-report-actions .button { padding: 9px 12px; font-size: 11px; border-radius: 8px; }
+.map-report-horizontal .map-report-head { gap: 12px; padding-bottom: 10px; }
+.map-report-horizontal .map-report-head h1 { margin: 3px 0; font-size: 22px; }
+.map-report-horizontal .map-report-head p { font-size: 11px; }
+.map-report-horizontal .map-report-head span { font-size: 9px; }
+.map-report-horizontal .map-report-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.map-report-horizontal .map-report-grid span { gap: 3px; padding: 8px 9px; border-radius: 8px; font-size: 10px; }
+.map-report-horizontal .map-report-grid strong { font-size: 7px; }
+.map-report-horizontal .map-report-section-head { display: none; }
+.map-report-horizontal .map-report-matrix-block { gap: 6px; }
+.map-report-horizontal .map-report-matrix-wrap { border-radius: 9px; box-shadow: none; }
+.map-report-horizontal .map-report-matrix { font-size: 10px; }
+.map-report-horizontal .map-report-matrix th,
+.map-report-horizontal .map-report-matrix td { padding: 5px 7px; }
+.map-report-horizontal .map-report-item-row-col { width: 210px; min-width: 210px; }
+.map-report-horizontal .map-report-item-row-col span { font-size: 8px; }
+.map-report-horizontal .map-report-item-row-col strong { margin: 2px 0; font-size: 11px; line-height: 1.18; }
+.map-report-horizontal .map-report-quantity-col { width: 78px; min-width: 78px; }
+.map-report-horizontal .map-report-quantity-col strong { font-size: 13px; }
+.map-report-horizontal .map-report-quantity-col small { margin-top: 1px; font-size: 8px; }
+.map-report-horizontal .map-report-supplier-head { min-width: 128px; max-width: 150px; }
+.map-report-horizontal .map-report-supplier-head strong { margin-bottom: 2px; font-size: 10px; line-height: 1.18; }
+.map-report-horizontal .map-report-supplier-head small { font-size: 8px; line-height: 1.18; }
+.map-report-horizontal .map-report-supplier-head em { margin: 2px 0; font-size: 7px; }
+.map-report-horizontal .map-report-price-cell { min-width: 115px; }
+.map-report-horizontal .map-report-price-cell strong { margin-bottom: 1px; font-size: 13px; }
+.map-report-horizontal .map-report-price-cell small { margin-top: 1px; font-size: 8px; line-height: 1.18; }
+.map-report-horizontal .map-report-price-line { gap: 6px; }
+.map-report-horizontal .map-report-price-details { gap: 1px; margin-top: 4px; padding-top: 4px; }
+.map-report-horizontal .map-report-choice-col { min-width: 105px; }
+.map-report-horizontal .map-report-choice-col strong { margin-bottom: 1px; font-size: 12px; }
+.map-report-horizontal .map-report-choice-col small { margin-top: 1px; font-size: 8px; line-height: 1.18; }
+.map-report-horizontal .map-report-matrix tfoot .map-report-extra-row td { font-size: 8px; line-height: 1.25; }
+.map-report-horizontal .map-report-footer { padding-top: 7px; font-size: 9px; }
 @media print {
   .map-report { width: 100%; padding: 0; gap: 14px; }
+  .map-report-horizontal { gap: 6px; }
   .map-report-actions { display: none; }
   .map-report-matrix-wrap { overflow: visible; box-shadow: none; }
   .map-report-matrix { min-width: 0; font-size: 9px; }
