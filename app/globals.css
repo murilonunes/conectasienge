@@ -1973,35 +1973,35 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-matrix-block { display: grid; gap: 12px; }
 .map-report-matrix-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 8px 26px rgba(24, 35, 30, .06); }
 .map-report-matrix { width: 100%; min-width: 920px; border-collapse: collapse; font-size: 11px; }
-.map-report-matrix th { padding: 9px 10px; border-bottom: 2px solid var(--line); border-left: 1px solid var(--line); background: #f8faf9; color: var(--muted); font-size: 9px; font-weight: 850; text-align: left; text-transform: uppercase; letter-spacing: .05em; vertical-align: bottom; }
+.map-report-matrix th { padding: 9px 10px; border-bottom: 2px solid var(--line); border-left: 1px solid var(--line); background: #f8faf9; color: var(--muted); font-size: 10px; font-weight: 850; text-align: left; text-transform: uppercase; letter-spacing: .05em; vertical-align: bottom; }
 .map-report-matrix th:first-child { border-left: 0; }
 .map-report-matrix td { padding: 9px 10px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); vertical-align: top; }
 .map-report-matrix td:first-child { border-left: 0; }
 .map-report-item-row-col { width: 220px; min-width: 220px; background: #fff; }
 .map-report-item-row-col span, .map-report-item-row-col strong, .map-report-item-row-col small { display: block; }
-.map-report-item-row-col span { color: #80591f; font-size: 9px; font-weight: 900; }
+.map-report-item-row-col span { color: #80591f; font-size: 10px; font-weight: 900; }
 .map-report-item-row-col strong { margin: 3px 0; color: var(--ink); font-size: 12px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
 .map-report-item-row-col .map-report-item-code { display: inline; margin-right: 5px; white-space: nowrap; }
-.map-report-item-row-col small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.35; }
+.map-report-item-row-col small { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.35; }
 .map-report-quantity-col { width: 92px; min-width: 92px; text-align: center; background: #fff; }
 .map-report-quantity-col strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 14px; }
-.map-report-quantity-col small { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
+.map-report-quantity-col small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
 .map-report-supplier-head { min-width: 150px; max-width: 185px; }
 .map-report-supplier-head strong, .map-report-supplier-head small, .map-report-supplier-head em { display: block; }
 .map-report-supplier-head strong { margin-bottom: 3px; color: var(--ink); font-size: 11px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
-.map-report-supplier-head small { color: var(--muted); font-size: 9px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
-.map-report-supplier-head em { margin: 4px 0; color: #9b641d; font-size: 8px; font-style: normal; font-weight: 800; text-transform: uppercase; }
+.map-report-supplier-head small { color: var(--muted); font-size: 10px; line-height: 1.25; text-transform: none; letter-spacing: 0; }
+.map-report-supplier-head em { margin: 4px 0; color: #9b641d; font-size: 9px; font-style: normal; font-weight: 800; text-transform: uppercase; }
 .map-report-choice-col { min-width: 150px; background: #fff; }
 .map-report-choice-col strong, .map-report-choice-col small, .map-report-choice-col span { display: block; }
 .map-report-choice-col strong { margin-bottom: 3px; color: var(--ink); font-family: var(--font-display); font-size: 14px; text-transform: none; letter-spacing: 0; }
-.map-report-choice-col small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.3; text-transform: none; letter-spacing: 0; }
+.map-report-choice-col small { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; text-transform: none; letter-spacing: 0; }
 .map-report-choice-col span { color: var(--muted); font-size: 10px; font-weight: 750; }
 .map-report-choice-col.total { background: var(--green-soft); }
 .map-report-choice-col.total strong, .map-report-choice-col.total small { color: var(--green); }
 .map-report-price-cell { min-width: 130px; background: #fff; }
 .map-report-price-cell strong, .map-report-price-cell small, .map-report-price-cell span { display: block; }
 .map-report-price-cell strong { margin-bottom: 3px; color: var(--ink); font-family: var(--font-display); font-size: 14px; }
-.map-report-price-cell small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+.map-report-price-cell small { margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.3; }
 .map-report-price-cell span { color: var(--muted); font-size: 10px; font-weight: 750; }
 .map-report-price-line { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; }
 .map-report-price-line strong { margin-bottom: 0; }
@@ -2014,7 +2014,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-price-cell.best strong { color: var(--green); }
 .map-report-price-cell.best small { color: var(--green); }
 .map-report-matrix tfoot td { border-top: 2px solid var(--line); font-weight: 800; }
-.map-report-matrix tfoot .map-report-extra-row td { border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 700; line-height: 1.35; }
+.map-report-matrix tfoot .map-report-extra-row td { border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; font-weight: 700; line-height: 1.35; }
 .map-report-matrix tfoot .map-report-extra-row td:first-child { color: var(--ink); font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
 .map-report-empty { margin: 0; color: var(--muted); font-size: 12px; }
 .map-report-footer { padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
@@ -2023,24 +2023,33 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-horizontal .map-report-head-brand { min-width: 0; }
 .map-report-horizontal .map-report-section-head { display: none; }
 .map-report-horizontal .map-report-matrix-wrap { border-radius: 9px; box-shadow: none; }
-.map-report-horizontal .map-report-matrix th,
-.map-report-horizontal .map-report-matrix td { padding: 5px 10px; }
-.map-report-horizontal .map-report-item-row-col { width: 420px; min-width: 420px; }
-.map-report-horizontal .map-report-item-row-col strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.map-report-horizontal .map-report-quantity-col { width: 70px; min-width: 70px; }
-.map-report-horizontal .map-report-quantity-col strong { display: inline-block; }
-.map-report-horizontal .map-report-quantity-col small { display: inline-block; margin-top: 0; margin-left: 4px; }
 .map-report-horizontal .map-report-supplier-head { min-width: 128px; max-width: 150px; }
 .map-report-horizontal .map-report-price-cell { min-width: 115px; }
 .map-report-horizontal .map-report-price-line { white-space: nowrap; }
-.map-report-horizontal .map-report-choice-col { width: 90px; min-width: 90px; }
-.map-report-horizontal .map-report-choice-col strong { white-space: nowrap; }
+.map-report-horizontal .map-report-matrix th,
+.map-report-horizontal .map-report-matrix td,
+.map-report-vertical .map-report-matrix th,
+.map-report-vertical .map-report-matrix td { padding: 5px 10px; }
+.map-report-horizontal .map-report-item-row-col,
+.map-report-vertical .map-report-item-row-col { width: 420px; min-width: 420px; }
+.map-report-horizontal .map-report-item-row-col strong,
+.map-report-vertical .map-report-item-row-col strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-report-horizontal .map-report-quantity-col,
+.map-report-vertical .map-report-quantity-col { width: 70px; min-width: 70px; }
+.map-report-horizontal .map-report-quantity-col strong,
+.map-report-vertical .map-report-quantity-col strong { display: inline-block; }
+.map-report-horizontal .map-report-quantity-col small,
+.map-report-vertical .map-report-quantity-col small { display: inline-block; margin-top: 0; margin-left: 4px; }
+.map-report-horizontal .map-report-choice-col,
+.map-report-vertical .map-report-choice-col { width: 90px; min-width: 90px; }
+.map-report-horizontal .map-report-choice-col strong,
+.map-report-vertical .map-report-choice-col strong { white-space: nowrap; }
 @media print {
   .map-report { width: 100%; padding: 0; gap: 14px; }
   .map-report-horizontal { gap: 6px; }
   .map-report-actions { display: none; }
   .map-report-matrix-wrap { overflow: visible; box-shadow: none; }
-  .map-report-matrix { min-width: 0; font-size: 9px; }
+  .map-report-matrix { min-width: 0; font-size: 10px; }
   .map-report-item-row-col { min-width: 150px; width: 150px; }
   .map-report-quantity-col { min-width: 70px; width: 70px; }
   .map-report-supplier-head { min-width: 118px; }
