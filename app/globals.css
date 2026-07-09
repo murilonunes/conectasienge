@@ -1965,9 +1965,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-block { display: grid; gap: 10px; }
 .map-report-grid { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
 .map-report-grid span { display: grid; gap: 4px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; font-size: 12px; }
-.map-report-grid strong { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+.map-report-grid strong { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
 .map-report-section-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; }
-.map-report-section-head span { color: #80591f; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.map-report-section-head span { color: #80591f; font-size: 10px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .map-report-section-head h2 { margin: 3px 0 0; font-family: var(--font-display); font-size: 18px; font-weight: 750; letter-spacing: 0; }
 .map-report-section-head small { max-width: 280px; color: var(--muted); font-size: 10px; text-align: right; }
 .map-report-matrix-block { display: grid; gap: 12px; }
@@ -2019,40 +2019,22 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .map-report-empty { margin: 0; color: var(--muted); font-size: 12px; }
 .map-report-footer { padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 .map-report-horizontal .map-report-actions { gap: 8px; }
-.map-report-horizontal .map-report-actions .button { padding: 9px 12px; font-size: 11px; border-radius: 8px; }
-.map-report-horizontal .map-report-head { gap: 12px; padding-bottom: 10px; }
-.map-report-horizontal .map-report-head h1 { margin: 3px 0; font-size: 22px; }
-.map-report-horizontal .map-report-head p { font-size: 11px; }
-.map-report-horizontal .map-report-head span { font-size: 9px; }
-.map-report-horizontal .map-report-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.map-report-horizontal .map-report-grid span { gap: 3px; padding: 8px 9px; border-radius: 8px; font-size: 10px; }
-.map-report-horizontal .map-report-grid strong { font-size: 7px; }
+.map-report-horizontal .map-report-head { grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); align-items: center; }
+.map-report-horizontal .map-report-head-brand { min-width: 0; }
 .map-report-horizontal .map-report-section-head { display: none; }
-.map-report-horizontal .map-report-matrix-block { gap: 6px; }
 .map-report-horizontal .map-report-matrix-wrap { border-radius: 9px; box-shadow: none; }
-.map-report-horizontal .map-report-matrix { font-size: 10px; }
 .map-report-horizontal .map-report-matrix th,
-.map-report-horizontal .map-report-matrix td { padding: 5px 7px; }
-.map-report-horizontal .map-report-item-row-col { width: 210px; min-width: 210px; }
-.map-report-horizontal .map-report-item-row-col span { font-size: 8px; }
-.map-report-horizontal .map-report-item-row-col strong { margin: 2px 0; font-size: 11px; line-height: 1.18; }
-.map-report-horizontal .map-report-quantity-col { width: 78px; min-width: 78px; }
-.map-report-horizontal .map-report-quantity-col strong { font-size: 13px; }
-.map-report-horizontal .map-report-quantity-col small { margin-top: 1px; font-size: 8px; }
+.map-report-horizontal .map-report-matrix td { padding: 5px 10px; }
+.map-report-horizontal .map-report-item-row-col { width: 420px; min-width: 420px; }
+.map-report-horizontal .map-report-item-row-col strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-report-horizontal .map-report-quantity-col { width: 70px; min-width: 70px; }
+.map-report-horizontal .map-report-quantity-col strong { display: inline-block; }
+.map-report-horizontal .map-report-quantity-col small { display: inline-block; margin-top: 0; margin-left: 4px; }
 .map-report-horizontal .map-report-supplier-head { min-width: 128px; max-width: 150px; }
-.map-report-horizontal .map-report-supplier-head strong { margin-bottom: 2px; font-size: 10px; line-height: 1.18; }
-.map-report-horizontal .map-report-supplier-head small { font-size: 8px; line-height: 1.18; }
-.map-report-horizontal .map-report-supplier-head em { margin: 2px 0; font-size: 7px; }
 .map-report-horizontal .map-report-price-cell { min-width: 115px; }
-.map-report-horizontal .map-report-price-cell strong { margin-bottom: 1px; font-size: 13px; }
-.map-report-horizontal .map-report-price-cell small { margin-top: 1px; font-size: 8px; line-height: 1.18; }
-.map-report-horizontal .map-report-price-line { gap: 6px; }
-.map-report-horizontal .map-report-price-details { gap: 1px; margin-top: 4px; padding-top: 4px; }
-.map-report-horizontal .map-report-choice-col { min-width: 105px; }
-.map-report-horizontal .map-report-choice-col strong { margin-bottom: 1px; font-size: 12px; }
-.map-report-horizontal .map-report-choice-col small { margin-top: 1px; font-size: 8px; line-height: 1.18; }
-.map-report-horizontal .map-report-matrix tfoot .map-report-extra-row td { font-size: 8px; line-height: 1.25; }
-.map-report-horizontal .map-report-footer { padding-top: 7px; font-size: 9px; }
+.map-report-horizontal .map-report-price-line { white-space: nowrap; }
+.map-report-horizontal .map-report-choice-col { width: 90px; min-width: 90px; }
+.map-report-horizontal .map-report-choice-col strong { white-space: nowrap; }
 @media print {
   .map-report { width: 100%; padding: 0; gap: 14px; }
   .map-report-horizontal { gap: 6px; }

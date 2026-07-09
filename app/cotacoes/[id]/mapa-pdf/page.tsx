@@ -111,7 +111,6 @@ export default async function QuotationMapPdfPage({
 
   const rowsWithBest = rows.filter((row) => row.best);
   const bestBasketTotal = rowsWithBest.reduce((sum, row) => sum + (row.best?.total || 0), 0);
-  const coverage = rows.length ? Math.round((rowsWithBest.length / rows.length) * 100) : 0;
   const respondingSuppliers = new Set(activeResponses.map((response) => response.document)).size;
   const supplierColumns = activeResponses.map((response) => {
     const offers = rows.map((row) => row.offers.find((offer) => offer.responseId === response.id));
@@ -135,22 +134,21 @@ export default async function QuotationMapPdfPage({
         </div>
 
       <header className="map-report-head">
-        <div>
+        <div className="map-report-head-brand">
           <span>Brasin Empreendimentos - Compras</span>
           <h1>Mapa comparativo de cotação</h1>
           <p>Cotação #{quotation.code} - {scopeLabel} - gerado em {new Date().toLocaleDateString("pt-BR")}</p>
         </div>
-      </header>
 
-      <section className="map-report-block map-report-grid">
-        <span><strong>Comprador</strong>{quotation.buyerId || "Não informado"}</span>
-        <span><strong>Data da cotação</strong>{formatOptionalDate(quotation.date)}</span>
-        <span><strong>Prazo de respostas</strong>{formatOptionalDate(quotation.deadline)}</span>
-        <span><strong>Fornecedores respondentes</strong>{respondingSuppliers}</span>
-        <span><strong>Itens no mapa</strong>{rows.length}</span>
-        <span><strong>Cobertura de preço</strong>{coverage}%</span>
-        <span><strong>Melhor cesta</strong>{formatCurrency(bestBasketTotal)}</span>
-      </section>
+        <div className="map-report-block map-report-grid">
+          <span><strong>Comprador</strong>{quotation.buyerId || "Não informado"}</span>
+          <span><strong>Data da cotação</strong>{formatOptionalDate(quotation.date)}</span>
+          <span><strong>Prazo de resp.</strong>{formatOptionalDate(quotation.deadline, "Não infor.")}</span>
+          <span><strong>Forn. respondentes</strong>{respondingSuppliers}</span>
+          <span><strong>Itens no mapa</strong>{rows.length}</span>
+          <span><strong>Melhor cesta</strong>{formatCurrency(bestBasketTotal)}</span>
+        </div>
+      </header>
 
       <section className="map-report-matrix-block">
         <div className="map-report-section-head">
