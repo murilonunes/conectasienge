@@ -147,7 +147,6 @@ export default async function QuotationMapPdfPage({
         <div className="map-report-section-head">
           <div>
             <span>Comparativo horizontal</span>
-            <h2>Itens por linha, fornecedores por coluna</h2>
           </div>
         </div>
 
@@ -219,8 +218,7 @@ export default async function QuotationMapPdfPage({
               </tbody>
               <tfoot>
                 <tr>
-                  <td>Total cotado por fornecedor</td>
-                  <td></td>
+                  <td colSpan={2}>Total cotado por fornecedor</td>
                   {supplierColumns.map(({ response, total }) => (
                     <td className="map-report-price-cell" key={`total-${response.id}`}>
                       <strong>{formatCurrency(total)}</strong>
@@ -232,32 +230,28 @@ export default async function QuotationMapPdfPage({
                   </td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td>Itens</td>
-                  <td></td>
+                  <td colSpan={2}>Itens</td>
                   {supplierColumns.map(({ response, coverageCount }) => (
                     <td key={`coverage-${response.id}`}>{coverageCount}/{rows.length} com preço</td>
                   ))}
                   <td></td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td>Melhores</td>
-                  <td></td>
+                  <td colSpan={2}>Melhores</td>
                   {supplierColumns.map(({ response, bestCount }) => (
                     <td key={`best-count-${response.id}`}>{bestCount ? plural(bestCount, "preço", "preços") : "Nenhum"}</td>
                   ))}
                   <td></td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td>Pagamento</td>
-                  <td></td>
+                  <td colSpan={2}>Pagamento</td>
                   {supplierColumns.map(({ response }) => (
                     <td key={`payment-${response.id}`}>{mapPaymentSummary(response.commercialTerms)}</td>
                   ))}
                   <td></td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td>Frete</td>
-                  <td></td>
+                  <td colSpan={2}>Frete</td>
                   {supplierColumns.map(({ response }) => (
                     <td key={`freight-${response.id}`}>{freightSummary(response.commercialTerms)}</td>
                   ))}
