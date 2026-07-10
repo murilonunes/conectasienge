@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { refreshQuotationsMirror } from "@/features/purchases/data";
 import { guardPermission } from "@/lib/app-users";
 import { findSupplierQuoteIntegration, findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
 
@@ -440,6 +441,18 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Depois de gravar no Sienge, o espelho local de cotações precisa ser atualizado
+// para a cotação aparecer nas telas sem depender de Configurações > Atualizar Compras.
+// Melhor esforço: se falhar, a gravação no Sienge já aconteceu e a resposta informa.
+async function refreshLocalQuotationsSafely(): Promise<boolean> {
+  try {
+    await refreshQuotationsMirror();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // O Sienge limita a taxa de chamadas (429) quando várias gravações saem em sequência
 // rápida (ex.: vincular vários itens de uma solicitação). Espera um pouco entre
 // chamadas e tenta de novo com backoff quando toma 429 ou erro 5xx transitório.
@@ -699,8 +712,10 @@ export async function POST(request: NextRequest) {
     } else {
       recordIntegrationEvent("sienge_created", "Itens vinculados no Sienge", "Itens da solicitação foram vinculados a cotação.", { integrationKey, preflight, results });
     }
+    const mirrorRefreshed = await refreshLocalQuotationsSafely();
     return NextResponse.json({
       message: failed ? "Um ou mais itens não foram aceitos pelo Sienge." : "Itens vinculados a cotação no Sienge.",
+      mirrorRefreshed,
       preflight,
       results
     }, { status: failed ? failed.status : 201 });
@@ -761,8 +776,10 @@ export async function POST(request: NextRequest) {
       endpoint: payload.endpoint,
       supplierId
     });
+    const mirrorRefreshed = await refreshLocalQuotationsSafely();
     return NextResponse.json({
       message: "Fornecedor incluído no item da cotação no Sienge.",
+      mirrorRefreshed,
       preflight,
       result
     }, { status: 201 });
@@ -846,8 +863,10 @@ export async function POST(request: NextRequest) {
       endpoint: payload.endpoint,
       productId: payload.body.productId
     });
+    const mirrorRefreshed = await refreshLocalQuotationsSafely();
     return NextResponse.json({
       message: "Insumo criado na cotação do Sienge.",
+      mirrorRefreshed,
       preflight,
       result
     }, { status: 201 });
@@ -963,12 +982,14 @@ export async function POST(request: NextRequest) {
       recordIntegrationEvent("sienge_created", negotiation.authorize ? "Negociação gravada e autorizada no Sienge" : "Negociação gravada no Sienge", `Negociação ${negotiationNumber} do fornecedor ${supplierId} atualizada com ${items.length} item(ns).`, { integrationKey, preflight, negotiationNumber, supplierId, responseId: Number(negotiation.responseId) || undefined, authorized: Boolean(negotiation.authorize) });
     }
 
+    const mirrorRefreshed = await refreshLocalQuotationsSafely();
     return NextResponse.json({
       message: failed
         ? "Uma ou mais etapas da negociação não foram aceitas pelo Sienge."
         : negotiation.authorize
           ? "Negociação gravada e autorizada no Sienge."
           : "Negociação gravada no Sienge.",
+      mirrorRefreshed,
       preflight,
       linkSteps,
       negotiationNumber,
@@ -1052,11 +1073,16 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  const mirrorRefreshed = await refreshLocalQuotationsSafely();
+
   return NextResponse.json({
     message: failedItem
       ? "Cotação criada no Sienge, mas um ou mais itens não foram vinculados."
-      : "Cotação criada no Sienge.",
+      : mirrorRefreshed
+        ? "Cotação criada no Sienge e atualizada nas telas locais."
+        : "Cotação criada no Sienge, mas as telas locais ainda não refletiram; atualize Compras em Configurações.",
     purchaseQuotationId,
+    mirrorRefreshed,
     location: result.location,
     quotationPayload,
     itemPayloads: payloads,

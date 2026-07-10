@@ -717,6 +717,28 @@ function recordType(endpoint: string) {
     .replace(/^_+|_+$/g, "");
 }
 
+// Endpoints cuja resposta traz o conjunto completo de registros em uma única
+// chamada: depois de gravar, os registros que não vieram na resposta podem ser
+// removidos com segurança (foram excluídos no Sienge). Endpoints paginados
+// (pedidos, notas, solicitações) NÃO podem entrar aqui: cada página é uma
+// resposta parcial e a limpeza apagaria dados válidos.
+const fullReplaceEndpoints = new Set(["/bulk-data/v1/purchase-quotations"]);
+
+function coversFullRange(context: SiengeStoreContext) {
+  if (!fullReplaceEndpoints.has(context.endpoint)) return false;
+  try {
+    const parsed = JSON.parse(context.queryJson || "[]") as unknown;
+    const startDate = Array.isArray(parsed)
+      ? new Map(parsed as Array<[string, unknown]>).get("startDate")
+      : (parsed as { startDate?: unknown }).startDate;
+    // Só limpa quando a consulta cobriu o histórico inteiro (padrão 2000-01-01);
+    // com período configurado, registros fora do período não podem ser julgados.
+    return typeof startDate !== "string" || startDate <= "2001-01-01";
+  } catch {
+    return false;
+  }
+}
+
 export function storeGenericResponseRecords(database: DatabaseSync, context: SiengeStoreContext, response: unknown, onProgress?: ProgressHandler) {
   createGenericRecordTable(database);
   const type = recordType(context.endpoint);
@@ -764,6 +786,14 @@ export function storeGenericResponseRecords(database: DatabaseSync, context: Sie
       context.savedAt
     ]);
   });
+
+  // Registros antigos que não vieram nesta resposta completa foram excluídos no
+  // Sienge; remove para não exibir cotações fantasmas nas telas. O guard de
+  // items.length evita zerar o espelho se a resposta vier vazia por falha.
+  if (items.length && coversFullRange(context)) {
+    database.prepare("DELETE FROM sienge_records WHERE tenant = ? AND endpoint = ? AND saved_at <> ?")
+      .run(context.tenant, context.endpoint, context.savedAt);
+  }
 }
 
 export function storeBulkResponse(database: DatabaseSync, context: SiengeStoreContext, response: unknown, onProgress?: ProgressHandler) {

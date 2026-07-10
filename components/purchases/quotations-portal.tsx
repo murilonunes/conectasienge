@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { QuotationPortalData, QuotationStatus } from "@/features/quotations/data";
 import { QuotationsFiltersBar } from "./quotations/filters-bar";
@@ -10,6 +11,7 @@ import { QuotationsStatusTabs } from "./quotations/status-tabs";
 import { QuotationsSummaryStats } from "./quotations/summary-stats";
 
 export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
+  const router = useRouter();
   const [status, setStatus] = useState<QuotationStatus | "Todas">("Todas");
   const [buyer, setBuyer] = useState("");
   const [search, setSearch] = useState("");
@@ -112,6 +114,9 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
       }
       setInsertResult(JSON.stringify(json, null, 2));
       setInsertOk(response.ok);
+      // A rota já atualizou o espelho local; o refresh recarrega a lista
+      // server-side para a cotação nova aparecer sem perder o painel de resultado.
+      if (response.ok) router.refresh();
     } finally {
       setInserting(false);
     }

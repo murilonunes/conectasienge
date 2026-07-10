@@ -377,6 +377,14 @@ export async function loadPurchases(forceRefresh = false, forceReplaceFinalized 
   return refreshFromSienge(forceReplaceFinalized, range);
 }
 
+// Atualiza só o espelho local de cotações, sem passar por pedidos/notas/solicitações.
+// Usado após escritas confirmadas em /api/sienge/purchase-quotations para a cotação
+// recém-gravada aparecer nas telas sem depender da atualização geral de Compras.
+export async function refreshQuotationsMirror(): Promise<number> {
+  const quotations = await loadQuotations(true);
+  return quotations.totalCount;
+}
+
 function orderStatusLabel(status?: string) {
   const labels: Record<string, string> = {
     PENDING: "Pendente",

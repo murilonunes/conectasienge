@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { QuotationSummary } from "@/features/quotations/data";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
@@ -46,6 +47,7 @@ export function QuotationDetail({
   supplierReviews?: Record<string, SupplierRegistrationReview>;
   knownBuyerIds?: string[];
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState<DetailTab>("resumo");
   const [buyerId, setBuyerId] = useState(quotation.buyerId === "Não informado" ? "" : quotation.buyerId);
   const [quotationDate, setQuotationDate] = useState((quotation.date || new Date().toISOString()).slice(0, 10));
@@ -222,7 +224,12 @@ export function QuotationDetail({
       }
       setOperationResult(JSON.stringify(json, null, 2));
       setOperationKind(confirm ? (response.ok ? "success" : skippedAsDuplicate ? "info" : "error") : "info");
-      if (confirm) void refreshEvents();
+      if (confirm) {
+        void refreshEvents();
+        // A rota atualizou o espelho local após a gravação; recarrega os dados
+        // server-side da cotação sem perder o estado das abas.
+        if (response.ok) router.refresh();
+      }
     } finally {
       setLoadingAction(null);
     }
@@ -395,7 +402,10 @@ export function QuotationDetail({
       }
       setOperationResult(JSON.stringify(results.length === 1 ? results[0] : results, null, 2));
       setOperationKind(confirm ? (results.every((result) => result.ok) ? "success" : "error") : "info");
-      if (confirm) void refreshEvents();
+      if (confirm) {
+        void refreshEvents();
+        router.refresh();
+      }
     } finally {
       setLoadingAction(null);
     }
