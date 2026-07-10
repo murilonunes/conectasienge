@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { QuotationPortalData, QuotationStatus } from "@/features/quotations/data";
 import { QuotationsFiltersBar } from "./quotations/filters-bar";
 import { statusOrder, requestPayload } from "./quotations/helpers";
@@ -19,6 +19,11 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
   const [insertResult, setInsertResult] = useState<string>("");
   const [insertOk, setInsertOk] = useState(false);
   const [inserting, setInserting] = useState(false);
+  const [selectedItemNumbers, setSelectedItemNumbers] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    setSelectedItemNumbers(new Set(data.request?.items.map((item) => item.itemNumber) || []));
+  }, [data.request?.purchaseRequestId]);
 
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -56,12 +61,18 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
     return counts;
   }, [data.quotations]);
 
+  function selectedRequestPayload() {
+    if (!data.request) return undefined;
+    const items = data.request.items.filter((item) => selectedItemNumbers.has(item.itemNumber));
+    return requestPayload({ ...data.request, items, itemCount: items.length });
+  }
+
   async function prepareSiengeInsertion() {
     const payload = {
       dryRun: true,
       buyerId: buyerId.trim(),
       date: quotationDate,
-      request: data.request ? requestPayload(data.request) : undefined
+      request: selectedRequestPayload()
     };
     const response = await fetch("/api/sienge/purchase-quotations", {
       method: "POST",
@@ -81,7 +92,7 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
         confirm: true,
         buyerId: buyerId.trim(),
         date: quotationDate,
-        request: data.request ? requestPayload(data.request) : undefined
+        request: selectedRequestPayload()
       };
       let response = await fetch("/api/sienge/purchase-quotations", {
         method: "POST",
@@ -131,6 +142,8 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
           insertResult={insertResult}
           insertOk={insertOk}
           inserting={inserting}
+          selectedItemNumbers={selectedItemNumbers}
+          onSelectedItemNumbersChange={setSelectedItemNumbers}
           onBuyerIdChange={setBuyerId}
           onQuotationDateChange={setQuotationDate}
           onPrepare={prepareSiengeInsertion}

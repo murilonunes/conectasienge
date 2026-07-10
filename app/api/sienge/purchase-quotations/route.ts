@@ -943,17 +943,10 @@ export async function POST(request: NextRequest) {
     steps.push(updated);
 
     for (const item of items) {
+      if (steps.length > 1) await sleep(350);
       const itemEndpoint = `${basePath}/${negotiationNumber}/items/${item.quotationItemNumber}`;
       const itemPayload = negotiationItemPayload(item);
-      let itemResult = await callSienge(config.tenant, config.username, config.password, "PUT", itemEndpoint, itemPayload);
-      // O Sienge às vezes devolve 500 sem detalhe num item logo após criar a negociação
-      // (parece uma falha transitória de indexação); um novo PUT idêntico é seguro (é
-      // sempre o mesmo estado final) e costuma resolver sem precisar repetir tudo.
-      if (!itemResult.ok && itemResult.status >= 500) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        itemResult = await callSienge(config.tenant, config.username, config.password, "PUT", itemEndpoint, itemPayload);
-      }
-      steps.push(itemResult);
+      steps.push(await callSiengeWithBackoff(config.tenant, config.username, config.password, "PUT", itemEndpoint, itemPayload));
     }
 
     let authorized: SiengePostResult | undefined;
