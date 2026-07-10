@@ -1,6 +1,6 @@
 # Status do projeto Brasin
 
-Atualizado em: 07/07/2026
+Atualizado em: 10/07/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
@@ -9,6 +9,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O sistema passou a exigir senha para acesso: todas as telas e rotas internas ficam atrás de login, com exceção explícita do portal público do fornecedor.
 - Foi criado o fluxo completo de cotações de compra: tela de solicitações (`/solicitacoes-compra`), portal de cotações (`/cotacoes`), detalhe da cotação (`/cotacoes/[id]`) e portal público do fornecedor (`/portal-cotacao/[token]`).
 - A tela `/cotacoes` foi revisada e separada em componentes por responsabilidade: filtros, origem/criação no Sienge, estatísticas, abas rápidas de status, lista/exportação e helpers.
+- A criação de cotação a partir de solicitação permite escolher quais itens serão enviados ao Sienge, por modal com checkboxes; isso permite dividir uma mesma solicitação em mais de uma cotação.
 - O detalhe da cotação mantém cada aba em arquivo próprio dentro de `components/purchases/quotation-detail/tabs`, com os tipos e a ordem centralizados em `components/purchases/quotation-detail/types.ts`.
 - O fornecedor recebe um link assinado com validade padrão de 7 dias e responde a cotação sem precisar de conta; a resposta fica salva no banco local `supplier-quotations.sqlite`.
 - Links do fornecedor podem ser revogados a qualquer momento pela aba Links da cotação; link revogado deixa de abrir o portal e de aceitar propostas.
@@ -24,6 +25,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Foi documentado o mapa real das conexões Sienge em cotações: telas abrem pelo espelho local, escritas passam por dry-run em `/api/sienge/purchase-quotations`, e o portal público do fornecedor não chama o Sienge diretamente.
 - O portal do fornecedor passou a validar forma de pagamento também no backend, gerar novo link automaticamente quando o fornecedor solicita revisão de uma proposta já enviada, e permitir que a equipe exclua uma resposta pela aba Respostas.
 - A integração Sienge de cotações mantém histórico de gravações na própria aba Sienge, bloqueia envios confirmados duplicados por chave de operação e faz pré-consulta ao Sienge antes das escritas confirmadas.
+- As gravações confirmadas de cotações no Sienge atualizam o espelho local de `/bulk-data/v1/purchase-quotations` e recarregam `/cotacoes` e `/cotacoes/[id]`, para a tela refletir a alteração sem depender de Atualizar Compras manual.
 - A gestão de usuários evoluiu para papéis/grupos com permissões por tela, permissões operacionais e alçada de aprovação herdada do grupo ou definida por usuário.
 - O portal público de cotação passou a destacar em vermelho os campos obrigatórios ou inválidos quando o fornecedor tenta avançar uma etapa incompleta.
 - A cotação passou a respeitar o prazo de resposta: prazo vencido bloqueia envio de proposta, pedido de novo link e convite além da data, e o portal público mostra aviso de prazo encerrado em vez do formulário.
@@ -86,6 +88,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O comparativo por item marca o melhor preço entre as respostas recebidas e alimenta a aba de aprovação.
 - A aba Mapa mostra leitura gerencial da cotação: melhor cesta por item, cobertura de preços, itens parciais, maiores economias e ranking por fornecedor.
 - A aba Mapa ganhou o botão `Mapa em PDF`, independente do Sienge (ao lado do `Mapa do Sienge (PDF)` que já existia): abre um modal para escolher todos os itens, somente os itens marcados manualmente ou somente os itens que já receberam proposta com preço válido, e gera o relatório na rota `/cotacoes/[id]/mapa-pdf` (sem shell/menu, com botão `Imprimir / salvar PDF`, no mesmo padrão do relatório de decisão). O relatório mostra cabeçalho executivo, dados da cotação e uma matriz horizontal: cada item aparece em uma linha, fornecedores aparecem uma vez como colunas e cada célula mostra preço, total, quantidade e prazo; no final da linha, a coluna `Melhor cesta` mostra apenas o menor valor unitário entre todos os fornecedores, com o total consolidado no rodapé. O verde fica reservado às células de melhor preço.
+- A rota `/cotacoes/[id]/mapa-pdf` tem alternância entre orientação horizontal e vertical; a versão horizontal é mais compacta para impressão, coloca item e quantidade na mesma linha e mostra os indicadores executivos no cabeçalho.
 - `buildItemComparison` (em `components/purchases/quotation-detail/helpers.ts`) concentra o cálculo do mapa item a item; é usado tanto no detalhe da cotação (client) quanto no relatório de mapa em PDF (server), para os dois não divergirem.
 - A aprovação registra vencedor por cotação inteira ou por item, com justificativa obrigatória, salva no banco local.
 - A aba Aprovar mostra prontidão da decisão, recomendação automática, cobertura salva, checklist e análise do fornecedor selecionado antes de enviar a decisão ao Sienge.
@@ -160,6 +163,8 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Cada banco de responsabilidade possui tabela de espelho da API e historico de integracao.
 - As respostas da API sao armazenadas em tabelas mantendo o padrao dos dados retornados, com chave de registro para evitar repeticao sempre que possivel.
 - As consultas bulk devem usar o maior periodo util possivel e gravar o resultado localmente, para manter um banco paralelo consultavel.
+- Para endpoints de cobertura completa, o espelho local pode remover registros ausentes na resposta nova. Hoje isso vale para `/bulk-data/v1/purchase-quotations`, somente quando a consulta cobre o histórico inteiro e a resposta não está vazia; endpoints paginados continuam preservados.
+- Em 10/07/2026, a base local de cotações foi limpa para reimportação: registros de `/bulk-data/v1/purchase-quotations` foram removidos de `purchases.sqlite` (`sienge_records`, `sienge_api_mirror`, `sienge_api_mirror_history`) e do cache `00-cache.sqlite` (`sienge_response_cache`), sem mexer no banco do portal de fornecedores.
 - Ao atualizar dados comuns, registros que parecem pagos, baixados, recebidos, cancelados ou finalizados sao preservados.
 - A opcao "atualizar com forca" em Configuracoes permite substituir tambem dados finalizados.
 
@@ -376,6 +381,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Validacoes recentes
 
+- Em 10/07/2026, foram revisados e commitados os ajustes recentes de cotações: mapa PDF horizontal/vertical, sincronização de respostas com o Sienge, seleção parcial de itens da solicitação, backoff contra 429/5xx, atualização do espelho local após escritas e limpeza controlada de cotações fantasmas. `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram nos commits funcionais.
 - Em 07/07/2026, a documentação foi revisada contra os commits reais (usuários/papéis/alçadas, grupos, permissões por tela, prazo de cotação, relatório de decisão, revisões/anexos de proposta e obrigatórios do portal); `tsc --noEmit --incremental false` passou limpo.
 - Em 07/07/2026, foram revisados os commits recentes de permissões/papéis e portal de cotação; `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram após o ajuste visual dos obrigatórios no portal.
 - Em 05/07/2026, a revisão das conexões Sienge de cotações passou em `tsc --noEmit --incremental false` e atualizou a documentação técnica (`lib/api/README.md`) com endpoints, telas envolvidas e pontos de atenção.

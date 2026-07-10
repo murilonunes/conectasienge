@@ -34,10 +34,10 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 ### O que cada tela faz de fato
 
 - `/cotacoes` abre lendo o espelho local de compras (`loadPurchases`) e monta filtros, status, exportação e cards sem consultar o Sienge.
-- Quando `/cotacoes` recebe uma solicitação de compra como origem, os botões de criação chamam `/api/sienge/purchase-quotations`: primeiro em `dryRun`, depois com `confirm: true`.
+- Quando `/cotacoes` recebe uma solicitação de compra como origem, o usuário pode escolher quais itens entram na cotação. Os botões de criação chamam `/api/sienge/purchase-quotations`: primeiro em `dryRun`, depois com `confirm: true`.
 - `/cotacoes/[id]` também abre pelo espelho local e pelas tabelas locais do portal do fornecedor; as ações que gravam no Sienge ficam nas abas Sienge, Respostas, Aprovar e Cadastros.
 - A aba Sienge prepara ou confirma criação da cotação, vínculo de itens de solicitação, inclusão de fornecedor por item e criação de insumo direto. O menu de temas fica compacto e a área operacional ocupa a maior parte da tela.
-- A aba Respostas envia uma proposta recebida pelo portal como negociação do fornecedor no Sienge e permite excluir uma resposta local, removendo aprovações vinculadas.
+- A aba Respostas envia uma proposta recebida pelo portal como negociação do fornecedor no Sienge, permite sincronizar em lote todas as respostas ativas com fornecedor cadastrado e permite excluir uma resposta local, removendo aprovações vinculadas.
 - A aba Aprovar salva a decisão localmente e, quando confirmado, envia a decisão como negociação autorizada.
 - A aba Cadastros cria fornecedor/credor no Sienge por `/api/sienge/suppliers`, que usa `/v1/creditors`.
 - A aba Mapa calcula análises localmente e pode buscar o PDF do mapa comparativo do Sienge.
@@ -60,7 +60,7 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 
 ### Dados enviados por operação Sienge
 
-- Criar cotação (`POST /v1/purchase-quotations`): usa comprador e data informados na tela. Quando vem de uma solicitação, usa também `purchaseRequestId`, itens e entregas para vincular os itens retornados pelo Sienge. No detalhe de uma cotação já existente, a criação é bloqueada por padrão para evitar duplicar a cotação.
+- Criar cotação (`POST /v1/purchase-quotations`): usa comprador e data informados na tela. Quando vem de uma solicitação, usa também `purchaseRequestId`, itens selecionados e entregas para vincular os itens retornados pelo Sienge. No detalhe de uma cotação já existente, a criação é bloqueada por padrão para evitar duplicar a cotação.
 - Vincular item de solicitação (`POST /items/from-purchase-request`): usa ID da cotação, ID da solicitação, número do item e entrega. A chave de deduplicação considera todos esses campos.
 - Incluir fornecedor no item (`POST /items/{item}/suppliers`): usa ID da cotação, número do item da cotação e ID do credor/fornecedor Sienge. A chave de deduplicação considera cotação, item e fornecedor.
 - Criar insumo direto (`POST /items`): usa obra, insumo, quantidade, unidade, entrega e apropriação de obra (`buildingUnitId`, `costEstimationItemReference`, `percentage`). A tela exige apropriação total de 100% antes de confirmar, porque esse caminho não reaproveita a apropriação de uma solicitação de compra.
@@ -77,9 +77,17 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 - O backend nunca bloqueia `dryRun`; bloqueia apenas gravação confirmada que repete a mesma `integrationKey`.
 - Integrações antigas que não tinham `integrationKey` continuam aparecendo no histórico, mas não conseguem bloquear duplicidade retroativamente.
 
+### Espelho local após escritas
+
+- Depois de uma gravação confirmada em `/api/sienge/purchase-quotations`, a rota tenta atualizar apenas o espelho local de cotações (`/bulk-data/v1/purchase-quotations`) por `refreshQuotationsMirror`.
+- As telas `/cotacoes` e `/cotacoes/[id]` chamam `router.refresh()` quando a gravação confirmada termina com sucesso, para refletir a cotação nova ou alterada sem depender de Atualizar Compras manual.
+- A persistência local remove cotações antigas que não vieram numa resposta completa de `/bulk-data/v1/purchase-quotations`, desde que a consulta cubra o histórico inteiro e a resposta não esteja vazia. Endpoints paginados não usam essa limpeza.
+- Loops de escrita que vinculam vários itens ou fornecedores usam `callSiengeWithBackoff`, com pausa curta entre chamadas e novas tentativas para respostas 429 ou 5xx.
+
 ### Pontos de atenção atuais
 
 - O caminho de `add-item`/Insumo direto agora exige apropriação de obra antes de confirmar. A documentação oficial de apoio do Sienge informa que apropriações de item de solicitação retornam unidade construtiva, referência do orçamento e percentual; se o contrato oficial do endpoint de cotações mudar, esses campos devem ser conferidos novamente antes de usar em produção.
+- Se a base local de cotações precisar ser reimportada do zero, a limpeza deve atingir somente o endpoint `/bulk-data/v1/purchase-quotations` nos espelhos/cache locais, sem apagar `supplier-quotations.sqlite`, pois esse banco guarda respostas, links, aprovações e eventos do portal.
 
 ### Rotas locais do portal do fornecedor
 
