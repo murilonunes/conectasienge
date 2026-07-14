@@ -667,31 +667,27 @@ export function QuotationDetail({
     setPendingSupplierLoading(`${document}-${confirm ? "confirm" : "preview"}`);
     setPendingSupplierResult("");
     try {
-      let siengeResponse = await fetch("/api/sienge/suppliers", {
+      const siengeResponse = await fetch("/api/sienge/suppliers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      let json = await siengeResponse.json() as Record<string, unknown>;
-      if (siengeResponse.status === 409 && json.alreadyIntegrated) {
-        if (window.confirm(`${String(json.message)}\n\nDeseja criar o cadastro novamente mesmo assim?`)) {
-          siengeResponse = await fetch("/api/sienge/suppliers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, force: true })
-          });
-          json = await siengeResponse.json() as Record<string, unknown>;
-        } else {
-          setPendingSupplierResult(JSON.stringify(json, null, 2));
-          setPendingSupplierKind("info");
-          return;
-        }
+      const json = await siengeResponse.json() as Record<string, unknown> & { review?: SupplierRegistrationReview };
+      const linked = json.linked === true;
+      const status: SupplierRegistrationReview["status"] = siengeResponse.ok
+        ? (confirm && linked ? "created" : "prepared")
+        : "failed";
+      if (json.review) {
+        setRegistrationReviews((current) => ({ ...current, [json.review!.document]: json.review! }));
+      } else {
+        await updateRegistrationReview(document, status, json);
       }
-      const status: SupplierRegistrationReview["status"] = siengeResponse.ok ? (confirm ? "created" : "prepared") : "failed";
-      await updateRegistrationReview(document, status, json);
       setPendingSupplierResult(JSON.stringify(json, null, 2));
-      setPendingSupplierKind(confirm ? (siengeResponse.ok ? "success" : "error") : "info");
-      if (confirm) void refreshEvents();
+      setPendingSupplierKind(confirm ? (siengeResponse.ok && linked ? "success" : "error") : "info");
+      if (confirm) {
+        void refreshEvents();
+        if (siengeResponse.ok && linked) router.refresh();
+      }
     } catch (error) {
       const result = { message: error instanceof Error ? error.message : "Erro inesperado ao processar fornecedor." };
       await updateRegistrationReview(document, "failed", result);

@@ -29,7 +29,7 @@ O portal público do fornecedor não chama o Sienge diretamente. Ele grava convi
 
 Quando um convite é emitido para um fornecedor já escolhido, o token carrega os dados conhecidos do fornecedor e o portal público preenche a identificação automaticamente. Campos fixados pelo convite não podem ser alterados na tela e são conferidos novamente na API de resposta.
 
-Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. Antes de repetir uma gravação confirmada, a rota consulta esse histórico e retorna `409` quando encontra a mesma operação já integrada. As ações confirmadas também fazem pré-consulta ao Sienge (`preflight`) antes da escrita, para trazer o estado atual da cotação/fornecedor e evitar duplicidade detectável fora do histórico local. O usuário pode forçar a repetição conscientemente pela tela, mas o envio automático duplicado fica bloqueado.
+Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. Antes de repetir uma gravação confirmada, a rota consulta esse histórico e retorna `409` quando encontra a mesma operação já integrada. As ações confirmadas também fazem pré-consulta ao Sienge (`preflight`) antes da escrita, para trazer o estado atual da cotação/fornecedor e evitar duplicidade detectável fora do histórico local. Operações de cotação podem permitir repetição consciente quando isso representar uma nova ação operacional; criação de credor pelo mesmo CPF/CNPJ nunca é forçada e deve reutilizar o cadastro localizado.
 
 ### O que cada tela faz de fato
 
@@ -66,7 +66,7 @@ Toda escrita confirmada no Sienge grava um evento local com `integrationKey`. An
 - Criar insumo direto (`POST /items`): usa obra, insumo, quantidade, unidade, entrega e apropriação de obra (`buildingUnitId`, `costEstimationItemReference`, `percentage`). A tela exige apropriação total de 100% antes de confirmar, porque esse caminho não reaproveita a apropriação de uma solicitação de compra.
 - Gravar negociação (`POST/PUT /negotiations` e `PUT /items/{item}`): usa fornecedor Sienge e a resposta recebida pelo portal do fornecedor, incluindo pagamento, frete, observações, preço, quantidade e itens selecionados. Antes de criar negociação nova, a rota consulta a última negociação do fornecedor na cotação e a reutiliza quando já existir. A chave de deduplicação considera cotação, fornecedor, resposta do portal e modo de envio.
 - Autorizar negociação (`PATCH /negotiations/latest/authorize`): usa a mesma resposta aprovada localmente e marca a última negociação do fornecedor como autorizada. A autorização tem chave separada da gravação simples.
-- Criar fornecedor (`POST /v1/creditors`): usa nome, CPF/CNPJ, e-mail e telefone da resposta do fornecedor. Antes de criar, consulta `/v1/creditors` por documento; se encontrar o mesmo CPF/CNPJ, retorna `409` sem gravar. A chave de deduplicação local também é global por documento, para evitar criar o mesmo credor por outra cotação.
+- Criar ou localizar fornecedor (`POST /v1/creditors`): usa nome, CPF/CNPJ, e-mail e telefone da resposta do fornecedor. Antes de criar, consulta `/v1/creditors` por documento. Se o credor já existir, não cria duplicado: usa o ID localizado para vincular a proposta e o convite locais. Após uma criação, consulta novamente o documento quando necessário para obter o ID, grava esse ID na resposta e libera sincronização e aprovação. A chave de deduplicação local também é global por documento.
 
 ### Histórico e deduplicação
 

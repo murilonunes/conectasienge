@@ -121,6 +121,14 @@ export type SupplierRegistrationReview = {
   reviewedAt: string;
 };
 
+export type SupplierQuoteSupplierLinkResult = {
+  quotationId: number;
+  supplierId: number;
+  document: string;
+  responsesUpdated: number;
+  invitationsUpdated: number;
+};
+
 export type SupplierQuoteInvitationSummary = {
   id: number;
   quotationId: number;
@@ -566,7 +574,7 @@ export function loadSupplierQuoteResponseByToken(token: string): SupplierQuoteRe
       email: row.email ?? undefined,
       phone: row.phone ?? undefined,
       registration: parseJson<Record<string, unknown> | undefined>(row.registration_json, undefined),
-      registrationPending: Boolean(row.registration_json),
+      registrationPending: Boolean(row.registration_json) && !row.supplier_id,
       items,
       attendedCount: attendedItems.length,
       totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
@@ -895,7 +903,7 @@ export function loadSupplierQuoteResponses(quotationId: number): SupplierQuoteRe
         email: row.email ?? undefined,
         phone: row.phone ?? undefined,
         registration: parseJson<Record<string, unknown> | undefined>(row.registration_json, undefined),
-        registrationPending: Boolean(row.registration_json),
+        registrationPending: Boolean(row.registration_json) && !row.supplier_id,
         items,
         attendedCount: attendedItems.length,
         totalValue: attendedItems.reduce((sum, item) => sum + ((item.unitPrice || 0) * (item.quantity || 0)), 0),
@@ -1111,6 +1119,54 @@ export function saveSupplierRegistrationReview(input: { document: string; status
     );
 
     return { document, status: input.status, result: input.result, reviewedAt } satisfies SupplierRegistrationReview;
+  } finally {
+    db.close();
+  }
+}
+
+export function linkSupplierQuoteSupplier(input: {
+  quotationId: number;
+  supplierId: number;
+  document: string;
+}): SupplierQuoteSupplierLinkResult {
+  const quotationId = Math.trunc(Number(input.quotationId));
+  const supplierId = Math.trunc(Number(input.supplierId));
+  const document = input.document.replace(/\D/g, "");
+  if (quotationId <= 0) throw new Error("Cotação inválida para vincular o fornecedor.");
+  if (supplierId <= 0) throw new Error("ID do fornecedor inválido para vincular a proposta.");
+  if (!document) throw new Error("Documento do fornecedor não informado.");
+
+  const db = database();
+  try {
+    db.exec("BEGIN IMMEDIATE");
+    const responses = db.prepare(`
+      UPDATE supplier_quote_responses
+      SET supplier_id = ?
+      WHERE quotation_id = ? AND document = ?
+        AND (supplier_id IS NULL OR supplier_id <> ?)
+    `).run(supplierId, quotationId, document, supplierId);
+    const invitations = db.prepare(`
+      UPDATE supplier_quote_invitations
+      SET supplier_id = ?
+      WHERE quotation_id = ? AND document = ?
+        AND (supplier_id IS NULL OR supplier_id <> ?)
+    `).run(supplierId, quotationId, document, supplierId);
+    db.exec("COMMIT");
+
+    return {
+      quotationId,
+      supplierId,
+      document,
+      responsesUpdated: Number(responses.changes),
+      invitationsUpdated: Number(invitations.changes)
+    };
+  } catch (error) {
+    try {
+      db.exec("ROLLBACK");
+    } catch {
+      // A transação pode ter falhado antes de ser iniciada.
+    }
+    throw error;
   } finally {
     db.close();
   }

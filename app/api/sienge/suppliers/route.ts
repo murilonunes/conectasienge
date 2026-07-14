@@ -3,7 +3,12 @@ import { credoresApi } from "@/lib/api/financeiro";
 import { SiengeApiError } from "@/lib/api/sienge";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
 import { guardPermission } from "@/lib/app-users";
-import { findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
+import {
+  findSupplierQuoteIntegrationByKey,
+  linkSupplierQuoteSupplier,
+  recordSupplierQuoteEvent,
+  saveSupplierRegistrationReview
+} from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,13 +34,18 @@ function cleanDocument(value: unknown) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function positiveId(value: unknown) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 function creditorDocument(record: CreditorRecord) {
   return cleanDocument(record.cnpj || record.cpf || record.document || record.documentNumber || record.taxId);
 }
 
 function creditorSummary(record: CreditorRecord) {
   return {
-    id: record.id ?? record.creditorId,
+    id: positiveId(record.id) ?? positiveId(record.creditorId),
     name: record.name ?? record.corporateName ?? record.companyName ?? record.creditorName,
     tradeName: record.tradeName ?? record.fantasyName,
     cnpj: record.cnpj,
@@ -45,6 +55,48 @@ function creditorSummary(record: CreditorRecord) {
     state: record.state ?? record.uf,
     active: record.active
   };
+}
+
+function creditorIdFrom(value: unknown): number | undefined {
+  const direct = positiveId(value);
+  if (direct) return direct;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as CreditorRecord;
+  return positiveId(record.id)
+    ?? positiveId(record.creditorId)
+    ?? creditorIdFrom(record.data)
+    ?? creditorIdFrom(record.result);
+}
+
+function linkQuotationSupplier(input: {
+  quotationId?: number;
+  supplierId: number;
+  document: string;
+  supplierName: string;
+  source: "existing" | "created";
+}) {
+  if (!input.quotationId) return undefined;
+  const link = linkSupplierQuoteSupplier({
+    quotationId: input.quotationId,
+    supplierId: input.supplierId,
+    document: input.document
+  });
+  const reviewResult = {
+    supplierId: input.supplierId,
+    supplierName: input.supplierName,
+    source: input.source,
+    link
+  };
+  const review = saveSupplierRegistrationReview({
+    document: input.document,
+    status: link.responsesUpdated > 0 ? "created" : "prepared",
+    result: reviewResult
+  });
+  return { link, review };
+}
+
+function proposalWasLinked(localLink: ReturnType<typeof linkQuotationSupplier>) {
+  return Boolean(localLink && localLink.link.responsesUpdated > 0);
 }
 
 async function findExistingCreditor(payload: ReturnType<typeof supplierPayload>) {
@@ -122,27 +174,86 @@ export async function POST(request: Request) {
       });
     }
 
-    if (preflight?.exists && input.force !== true) {
+    if (preflight?.exists) {
+      const existingSupplierId = creditorIdFrom(preflight.creditor);
+      if (!existingSupplierId) {
+        return NextResponse.json({
+          message: "O fornecedor existe no Sienge, mas a consulta não retornou um ID válido para vincular a proposta. Nada foi enviado.",
+          alreadyExistsInSienge: true,
+          preflight
+        }, { status: 502 });
+      }
+      const localLink = linkQuotationSupplier({
+        quotationId,
+        supplierId: existingSupplierId,
+        document: eventDocument,
+        supplierName: eventName,
+        source: "existing"
+      });
+      const linked = proposalWasLinked(localLink);
+      const linkIntegrationKey = quotationId
+        ? `link-supplier-registration:${quotationId}:${eventDocument}:${existingSupplierId}`
+        : undefined;
+      if (quotationId && linked && linkIntegrationKey && !findSupplierQuoteIntegrationByKey(linkIntegrationKey)) {
+        recordSupplierQuoteEvent({
+          quotationId,
+          type: "sienge_created",
+          title: "Fornecedor existente vinculado à proposta",
+          description: "Credor localizado pelo documento e associado à resposta local sem criar cadastro duplicado.",
+          supplierName: payload.name,
+          document: eventDocument,
+          metadata: {
+            action: "link-supplier-registration",
+            integrationKey: linkIntegrationKey,
+            endpoint: "/v1/creditors",
+            supplierId: existingSupplierId,
+            preflight,
+            localLink
+          }
+        });
+      }
       return NextResponse.json({
-        message: "Fornecedor já localizado no Sienge pelo mesmo documento. Nada foi enviado agora para evitar cadastro duplicado.",
+        message: quotationId && linked
+          ? "Fornecedor já existente no Sienge e vinculado à proposta."
+          : quotationId
+            ? "Fornecedor localizado no Sienge, mas nenhuma proposta pendente correspondente foi encontrada para vincular."
+          : "Fornecedor já existente no Sienge. Nenhum cadastro duplicado foi criado.",
         alreadyExistsInSienge: true,
-        preflight
-      }, { status: 409 });
+        linked,
+        supplierId: existingSupplierId,
+        supplier: preflight.creditor,
+        preflight,
+        ...localLink
+      }, { status: quotationId && !linked ? 409 : 200 });
     }
 
     const integrationKey = `create-supplier:${eventDocument}`;
-    if (input.force !== true) {
-      const existing = findSupplierQuoteIntegrationByKey(integrationKey);
-      if (existing) {
-        return NextResponse.json({
-          message: `Este fornecedor já foi criado no Sienge em ${existing.createdAt.slice(0, 10)}. Nada foi enviado agora para evitar cadastro duplicado.`,
-          alreadyIntegrated: true,
-          integration: { eventId: existing.id, title: existing.title, createdAt: existing.createdAt }
-        }, { status: 409 });
-      }
+    const existing = findSupplierQuoteIntegrationByKey(integrationKey);
+    if (existing) {
+      return NextResponse.json({
+        message: `Este fornecedor já foi criado no Sienge em ${existing.createdAt.slice(0, 10)}. Consulte novamente pelo documento para vincular o cadastro existente; uma segunda criação não será permitida.`,
+        alreadyIntegrated: true,
+        integration: { eventId: existing.id, title: existing.title, createdAt: existing.createdAt }
+      }, { status: 409 });
     }
 
-    const created = await credoresApi.create(payload);
+    const created = await credoresApi.create<unknown>(payload);
+    let createdSupplierId = creditorIdFrom(created);
+    let confirmedCreditor: Awaited<ReturnType<typeof findExistingCreditor>> | undefined;
+    if (!createdSupplierId) {
+      confirmedCreditor = await findExistingCreditor(payload);
+      createdSupplierId = creditorIdFrom(confirmedCreditor.creditor);
+    }
+    const localLink = createdSupplierId
+      ? linkQuotationSupplier({
+          quotationId,
+          supplierId: createdSupplierId,
+          document: eventDocument,
+          supplierName: eventName,
+          source: "created"
+        })
+      : undefined;
+    const linked = proposalWasLinked(localLink);
     if (quotationId) {
       recordSupplierQuoteEvent({
         quotationId,
@@ -151,15 +262,35 @@ export async function POST(request: Request) {
         description: "Cadastro enviado para /v1/creditors.",
         supplierName: payload.name,
         document: payload.cnpj || payload.cpf,
-        metadata: { action: "create-supplier", integrationKey, endpoint: "/v1/creditors", preflight, created }
+        metadata: {
+          action: "create-supplier",
+          integrationKey,
+          endpoint: "/v1/creditors",
+          supplierId: createdSupplierId,
+          preflight,
+          confirmedCreditor,
+          created,
+          localLink
+        }
       });
     }
     return NextResponse.json({
-      message: "Fornecedor criado no Sienge. Atualize Fornecedores em Configurações para aparecer na busca local.",
+      message: createdSupplierId
+        ? quotationId && linked
+          ? "Fornecedor criado no Sienge e vinculado à proposta."
+          : quotationId
+            ? "Fornecedor criado no Sienge, mas nenhuma proposta pendente correspondente foi encontrada para vincular."
+          : "Fornecedor criado no Sienge. Atualize Fornecedores em Configurações para aparecer na busca local."
+        : "Fornecedor criado no Sienge, mas o ID ainda não apareceu na consulta. Atualize Fornecedores e tente apenas vincular o cadastro existente.",
+      linked,
+      supplierId: createdSupplierId,
+      supplier: confirmedCreditor?.creditor,
       preflight,
+      confirmedCreditor,
       payload,
-      created
-    }, { status: 201 });
+      created,
+      ...localLink
+    }, { status: createdSupplierId && (!quotationId || linked) ? 201 : 202 });
   } catch (error) {
     if (quotationId) {
       recordSupplierQuoteEvent({
