@@ -709,6 +709,17 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .purchase-tabs { display: inline-flex; gap: 6px; padding: 5px; margin: -8px 0 18px; border: 1px solid var(--line); border-radius: 13px; background: #fff; box-shadow: var(--shadow); }
 .purchase-tabs button { border: 0; border-radius: 9px; padding: 9px 13px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 800; cursor: pointer; }
 .purchase-tabs button.active { background: var(--green); color: #fff; }
+.supply-period-filter {
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: 10px 14px; margin: -4px 0 18px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 8px; background: #fff;
+}
+.supply-period-current { display: inline-flex; align-items: center; gap: 8px; min-height: 34px; color: var(--ink); font-size: 12px; font-weight: 800; cursor: pointer; }
+.supply-period-current input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); }
+.supply-period-history { display: grid; gap: 4px; }
+.supply-period-history > span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.supply-period-history select { min-width: 150px; height: 34px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); padding: 0 30px 0 9px; }
+.supply-period-filter .button { min-height: 34px; }
+.supply-period-filter > small { flex: 1 1 220px; align-self: center; color: var(--muted); font-size: 10px; text-align: right; }
 .purchase-periods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
 .purchase-period { display: grid; gap: 14px; padding: 18px; }
 .purchase-period span { color: var(--muted); font-size: 10px; }
@@ -717,6 +728,32 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .purchase-period-meta { display: flex; flex-wrap: wrap; gap: 6px; }
 .purchase-period-meta span { padding: 5px 7px; border-radius: 20px; background: #f8faf9; font-size: 9px; font-weight: 700; }
 .purchase-stage-panel { margin-bottom: 20px; }
+.supply-funnel-panel { margin-bottom: 20px; }
+.supply-funnel { display: flex; align-items: stretch; gap: 8px; }
+.supply-funnel-step { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.supply-funnel-card {
+  flex: 1 1 auto; min-width: 0; display: grid; gap: 3px; padding: 14px 15px;
+  border: 1px solid var(--line); border-radius: 13px; background: #fbfcfb; color: var(--ink);
+}
+a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
+.supply-funnel-card.warn { border-color: #ecd9ae; background: #fffaf1; }
+.supply-funnel-card span { color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .05em; }
+.supply-funnel-card strong { font-family: var(--font-display); font-size: 24px; font-weight: 750; }
+.supply-funnel-card em { color: var(--green); font-size: 12px; font-style: normal; font-weight: 800; }
+.supply-funnel-card small { color: var(--muted); font-size: 10px; line-height: 1.35; }
+.supply-funnel-arrow { flex: 0 0 auto; color: #b9cdc2; font-size: 15px; font-weight: 900; font-style: normal; }
+.supply-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.supply-action-list { display: grid; gap: 8px; }
+.supply-action-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfb;
+}
+.supply-action-row > div { min-width: 0; display: grid; gap: 2px; }
+.supply-action-row strong { font-size: 12px; }
+.supply-action-row small { color: var(--muted); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.supply-action-row .button { flex: 0 0 auto; padding: 8px 11px; font-size: 10px; }
+.supply-action-row .badge { flex: 0 0 auto; }
+.supply-action-hint { color: #80591f !important; font-weight: 750; }
 .purchase-stage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
 .purchase-stage-grid > div { display: grid; gap: 8px; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
 .purchase-stage-grid > div > div:first-child { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
@@ -1768,6 +1805,9 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .purchases-source-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .purchase-periods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .purchase-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .supply-funnel { flex-wrap: wrap; }
+  .supply-funnel-step { flex: 1 1 44%; }
+  .supply-actions { grid-template-columns: 1fr; }
   .reconciliation-month-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .settings-layout { grid-template-columns: 1fr; }
   .settings-command-layout { grid-template-columns: 1fr; }
@@ -1830,7 +1870,12 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   .purchases-filters { grid-template-columns: 1fr; }
   .purchases-source-panel { grid-template-columns: 1fr; }
   .purchase-periods { grid-template-columns: 1fr; }
+  .supply-period-filter { align-items: stretch; }
+  .supply-period-history, .supply-period-history select, .supply-period-filter .button { width: 100%; }
+  .supply-period-filter > small { flex-basis: 100%; text-align: left; }
   .purchase-stage-grid { grid-template-columns: 1fr; }
+  .supply-funnel-step { flex: 1 1 100%; }
+  .supply-funnel-arrow { display: none; }
   .reconciliation-month-grid { grid-template-columns: 1fr; }
   .reconciliation-period-head { align-items: flex-start; flex-direction: column; }
   .reconciliation-monthly-panel .panel-head { align-items: flex-start; flex-direction: column; }

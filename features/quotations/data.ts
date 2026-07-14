@@ -126,7 +126,7 @@ function quotationStatus(quotation: PurchaseQuotation, suppliers: QuotationSuppl
   return "Registrada";
 }
 
-function quotationSummary(quotation: PurchaseQuotation): QuotationSummary {
+export function quotationSummary(quotation: PurchaseQuotation): QuotationSummary {
   const items = (quotation.purchaseQuotationItems || []).map(itemSummary);
   const suppliers = (quotation.purchaseQuotationSuppliers || []).map(supplierSummary);
   const selectedSupplier = suppliers.find((supplier) => supplier.selected);

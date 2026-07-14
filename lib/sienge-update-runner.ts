@@ -2,7 +2,8 @@ import "server-only";
 import { loadPayables } from "@/features/financeiro/sienge-data";
 import { loadInventoryAssets } from "@/features/inventory/data";
 import { loadPayablesSchedule } from "@/features/payables-schedule/data";
-import { loadPurchases } from "@/features/purchases/data";
+import { loadPurchases, type PurchaseResult } from "@/features/purchases/data";
+import { syncPurchaseRequestHeaders } from "@/features/purchases/request-headers";
 import { loadReceivablesForecast } from "@/features/receivables-forecast/sienge-data";
 import { loadReconciliationMovements } from "@/features/reconciliation/data";
 import { loadSalesContracts } from "@/features/sales/data";
@@ -152,7 +153,19 @@ async function runSiengeUpdateJob(job: SiengeUpdateJob) {
       await runStep(job, "inventory", () => loadInventoryAssets(true, force));
     }
     if (job.area === "purchases" || job.area === "all" || job.area === "reports") {
-      await runStep(job, "purchases", () => loadPurchases(true, force, integrationRange));
+      await runStep(job, "purchases", async () => {
+        const purchases = await loadPurchases(true, force, integrationRange) as PurchaseResult;
+        // Complementa o espelho com a situação individual de cada solicitação
+        // (atendida/pendente), que só existe no endpoint por ID. Melhor esforço:
+        // uma falha aqui não derruba a atualização de compras.
+        try {
+          const ids = Array.from(new Set(purchases.requestItems.map((item) => item.purchaseRequestId)));
+          await syncPurchaseRequestHeaders(ids);
+        } catch {
+          // A tela indica quando a situação das solicitações não está sincronizada.
+        }
+        return purchases;
+      });
     }
     if (job.area === "suppliers" || job.area === "all" || job.area === "reports") {
       await runStep(job, "suppliers", () => refreshSupplierDirectory(force));

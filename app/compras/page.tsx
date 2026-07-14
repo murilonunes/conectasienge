@@ -2,20 +2,25 @@ import { PurchasesPortal } from "@/components/purchases/purchases-portal";
 import { ApiErrorNotice } from "@/components/ui/api-error-notice";
 import { PageHeading } from "@/components/ui/page-heading";
 import { analyzePurchases, loadPurchases } from "@/features/purchases/data";
+import { buildSupplyOverview, filterPurchasesBySupplyPeriod, supplyPeriodFilterFromParams } from "@/features/purchases/supply-overview";
 
 export const dynamic = "force-dynamic";
 
-export default async function PurchasesPage() {
+export default async function PurchasesPage({ searchParams = {} }: { searchParams?: Record<string, string | string[] | undefined> }) {
   const result = await loadPurchases();
-  const summary = analyzePurchases(result);
+  const periodFilter = supplyPeriodFilterFromParams(searchParams);
+  const filtered = filterPurchasesBySupplyPeriod(result, periodFilter);
+  const summary = analyzePurchases(filtered.purchases);
+  const overview = buildSupplyOverview(filtered.purchases, periodFilter, filtered.undatedRequests);
+  const totalRecords = analyzePurchases(result).flow.length;
   const { flow, ...summaryWithoutFlow } = summary;
 
   return (
     <>
       <PageHeading
         eyebrow="Portal de compras"
-        title="Compras"
-        subtitle="Acompanhe pendências, compras realizadas, solicitações e pedidos a partir dos dados integrados."
+        title="Suprimentos"
+        subtitle="O cenário atual da cadeia de compras: o que espera cotação, o que espera decisão, o que está a caminho e o que travou."
       />
 
       {result.error ? (
@@ -23,7 +28,8 @@ export default async function PurchasesPage() {
       ) : (
         <PurchasesPortal
           summary={summaryWithoutFlow}
-          totalRecords={flow.length}
+          overview={overview}
+          totalRecords={totalRecords}
           warning={result.warning}
         />
       )}
