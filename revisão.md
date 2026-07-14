@@ -57,7 +57,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 Revisado nesta etapa:
 
 - Menu lateral em `components/ui/app-shell.tsx` e `components/ui/app-shell-client.tsx`: esta alinhado ao fluxo atual, sem `Inicio` e sem `Novo lancamento` como item de menu.
-- A navegacao foi reorganizada em areas com submenus recolhiveis e opcao de sidebar compacta; a abertura padrao agora vem recolhida e com grupos fechados, reduzindo espaco horizontal em telas de operacao sem perder acesso as rotas.
+- A navegacao foi reorganizada em areas com submenus recolhiveis e icones consistentes; a sidebar abre compacta e com grupos fechados, expande sobre o conteudo ao receber foco ou mouse e pode ser fixada aberta pelo usuario.
 - Tela inicial `/`: continua sem carga pesada e serve como abertura rápida.
 - Central financeira `/financeiro`: removido o atalho direto para `Novo lançamento`, mantendo a operação dentro do contexto de Contas a pagar.
 

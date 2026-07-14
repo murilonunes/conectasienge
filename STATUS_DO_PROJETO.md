@@ -42,7 +42,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O login bloqueia força bruta: 8 falhas por 15 minutos por IP e teto global de 40 falhas por 15 minutos independente do IP informado (o cabeçalho `x-forwarded-for` pode ser forjado quando não há proxy confiável na frente).
 - As verificações de assinatura (sessão no middleware e senha no login) usam comparação em tempo constante.
 - Páginas públicas (`/login` e `/portal-cotacao`) não renderizam o shell interno de navegação.
-- O menu interno foi reorganizado por areas com submenus recolhiveis (Visao geral, Compras, Financeiro, Comercial/estoque, Analises e Administracao) e agora abre em modo compacto, com os grupos fechados para liberar largura nas telas operacionais.
+- O menu interno foi reorganizado por areas com submenus recolhiveis (Visao geral, Compras, Financeiro, Comercial/estoque, Analises e Administracao). Ele abre compacto com os grupos fechados, expande sobre o conteudo ao receber foco ou mouse e pode ser fixado aberto sem perder a preferencia salva.
 - A sessão passou a identificar o usuário local salvo em `app-users.sqlite`; rotas e telas sensíveis usam permissões do usuário para liberar menu, página e ações.
 
 ## Usuários, papéis e permissões
@@ -183,7 +183,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A rota `/` nao abre mais o dashboard automaticamente.
 - A rota `/` agora e uma tela de boas-vindas leve, sem consulta ao Sienge e sem carregamento pesado de dados.
 - O menu lateral foi simplificado: `Inicio` saiu da lista e o logo/nome Brasin passou a ser o atalho para a tela inicial.
-- O shell principal agora possui submenus por area e botao de recolher/expandir; por padrao ele abre recolhido e com os grupos fechados, mantendo a navegacao mais curta na horizontal para telas densas como cotacoes, mapa e aprovacoes.
+- O shell principal possui submenus por area e icones consistentes; por padrao abre recolhido e com os grupos fechados. Ao receber foco ou mouse, funciona como menu sobreposto e oferece a acao Fixar para permanecer aberto, mantendo mais largura para telas densas como cotacoes, mapa e aprovacoes.
 - A tela inicial do dashboard agora traz uma visao geral com um pouco de cada portal.
 - O dashboard passou a abrir com periodo inicial curto de 7 dias para carregar e renderizar mais rapido.
 - O dashboard permite trocar a visao do periodo na propria tela, por botoes de Hoje, 7 dias, 15 dias, 30 dias, 60 dias, 90 dias, 6 meses, 12 meses e 24 meses.
@@ -357,6 +357,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 ## Componentes e estrutura
 
 - A estrutura do frontend esta organizada em `app`, `components`, `features` e `lib`, com `middleware.ts` na raiz para o controle de acesso.
+- O menu lateral (`components/ui/app-shell-client.tsx`) fica recolhido em trilho de ícones (76px) e expande ao passar o mouse como flyout fixo de 236px por cima do conteúdo (sem deslocar a página; o conteúdo fica preso na coluna 2 do grid porque o menu sai do fluxo ao virar `position: fixed`). Um botão Fixar/Soltar mantém o menu aberto em definitivo; a preferência é salva em `localStorage` (`brasin-sidebar-pinned-v1`, com migração da chave antiga de recolhido) e recarregada a cada carregamento, com guard de hidratação para o efeito de salvar não sobrescrever o valor carregado no mount (o modo estrito do React desmonta/remonta e gravava o padrão por cima). Os ícones do menu usam `lucide-react` (biblioteca MIT) em vez de siglas de duas letras.
 - Foram criados componentes reutilizaveis para cards de indicadores, cabecalho de pagina, aviso de erro de API, graficos (pizza, linha, barras/ranking e fluxo), tabelas e exploradores de registros.
 - O componente padrao `LocalDataList` cuida das listas de dados salvos com paginacao inicial de 100 registros, troca de quantidade e exportacao CSV opcional; e usado em compras, conciliacao, estoque, vendas, buscas avancadas e tabela financeira generica.
 - `components/ui/csv-export-button.tsx` e um botao de exportacao CSV avulso para listas ja calculadas no servidor que nao usam `LocalDataList` (por exemplo, o detalhe completo por parcela da tabela `Futuro agrupado` da DRE financeira); mesmo padrao de separador `;`, aspas e BOM UTF-8 do `LocalDataList`.

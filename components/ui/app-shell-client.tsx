@@ -1,5 +1,32 @@
 "use client";
 
+import {
+  ArrowLeftRight,
+  Boxes,
+  ChartColumnBig,
+  ChartLine,
+  ChartPie,
+  CircleCheckBig,
+  ClipboardList,
+  FileSignature,
+  Gauge,
+  HandCoins,
+  Landmark,
+  LayoutDashboard,
+  Map,
+  Receipt,
+  Scale,
+  Settings,
+  Shield,
+  ShoppingBag,
+  ShoppingCart,
+  SquareCheckBig,
+  Store,
+  TrendingUp,
+  Users,
+  Wallet,
+  type LucideIcon
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -13,14 +40,14 @@ type ShellSettings = {
 type NavigationItem = {
   label: string;
   href: string;
-  icon: string;
+  icon: LucideIcon;
   permission: string;
 };
 
 type NavigationSection = {
   key: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   items: NavigationItem[];
 };
 
@@ -28,67 +55,68 @@ const navigationSections: NavigationSection[] = [
   {
     key: "overview",
     label: "Visao geral",
-    icon: "VG",
+    icon: Gauge,
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: "D", permission: "screen.dashboard" },
-      { label: "Central financeira", href: "/financeiro", icon: "F", permission: "screen.financeiro" }
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "screen.dashboard" },
+      { label: "Central financeira", href: "/financeiro", icon: Landmark, permission: "screen.financeiro" }
     ]
   },
   {
     key: "purchases",
     label: "Compras",
-    icon: "CP",
+    icon: ShoppingCart,
     items: [
-      { label: "Portal de compras", href: "/compras", icon: "PC", permission: "screen.compras" },
-      { label: "Solicitacoes", href: "/solicitacoes-compra", icon: "SC", permission: "screen.solicitacoes" },
-      { label: "Cotacoes", href: "/cotacoes", icon: "CT", permission: "screen.cotacoes" }
+      { label: "Portal de compras", href: "/compras", icon: ShoppingBag, permission: "screen.compras" },
+      { label: "Solicitacoes", href: "/solicitacoes-compra", icon: ClipboardList, permission: "screen.solicitacoes" },
+      { label: "Cotacoes", href: "/cotacoes", icon: Scale, permission: "screen.cotacoes" }
     ]
   },
   {
     key: "finance",
     label: "Financeiro",
-    icon: "FI",
+    icon: Wallet,
     items: [
-      { label: "Contas a pagar", href: "/contas-pagar", icon: "PG", permission: "screen.contas-pagar" },
-      { label: "Contas a receber", href: "/contas-receber", icon: "RC", permission: "screen.contas-receber" },
-      { label: "Baixa a pagar", href: "/lancamentos/baixa", icon: "BP", permission: "screen.baixa-pagar" },
-      { label: "Baixa a receber", href: "/lancamentos/baixa-receber", icon: "BR", permission: "screen.baixa-receber" },
-      { label: "Conciliacao", href: "/conciliacao", icon: "CC", permission: "screen.conciliacao" }
+      { label: "Contas a pagar", href: "/contas-pagar", icon: Receipt, permission: "screen.contas-pagar" },
+      { label: "Contas a receber", href: "/contas-receber", icon: HandCoins, permission: "screen.contas-receber" },
+      { label: "Baixa a pagar", href: "/lancamentos/baixa", icon: SquareCheckBig, permission: "screen.baixa-pagar" },
+      { label: "Baixa a receber", href: "/lancamentos/baixa-receber", icon: CircleCheckBig, permission: "screen.baixa-receber" },
+      { label: "Conciliacao", href: "/conciliacao", icon: ArrowLeftRight, permission: "screen.conciliacao" }
     ]
   },
   {
     key: "commercial",
     label: "Comercial e estoque",
-    icon: "CE",
+    icon: Store,
     items: [
-      { label: "Portal de vendas", href: "/sales", icon: "VD", permission: "screen.vendas" },
-      { label: "Contratos", href: "/contratos", icon: "CO", permission: "screen.contratos" },
-      { label: "Bens em estoque", href: "/estoque", icon: "ES", permission: "screen.estoque" }
+      { label: "Portal de vendas", href: "/sales", icon: TrendingUp, permission: "screen.vendas" },
+      { label: "Contratos", href: "/contratos", icon: FileSignature, permission: "screen.contratos" },
+      { label: "Bens em estoque", href: "/estoque", icon: Boxes, permission: "screen.estoque" }
     ]
   },
   {
     key: "analysis",
     label: "Analises",
-    icon: "AN",
+    icon: ChartColumnBig,
     items: [
-      { label: "Relatorios", href: "/relatorios", icon: "RL", permission: "screen.relatorios" },
-      { label: "DRE financeiro", href: "/dre-financeiro", icon: "DF", permission: "screen.dre-financeiro" },
-      { label: "DRE POC", href: "/dre-gerencial", icon: "DR", permission: "screen.dre" },
-      { label: "Mapa Sienge", href: "/sienge", icon: "SI", permission: "screen.sienge" }
+      { label: "Relatorios", href: "/relatorios", icon: ChartPie, permission: "screen.relatorios" },
+      { label: "DRE financeiro", href: "/dre-financeiro", icon: ChartLine, permission: "screen.dre-financeiro" },
+      { label: "DRE POC", href: "/dre-gerencial", icon: TrendingUp, permission: "screen.dre" },
+      { label: "Mapa Sienge", href: "/sienge", icon: Map, permission: "screen.sienge" }
     ]
   },
   {
     key: "settings",
     label: "Administracao",
-    icon: "AD",
+    icon: Shield,
     items: [
-      { label: "Configuracoes", href: "/configuracoes", icon: "CF", permission: "screen.configuracoes" },
-      { label: "Usuarios", href: "/configuracoes/usuarios", icon: "US", permission: "screen.usuarios" }
+      { label: "Configuracoes", href: "/configuracoes", icon: Settings, permission: "screen.configuracoes" },
+      { label: "Usuarios", href: "/configuracoes/usuarios", icon: Users, permission: "screen.usuarios" }
     ]
   }
 ];
 
-const collapsedStorageKey = "brasin-sidebar-collapsed-v2";
+const pinnedStorageKey = "brasin-sidebar-pinned-v1";
+const legacyCollapsedStorageKey = "brasin-sidebar-collapsed-v2";
 const sectionsStorageKey = "brasin-sidebar-sections-v2";
 
 function defaultOpenSections() {
@@ -101,8 +129,11 @@ function isPathActive(pathname: string, href: string) {
 
 export function AppShellClient({ children, settings, allowedPermissions }: { children: React.ReactNode; settings: ShellSettings; allowedPermissions?: string[] }) {
   const pathname = usePathname() || "/";
-  const [collapsed, setCollapsed] = useState(true);
+  const [pinned, setPinned] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(defaultOpenSections);
+  const expanded = pinned || hovering;
   const allowed = useMemo(() => new Set(allowedPermissions || []), [allowedPermissions]);
   const visibleSections = useMemo(() => {
     if (!allowedPermissions) return navigationSections;
@@ -117,8 +148,14 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
 
   useEffect(() => {
     try {
-      const storedCollapsed = window.localStorage.getItem(collapsedStorageKey);
-      setCollapsed(storedCollapsed === null ? true : storedCollapsed === "true");
+      const storedPinned = window.localStorage.getItem(pinnedStorageKey);
+      if (storedPinned !== null) {
+        setPinned(storedPinned === "true");
+      } else {
+        // Migração da preferência antiga: quem mantinha o menu aberto vira "fixado".
+        const legacyCollapsed = window.localStorage.getItem(legacyCollapsedStorageKey);
+        setPinned(legacyCollapsed === "false");
+      }
       const storedSections = window.localStorage.getItem(sectionsStorageKey);
       if (storedSections) {
         setOpenSections({ ...defaultOpenSections(), ...JSON.parse(storedSections) });
@@ -126,45 +163,62 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
     } catch {
       setOpenSections(defaultOpenSections());
     }
+    setHydrated(true);
   }, []);
 
+  // Só persiste depois de carregar o valor salvo: sem o guard, o efeito roda no
+  // mount com o estado inicial e sobrescreve a preferência gravada.
   useEffect(() => {
+    if (!hydrated) return;
     try {
-      window.localStorage.setItem(collapsedStorageKey, String(collapsed));
+      window.localStorage.setItem(pinnedStorageKey, String(pinned));
     } catch {
       // Ignore storage restrictions.
     }
-  }, [collapsed]);
+  }, [hydrated, pinned]);
 
   useEffect(() => {
+    if (!hydrated) return;
     try {
       window.localStorage.setItem(sectionsStorageKey, JSON.stringify(openSections));
     } catch {
       // Ignore storage restrictions.
     }
-  }, [openSections]);
+  }, [hydrated, openSections]);
 
   function toggleSection(sectionKey: string) {
     setOpenSections((current) => ({ ...current, [sectionKey]: !current[sectionKey] }));
   }
 
   return (
-    <div className={`shell${collapsed ? " sidebar-collapsed" : ""}`}>
-      <aside className="sidebar" aria-label="Menu principal">
+    <div className={`shell${pinned ? "" : " sidebar-collapsed"}${!pinned && hovering ? " sidebar-hover-open" : ""}`}>
+      <aside
+        className="sidebar"
+        aria-label="Menu principal"
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        onFocusCapture={() => setHovering(true)}
+        onBlurCapture={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHovering(false);
+        }}
+      >
         <div className="sidebar-top">
           <Link className="brand" href="/" aria-label="Ir para a tela inicial">
             <div className="brand-mark">B</div>
             <div className="brand-text"><strong>Brasin</strong><span>GESTAO FINANCEIRA</span></div>
           </Link>
-          <button
-            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-            className="sidebar-toggle"
-            onClick={() => setCollapsed((current) => !current)}
-            title={collapsed ? "Expandir menu" : "Recolher menu"}
-            type="button"
-          >
-            {collapsed ? ">>" : "<<"}
-          </button>
+          {expanded && (
+            <button
+              aria-label={pinned ? "Soltar menu (expande ao passar o mouse)" : "Fixar menu aberto"}
+              aria-pressed={pinned}
+              className={`sidebar-toggle${pinned ? " pinned" : ""}`}
+              onClick={() => setPinned((current) => !current)}
+              title={pinned ? "Soltar menu (expande ao passar o mouse)" : "Fixar menu aberto"}
+              type="button"
+            >
+              {pinned ? "Soltar" : "Fixar"}
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -181,7 +235,7 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
                   title={section.label}
                   type="button"
                 >
-                  <span className="nav-section-icon">{section.icon}</span>
+                  <span className="nav-section-icon"><section.icon aria-hidden="true" size={16} strokeWidth={2.1} /></span>
                   <span className="nav-section-title">{section.label}</span>
                   <span className="nav-caret" aria-hidden="true">{expanded ? "-" : "+"}</span>
                 </button>
@@ -197,7 +251,7 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
                         key={item.href}
                         title={item.label}
                       >
-                        <span className="nav-icon">{item.icon}</span>
+                        <span className="nav-icon"><item.icon aria-hidden="true" size={14} strokeWidth={2} /></span>
                         <span className="nav-link-text">{item.label}</span>
                       </Link>
                     );
