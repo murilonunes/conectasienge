@@ -718,7 +718,10 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supply-period-history { display: grid; gap: 4px; }
 .supply-period-history > span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .recurring-payables-panel { margin-top: 20px; }
-.recurring-payables-window { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 5px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcfb; }
+.recurring-payables-filters { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 10px 18px; margin-bottom: 12px; }
+.recurring-payables-filter-group { display: grid; gap: 4px; }
+.recurring-payables-filter-group > span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.recurring-payables-window { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfb; }
 .recurring-payables-window button { border: 0; border-radius: 9px; padding: 8px 12px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
 .recurring-payables-window button.active { background: var(--green); color: #fff; }
 .recurring-payables-summary { margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -735,7 +738,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
   }
   html.printing-single-panel .content { padding: 0; }
   html.printing-single-panel [data-print-panel] { padding: 0; box-shadow: none; border: 0; }
-  html.printing-single-panel .recurring-payables-window { display: none; }
+  html.printing-single-panel .recurring-payables-filters { display: none; }
   html.printing-single-panel [data-print-panel] .panel-head button { display: none; }
   /* Densidade de impressão: menos espaço entre linhas para caber mais fornecedores por página. */
   html.printing-single-panel .panel-head { margin-bottom: 8px; }

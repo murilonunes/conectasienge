@@ -12,6 +12,9 @@ export type RecurringCreditor = {
   totalAmount: number;
   billCount: number;
   lastDueDate: string;
+  hasFutureBill: boolean;
+  futureBillCount: number;
+  nextFutureDueDate?: string;
   category?: string;
 };
 
@@ -126,6 +129,8 @@ export async function loadRecurringPayables(): Promise<RecurringPayablesResult> 
       billCount: number;
       lastDueDate: string;
       hasFutureBill: boolean;
+      futureBillCount: number;
+      nextFutureDueDate?: string;
       categoryCounts: Map<string, number>;
     };
     const groups = new Map<number, Group>();
@@ -140,14 +145,19 @@ export async function loadRecurringPayables(): Promise<RecurringPayablesResult> 
           amountByMonth: new Map(),
           totalAmount: 0,
           billCount: 0,
-          lastDueDate: row.dueDate,
+          lastDueDate: "",
           hasFutureBill: false,
+          futureBillCount: 0,
           categoryCounts: new Map()
         };
         groups.set(row.creditorId, group);
       }
       if (row.dueDate > todayIso) {
         group.hasFutureBill = true;
+        group.futureBillCount += 1;
+        if (!group.nextFutureDueDate || row.dueDate < group.nextFutureDueDate) {
+          group.nextFutureDueDate = row.dueDate;
+        }
       } else {
         const monthKey = row.dueDate.slice(0, 7);
         if (monthKeys.includes(monthKey)) {
@@ -158,12 +168,12 @@ export async function loadRecurringPayables(): Promise<RecurringPayablesResult> 
         group.billCount += 1;
         const category = categoryByBill.get(`${row.billId}:${row.installmentId}`);
         if (category) group.categoryCounts.set(category, (group.categoryCounts.get(category) || 0) + 1);
+        if (!group.lastDueDate || row.dueDate > group.lastDueDate) group.lastDueDate = row.dueDate;
       }
-      if (row.dueDate > group.lastDueDate) group.lastDueDate = row.dueDate;
     });
 
     const creditors: RecurringCreditor[] = Array.from(groups.values())
-      .filter((group) => !group.hasFutureBill && group.months.size > 0)
+      .filter((group) => group.months.size > 0)
       .map((group) => {
         const topCategory = Array.from(group.categoryCounts.entries()).sort((left, right) => right[1] - left[1])[0];
         return {
@@ -174,6 +184,9 @@ export async function loadRecurringPayables(): Promise<RecurringPayablesResult> 
           totalAmount: group.totalAmount,
           billCount: group.billCount,
           lastDueDate: group.lastDueDate,
+          hasFutureBill: group.hasFutureBill,
+          futureBillCount: group.futureBillCount,
+          nextFutureDueDate: group.nextFutureDueDate,
           category: topCategory?.[0]
         };
       })

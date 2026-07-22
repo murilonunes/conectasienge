@@ -6,6 +6,7 @@ import type { RecurringPayablesResult } from "@/features/payables-recurring/data
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 
 type WindowOption = "3" | "6" | "9" | "12" | "year";
+type FutureMode = "missing" | "scheduled";
 
 const windowLabels: Record<WindowOption, string> = {
   "3": "3 meses",
@@ -28,49 +29,73 @@ function monthLabel(monthKey: string) {
 
 export function RecurringPayablesPanel({ result }: { result: RecurringPayablesResult }) {
   const [windowOption, setWindowOption] = useState<WindowOption>("3");
+  const [futureMode, setFutureMode] = useState<FutureMode>("missing");
   const currentYear = String(new Date(result.generatedAt).getFullYear());
   const months = useMemo(() => targetMonths(result.monthKeys, windowOption, currentYear), [result.monthKeys, windowOption, currentYear]);
 
   const candidates = useMemo(() => {
     if (months.length < 2) return [];
     return result.creditors
-      .filter((creditor) => months.every((month) => creditor.monthsWithBill.includes(month)))
+      .filter((creditor) => (
+        months.every((month) => creditor.monthsWithBill.includes(month))
+        && creditor.hasFutureBill === (futureMode === "scheduled")
+      ))
       .map((creditor) => ({
         ...creditor,
         periodAmount: months.reduce((total, month) => total + (creditor.amountByMonth[month] || 0), 0)
       }))
       .sort((left, right) => right.periodAmount - left.periodAmount);
-  }, [result.creditors, months]);
+  }, [result.creditors, months, futureMode]);
+
+  const futureDescription = futureMode === "scheduled"
+    ? "com título no passado e também com lançamento futuro"
+    : "com título no passado e sem lançamento futuro";
 
   return (
     <section className="card panel recurring-payables-panel" data-print-panel>
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Recorrentes sem lançamento futuro</h2>
+          <h2 className="panel-title">Pagamentos recorrentes</h2>
           <span className="panel-note">
-            Fornecedores com título todo mês no período escolhido (pago ou não), sem nenhum título futuro cadastrado em Contas a pagar
+            Compare fornecedores com títulos recorrentes no histórico e confira se já existem lançamentos futuros em Contas a pagar
           </span>
         </div>
         <PrintPanelButton />
       </div>
 
-      <div className="recurring-payables-window">
-        {(Object.keys(windowLabels) as WindowOption[]).map((option) => (
-          <button
-            className={windowOption === option ? "active" : ""}
-            key={option}
-            type="button"
-            onClick={() => setWindowOption(option)}
-          >
-            {windowLabels[option]}
-          </button>
-        ))}
+      <div className="recurring-payables-filters">
+        <div className="recurring-payables-filter-group">
+          <span>Situação</span>
+          <div className="recurring-payables-window" aria-label="Situação dos lançamentos futuros">
+            <button className={futureMode === "missing" ? "active" : ""} type="button" onClick={() => setFutureMode("missing")}>
+              Sem futuro
+            </button>
+            <button className={futureMode === "scheduled" ? "active" : ""} type="button" onClick={() => setFutureMode("scheduled")}>
+              Passado + futuro
+            </button>
+          </div>
+        </div>
+        <div className="recurring-payables-filter-group">
+          <span>Período histórico</span>
+          <div className="recurring-payables-window" aria-label="Período histórico da recorrência">
+            {(Object.keys(windowLabels) as WindowOption[]).map((option) => (
+              <button
+                className={windowOption === option ? "active" : ""}
+                key={option}
+                type="button"
+                onClick={() => setWindowOption(option)}
+              >
+                {windowLabels[option]}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <p className="recurring-payables-summary">
         {months.length < 2
           ? "Escolha um período com pelo menos 2 meses para comparar."
-          : `Considerando ${months.length} ${months.length === 1 ? "mês" : "meses"} (${monthLabel(months[0])} a ${monthLabel(months[months.length - 1])}): ${candidates.length} fornecedor(es) com título em todos os meses do período, sem título futuro registrado.`}
+          : `Considerando ${months.length} ${months.length === 1 ? "mês" : "meses"} (${monthLabel(months[0])} a ${monthLabel(months[months.length - 1])}): ${candidates.length} fornecedor(es) ${futureDescription}.`}
       </p>
 
       {candidates.length ? (
@@ -83,7 +108,8 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
                 <th>Meses com título</th>
                 <th>Total no período</th>
                 <th>Média mensal</th>
-                <th>Último vencimento</th>
+                <th>Último no histórico</th>
+                <th>Próximo futuro</th>
               </tr>
             </thead>
             <tbody>
@@ -95,13 +121,20 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
                   <td>{formatCurrency(creditor.periodAmount)}</td>
                   <td>{formatCurrency(creditor.periodAmount / months.length)}</td>
                   <td>{formatOptionalDate(creditor.lastDueDate)}</td>
+                  <td>
+                    {creditor.nextFutureDueDate
+                      ? `${formatOptionalDate(creditor.nextFutureDueDate)} | ${creditor.futureBillCount} ${creditor.futureBillCount === 1 ? "título" : "títulos"}`
+                      : "Não cadastrado"}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : months.length >= 2 ? (
-        <div className="empty-state">Nenhum fornecedor recorrente sem título futuro cadastrado nesse período.</div>
+        <div className="empty-state">
+          Nenhum fornecedor recorrente {futureMode === "scheduled" ? "com lançamento futuro" : "sem lançamento futuro"} nesse período.
+        </div>
       ) : null}
     </section>
   );
