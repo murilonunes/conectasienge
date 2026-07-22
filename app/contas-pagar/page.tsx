@@ -3,6 +3,8 @@ import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { PayablesAgenda } from "@/components/payables/payables-agenda";
 import { PayablesCalendarChart } from "@/components/payables/payables-calendar-chart";
+import { RecurringPayablesPanel } from "@/components/payables/recurring-payables-panel";
+import { loadRecurringPayables } from "@/features/payables-recurring/data";
 import { loadPayablesSchedule } from "@/features/payables-schedule/data";
 import { analyzePayableCharge } from "@/lib/payables-abuse-analysis";
 import { formatCompactCurrency, formatCurrency } from "@/lib/formatters";
@@ -11,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ContasPagarPage() {
   const schedule = await loadPayablesSchedule();
+  const recurring = await loadRecurringPayables();
   const today = schedule.buckets.find((bucket) => bucket.id === "today");
   const month = schedule.buckets.filter((bucket) => ["today", "week", "month"].includes(bucket.id));
   const monthAmount = month.reduce((sum, bucket) => sum + bucket.amount, 0);
@@ -41,6 +44,7 @@ export default async function ContasPagarPage() {
         <PayablesCalendarChart buckets={schedule.buckets} />
         <PayablesAgenda buckets={schedule.buckets} />
       </>}
+      {recurring.error ? <ApiErrorNotice error={recurring.error} /> : <RecurringPayablesPanel result={recurring} />}
     </>
   );
 }

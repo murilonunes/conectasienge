@@ -717,6 +717,38 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .supply-period-current input { width: 16px; height: 16px; margin: 0; accent-color: var(--green); }
 .supply-period-history { display: grid; gap: 4px; }
 .supply-period-history > span { color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.recurring-payables-panel { margin-top: 20px; }
+.recurring-payables-window { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 5px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcfb; }
+.recurring-payables-window button { border: 0; border-radius: 9px; padding: 8px 12px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
+.recurring-payables-window button.active { background: var(--green); color: #fff; }
+.recurring-payables-summary { margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.recurring-payables-table table th:nth-child(n+3), .recurring-payables-table table td:nth-child(n+3) { text-align: right; }
+.recurring-payables-table table th:last-child, .recurring-payables-table table td:last-child { text-align: right; }
+/* Imprimir só um painel específico da tela (ex.: pagamentos recorrentes em
+   Contas a pagar): o botão marca <html> com essa classe antes de chamar
+   window.print() e remove no evento afterprint. */
+@media print {
+  html.printing-single-panel .sidebar,
+  html.printing-single-panel .topbar,
+  html.printing-single-panel .content > *:not([data-print-panel]) {
+    display: none !important;
+  }
+  html.printing-single-panel .content { padding: 0; }
+  html.printing-single-panel [data-print-panel] { padding: 0; box-shadow: none; border: 0; }
+  html.printing-single-panel .recurring-payables-window { display: none; }
+  html.printing-single-panel [data-print-panel] .panel-head button { display: none; }
+  /* Densidade de impressão: menos espaço entre linhas para caber mais fornecedores por página. */
+  html.printing-single-panel .panel-head { margin-bottom: 8px; }
+  html.printing-single-panel .panel-title { font-size: 13px; }
+  html.printing-single-panel .panel-note { font-size: 10px; }
+  html.printing-single-panel .recurring-payables-summary { margin-bottom: 8px; font-size: 10px; line-height: 1.3; }
+  html.printing-single-panel .recurring-payables-table table { font-size: 10px; }
+  html.printing-single-panel .recurring-payables-table th,
+  html.printing-single-panel .recurring-payables-table td { padding: 4px 8px; }
+  html.printing-single-panel .recurring-payables-table th { font-size: 8px; }
+  html.printing-single-panel .recurring-payables-table tr { break-inside: avoid; }
+  @page { size: A4 portrait; margin: 10mm; }
+}
 .supply-period-history select { min-width: 150px; height: 34px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); padding: 0 30px 0 9px; }
 .supply-period-filter .button { min-height: 34px; }
 .supply-period-filter > small { flex: 1 1 220px; align-self: center; color: var(--muted); font-size: 10px; text-align: right; }
