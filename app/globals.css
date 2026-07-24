@@ -1370,6 +1370,32 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-request-list strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .purchase-request-list small { color: var(--muted); font-size: 10px; }
 .purchase-request-list .badge { font-style: normal; white-space: nowrap; }
+.purchase-request-title-line,
+.purchase-request-list .purchase-request-title-line,
+.purchase-item-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.purchase-request-title-line h2 { min-width: 0; }
+.purchase-note-indicator {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: inline-grid !important;
+  place-items: center;
+  border: 1px solid #ead8aa;
+  border-radius: 6px;
+  background: #fffaf1;
+  color: #80591f;
+  cursor: help;
+}
+.purchase-note-indicator:hover {
+  border-color: #d2b76f;
+  background: #fff5dc;
+  color: #684712;
+}
 .purchase-request-detail { overflow: hidden; min-height: 430px; }
 .purchase-request-detail-head { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: start; margin-bottom: 16px; }
 .purchase-request-detail-head h2 { margin: 0; font-size: 21px; }

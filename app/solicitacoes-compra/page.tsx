@@ -1,6 +1,7 @@
 import { PurchaseRequestsPortal, type PurchaseRequestInput } from "@/components/purchases/purchase-requests-portal";
 import { PageHeading } from "@/components/ui/page-heading";
 import { loadPurchases } from "@/features/purchases/data";
+import { readPurchaseRequestHeaders } from "@/features/purchases/request-headers";
 import type { PurchaseRequestItem } from "@/features/purchases/types";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,10 @@ function statusFromItems(items: PurchaseRequestItem[]) {
   return "Em aprovação";
 }
 
-function mapPurchaseRequests(items: PurchaseRequestItem[]): PurchaseRequestInput[] {
+function mapPurchaseRequests(
+  items: PurchaseRequestItem[],
+  requestHeaders: ReturnType<typeof readPurchaseRequestHeaders>
+): PurchaseRequestInput[] {
   const groups = new Map<number, PurchaseRequestItem[]>();
 
   items.forEach((item) => {
@@ -31,7 +35,7 @@ function mapPurchaseRequests(items: PurchaseRequestItem[]): PurchaseRequestInput
       priority: "Normal" as const,
       neededAt: "",
       status: statusFromItems(requestItems) as PurchaseRequestInput["status"],
-      notes: "",
+      notes: requestHeaders.get(purchaseRequestId)?.notes?.trim() || "",
       createdAt: requestItems[0]?.__siengeIntegratedAt?.slice(0, 10) || "",
       source: "sienge" as const,
       items: requestItems.map((item) => ({
@@ -40,14 +44,16 @@ function mapPurchaseRequests(items: PurchaseRequestItem[]): PurchaseRequestInput
         category: item.detailDescription || "",
         unit: item.unitySymbol || "un",
         quantity: item.quantity || 0,
-        details: [item.detailDescription, item.notes].filter(Boolean).join(" - ")
+        details: item.detailDescription || "",
+        notes: item.notes?.trim() || ""
       }))
     }));
 }
 
 export default async function PurchaseRequestsPage() {
   const purchases = await loadPurchases();
-  const initialRequests = mapPurchaseRequests(purchases.requestItems);
+  const requestHeaders = readPurchaseRequestHeaders();
+  const initialRequests = mapPurchaseRequests(purchases.requestItems, requestHeaders);
 
   return (
     <>

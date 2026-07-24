@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MessageSquareText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 type RequestStatus =
@@ -19,6 +20,7 @@ type PurchaseRequestItem = {
   unit: string;
   quantity: number;
   details: string;
+  notes?: string;
 };
 
 type PurchaseRequest = {
@@ -58,6 +60,21 @@ const emptyItem: Omit<PurchaseRequestItem, "id"> = {
   quantity: 1,
   details: ""
 };
+
+function NoteIndicator({ label, note }: { label: string; note?: string }) {
+  const text = note?.trim();
+  if (!text) return null;
+
+  return (
+    <span
+      className="purchase-note-indicator"
+      aria-label={`${label}: ${text}`}
+      title={`${label}: ${text}`}
+    >
+      <MessageSquareText aria-hidden="true" size={14} strokeWidth={2} />
+    </span>
+  );
+}
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -225,6 +242,8 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
         "Unidade",
         "Quantidade",
         "Especificação",
+        "Observação da solicitação",
+        "Observação do insumo",
         "Fornecedor",
         "Valor unitário",
         "Prazo",
@@ -239,6 +258,8 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
         item.unit,
         item.quantity,
         item.details,
+        selected.notes,
+        item.notes || "",
         "",
         "",
         "",
@@ -259,6 +280,8 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
         "Unidade",
         "Quantidade",
         "Especificação",
+        "Observação da solicitação",
+        "Observação do insumo",
         "Fornecedor",
         "Valor unitário",
         "Prazo",
@@ -274,6 +297,8 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
           item.unit,
           item.quantity,
           item.details,
+          request.notes,
+          item.notes || "",
           "",
           "",
           "",
@@ -320,7 +345,10 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                   onClick={() => setSelectedId(request.id)}
                 >
                   <span>
-                    <strong>{request.title}</strong>
+                    <span className="purchase-request-title-line">
+                      <strong>{request.title}</strong>
+                      <NoteIndicator label="Observação da solicitação" note={request.notes} />
+                    </span>
                     <small>{request.code} - {request.items.length} insumos</small>
                   </span>
                   <i className={`badge ${statusClass(request.status)}`}>{request.status}</i>
@@ -334,7 +362,10 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
               <div className="purchase-request-detail-head">
                 <div>
                   <span className="eyebrow">{selected.code}</span>
-                  <h2>{selected.title}</h2>
+                  <div className="purchase-request-title-line">
+                    <h2>{selected.title}</h2>
+                    <NoteIndicator label="Observação da solicitação" note={selected.notes} />
+                  </div>
                   <p>{selected.costCenter} - necessidade em {selected.neededAt || "data não informada"}</p>
                 </div>
                 <div>
@@ -374,7 +405,12 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                   <tbody>
                     {selected.items.map((item) => (
                       <tr key={item.id}>
-                        <td><strong>{item.name}</strong></td>
+                        <td>
+                          <span className="purchase-item-name">
+                            <strong>{item.name}</strong>
+                            <NoteIndicator label="Observação do insumo" note={item.notes} />
+                          </span>
+                        </td>
                         <td>{item.quantity}</td>
                         <td>{item.unit}</td>
                         <td>{item.details || "Sem detalhe"}</td>
