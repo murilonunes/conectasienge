@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/formatters";
 import type { CashDiscountChoice, CashDiscountMode, InstallmentRow, TermPaymentChoice } from "./types";
@@ -126,9 +127,9 @@ export function PaymentStep({
   return (
     <section className="card supplier-portal-card">
       <div className="supplier-card-head">
-        <span>Passo 3 de 5</span>
-        <h2>Formas de pagamento</h2>
-        <p className="supplier-card-note">Marque as formas que você aceita. Pode ser à vista, a prazo ou as duas.</p>
+        <span><I18nText text={"Passo 3 de 5"} /></span>
+        <h2><I18nText text={"Formas de pagamento"} /></h2>
+        <p className="supplier-card-note"><I18nText text={"Marque as formas que você aceita. Pode ser à vista, a prazo ou as duas."} /></p>
       </div>
 
       <div className="supplier-payment-options">
@@ -136,59 +137,59 @@ export function PaymentStep({
           <label className={`supplier-payment-option-head ${paymentMethodInvalid ? "supplier-field-invalid" : ""}`}>
             <input type="checkbox" checked={offersCash} onChange={(event) => onOffersCashChange(event.target.checked)} />
             <span>
-              <strong>À vista</strong>
-              <small>Pagamento na entrega ou contra apresentação</small>
+              <strong><I18nText text={"À vista"} /></strong>
+              <small><I18nText text={"Pagamento na entrega ou contra apresentação"} /></small>
             </span>
           </label>
           {offersCash && (
             <div className="supplier-payment-fields">
               <div className={`supplier-cash-discount-choice ${cashDiscountDecisionInvalid ? "supplier-field-invalid" : ""}`}>
-                <span>Desconto à vista?</span>
-                <div className="supplier-term-choice" role="group" aria-label="Oferece desconto à vista?">
+                <span><I18nText text={"Desconto à vista?"} /></span>
+                <div className="supplier-term-choice" role="group" aria-label="Oferece desconto à vista?" data-i18n-aria-label={"Oferece desconto à vista?"}>
                   <button
                     className={cashDiscountChoice === "yes" ? "active" : ""}
                     type="button"
                     onClick={() => onCashDiscountChoiceChange("yes")}
                   >
-                    Sim
+                    <I18nText text={"Sim"} />
                   </button>
                   <button
                     className={cashDiscountChoice === "no" ? "active" : ""}
                     type="button"
                     onClick={() => onCashDiscountChoiceChange("no")}
                   >
-                    Não
+                    <I18nText text={"Não"} />
                   </button>
                 </div>
               </div>
               {cashDiscountChoice === "yes" && (
                 <>
                   <label className={cashDiscountModeInvalid ? "supplier-field-invalid" : ""}>
-                    <span>Tipo de desconto</span>
+                    <span><I18nText text={"Tipo de desconto"} /></span>
                     <select value={cashDiscountMode} onChange={(event) => onCashDiscountModeChange(event.target.value as CashDiscountMode)}>
-                      <option value="">Selecione</option>
-                      <option value="percentage">Porcentagem</option>
-                      <option value="value">Valor manual</option>
+                      <option value=""><I18nText text={"Selecione"} /></option>
+                      <option value="percentage"><I18nText text={"Porcentagem"} /></option>
+                      <option value="value"><I18nText text={"Valor manual"} /></option>
                     </select>
                   </label>
                   {cashDiscountMode === "percentage" && (
                     <label className={cashDiscountPercentageInvalid ? "supplier-field-invalid" : ""}>
-                      <span>Desconto (%)</span>
-                      <input value={cashDiscountPercentage} onChange={(event) => onCashDiscountPercentageChange(event.target.value)} type="number" min="0.01" max="100" step="0.1" placeholder="Informe %" />
+                      <span><I18nText text={"Desconto (%)"} /></span>
+                      <input value={cashDiscountPercentage} onChange={(event) => onCashDiscountPercentageChange(event.target.value)} type="number" min="0.01" max="100" step="0.1" placeholder="Informe %" data-i18n-placeholder={"Informe %"} />
                     </label>
                   )}
                   {cashDiscountMode === "value" && (
                     <label className={cashDiscountValueInvalid ? "supplier-field-invalid" : ""}>
-                      <span>Desconto (R$)</span>
-                      <input value={cashDiscountValue} onChange={(event) => onCashDiscountValueChange(event.target.value)} type="number" min="0.01" step="0.01" placeholder="Informe valor" />
+                      <span><I18nText text={"Desconto (R$)"} /></span>
+                      <input value={cashDiscountValue} onChange={(event) => onCashDiscountValueChange(event.target.value)} type="number" min="0.01" step="0.01" placeholder="Informe valor" data-i18n-placeholder={"Informe valor"} />
                     </label>
                   )}
                 </>
               )}
               <div className="supplier-payment-preview">
-                <span>{cashDiscountChoice === "yes" ? "Preço à vista com desconto" : "Preço à vista"}</span>
+                <span><I18nText text={cashDiscountChoice === "yes" ? "Preço à vista com desconto" : "Preço à vista"} /></span>
                 <strong>{formatCurrency(cashPrice)}</strong>
-                {cashDiscountChoice === "yes" && cashDiscountAmount > 0 && <small>Desconto: {formatCurrency(cashDiscountAmount)}</small>}
+                {cashDiscountChoice === "yes" && cashDiscountAmount > 0 && <small><I18nText text={"Desconto:"} /> {formatCurrency(cashDiscountAmount)}</small>}
               </div>
             </div>
           )}
@@ -197,23 +198,23 @@ export function PaymentStep({
         <div className={`supplier-payment-option ${offersTerm ? "enabled" : ""} ${paymentMethodInvalid || termDecisionInvalid || installmentsInvalid ? "invalid" : ""}`}>
           <div className={`supplier-payment-option-head supplier-term-choice-head ${paymentMethodInvalid || termDecisionInvalid ? "supplier-field-invalid" : ""}`}>
             <span>
-              <strong>A prazo?</strong>
-              <small>Escolha Sim ou Não. Se escolher Sim, gere parcelas automaticamente ou preencha manualmente.</small>
+              <strong><I18nText text={"A prazo?"} /></strong>
+              <small><I18nText text={"Escolha Sim ou Não. Se escolher Sim, gere parcelas automaticamente ou preencha manualmente."} /></small>
             </span>
-            <div className="supplier-term-choice" role="group" aria-label="Aceita pagamento a prazo?">
+            <div className="supplier-term-choice" role="group" aria-label="Aceita pagamento a prazo?" data-i18n-aria-label={"Aceita pagamento a prazo?"}>
               <button
                 className={termPaymentChoice === "yes" ? "active" : ""}
                 type="button"
                 onClick={() => onTermPaymentChoiceChange("yes")}
               >
-                Sim
+                <I18nText text={"Sim"} />
               </button>
               <button
                 className={termPaymentChoice === "no" ? "active" : ""}
                 type="button"
                 onClick={() => onTermPaymentChoiceChange("no")}
               >
-                Não
+                <I18nText text={"Não"} />
               </button>
             </div>
           </div>
@@ -222,44 +223,44 @@ export function PaymentStep({
               <div className="supplier-installment-helper">
                 <div className="supplier-helper-head">
                   <div>
-                    <strong>Gerar parcelas automaticamente</strong>
-                    <span>Use este bloco para montar a condição por quantidade, intervalo e percentual.</span>
+                    <strong><I18nText text={"Gerar parcelas automaticamente"} /></strong>
+                    <span><I18nText text={"Use este bloco para montar a condição por quantidade, intervalo e percentual."} /></span>
                   </div>
-                  <button type="button" className="button secondary supplier-helper-action" onClick={applyInstallmentPlan}>Gerar parcelas</button>
+                  <button type="button" className="button secondary supplier-helper-action" onClick={applyInstallmentPlan}><I18nText text={"Gerar parcelas"} /></button>
                 </div>
 
                 <div className="supplier-installment-builder">
                   <label>
-                    <span>Parcelas</span>
+                    <span><I18nText text={"Parcelas"} /></span>
                     <input value={installmentCount} onChange={(event) => setInstallmentCount(event.target.value)} type="number" min="1" max="24" />
                   </label>
                   <label>
-                    <span>{distribution === "entry" ? "Entrada em dias" : "1ª parcela em dias"}</span>
+                    <span><I18nText text={distribution === "entry" ? "Entrada em dias" : "1ª parcela em dias"} /></span>
                     <input value={firstDueDays} onChange={(event) => setFirstDueDays(event.target.value)} type="number" min="0" max="3650" />
                   </label>
                   <label>
-                    <span>Intervalo</span>
+                    <span><I18nText text={"Intervalo"} /></span>
                     <select value={intervalMode} onChange={(event) => setIntervalMode(event.target.value as "monthly" | "days")}>
-                      <option value="monthly">1 vez por mês</option>
-                      <option value="days">Intervalo em dias</option>
+                      <option value="monthly"><I18nText text={"1 vez por mês"} /></option>
+                      <option value="days"><I18nText text={"Intervalo em dias"} /></option>
                     </select>
                   </label>
                   {intervalMode === "days" && (
                     <label>
-                      <span>Dias entre parcelas</span>
+                      <span><I18nText text={"Dias entre parcelas"} /></span>
                       <input value={intervalDays} onChange={(event) => setIntervalDays(event.target.value)} type="number" min="1" max="3650" />
                     </label>
                   )}
                   <label>
-                    <span>Percentual</span>
+                    <span><I18nText text={"Percentual"} /></span>
                     <select value={distribution} onChange={(event) => setDistribution(event.target.value as "equal" | "entry")}>
-                      <option value="equal">Fixo igual</option>
-                      <option value="entry">Entrada diferenciada</option>
+                      <option value="equal"><I18nText text={"Fixo igual"} /></option>
+                      <option value="entry"><I18nText text={"Entrada diferenciada"} /></option>
                     </select>
                   </label>
                   {distribution === "entry" && (
                     <label>
-                      <span>% entrada</span>
+                      <span><I18nText text={"% entrada"} /></span>
                       <input value={entryPercentage} onChange={(event) => setEntryPercentage(event.target.value)} type="number" min="0.01" max="99.99" step="0.1" />
                     </label>
                   )}
@@ -268,16 +269,16 @@ export function PaymentStep({
                 <div className="supplier-installment-preview">
                   {generatedPreview.map((installment, index) => (
                     <span key={`${installment.days}-${index}`}>
-                      <strong>{installment.percentage}%</strong>
-                      {installment.days} {Number(installment.days) === 1 ? "dia" : "dias"}
+                      <strong>{installment.percentage}<I18nText text={"%"} /></strong>
+                      {installment.days} <I18nText text={Number(installment.days) === 1 ? "dia" : "dias"} />
                     </span>
                   ))}
                 </div>
               </div>
 
               <div className="supplier-manual-installments">
-                <strong>Preencher ou ajustar manualmente</strong>
-                <span>Confira os dias e percentuais. Se precisar, altere uma parcela ou adicione outra linha.</span>
+                <strong><I18nText text={"Preencher ou ajustar manualmente"} /></strong>
+                <span><I18nText text={"Confira os dias e percentuais. Se precisar, altere uma parcela ou adicione outra linha."} /></span>
               </div>
 
               {installments.map((installment, index) => {
@@ -289,29 +290,29 @@ export function PaymentStep({
                 return (
                   <div className="supplier-installment-row" key={index}>
                     <label className={installmentDaysInvalid ? "supplier-field-invalid" : ""}>
-                      <span>Dias</span>
-                      <input value={installment.days} onChange={(event) => onInstallmentChange(index, "days", event.target.value)} type="number" min="0" placeholder="30" />
+                      <span><I18nText text={"Dias"} /></span>
+                      <input value={installment.days} onChange={(event) => onInstallmentChange(index, "days", event.target.value)} type="number" min="0" placeholder="30" data-i18n-placeholder={"30"} />
                     </label>
                     <label className={installmentPercentageInvalid ? "supplier-field-invalid" : ""}>
-                      <span>% do valor</span>
-                      <input value={installment.percentage} onChange={(event) => onInstallmentChange(index, "percentage", event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="100" />
+                      <span><I18nText text={"% do valor"} /></span>
+                      <input value={installment.percentage} onChange={(event) => onInstallmentChange(index, "percentage", event.target.value)} type="number" min="0" max="100" step="0.1" placeholder="100" data-i18n-placeholder={"100"} />
                     </label>
                     {installments.length > 1 && (
-                      <button type="button" className="supplier-installment-remove" onClick={() => onRemoveInstallment(index)}>Remover parcela</button>
+                      <button type="button" className="supplier-installment-remove" onClick={() => onRemoveInstallment(index)}><I18nText text={"Remover parcela"} /></button>
                     )}
                   </div>
                 );
               })}
               <div className="supplier-installment-actions">
-                <button type="button" className="button secondary" onClick={onAddInstallment}>{installments.length ? "Adicionar parcela manual" : "Adicionar primeira parcela manual"}</button>
+                <button type="button" className="button secondary" onClick={onAddInstallment}><I18nText text={installments.length ? "Adicionar parcela manual" : "Adicionar primeira parcela manual"} /></button>
                 <span className={installments.length && installmentsTotalValid ? "done" : "warn"}>
-                  {installments.length ? `Total: ${installmentsTotalPercentage}%${!installmentsTotalValid ? " (deve somar 100%)" : ""}` : "Nenhuma parcela informada"}
+                  {installments.length ? `Total: ${installmentsTotalPercentage}%${!installmentsTotalValid ? " (deve somar 100%)" : ""}` : <I18nText text={"Nenhuma parcela informada"} />}
                 </span>
               </div>
             </div>
           )}
           {termPaymentChoice === "no" && (
-            <div className="supplier-term-declined">Pagamento a prazo não será oferecido nesta proposta.</div>
+            <div className="supplier-term-declined"><I18nText text={"Pagamento a prazo não será oferecido nesta proposta."} /></div>
           )}
         </div>
       </div>

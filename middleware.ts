@@ -14,6 +14,7 @@ function publicPath(pathname: string) {
     || pathname === "/login"
     || pathname === "/api/auth/login"
     || pathname === "/api/auth/logout"
+    || pathname === "/api/locale"
     || pathname.startsWith("/portal-cotacao")
     || pathname === "/api/supplier-portal/responses"
     || pathname === "/api/supplier-portal/link-requests"

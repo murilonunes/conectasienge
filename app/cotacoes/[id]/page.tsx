@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QuotationDetail } from "@/components/purchases/quotation-detail";
@@ -24,7 +25,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
   return (
     <>
       <div className="page-actions">
-        <Link className="button secondary" href="/cotacoes">Voltar para cotações</Link>
+        <Link className="button secondary" href="/cotacoes"><I18nText text={"Voltar para cotações"} /></Link>
       </div>
 
       <QuotationDetail

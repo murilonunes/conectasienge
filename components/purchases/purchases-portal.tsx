@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { useState } from "react";
 import { MonthlyVolumeChart } from "@/components/charts/monthly-volume-chart";
@@ -29,8 +30,8 @@ export function PurchasesPortal({
   return (
     <>
       <div className="purchase-tabs">
-        <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}>Cenário de suprimentos</button>
-        <button className={tab === "records" ? "active" : ""} onClick={() => setTab("records")}>Registros</button>
+        <button className={tab === "overview" ? "active" : ""} onClick={() => setTab("overview")}><I18nText text={"Cenário de suprimentos"} /></button>
+        <button className={tab === "records" ? "active" : ""} onClick={() => setTab("records")}><I18nText text={"Registros"} /></button>
       </div>
 
       {tab === "overview" ? (
@@ -44,31 +45,31 @@ export function PurchasesPortal({
             <input name="filtro" type="hidden" value="periodo" />
             <label className="supply-period-current">
               <input defaultChecked={overview.period.includeCurrentMonth} name="mesAtual" type="checkbox" value="1" />
-              <span>Mês atual</span>
+              <span><I18nText text={"Mês atual"} /></span>
             </label>
             <label className="supply-period-history">
-              <span>Histórico adicional</span>
+              <span><I18nText text={"Histórico adicional"} /></span>
               <select defaultValue={String(overview.period.extraMonths === "all" ? "tudo" : overview.period.extraMonths)} name="historico">
-                <option value="1">+1 mês</option>
-                <option value="2">+2 meses</option>
-                <option value="3">+3 meses</option>
-                <option value="6">+6 meses</option>
-                <option value="12">+12 meses</option>
-                <option value="tudo">Tudo</option>
+                <option value="1"><I18nText text={"+1 mês"} /></option>
+                <option value="2"><I18nText text={"+2 meses"} /></option>
+                <option value="3"><I18nText text={"+3 meses"} /></option>
+                <option value="6"><I18nText text={"+6 meses"} /></option>
+                <option value="12"><I18nText text={"+12 meses"} /></option>
+                <option value="tudo"><I18nText text={"Tudo"} /></option>
               </select>
             </label>
-            <button className="button secondary" type="submit">Aplicar período</button>
+            <button className="button secondary" type="submit"><I18nText text={"Aplicar período"} /></button>
             <small>{overview.period.label}</small>
           </form>
 
-          {warning && <div className="card data-notice"><strong>Atenção</strong><span>{warning}</span></div>}
+          {warning && <div className="card data-notice"><strong><I18nText text={"Atenção"} /></strong><span>{warning}</span></div>}
           {!overview.requestStatusSynced && (
             <div className="card data-notice">
-              <strong>Situação das solicitações</strong>
+              <strong><I18nText text={"Situação das solicitações"} /></strong>
               <span>
                 {overview.undatedRequests
                   ? `${overview.undatedRequests} solicitações sem data sincronizada ficaram fora deste período. Atualize Compras em Configurações ou escolha Tudo para incluí-las.`
-                  : "A situação individual de algumas solicitações ainda não foi sincronizada. Rode Atualizar Compras em Configurações para o funil ignorar solicitações já atendidas."}
+                  : <I18nText text={"A situação individual de algumas solicitações ainda não foi sincronizada. Rode Atualizar Compras em Configurações para o funil ignorar solicitações já atendidas."} />}
               </span>
             </div>
           )}
@@ -113,8 +114,8 @@ export function PurchasesPortal({
           <section className="card panel supply-funnel-panel">
             <div className="panel-head">
               <div>
-                <h2 className="panel-title">Funil de suprimentos</h2>
-                <span className="panel-note">Da solicitação à nota fiscal: onde cada etapa está agora</span>
+                <h2 className="panel-title"><I18nText text={"Funil de suprimentos"} /></h2>
+                <span className="panel-note"><I18nText text={"Da solicitação à nota fiscal: onde cada etapa está agora"} /></span>
               </div>
             </div>
             <div className="supply-funnel">
@@ -145,8 +146,8 @@ export function PurchasesPortal({
             <article className="card panel">
               <div className="panel-head">
                 <div>
-                  <h2 className="panel-title">Solicitações para cotar</h2>
-                  <span className="panel-note">Aprovadas e ainda sem cotação com fornecedores</span>
+                  <h2 className="panel-title"><I18nText text={"Solicitações para cotar"} /></h2>
+                  <span className="panel-note"><I18nText text={"Aprovadas e ainda sem cotação com fornecedores"} /></span>
                 </div>
                 <i className={`badge ${actions.requestsToQuote.length ? "warn" : ""}`}>{actions.requestsToQuote.length}</i>
               </div>
@@ -157,30 +158,30 @@ export function PurchasesPortal({
                       <div>
                         <strong>{request.code}</strong>
                         <small>
-                          {request.itemCount} insumos - {request.sample}
-                          {request.requestDate ? ` - desde ${formatOptionalDate(request.requestDate)}` : ""}
-                          {request.requesterUser ? ` - ${request.requesterUser}` : ""}
+                          {request.itemCount} <I18nText text={"insumos -"} /> {request.sample}
+                          {request.requestDate ? ` - desde ${formatOptionalDate(request.requestDate)}` : <I18nText text={""} />}
+                          {request.requesterUser ? ` - ${request.requesterUser}` : <I18nText text={""} />}
                         </small>
                         {request.relatedQuotationId && (
-                          <small className="supply-action-hint">Cotação provável #{request.relatedQuotationId} ({request.relatedQuotationStatus})</small>
+                          <small className="supply-action-hint"><I18nText text={"Cotação provável #"} />{request.relatedQuotationId} <I18nText text={"("} />{request.relatedQuotationStatus}<I18nText text={")"} /></small>
                         )}
                       </div>
                       <Link className="button secondary" href={`/cotacoes?solicitacao=${request.purchaseRequestId}`}>
-                        {request.relatedQuotationId ? "Abrir cotação" : "Iniciar cotação"}
+                        <I18nText text={request.relatedQuotationId ? "Abrir cotação" : "Iniciar cotação"} />
                       </Link>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">Nenhuma solicitação aguardando cotação.</div>
+                <div className="empty-state"><I18nText text={"Nenhuma solicitação aguardando cotação."} /></div>
               )}
             </article>
 
             <article className="card panel">
               <div className="panel-head">
                 <div>
-                  <h2 className="panel-title">Cotações aguardando fornecedores</h2>
-                  <span className="panel-note">Sem fornecedor vinculado ou sem resposta de preço</span>
+                  <h2 className="panel-title"><I18nText text={"Cotações aguardando fornecedores"} /></h2>
+                  <span className="panel-note"><I18nText text={"Sem fornecedor vinculado ou sem resposta de preço"} /></span>
                 </div>
                 <i className={`badge ${actions.quotationsWaitingSuppliers.length ? "warn" : ""}`}>{actions.quotationsWaitingSuppliers.length}</i>
               </div>
@@ -189,26 +190,26 @@ export function PurchasesPortal({
                   {actions.quotationsWaitingSuppliers.map((quotation) => (
                     <div className="supply-action-row" key={quotation.id}>
                       <div>
-                        <strong>Cotação #{quotation.code}</strong>
+                        <strong><I18nText text={"Cotação #"} />{quotation.code}</strong>
                         <small>
-                          {quotation.itemCount} insumos - {quotation.supplierCount ? `${quotation.responseCount} de ${quotation.supplierCount} fornecedores responderam` : "sem fornecedores"}
-                          {quotation.date ? ` - ${formatOptionalDate(quotation.date)}` : ""}
+                          {quotation.itemCount} <I18nText text={"insumos -"} /> {quotation.supplierCount ? `${quotation.responseCount} de ${quotation.supplierCount} fornecedores responderam` : <I18nText text={"sem fornecedores"} />}
+                          {quotation.date ? ` - ${formatOptionalDate(quotation.date)}` : <I18nText text={""} />}
                         </small>
                       </div>
-                      <Link className="button secondary" href={`/cotacoes/${quotation.id}`}>Abrir</Link>
+                      <Link className="button secondary" href={`/cotacoes/${quotation.id}`}><I18nText text={"Abrir"} /></Link>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">Todas as cotações em andamento têm fornecedores respondendo.</div>
+                <div className="empty-state"><I18nText text={"Todas as cotações em andamento têm fornecedores respondendo."} /></div>
               )}
             </article>
 
             <article className="card panel">
               <div className="panel-head">
                 <div>
-                  <h2 className="panel-title">Prontas para decisão</h2>
-                  <span className="panel-note">Cotações com preço recebido esperando aprovação</span>
+                  <h2 className="panel-title"><I18nText text={"Prontas para decisão"} /></h2>
+                  <span className="panel-note"><I18nText text={"Cotações com preço recebido esperando aprovação"} /></span>
                 </div>
                 <i className="badge">{actions.quotationsReadyForDecision.length}</i>
               </div>
@@ -217,23 +218,23 @@ export function PurchasesPortal({
                   {actions.quotationsReadyForDecision.map((quotation) => (
                     <div className="supply-action-row" key={quotation.id}>
                       <div>
-                        <strong>Cotação #{quotation.code}</strong>
-                        <small>{quotation.itemCount} insumos - melhor cesta {formatCurrency(quotation.totalValue)}</small>
+                        <strong><I18nText text={"Cotação #"} />{quotation.code}</strong>
+                        <small>{quotation.itemCount} <I18nText text={"insumos - melhor cesta"} /> {formatCurrency(quotation.totalValue)}</small>
                       </div>
-                      <Link className="button secondary" href={`/cotacoes/${quotation.id}`}>Decidir</Link>
+                      <Link className="button secondary" href={`/cotacoes/${quotation.id}`}><I18nText text={"Decidir"} /></Link>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">Nenhuma cotação aguardando decisão agora.</div>
+                <div className="empty-state"><I18nText text={"Nenhuma cotação aguardando decisão agora."} /></div>
               )}
             </article>
 
             <article className="card panel">
               <div className="panel-head">
                 <div>
-                  <h2 className="panel-title">Pedidos que precisam de atenção</h2>
-                  <span className="panel-note">Sem autorização ou com entrega atrasada</span>
+                  <h2 className="panel-title"><I18nText text={"Pedidos que precisam de atenção"} /></h2>
+                  <span className="panel-note"><I18nText text={"Sem autorização ou com entrega atrasada"} /></span>
                 </div>
                 <i className={`badge ${actions.lateOrders.length ? "late" : actions.ordersAwaitingAuthorization.length ? "warn" : ""}`}>
                   {actions.lateOrders.length + actions.ordersAwaitingAuthorization.length}
@@ -244,8 +245,8 @@ export function PurchasesPortal({
                   {actions.lateOrders.map((order) => (
                     <div className="supply-action-row" key={`late-${order.id}`}>
                       <div>
-                        <strong>Pedido {order.code}</strong>
-                        <small>{order.supplierName} - {formatCurrency(order.amount)}{order.date ? ` - ${formatOptionalDate(order.date)}` : ""}</small>
+                        <strong><I18nText text={"Pedido"} /> {order.code}</strong>
+                        <small>{order.supplierName} <I18nText text={"-"} /> {formatCurrency(order.amount)}{order.date ? ` - ${formatOptionalDate(order.date)}` : <I18nText text={""} />}</small>
                       </div>
                       <i className="badge late">{order.statusLabel}</i>
                     </div>
@@ -253,15 +254,15 @@ export function PurchasesPortal({
                   {actions.ordersAwaitingAuthorization.map((order) => (
                     <div className="supply-action-row" key={`auth-${order.id}`}>
                       <div>
-                        <strong>Pedido {order.code}</strong>
-                        <small>{order.supplierName} - {formatCurrency(order.amount)}{order.buyer ? ` - ${order.buyer}` : ""}</small>
+                        <strong><I18nText text={"Pedido"} /> {order.code}</strong>
+                        <small>{order.supplierName} <I18nText text={"-"} /> {formatCurrency(order.amount)}{order.buyer ? ` - ${order.buyer}` : <I18nText text={""} />}</small>
                       </div>
                       <i className="badge warn">{order.statusLabel}</i>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">Nenhum pedido travado por autorização ou entrega.</div>
+                <div className="empty-state"><I18nText text={"Nenhum pedido travado por autorização ou entrega."} /></div>
               )}
             </article>
           </section>
@@ -283,10 +284,9 @@ export function PurchasesPortal({
           <div className="grid-main equal-grid">
             <RankingChart title="Volume por comprador" note="Compradores com maior volume informado" data={summary.byBuyer} />
             <section className="card methodology">
-              <strong>Leitura rápida</strong>
+              <strong><I18nText text={"Leitura rápida"} /></strong>
               <p>
-                O funil mostra onde cada compra está: solicitação aprovada vira cotação, cotação decidida vira pedido e pedido entregue vira nota.
-                Os painéis de ação listam exatamente o que está parado em cada etapa, com atalho para resolver. A lista completa fica na aba Registros.
+                <I18nText text={"O funil mostra onde cada compra está: solicitação aprovada vira cotação, cotação decidida vira pedido e pedido entregue vira nota. Os painéis de ação listam exatamente o que está parado em cada etapa, com atalho para resolver. A lista completa fica na aba Registros."} />
               </p>
             </section>
           </div>

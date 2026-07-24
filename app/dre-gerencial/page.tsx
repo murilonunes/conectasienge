@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { CashFlowChart } from "@/components/charts/cash-flow-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
@@ -27,13 +28,13 @@ function IntegrationSummary({ integrations }: { integrations: DreGerencialData["
       {integrations.map((item) => (
         <div key={item.label}>
           <span>{item.label}</span>
-          <strong>{item.count} registros</strong>
+          <strong>{item.count} <I18nText text={"registros"} /></strong>
           <small>
             {item.lastIntegrationDay
               ? `Integrado em ${item.lastIntegrationDay}`
               : item.lastSavedAt
                 ? `Salvo em ${item.lastSavedAt.slice(0, 10)}`
-                : "Ainda sem integração salva"}
+                : <I18nText text={"Ainda sem integração salva"} />}
           </small>
         </div>
       ))}
@@ -54,8 +55,8 @@ function ResultTrend({ monthly }: { monthly: DreMonthlyItem[] }) {
     <section className="card panel dre-result-panel">
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Resultado por mês</h2>
-          <span className="panel-note">Receita POC líquida menos custos e despesas lançados</span>
+          <h2 className="panel-title"><I18nText text={"Resultado por mês"} /></h2>
+          <span className="panel-note"><I18nText text={"Receita POC líquida menos custos e despesas lançados"} /></span>
         </div>
       </div>
       {recent.length ? (
@@ -76,7 +77,7 @@ function ResultTrend({ monthly }: { monthly: DreMonthlyItem[] }) {
             );
           })}
         </div>
-      ) : <div className="chart-empty">Sem dados suficientes para montar a evolução.</div>}
+      ) : <div className="chart-empty"><I18nText text={"Sem dados suficientes para montar a evolução."} /></div>}
     </section>
   );
 }
@@ -87,21 +88,21 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
   return (
     <section className="card table-card dre-monthly-table">
       <div className="table-head">
-        <h2 className="panel-title">DRE POC mês a mês</h2>
-        <span className="panel-note">Valores consolidados por competência e por caixa</span>
+        <h2 className="panel-title"><I18nText text={"DRE POC mês a mês"} /></h2>
+        <span className="panel-note"><I18nText text={"Valores consolidados por competência e por caixa"} /></span>
       </div>
       {rows.length ? (
         <table>
           <thead>
             <tr>
-              <th>Mês</th>
-              <th>Vendas contratadas</th>
-              <th>Receita POC líquida</th>
-              <th>Custos/despesas</th>
-              <th>Resultado</th>
-              <th>Recebido</th>
-              <th>Pago</th>
-              <th>Caixa</th>
+              <th><I18nText text={"Mês"} /></th>
+              <th><I18nText text={"Vendas contratadas"} /></th>
+              <th><I18nText text={"Receita POC líquida"} /></th>
+              <th><I18nText text={"Custos/despesas"} /></th>
+              <th><I18nText text={"Resultado"} /></th>
+              <th><I18nText text={"Recebido"} /></th>
+              <th><I18nText text={"Pago"} /></th>
+              <th><I18nText text={"Caixa"} /></th>
             </tr>
           </thead>
           <tbody>
@@ -119,7 +120,7 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
             ))}
           </tbody>
         </table>
-      ) : <div className="empty-state">Nenhum mês com dados salvos para este ano.</div>}
+      ) : <div className="empty-state"><I18nText text={"Nenhum mês com dados salvos para este ano."} /></div>}
     </section>
   );
 }
@@ -128,18 +129,18 @@ function FutureGroups({ groups }: { groups: DreFutureGroup[] }) {
   return (
     <section className="card table-card dre-monthly-table">
       <div className="table-head">
-        <h2 className="panel-title">Futuro financeiro da carteira POC</h2>
-        <span className="panel-note">Parcelas abertas a receber e a pagar, agrupadas pelo vencimento a partir de hoje</span>
+        <h2 className="panel-title"><I18nText text={"Futuro financeiro da carteira POC"} /></h2>
+        <span className="panel-note"><I18nText text={"Parcelas abertas a receber e a pagar, agrupadas pelo vencimento a partir de hoje"} /></span>
       </div>
       <table>
         <thead>
           <tr>
-            <th>Faixa</th>
-            <th>A receber aberto</th>
-            <th>Parcelas a receber</th>
-            <th>A pagar aberto</th>
-            <th>Parcelas a pagar</th>
-            <th>Saldo de caixa</th>
+            <th><I18nText text={"Faixa"} /></th>
+            <th><I18nText text={"A receber aberto"} /></th>
+            <th><I18nText text={"Parcelas a receber"} /></th>
+            <th><I18nText text={"A pagar aberto"} /></th>
+            <th><I18nText text={"Parcelas a pagar"} /></th>
+            <th><I18nText text={"Saldo de caixa"} /></th>
           </tr>
         </thead>
         <tbody>
@@ -167,28 +168,27 @@ function FuturePocView({ dre }: { dre: DreGerencialData }) {
     <>
       <section className={`card dashboard-executive dre-executive ${hasFutureMargin ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
-          <span>{hasFutureMargin ? "Potencial POC futuro positivo" : "Potencial POC futuro pressionado"}</span>
+          <span><I18nText text={hasFutureMargin ? "Potencial POC futuro positivo" : "Potencial POC futuro pressionado"} /></span>
           <h2>{formatCompactCurrency(dre.futureRemainingPocRevenue)}</h2>
           <p>
-            Receita POC ainda a reconhecer pela carteira ativa, considerando o percentual de avanço salvo hoje.
-            Essa leitura não cria cronograma de medição; ela mostra o estoque de resultado ainda não reconhecido.
+            <I18nText text={"Receita POC ainda a reconhecer pela carteira ativa, considerando o percentual de avanço salvo hoje. Essa leitura não cria cronograma de medição; ela mostra o estoque de resultado ainda não reconhecido."} />
           </p>
         </div>
         <div className="dashboard-executive-grid">
           <div>
-            <span>POC já reconhecido</span>
+            <span><I18nText text={"POC já reconhecido"} /></span>
             <strong>{formatCompactCurrency(dre.futureCurrentPocRevenue)}</strong>
-            <small>{formatPercent(dre.futurePocCoverage)} da carteira ativa já está reconhecida pela base atual.</small>
+            <small>{formatPercent(dre.futurePocCoverage)} <I18nText text={"da carteira ativa já está reconhecida pela base atual."} /></small>
           </div>
           <div>
-            <span>Saldo futuro de caixa</span>
+            <span><I18nText text={"Saldo futuro de caixa"} /></span>
             <strong className={dre.futureCashResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.futureCashResult)}</strong>
-            <small>{formatCompactCurrency(dre.futureOpenReceivables)} a receber e {formatCompactCurrency(dre.futureOpenPayables)} a pagar.</small>
+            <small>{formatCompactCurrency(dre.futureOpenReceivables)} <I18nText text={"a receber e"} /> {formatCompactCurrency(dre.futureOpenPayables)} <I18nText text={"a pagar."} /></small>
           </div>
           <div>
-            <span>Sem vínculo POC</span>
+            <span><I18nText text={"Sem vínculo POC"} /></span>
             <strong className={dre.futurePocUnmatchedCount > 0 ? "negative" : ""}>{formatCompactCurrency(dre.futurePocUnmatchedRevenue)}</strong>
-            <small>{dre.futurePocUnmatchedCount} contrato(s) ativos sem obra/contrato de fornecimento vinculado.</small>
+            <small>{dre.futurePocUnmatchedCount} <I18nText text={"contrato(s) ativos sem obra/contrato de fornecimento vinculado."} /></small>
           </div>
         </div>
       </section>
@@ -214,36 +214,34 @@ function FuturePocView({ dre }: { dre: DreGerencialData }) {
         <section className="card panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Leitura da visão futura</h2>
-              <span className="panel-note">A projeção usa a base salva, sem consultar o Sienge na abertura</span>
+              <h2 className="panel-title"><I18nText text={"Leitura da visão futura"} /></h2>
+              <span className="panel-note"><I18nText text={"A projeção usa a base salva, sem consultar o Sienge na abertura"} /></span>
             </div>
           </div>
           <div className="dashboard-period-list">
             <div>
-              <span>Data base</span>
+              <span><I18nText text={"Data base"} /></span>
               <strong>{dre.baseDate}</strong>
-              <small><span>Referência</span><span>Vencimentos futuros partem desta data.</span></small>
+              <small><span><I18nText text={"Referência"} /></span><span><I18nText text={"Vencimentos futuros partem desta data."} /></span></small>
             </div>
             <div>
-              <span>Receita remanescente</span>
+              <span><I18nText text={"Receita remanescente"} /></span>
               <strong>{formatCompactCurrency(dre.futureRemainingPocRevenue)}</strong>
-              <small><span>POC</span><span>Carteira vendida menos POC reconhecido pela última medição.</span></small>
+              <small><span><I18nText text={"POC"} /></span><span><I18nText text={"Carteira vendida menos POC reconhecido pela última medição."} /></span></small>
             </div>
             <div>
-              <span>Sem cronograma mensal</span>
-              <strong>Estimativa</strong>
-              <small><span>Limite</span><span>Falta histórico de medições futuras por obra/unidade.</span></small>
+              <span><I18nText text={"Sem cronograma mensal"} /></span>
+              <strong><I18nText text={"Estimativa"} /></strong>
+              <small><span><I18nText text={"Limite"} /></span><span><I18nText text={"Falta histórico de medições futuras por obra/unidade."} /></span></small>
             </div>
           </div>
         </section>
       </div>
 
       <section className="card methodology dre-methodology">
-        <strong>Como ler o futuro da DRE POC</strong>
+        <strong><I18nText text={"Como ler o futuro da DRE POC"} /></strong>
         <p>
-          A visão futura parte da carteira ativa de vendas e calcula o que ainda falta reconhecer no POC usando o avanço atual dos contratos de fornecimento.
-          O caixa futuro vem das parcelas abertas de contas a receber e contas a pagar. Como ainda não há cronograma mensal de medições futuras,
-          a receita POC futura aparece como backlog por empreendimento, não como previsão mensal contábil.
+          <I18nText text={"A visão futura parte da carteira ativa de vendas e calcula o que ainda falta reconhecer no POC usando o avanço atual dos contratos de fornecimento. O caixa futuro vem das parcelas abertas de contas a receber e contas a pagar. Como ainda não há cronograma mensal de medições futuras, a receita POC futura aparece como backlog por empreendimento, não como previsão mensal contábil."} />
         </p>
       </section>
     </>
@@ -275,16 +273,16 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
 
       <section className="reports-filter card">
         <div>
-          <span>Exercício</span>
+          <span><I18nText text={"Exercício"} /></span>
           <strong>{selectedYear}</strong>
-          <small>{dre.range.start} até {dre.range.end}</small>
+          <small>{dre.range.start} <I18nText text={"até"} /> {dre.range.end}</small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-direction-options" aria-label="Visão da DRE POC">
-            <Link href={`/dre-gerencial?ano=${selectedYear}&visao=historico`} className={selectedView === "historico" ? "active" : ""}>Histórico</Link>
-            <Link href={`/dre-gerencial?ano=${selectedYear}&visao=futuro`} className={selectedView === "futuro" ? "active" : ""}>Futuro</Link>
+          <div className="dashboard-direction-options" aria-label="Visão da DRE POC" data-i18n-aria-label={"Visão da DRE POC"}>
+            <Link href={`/dre-gerencial?ano=${selectedYear}&visao=historico`} className={selectedView === "historico" ? "active" : ""}><I18nText text={"Histórico"} /></Link>
+            <Link href={`/dre-gerencial?ano=${selectedYear}&visao=futuro`} className={selectedView === "futuro" ? "active" : ""}><I18nText text={"Futuro"} /></Link>
           </div>
-          <div className="dashboard-view-options compact" aria-label="Ano da DRE">
+          <div className="dashboard-view-options compact" aria-label="Ano da DRE" data-i18n-aria-label={"Ano da DRE"}>
             {availableYears.map((year) => (
               <Link
                 key={year}
@@ -300,35 +298,32 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
 
       {yearWasAdjusted && (
         <section className="card data-notice">
-          <strong>Ano ajustado</strong>
+          <strong><I18nText text={"Ano ajustado"} /></strong>
           <span>
-            O exercício {requestedYear} não tem vendas ou contratos salvos para calcular POC.
-            A tela foi aberta em {selectedYear}, que possui base comercial local.
+            <I18nText text={"O exercício"} /> {requestedYear} <I18nText text={"não tem vendas ou contratos salvos para calcular POC. A tela foi aberta em"} /> {selectedYear}<I18nText text={", que possui base comercial local."} />
           </span>
         </section>
       )}
 
       {dre.unavailable.length > 0 && (
         <section className="card data-notice">
-          <strong>Visão parcial</strong>
-          <span>Algumas áreas ainda não têm dados salvos: {dre.unavailable.join(", ")}. Atualize essas áreas em Configurações para completar a DRE.</span>
+          <strong><I18nText text={"Visão parcial"} /></strong>
+          <span><I18nText text={"Algumas áreas ainda não têm dados salvos:"} /> {dre.unavailable.join(", ")}<I18nText text={". Atualize essas áreas em Configurações para completar a DRE."} /></span>
         </section>
       )}
 
       <section className="card data-notice">
-        <strong>Estimativa gerencial</strong>
+        <strong><I18nText text={"Estimativa gerencial"} /></strong>
         <span>
-          Esta visão ainda não substitui a apuração contábil do POC por unidade vendida. Ela usa os dados salvos para estimar
-          receita por avanço de obra e destacar o que precisa ser validado.
+          <I18nText text={"Esta visão ainda não substitui a apuração contábil do POC por unidade vendida. Ela usa os dados salvos para estimar receita por avanço de obra e destacar o que precisa ser validado."} />
         </span>
       </section>
 
       {dre.pocSourceContractCount === 0 && (
         <section className="card data-notice">
-          <strong>POC sem base de medição</strong>
+          <strong><I18nText text={"POC sem base de medição"} /></strong>
           <span>
-            A tela precisa dos contratos de fornecimento com valor contratado e valor medido para reconhecer receita por avanço da obra.
-            Atualize Contratos em Configurações; até lá, a Receita POC fica zerada para não transformar venda contratada em receita.
+            <I18nText text={"A tela precisa dos contratos de fornecimento com valor contratado e valor medido para reconhecer receita por avanço da obra. Atualize Contratos em Configurações; até lá, a Receita POC fica zerada para não transformar venda contratada em receita."} />
           </span>
         </section>
       )}
@@ -336,28 +331,28 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       {selectedView === "futuro" ? <FuturePocView dre={dre} /> : <>
       <section className={`card dashboard-executive dre-executive ${hasProfit ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
-          <span>{hasProfit ? "Lucro POC estimado" : "Prejuízo POC estimado"}</span>
+          <span><I18nText text={hasProfit ? "Lucro POC estimado" : "Prejuízo POC estimado"} /></span>
           <h2>{formatCompactCurrency(dre.netResult)}</h2>
           <p>
-            Receita POC líquida de {formatCompactCurrency(dre.netRevenue)} menos {formatCompactCurrency(dre.costAmount)}
-            {" "}em custos e despesas lançados. POC médio ponderado de {formatPercent(dre.averagePoc * 100)}.
+            <I18nText text={"Receita POC líquida de"} /> {formatCompactCurrency(dre.netRevenue)} <I18nText text={"menos"} /> {formatCompactCurrency(dre.costAmount)}
+            <I18nText text={" "} /><I18nText text={"em custos e despesas lançados. POC médio ponderado de"} /> {formatPercent(dre.averagePoc * 100)}<I18nText text={"."} />
           </p>
         </div>
         <div className="dashboard-executive-grid">
           <div>
-            <span>Caixa realizado</span>
+            <span><I18nText text={"Caixa realizado"} /></span>
             <strong className={dre.cashResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.cashResult)}</strong>
-            <small>{cashPositive ? "Entrou mais dinheiro do que saiu." : "Saiu mais dinheiro do que entrou."}</small>
+            <small><I18nText text={cashPositive ? "Entrou mais dinheiro do que saiu." : "Saiu mais dinheiro do que entrou."} /></small>
           </div>
           <div>
-            <span>A receber até o ano</span>
+            <span><I18nText text={"A receber até o ano"} /></span>
             <strong>{formatCompactCurrency(dre.openReceivables)}</strong>
-            <small>{dre.openReceivablesCount} parcelas abertas com vencimento até {selectedYear}</small>
+            <small>{dre.openReceivablesCount} <I18nText text={"parcelas abertas com vencimento até"} /> {selectedYear}</small>
           </div>
           <div>
-            <span>A pagar até o ano</span>
+            <span><I18nText text={"A pagar até o ano"} /></span>
             <strong className={dre.openPayables > 0 ? "negative" : ""}>{formatCompactCurrency(dre.openPayables)}</strong>
-            <small>{dre.openPayablesCount} parcelas abertas com vencimento até {selectedYear}</small>
+            <small>{dre.openPayablesCount} <I18nText text={"parcelas abertas com vencimento até"} /> {selectedYear}</small>
           </div>
         </div>
       </section>
@@ -401,25 +396,25 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         <section className="card panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Base usada no POC</h2>
-              <span className="panel-note">Valores de contratos de fornecimento salvos localmente</span>
+              <h2 className="panel-title"><I18nText text={"Base usada no POC"} /></h2>
+              <span className="panel-note"><I18nText text={"Valores de contratos de fornecimento salvos localmente"} /></span>
             </div>
           </div>
           <div className="dashboard-period-list">
             <div>
-              <span>Valor contratado</span>
+              <span><I18nText text={"Valor contratado"} /></span>
               <strong>{formatCompactCurrency(dre.pocSourcePlannedCost)}</strong>
-              <small><span>Base de custo</span><span>{dre.pocSourceContractCount} contratos com medição</span></small>
+              <small><span><I18nText text={"Base de custo"} /></span><span>{dre.pocSourceContractCount} <I18nText text={"contratos com medição"} /></span></small>
             </div>
             <div>
-              <span>Valor medido</span>
+              <span><I18nText text={"Valor medido"} /></span>
               <strong>{formatCompactCurrency(dre.pocSourceMeasuredCost)}</strong>
-              <small><span>Avanço reconhecido</span><span>{formatPercent(dre.pocSourceAveragePercent * 100)} medido sobre contratado</span></small>
+              <small><span><I18nText text={"Avanço reconhecido"} /></span><span>{formatPercent(dre.pocSourceAveragePercent * 100)} <I18nText text={"medido sobre contratado"} /></span></small>
             </div>
             <div>
-              <span>Vendas sem vínculo</span>
+              <span><I18nText text={"Vendas sem vínculo"} /></span>
               <strong>{dre.pocUnmatchedCount}</strong>
-              <small><span>A revisar</span><span>Essas vendas não entraram na Receita POC.</span></small>
+              <small><span><I18nText text={"A revisar"} /></span><span><I18nText text={"Essas vendas não entraram na Receita POC."} /></span></small>
             </div>
           </div>
         </section>
@@ -428,12 +423,9 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       <MonthlyTable monthly={dre.monthly} />
 
       <section className="card methodology dre-methodology">
-        <strong>Como ler esta DRE POC estimada</strong>
+        <strong><I18nText text={"Como ler esta DRE POC estimada"} /></strong>
         <p>
-          Resultado POC considera vendas contratadas multiplicadas pelo percentual de avanço encontrado nos contratos de fornecimento da obra,
-          menos cancelamentos, custos e despesas lançados. Caixa realizado continua separado: recebimentos efetivos menos pagamentos efetivos.
-          Quando uma venda não encontra vínculo com obra/contrato, ela fica fora da receita POC e aparece no card de contratos sem vínculo.
-          Sem histórico mensal de medições e sem apropriação por unidade vendida, a receita POC é uma estimativa anual baseada na última medição salva.
+          <I18nText text={"Resultado POC considera vendas contratadas multiplicadas pelo percentual de avanço encontrado nos contratos de fornecimento da obra, menos cancelamentos, custos e despesas lançados. Caixa realizado continua separado: recebimentos efetivos menos pagamentos efetivos. Quando uma venda não encontra vínculo com obra/contrato, ela fica fora da receita POC e aparece no card de contratos sem vínculo. Sem histórico mensal de medições e sem apropriação por unidade vendida, a receita POC é uma estimativa anual baseada na última medição salva."} />
         </p>
       </section>
       </>}

@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { PrintPanelButton } from "@/components/ui/print-panel-button";
 import type { RecurringPayablesResult } from "@/features/payables-recurring/data";
@@ -55,9 +56,9 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
     <section className="card panel recurring-payables-panel" data-print-panel>
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Pagamentos recorrentes</h2>
+          <h2 className="panel-title"><I18nText text={"Pagamentos recorrentes"} /></h2>
           <span className="panel-note">
-            Compare fornecedores com títulos recorrentes no histórico e confira se já existem lançamentos futuros em Contas a pagar
+            <I18nText text={"Compare fornecedores com títulos recorrentes no histórico e confira se já existem lançamentos futuros em Contas a pagar"} />
           </span>
         </div>
         <PrintPanelButton />
@@ -65,19 +66,19 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
 
       <div className="recurring-payables-filters">
         <div className="recurring-payables-filter-group">
-          <span>Situação</span>
-          <div className="recurring-payables-window" aria-label="Situação dos lançamentos futuros">
+          <span><I18nText text={"Situação"} /></span>
+          <div className="recurring-payables-window" aria-label="Situação dos lançamentos futuros" data-i18n-aria-label={"Situação dos lançamentos futuros"}>
             <button className={futureMode === "missing" ? "active" : ""} type="button" onClick={() => setFutureMode("missing")}>
-              Sem futuro
+              <I18nText text={"Sem futuro"} />
             </button>
             <button className={futureMode === "scheduled" ? "active" : ""} type="button" onClick={() => setFutureMode("scheduled")}>
-              Passado + futuro
+              <I18nText text={"Passado + futuro"} />
             </button>
           </div>
         </div>
         <div className="recurring-payables-filter-group">
-          <span>Período histórico</span>
-          <div className="recurring-payables-window" aria-label="Período histórico da recorrência">
+          <span><I18nText text={"Período histórico"} /></span>
+          <div className="recurring-payables-window" aria-label="Período histórico da recorrência" data-i18n-aria-label={"Período histórico da recorrência"}>
             {(Object.keys(windowLabels) as WindowOption[]).map((option) => (
               <button
                 className={windowOption === option ? "active" : ""}
@@ -94,7 +95,7 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
 
       <p className="recurring-payables-summary">
         {months.length < 2
-          ? "Escolha um período com pelo menos 2 meses para comparar."
+          ? <I18nText text={"Escolha um período com pelo menos 2 meses para comparar."} />
           : `Considerando ${months.length} ${months.length === 1 ? "mês" : "meses"} (${monthLabel(months[0])} a ${monthLabel(months[months.length - 1])}): ${candidates.length} fornecedor(es) ${futureDescription}.`}
       </p>
 
@@ -103,28 +104,28 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
           <table>
             <thead>
               <tr>
-                <th>Fornecedor</th>
-                <th>Categoria</th>
-                <th>Meses com título</th>
-                <th>Total no período</th>
-                <th>Média mensal</th>
-                <th>Último no histórico</th>
-                <th>Próximo futuro</th>
+                <th><I18nText text={"Fornecedor"} /></th>
+                <th><I18nText text={"Categoria"} /></th>
+                <th><I18nText text={"Meses com título"} /></th>
+                <th><I18nText text={"Total no período"} /></th>
+                <th><I18nText text={"Média mensal"} /></th>
+                <th><I18nText text={"Último no histórico"} /></th>
+                <th><I18nText text={"Próximo futuro"} /></th>
               </tr>
             </thead>
             <tbody>
               {candidates.map((creditor) => (
                 <tr key={creditor.creditorId}>
                   <td><strong>{creditor.creditorName}</strong></td>
-                  <td>{creditor.category || "Não informada"}</td>
-                  <td>{months.length}/{months.length} meses</td>
+                  <td>{creditor.category || <I18nText text={"Não informada"} />}</td>
+                  <td>{months.length}<I18nText text={"/"} />{months.length} <I18nText text={"meses"} /></td>
                   <td>{formatCurrency(creditor.periodAmount)}</td>
                   <td>{formatCurrency(creditor.periodAmount / months.length)}</td>
                   <td>{formatOptionalDate(creditor.lastDueDate)}</td>
                   <td>
                     {creditor.nextFutureDueDate
                       ? `${formatOptionalDate(creditor.nextFutureDueDate)} | ${creditor.futureBillCount} ${creditor.futureBillCount === 1 ? "título" : "títulos"}`
-                      : "Não cadastrado"}
+                      : <I18nText text={"Não cadastrado"} />}
                   </td>
                 </tr>
               ))}
@@ -133,7 +134,7 @@ export function RecurringPayablesPanel({ result }: { result: RecurringPayablesRe
         </div>
       ) : months.length >= 2 ? (
         <div className="empty-state">
-          Nenhum fornecedor recorrente {futureMode === "scheduled" ? "com lançamento futuro" : "sem lançamento futuro"} nesse período.
+          <I18nText text={"Nenhum fornecedor recorrente"} /> <I18nText text={futureMode === "scheduled" ? "com lançamento futuro" : "sem lançamento futuro"} /> <I18nText text={"nesse período."} />
         </div>
       ) : null}
     </section>

@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { CashFlowChart } from "@/components/charts/cash-flow-chart";
 import { DreYearlyStackedChart } from "@/components/charts/dre-yearly-stacked-chart";
@@ -42,13 +43,13 @@ function IntegrationSummary({ integrations }: { integrations: Awaited<ReturnType
       {integrations.map((item) => (
         <div key={item.label}>
           <span>{item.label}</span>
-          <strong>{item.count} registros</strong>
+          <strong>{item.count} <I18nText text={"registros"} /></strong>
           <small>
             {item.lastIntegrationDay
               ? `Integrado em ${item.lastIntegrationDay}`
               : item.lastSavedAt
                 ? `Salvo em ${item.lastSavedAt.slice(0, 10)}`
-                : "Ainda sem integração salva"}
+                : <I18nText text={"Ainda sem integração salva"} />}
           </small>
         </div>
       ))}
@@ -60,20 +61,20 @@ function MonthlyTable({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
   return (
     <section className="card table-card dre-monthly-table">
       <div className="table-head">
-        <h2 className="panel-title">DRE financeiro mês a mês</h2>
-        <span className="panel-note">Previsto por vencimento e realizado por baixa registrada em contas a pagar/receber</span>
+        <h2 className="panel-title"><I18nText text={"DRE financeiro mês a mês"} /></h2>
+        <span className="panel-note"><I18nText text={"Previsto por vencimento e realizado por baixa registrada em contas a pagar/receber"} /></span>
       </div>
       <table>
         <thead>
           <tr>
-            <th>Mês</th>
-            <th>A receber previsto</th>
-            <th>Recebido</th>
-            <th>A pagar previsto</th>
-            <th>Pago</th>
-            <th>Resultado previsto</th>
-            <th>Resultado realizado</th>
-            <th>Aberto líquido</th>
+            <th><I18nText text={"Mês"} /></th>
+            <th><I18nText text={"A receber previsto"} /></th>
+            <th><I18nText text={"Recebido"} /></th>
+            <th><I18nText text={"A pagar previsto"} /></th>
+            <th><I18nText text={"Pago"} /></th>
+            <th><I18nText text={"Resultado previsto"} /></th>
+            <th><I18nText text={"Resultado realizado"} /></th>
+            <th><I18nText text={"Aberto líquido"} /></th>
           </tr>
         </thead>
         <tbody>
@@ -103,8 +104,8 @@ function FutureGroups({ groups, details }: { groups: FinancialDreFutureGroup[]; 
     <section className="card table-card dre-monthly-table">
       <div className="table-head table-head-row">
         <div>
-          <h2 className="panel-title">Futuro agrupado</h2>
-          <span className="panel-note">Somente parcelas abertas com vencimento a partir de hoje, agrupadas por distância do vencimento</span>
+          <h2 className="panel-title"><I18nText text={"Futuro agrupado"} /></h2>
+          <span className="panel-note"><I18nText text={"Somente parcelas abertas com vencimento a partir de hoje, agrupadas por distância do vencimento"} /></span>
         </div>
         <CsvExportButton
           fileName="dre-financeiro-saldo-futuro-detalhado.csv"
@@ -125,12 +126,12 @@ function FutureGroups({ groups, details }: { groups: FinancialDreFutureGroup[]; 
       <table>
         <thead>
           <tr>
-            <th>Faixa</th>
-            <th>A receber aberto</th>
-            <th>Parcelas a receber</th>
-            <th>A pagar aberto</th>
-            <th>Parcelas a pagar</th>
-            <th>Saldo futuro</th>
+            <th><I18nText text={"Faixa"} /></th>
+            <th><I18nText text={"A receber aberto"} /></th>
+            <th><I18nText text={"Parcelas a receber"} /></th>
+            <th><I18nText text={"A pagar aberto"} /></th>
+            <th><I18nText text={"Parcelas a pagar"} /></th>
+            <th><I18nText text={"Saldo futuro"} /></th>
           </tr>
         </thead>
         <tbody>
@@ -180,9 +181,9 @@ function CalculationExports({
   return (
     <section className="card dre-export-panel">
       <div>
-        <span>Auditoria do cálculo</span>
-        <strong>Exportar linhas usadas no DRE de {year}</strong>
-        <small>Inclui parcelas previstas por vencimento e baixas de dinheiro real usadas nos cards, gráficos e tabela mensal.</small>
+        <span><I18nText text={"Auditoria do cálculo"} /></span>
+        <strong><I18nText text={"Exportar linhas usadas no DRE de"} /> {year}</strong>
+        <small><I18nText text={"Inclui parcelas previstas por vencimento e baixas de dinheiro real usadas nos cards, gráficos e tabela mensal."} /></small>
       </div>
       <div className="dre-export-actions">
         <CsvExportButton
@@ -206,19 +207,19 @@ function YearlyTable({ yearly }: { yearly: Awaited<ReturnType<typeof loadFinanci
   return (
     <section className="card table-card dre-monthly-table">
       <div className="table-head">
-        <h2 className="panel-title">Consolidado ano a ano</h2>
-        <span className="panel-note">Todos os exercícios com dados salvos em contas a pagar/receber, previsto por vencimento e realizado por baixa</span>
+        <h2 className="panel-title"><I18nText text={"Consolidado ano a ano"} /></h2>
+        <span className="panel-note"><I18nText text={"Todos os exercícios com dados salvos em contas a pagar/receber, previsto por vencimento e realizado por baixa"} /></span>
       </div>
       <table>
         <thead>
           <tr>
-            <th>Ano</th>
-            <th>A receber previsto</th>
-            <th>A pagar previsto</th>
-            <th>Resultado previsto</th>
-            <th>Recebido</th>
-            <th>Pago</th>
-            <th>Resultado realizado</th>
+            <th><I18nText text={"Ano"} /></th>
+            <th><I18nText text={"A receber previsto"} /></th>
+            <th><I18nText text={"A pagar previsto"} /></th>
+            <th><I18nText text={"Resultado previsto"} /></th>
+            <th><I18nText text={"Recebido"} /></th>
+            <th><I18nText text={"Pago"} /></th>
+            <th><I18nText text={"Resultado realizado"} /></th>
           </tr>
         </thead>
         <tbody>
@@ -246,8 +247,8 @@ function ResultTrend({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
     <section className="card panel dre-result-panel">
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Resultado previsto por mês</h2>
-          <span className="panel-note">A receber previsto menos a pagar previsto, usando a data de vencimento</span>
+          <h2 className="panel-title"><I18nText text={"Resultado previsto por mês"} /></h2>
+          <span className="panel-note"><I18nText text={"A receber previsto menos a pagar previsto, usando a data de vencimento"} /></span>
         </div>
       </div>
       <div className="dre-result-bars">
@@ -293,14 +294,14 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
 
         <section className="reports-filter dre-filter card">
           <div>
-            <span>Visão</span>
-            <strong>Consolidado</strong>
-            <small>{yearly.length ? `${yearly[0].year} até ${yearly[yearly.length - 1].year}` : "Sem exercícios com dados salvos"}</small>
+            <span><I18nText text={"Visão"} /></span>
+            <strong><I18nText text={"Consolidado"} /></strong>
+            <small>{yearly.length ? `${yearly[0].year} até ${yearly[yearly.length - 1].year}` : <I18nText text={"Sem exercícios com dados salvos"} />}</small>
           </div>
           <div className="dashboard-view-controls">
-            <div className="dashboard-direction-options" aria-label="Modo de visão da DRE financeira">
-              <Link href={`/dre-financeiro?ano=${selectedYear}&visao=ano`}>Por ano</Link>
-              <Link href="/dre-financeiro?visao=consolidado" className="active">Consolidado (todos os anos)</Link>
+            <div className="dashboard-direction-options" aria-label="Modo de visão da DRE financeira" data-i18n-aria-label={"Modo de visão da DRE financeira"}>
+              <Link href={`/dre-financeiro?ano=${selectedYear}&visao=ano`}><I18nText text={"Por ano"} /></Link>
+              <Link href="/dre-financeiro?visao=consolidado" className="active"><I18nText text={"Consolidado (todos os anos)"} /></Link>
             </div>
           </div>
         </section>
@@ -323,10 +324,9 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
         <YearlyTable yearly={yearly} />
 
         <section className="card methodology dre-methodology">
-          <strong>Como ler esta visão consolidada</strong>
+          <strong><I18nText text={"Como ler esta visão consolidada"} /></strong>
           <p>
-            Cada coluna soma todas as parcelas de contas a receber e contas a pagar do ano indicado, usando data de vencimento
-            para o previsto e data de baixa para o realizado. Esta visão não depende do exercício selecionado na visão "Por ano".
+            <I18nText text={"Cada coluna soma todas as parcelas de contas a receber e contas a pagar do ano indicado, usando data de vencimento para o previsto e data de baixa para o realizado. Esta visão não depende do exercício selecionado na visão \"Por ano\"."} />
           </p>
         </section>
       </>
@@ -354,16 +354,16 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
 
       <section className="reports-filter dre-filter card">
         <div>
-          <span>Exercício</span>
+          <span><I18nText text={"Exercício"} /></span>
           <strong>{selectedYear}</strong>
-          <small>{dre.range.start} até {dre.range.end}</small>
+          <small>{dre.range.start} <I18nText text={"até"} /> {dre.range.end}</small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-direction-options" aria-label="Modo de visão da DRE financeira">
-            <Link href={`/dre-financeiro?ano=${selectedYear}&visao=ano`} className="active">Por ano</Link>
-            <Link href="/dre-financeiro?visao=consolidado">Consolidado (todos os anos)</Link>
+          <div className="dashboard-direction-options" aria-label="Modo de visão da DRE financeira" data-i18n-aria-label={"Modo de visão da DRE financeira"}>
+            <Link href={`/dre-financeiro?ano=${selectedYear}&visao=ano`} className="active"><I18nText text={"Por ano"} /></Link>
+            <Link href="/dre-financeiro?visao=consolidado"><I18nText text={"Consolidado (todos os anos)"} /></Link>
           </div>
-          <div className="dashboard-view-options compact" aria-label="Ano da DRE financeira">
+          <div className="dashboard-view-options compact" aria-label="Ano da DRE financeira" data-i18n-aria-label={"Ano da DRE financeira"}>
             {availableYears.map((year) => (
               <Link
                 key={year}
@@ -385,42 +385,41 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
 
       {yearWasAdjusted && (
         <section className="card data-notice">
-          <strong>Ano ajustado</strong>
-          <span>O exercício {requestedYear} não tem base local de contas. A tela foi aberta em {selectedYear}, que possui dados salvos.</span>
+          <strong><I18nText text={"Ano ajustado"} /></strong>
+          <span><I18nText text={"O exercício"} /> {requestedYear} <I18nText text={"não tem base local de contas. A tela foi aberta em"} /> {selectedYear}<I18nText text={", que possui dados salvos."} /></span>
         </section>
       )}
 
       {dre.unavailable.length > 0 && (
         <section className="card data-notice">
-          <strong>Visão parcial</strong>
-          <span>Algumas bases ainda não têm dados salvos: {dre.unavailable.join(", ")}. Atualize essas áreas em Configurações.</span>
+          <strong><I18nText text={"Visão parcial"} /></strong>
+          <span><I18nText text={"Algumas bases ainda não têm dados salvos:"} /> {dre.unavailable.join(", ")}<I18nText text={". Atualize essas áreas em Configurações."} /></span>
         </section>
       )}
 
       <section className={`card dashboard-executive dre-executive ${projectedPositive ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
-          <span>{projectedPositive ? "Resultado previsto positivo" : "Resultado previsto negativo"}</span>
+          <span><I18nText text={projectedPositive ? "Resultado previsto positivo" : "Resultado previsto negativo"} /></span>
           <h2>{formatCompactCurrency(dre.projectedResult)}</h2>
           <p>
-            A receber previsto de {formatCompactCurrency(dre.receivableDue)} menos a pagar previsto de {formatCompactCurrency(dre.payableDue)}.
-            A visão considera somente títulos e parcelas do contas a receber/pagar.
+            <I18nText text={"A receber previsto de"} /> {formatCompactCurrency(dre.receivableDue)} <I18nText text={"menos a pagar previsto de"} /> {formatCompactCurrency(dre.payableDue)}<I18nText text={". A visão considera somente títulos e parcelas do contas a receber/pagar."} />
           </p>
         </div>
         <div className="dashboard-executive-grid">
           <div>
-            <span>Resultado realizado</span>
+            <span><I18nText text={"Resultado realizado"} /></span>
             <strong className={realizedPositive ? "" : "negative"}>{formatCompactCurrency(dre.realizedResult)}</strong>
-            <small>{formatCompactCurrency(dre.receivableReceived)} recebido e {formatCompactCurrency(dre.payablePaid)} pago no ano.</small>
+            <small>{formatCompactCurrency(dre.receivableReceived)} <I18nText text={"recebido e"} /> {formatCompactCurrency(dre.payablePaid)} <I18nText text={"pago no ano."} /></small>
           </div>
           <div>
-            <span>Aberto líquido do ano</span>
+            <span><I18nText text={"Aberto líquido do ano"} /></span>
             <strong className={dre.openResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.openResult)}</strong>
-            <small>{dre.openReceivablesCount} parcelas a receber e {dre.openPayablesCount} a pagar ainda abertas.</small>
+            <small>{dre.openReceivablesCount} <I18nText text={"parcelas a receber e"} /> {dre.openPayablesCount} <I18nText text={"a pagar ainda abertas."} /></small>
           </div>
           <div>
-            <span>Saldo futuro aberto</span>
+            <span><I18nText text={"Saldo futuro aberto"} /></span>
             <strong className={dre.futureNetResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.futureNetResult)}</strong>
-            <small>Vencimentos abertos a partir de {dre.baseDate}, agrupados abaixo.</small>
+            <small><I18nText text={"Vencimentos abertos a partir de"} /> {dre.baseDate}<I18nText text={", agrupados abaixo."} /></small>
           </div>
         </div>
       </section>
@@ -460,11 +459,9 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
       <MonthlyTable monthly={dre.monthly} />
 
       <section className="card methodology dre-methodology">
-        <strong>Como ler esta DRE financeira</strong>
+        <strong><I18nText text={"Como ler esta DRE financeira"} /></strong>
         <p>
-          Previsto usa a data de vencimento das parcelas de contas a receber e contas a pagar. Realizado usa as baixas salvas
-          em recebimentos e pagamentos. A visão futura considera apenas parcelas abertas com vencimento de hoje em diante.
-          Esta tela não usa contratos de venda, compras, estoque ou POC.
+          <I18nText text={"Previsto usa a data de vencimento das parcelas de contas a receber e contas a pagar. Realizado usa as baixas salvas em recebimentos e pagamentos. A visão futura considera apenas parcelas abertas com vencimento de hoje em diante. Esta tela não usa contratos de venda, compras, estoque ou POC."} />
         </p>
       </section>
     </>

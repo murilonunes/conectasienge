@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
 import { itemTotal } from "./helpers";
@@ -16,9 +17,9 @@ export function ItemsStep({ items, responseItems, showValidation = false, onItem
   return (
     <section className={`card supplier-portal-card ${showValidation && quotedCount === 0 ? "supplier-section-invalid" : ""}`}>
       <div className="supplier-card-head">
-        <span>Passo 2 de 5</span>
-        <h2>Itens da cotação</h2>
-        <p className="supplier-card-note">Marque os itens que sua empresa consegue cotar. Use atendimento parcial apenas quando a quantidade for menor que a solicitada.</p>
+        <span><I18nText text={"Passo 2 de 5"} /></span>
+        <h2><I18nText text={"Itens da cotação"} /></h2>
+        <p className="supplier-card-note"><I18nText text={"Marque os itens que sua empresa consegue cotar. Use atendimento parcial apenas quando a quantidade for menor que a solicitada."} /></p>
       </div>
       <div className="supplier-quote-items">
         {items.map((item) => {
@@ -49,22 +50,22 @@ export function ItemsStep({ items, responseItems, showValidation = false, onItem
                   <input type="checkbox" checked={current.attends} onChange={(event) => onItemChange(item.itemNumber, "attends", event.target.checked)} />
                   <span>
                     <strong>{item.name}</strong>
-                    <small>{item.quantity} {item.unit}{item.detail ? ` | ${item.detail}` : ""}</small>
+                    <small>{item.quantity} {item.unit}{item.detail ? ` | ${item.detail}` : <I18nText text={""} />}</small>
                   </span>
                 </label>
                 <div className="supplier-item-side">
                   <label className="supplier-item-partial">
                     <input type="checkbox" disabled={!current.attends} checked={current.partial} onChange={(event) => onItemChange(item.itemNumber, "partial", event.target.checked)} />
-                    <span>Atendimento parcial</span>
+                    <span><I18nText text={"Atendimento parcial"} /></span>
                   </label>
-                  <strong className="supplier-item-total">{current.attends ? formatCurrency(total) : "Não cotado"}</strong>
+                  <strong className="supplier-item-total">{current.attends ? formatCurrency(total) : <I18nText text={"Não cotado"} />}</strong>
                 </div>
               </div>
               <div className="supplier-item-values">
-                <label className={showValidation && unitPriceInvalid ? "supplier-field-invalid" : ""}><span>Valor unitário *</span><input disabled={!current.attends} value={current.unitPrice} onChange={(event) => onItemChange(item.itemNumber, "unitPrice", event.target.value)} type="number" min="0" step="0.01" /></label>
-                <label className={showValidation && quantityInvalid ? "supplier-field-invalid" : ""}><span>Quantidade cotada *</span><input disabled={!current.attends || !current.partial} value={current.quantity} onChange={(event) => onItemChange(item.itemNumber, "quantity", event.target.value)} type="number" min="0" max={item.quantity} step="0.01" /></label>
-                <label><span>Prazo diferente do pedido (dias)</span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => onItemChange(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" placeholder="Opcional" /></label>
-                <label><span>Observação do item</span><input disabled={!current.attends} value={current.notes} onChange={(event) => onItemChange(item.itemNumber, "notes", event.target.value)} /></label>
+                <label className={showValidation && unitPriceInvalid ? "supplier-field-invalid" : ""}><span><I18nText text={"Valor unitário *"} /></span><input disabled={!current.attends} value={current.unitPrice} onChange={(event) => onItemChange(item.itemNumber, "unitPrice", event.target.value)} type="number" min="0" step="0.01" /></label>
+                <label className={showValidation && quantityInvalid ? "supplier-field-invalid" : ""}><span><I18nText text={"Quantidade cotada *"} /></span><input disabled={!current.attends || !current.partial} value={current.quantity} onChange={(event) => onItemChange(item.itemNumber, "quantity", event.target.value)} type="number" min="0" max={item.quantity} step="0.01" /></label>
+                <label><span><I18nText text={"Prazo diferente do pedido (dias)"} /></span><input disabled={!current.attends} value={current.deadlineDays} onChange={(event) => onItemChange(item.itemNumber, "deadlineDays", event.target.value)} type="number" min="0" placeholder="Opcional" data-i18n-placeholder={"Opcional"} /></label>
+                <label><span><I18nText text={"Observação do item"} /></span><input disabled={!current.attends} value={current.notes} onChange={(event) => onItemChange(item.itemNumber, "notes", event.target.value)} /></label>
               </div>
             </article>
           );

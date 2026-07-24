@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { FormEvent, useMemo, useState } from "react";
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import { formatCurrency, formatDate } from "@/lib/formatters";
@@ -66,49 +67,49 @@ export function BillEntryForm() {
   return (
     <form onSubmit={submit} className="operation-layout">
       <section className="card operation-card">
-        <div className="form-section-head"><span>01</span><div><h2>Identificação do título</h2><p>Códigos conforme cadastrados no Sienge.</p></div></div>
+        <div className="form-section-head"><span><I18nText text={"01"} /></span><div><h2><I18nText text={"Identificação do título"} /></h2><p><I18nText text={"Códigos conforme cadastrados no Sienge."} /></p></div></div>
         <div className="form-grid">
-          <label><span>Empresa devedora *</span><input required type="number" min="1" value={data.debtorId} onChange={(e) => update("debtorId", e.target.value)} placeholder="Código da empresa" /></label>
+          <label><span><I18nText text={"Empresa devedora *"} /></span><input required type="number" min="1" value={data.debtorId} onChange={(e) => update("debtorId", e.target.value)} placeholder="Código da empresa" data-i18n-placeholder={"Código da empresa"} /></label>
           <SiengeSupplierPicker value={data.creditorId} onChange={(next) => update("creditorId", next)} label="Credor" required compact />
-          <label><span>Código do documento *</span><input required value={data.documentIdentificationId} onChange={(e) => update("documentIdentificationId", e.target.value.toUpperCase())} placeholder="NF" /></label>
-          <label><span>Número do documento *</span><input required value={data.documentNumber} onChange={(e) => update("documentNumber", e.target.value)} placeholder="Ex.: 2026-0042" /></label>
+          <label><span><I18nText text={"Código do documento *"} /></span><input required value={data.documentIdentificationId} onChange={(e) => update("documentIdentificationId", e.target.value.toUpperCase())} placeholder="NF" data-i18n-placeholder={"NF"} /></label>
+          <label><span><I18nText text={"Número do documento *"} /></span><input required value={data.documentNumber} onChange={(e) => update("documentNumber", e.target.value)} placeholder="Ex.: 2026-0042" data-i18n-placeholder={"Ex.: 2026-0042"} /></label>
         </div>
       </section>
 
       <section className="card operation-card">
-        <div className="form-section-head"><span>02</span><div><h2>Datas e parcelamento</h2><p>O Sienge gerará as parcelas com base nestas informações.</p></div></div>
+        <div className="form-section-head"><span><I18nText text={"02"} /></span><div><h2><I18nText text={"Datas e parcelamento"} /></h2><p><I18nText text={"O Sienge gerará as parcelas com base nestas informações."} /></p></div></div>
         <div className="form-grid three">
-          <label><span>Emissão *</span><input required type="date" value={data.issueDate} onChange={(e) => update("issueDate", e.target.value)} /></label>
-          <label><span>Competência *</span><input required type="date" value={data.billDate} onChange={(e) => update("billDate", e.target.value)} /></label>
-          <label><span>Data-base *</span><input required type="date" value={data.baseDate} onChange={(e) => update("baseDate", e.target.value)} /></label>
-          <label><span>Primeiro vencimento *</span><input required type="date" value={data.dueDate} onChange={(e) => update("dueDate", e.target.value)} /></label>
-          <label><span>Quantidade de parcelas *</span><input required type="number" min="1" value={data.installmentsNumber} onChange={(e) => update("installmentsNumber", e.target.value)} /></label>
-          <label><span>Indexador *</span><input required type="number" min="1" value={data.indexId} onChange={(e) => update("indexId", e.target.value)} /></label>
+          <label><span><I18nText text={"Emissão *"} /></span><input required type="date" value={data.issueDate} onChange={(e) => update("issueDate", e.target.value)} /></label>
+          <label><span><I18nText text={"Competência *"} /></span><input required type="date" value={data.billDate} onChange={(e) => update("billDate", e.target.value)} /></label>
+          <label><span><I18nText text={"Data-base *"} /></span><input required type="date" value={data.baseDate} onChange={(e) => update("baseDate", e.target.value)} /></label>
+          <label><span><I18nText text={"Primeiro vencimento *"} /></span><input required type="date" value={data.dueDate} onChange={(e) => update("dueDate", e.target.value)} /></label>
+          <label><span><I18nText text={"Quantidade de parcelas *"} /></span><input required type="number" min="1" value={data.installmentsNumber} onChange={(e) => update("installmentsNumber", e.target.value)} /></label>
+          <label><span><I18nText text={"Indexador *"} /></span><input required type="number" min="1" value={data.indexId} onChange={(e) => update("indexId", e.target.value)} /></label>
         </div>
       </section>
 
       <section className="card operation-card">
-        <div className="form-section-head"><span>03</span><div><h2>Valores e observações</h2><p>Confira os valores antes de enviar.</p></div></div>
+        <div className="form-section-head"><span><I18nText text={"03"} /></span><div><h2><I18nText text={"Valores e observações"} /></h2><p><I18nText text={"Confira os valores antes de enviar."} /></p></div></div>
         <div className="form-grid">
-          <label><span>Valor bruto *</span><input required type="number" min="0.01" step="0.01" value={data.totalInvoiceAmount} onChange={(e) => update("totalInvoiceAmount", e.target.value)} placeholder="0,00" /></label>
-          <label><span>Desconto</span><input type="number" min="0" step="0.01" value={data.discount} onChange={(e) => update("discount", e.target.value)} /></label>
-          <label className="full-field"><span>Observações</span><textarea maxLength={500} value={data.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Informações adicionais do título" /></label>
+          <label><span><I18nText text={"Valor bruto *"} /></span><input required type="number" min="0.01" step="0.01" value={data.totalInvoiceAmount} onChange={(e) => update("totalInvoiceAmount", e.target.value)} placeholder="0,00" data-i18n-placeholder={"0,00"} /></label>
+          <label><span><I18nText text={"Desconto"} /></span><input type="number" min="0" step="0.01" value={data.discount} onChange={(e) => update("discount", e.target.value)} /></label>
+          <label className="full-field"><span><I18nText text={"Observações"} /></span><textarea maxLength={500} value={data.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Informações adicionais do título" data-i18n-placeholder={"Informações adicionais do título"} /></label>
         </div>
       </section>
 
       <aside className="card operation-summary">
-        <p className="eyebrow">{reviewing ? "Revisão final" : "Resumo"}</p>
+        <p className="eyebrow"><I18nText text={reviewing ? "Revisão final" : "Resumo"} /></p>
         <h2>{formatCurrency(netAmount)}</h2>
         <dl>
-          <div><dt>Documento</dt><dd>{data.documentIdentificationId}-{data.documentNumber || "-"}</dd></div>
-          <div><dt>Credor</dt><dd>#{data.creditorId || "-"}</dd></div>
-          <div><dt>Vencimento</dt><dd>{data.dueDate ? formatDate(data.dueDate) : "-"}</dd></div>
-          <div><dt>Parcelas</dt><dd>{data.installmentsNumber}</dd></div>
+          <div><dt><I18nText text={"Documento"} /></dt><dd>{data.documentIdentificationId}<I18nText text={"-"} />{data.documentNumber || <I18nText text={"-"} />}</dd></div>
+          <div><dt><I18nText text={"Credor"} /></dt><dd><I18nText text={"#"} />{data.creditorId || <I18nText text={"-"} />}</dd></div>
+          <div><dt><I18nText text={"Vencimento"} /></dt><dd>{data.dueDate ? formatDate(data.dueDate) : <I18nText text={"-"} />}</dd></div>
+          <div><dt><I18nText text={"Parcelas"} /></dt><dd>{data.installmentsNumber}</dd></div>
         </dl>
-        {reviewing && <div className="operation-warning"><strong>Ação real</strong><span>Ao confirmar, um título será criado no Sienge.</span></div>}
+        {reviewing && <div className="operation-warning"><strong><I18nText text={"Ação real"} /></strong><span><I18nText text={"Ao confirmar, um título será criado no Sienge."} /></span></div>}
         {result && <div className={`form-result ${result.type}`}>{result.message}</div>}
-        <button className="button operation-submit" disabled={submitting}>{submitting ? "Enviando..." : reviewing ? "Confirmar lançamento" : "Revisar lançamento"}</button>
-        {reviewing && <button type="button" className="button secondary operation-submit" onClick={() => setReviewing(false)}>Voltar e editar</button>}
+        <button className="button operation-submit" disabled={submitting}>{submitting ? <I18nText text={"Enviando..."} /> : reviewing ? <I18nText text={"Confirmar lançamento"} /> : <I18nText text={"Revisar lançamento"} />}</button>
+        {reviewing && <button type="button" className="button secondary operation-submit" onClick={() => setReviewing(false)}><I18nText text={"Voltar e editar"} /></button>}
       </aside>
     </form>
   );

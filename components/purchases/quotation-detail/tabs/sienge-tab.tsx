@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useState } from "react";
 import { SiengeSupplierPicker } from "@/components/suppliers/sienge-supplier-picker";
 import { formatOptionalDate } from "@/lib/formatters";
@@ -116,10 +117,10 @@ export function SiengeTab({
       <aside className="card panel quotation-operation-side quotation-operation-topic-panel">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Temas Sienge</h2>
-            <span className="panel-note">Escolha uma operação por vez</span>
+            <h2 className="panel-title"><I18nText text={"Temas Sienge"} /></h2>
+            <span className="panel-note"><I18nText text={"Escolha uma operação por vez"} /></span>
           </div>
-          <i className="badge">ID {quotationId}</i>
+          <i className="badge"><I18nText text={"ID"} /> {quotationId}</i>
         </div>
         <div className="quotation-operation-topic-list">
           {topics.map((topic) => (
@@ -135,7 +136,7 @@ export function SiengeTab({
             </button>
           ))}
         </div>
-        <p className="quotation-sienge-legend"><i /> Botões amarelos consultam o Sienge e só depois gravam quando confirmados.</p>
+        <p className="quotation-sienge-legend"><i /> <I18nText text={"Botões amarelos consultam o Sienge e só depois gravam quando confirmados."} /></p>
       </aside>
 
       <div className="card panel quotation-operation-main">
@@ -149,14 +150,14 @@ export function SiengeTab({
 
         {selectedTopicIntegration && (
           <div className="advanced-search-hint quotation-integration-hint">
-            Já integrado em {formatOptionalDate(selectedTopicIntegration.createdAt)}: {selectedTopicIntegration.title}.
-            {" "}Um novo envio idêntico será bloqueado e pedirá confirmação para evitar duplicidade no Sienge.
+            <I18nText text={"Já integrado em"} /> {formatOptionalDate(selectedTopicIntegration.createdAt)}<I18nText text={":"} /> {selectedTopicIntegration.title}<I18nText text={"."} />
+            <I18nText text={" "} /><I18nText text={"Um novo envio idêntico será bloqueado e pedirá confirmação para evitar duplicidade no Sienge."} />
           </div>
         )}
 
         {activeTopic === "quotation" && !selectedTopicIntegration && quotationAlreadyExists && (
           <div className="advanced-search-hint quotation-integration-hint">
-            Esta cotação já possui ID no Sienge. A criação de uma nova cotação a partir desta tela será bloqueada para evitar duplicidade.
+            <I18nText text={"Esta cotação já possui ID no Sienge. A criação de uma nova cotação a partir desta tela será bloqueada para evitar duplicidade."} />
           </div>
         )}
 
@@ -164,11 +165,11 @@ export function SiengeTab({
           <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid two">
               <label>
-                <span>Comprador Sienge</span>
+                <span><I18nText text={"Comprador Sienge"} /></span>
                 <input
                   value={form.buyerId}
                   onChange={(event) => onFormChange("buyerId", event.target.value)}
-                  placeholder="Login do usuário no Sienge, ex.: MURILO"
+                  placeholder="Login do usuário no Sienge, ex.: MURILO" data-i18n-placeholder={"Login do usuário no Sienge, ex.: MURILO"}
                   list="quotation-known-buyer-ids"
                 />
                 {knownBuyerIds.length > 0 && (
@@ -176,19 +177,19 @@ export function SiengeTab({
                     {knownBuyerIds.map((id) => <option value={id} key={id} />)}
                   </datalist>
                 )}
-                <small className="table-muted">Use o login do usuário comprador no Sienge.</small>
+                <small className="table-muted"><I18nText text={"Use o login do usuário comprador no Sienge."} /></small>
               </label>
               <label>
-                <span>Data da cotação</span>
+                <span><I18nText text={"Data da cotação"} /></span>
                 <input type="date" value={form.quotationDate} onChange={(event) => onFormChange("quotationDate", event.target.value)} />
               </label>
             </div>
             <div className="quotation-operation-actions">
               <button className="button secondary" type="button" onClick={() => onRunAction("create", false)} disabled={!form.buyerId.trim() || loadingAction !== null}>
-                Preparar criação
+                <I18nText text={"Preparar criação"} />
               </button>
               <button className="button sienge-write" type="button" onClick={() => onRunAction("create", true)} disabled={!form.buyerId.trim() || loadingAction !== null}>
-                {loadingAction === "create-confirm" ? "Gravando..." : "Criar cotação"}
+                <I18nText text={loadingAction === "create-confirm" ? "Gravando..." : "Criar cotação"} />
               </button>
             </div>
           </article>
@@ -198,24 +199,24 @@ export function SiengeTab({
           <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid">
               <label>
-                <span>Solicitação de compra</span>
-                <input value={form.purchaseRequestId} onChange={(event) => onFormChange("purchaseRequestId", event.target.value.replace(/\D/g, ""))} placeholder="ID da solicitação" />
+                <span><I18nText text={"Solicitação de compra"} /></span>
+                <input value={form.purchaseRequestId} onChange={(event) => onFormChange("purchaseRequestId", event.target.value.replace(/\D/g, ""))} placeholder="ID da solicitação" data-i18n-placeholder={"ID da solicitação"} />
               </label>
               <label>
-                <span>Item da solicitação</span>
-                <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" />
+                <span><I18nText text={"Item da solicitação"} /></span>
+                <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" data-i18n-placeholder={"Item"} />
               </label>
               <label>
-                <span>Entrega</span>
-                <input value={form.deliveryRequirementNumber} onChange={(event) => onFormChange("deliveryRequirementNumber", event.target.value.replace(/\D/g, ""))} placeholder="1" />
+                <span><I18nText text={"Entrega"} /></span>
+                <input value={form.deliveryRequirementNumber} onChange={(event) => onFormChange("deliveryRequirementNumber", event.target.value.replace(/\D/g, ""))} placeholder="1" data-i18n-placeholder={"1"} />
               </label>
             </div>
             <div className="quotation-operation-actions">
               <button className="button secondary" type="button" onClick={() => onRunAction("attach-items", false)} disabled={!requestItemReady || loadingAction !== null}>
-                Preparar item
+                <I18nText text={"Preparar item"} />
               </button>
               <button className="button sienge-write" type="button" onClick={() => onRunAction("attach-items", true)} disabled={!requestItemReady || loadingAction !== null}>
-                {loadingAction === "attach-items-confirm" ? "Vinculando..." : "Vincular item"}
+                <I18nText text={loadingAction === "attach-items-confirm" ? "Vinculando..." : "Vincular item"} />
               </button>
             </div>
           </article>
@@ -230,16 +231,16 @@ export function SiengeTab({
                 compact
               />
               <label>
-                <span>Item para fornecedor</span>
-                <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" />
+                <span><I18nText text={"Item para fornecedor"} /></span>
+                <input value={form.purchaseRequestItemNumber} onChange={(event) => onFormChange("purchaseRequestItemNumber", event.target.value.replace(/\D/g, ""))} placeholder="Item" data-i18n-placeholder={"Item"} />
               </label>
             </div>
             <div className="quotation-operation-actions">
               <button className="button secondary" type="button" onClick={() => onRunAction("add-supplier", false)} disabled={!supplierReady || loadingAction !== null}>
-                Preparar fornecedor
+                <I18nText text={"Preparar fornecedor"} />
               </button>
               <button className="button sienge-write" type="button" onClick={() => onRunAction("add-supplier", true)} disabled={!supplierReady || loadingAction !== null}>
-                {loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"}
+                <I18nText text={loadingAction === "add-supplier-confirm" ? "Incluindo..." : "Incluir fornecedor"} />
               </button>
             </div>
           </article>
@@ -249,47 +250,47 @@ export function SiengeTab({
           <article className="quotation-operation-block focused">
             <div className="quotation-operation-grid">
               <label>
-                <span>Obra</span>
-                <input value={form.directItemBuildingId} onChange={(event) => onFormChange("directItemBuildingId", event.target.value.replace(/\D/g, ""))} placeholder="Código da obra" />
+                <span><I18nText text={"Obra"} /></span>
+                <input value={form.directItemBuildingId} onChange={(event) => onFormChange("directItemBuildingId", event.target.value.replace(/\D/g, ""))} placeholder="Código da obra" data-i18n-placeholder={"Código da obra"} />
               </label>
               <label>
-                <span>Insumo</span>
-                <input value={form.directItemProductId} onChange={(event) => onFormChange("directItemProductId", event.target.value.replace(/\D/g, ""))} placeholder="Código do insumo" />
+                <span><I18nText text={"Insumo"} /></span>
+                <input value={form.directItemProductId} onChange={(event) => onFormChange("directItemProductId", event.target.value.replace(/\D/g, ""))} placeholder="Código do insumo" data-i18n-placeholder={"Código do insumo"} />
               </label>
               <label>
-                <span>Quantidade</span>
-                <input value={form.directItemQuantity} onChange={(event) => onFormChange("directItemQuantity", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="0" />
+                <span><I18nText text={"Quantidade"} /></span>
+                <input value={form.directItemQuantity} onChange={(event) => onFormChange("directItemQuantity", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="0" data-i18n-placeholder={"0"} />
               </label>
               <label>
-                <span>Unidade</span>
-                <input value={form.directItemUnity} onChange={(event) => onFormChange("directItemUnity", event.target.value)} placeholder="Ex.: sc, un, m3" />
+                <span><I18nText text={"Unidade"} /></span>
+                <input value={form.directItemUnity} onChange={(event) => onFormChange("directItemUnity", event.target.value)} placeholder="Ex.: sc, un, m3" data-i18n-placeholder={"Ex.: sc, un, m3"} />
               </label>
               <label>
-                <span>Data de necessidade</span>
+                <span><I18nText text={"Data de necessidade"} /></span>
                 <input type="date" value={form.directItemNeedDate} onChange={(event) => onFormChange("directItemNeedDate", event.target.value)} />
               </label>
               <label>
-                <span>Unidade construtiva</span>
-                <input value={form.directItemBuildingUnitId} onChange={(event) => onFormChange("directItemBuildingUnitId", event.target.value.replace(/\D/g, ""))} placeholder="ID da unidade" />
+                <span><I18nText text={"Unidade construtiva"} /></span>
+                <input value={form.directItemBuildingUnitId} onChange={(event) => onFormChange("directItemBuildingUnitId", event.target.value.replace(/\D/g, ""))} placeholder="ID da unidade" data-i18n-placeholder={"ID da unidade"} />
               </label>
               <label>
-                <span>Referência do orçamento</span>
-                <input value={form.directItemCostEstimationItemReference} onChange={(event) => onFormChange("directItemCostEstimationItemReference", event.target.value)} placeholder="Ex.: 01.02.003" />
+                <span><I18nText text={"Referência do orçamento"} /></span>
+                <input value={form.directItemCostEstimationItemReference} onChange={(event) => onFormChange("directItemCostEstimationItemReference", event.target.value)} placeholder="Ex.: 01.02.003" data-i18n-placeholder={"Ex.: 01.02.003"} />
               </label>
               <label>
-                <span>Percentual apropriado</span>
-                <input value={form.directItemAppropriationPercentage} onChange={(event) => onFormChange("directItemAppropriationPercentage", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="100" />
+                <span><I18nText text={"Percentual apropriado"} /></span>
+                <input value={form.directItemAppropriationPercentage} onChange={(event) => onFormChange("directItemAppropriationPercentage", event.target.value.replace(/[^\d.,]/g, "").replace(",", "."))} placeholder="100" data-i18n-placeholder={"100"} />
               </label>
             </div>
             <div className="advanced-search-hint quotation-integration-hint">
-              O Sienge exige apropriação de obra para criar insumo direto. Para itens que vieram de solicitação de compra, prefira a aba Item, que reaproveita a apropriação já cadastrada na solicitação.
+              <I18nText text={"O Sienge exige apropriação de obra para criar insumo direto. Para itens que vieram de solicitação de compra, prefira a aba Item, que reaproveita a apropriação já cadastrada na solicitação."} />
             </div>
             <div className="quotation-operation-actions">
               <button className="button secondary" type="button" onClick={() => onRunAction("add-item", false)} disabled={directItemDisabled}>
-                Preparar insumo
+                <I18nText text={"Preparar insumo"} />
               </button>
               <button className="button sienge-write" type="button" onClick={() => onRunAction("add-item", true)} disabled={directItemDisabled}>
-                {loadingAction === "add-item-confirm" ? "Criando..." : "Criar insumo direto"}
+                <I18nText text={loadingAction === "add-item-confirm" ? "Criando..." : "Criar insumo direto"} />
               </button>
             </div>
           </article>
@@ -301,11 +302,11 @@ export function SiengeTab({
       <div className="card panel quotation-operation-result quotation-integration-history">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Histórico de integrações</h2>
-            <span className="panel-note">O que já foi gravado no Sienge para esta cotação</span>
+            <h2 className="panel-title"><I18nText text={"Histórico de integrações"} /></h2>
+            <span className="panel-note"><I18nText text={"O que já foi gravado no Sienge para esta cotação"} /></span>
           </div>
           <i className={`badge ${integrationEvents.some((event) => event.type === "integration_error") ? "warn" : ""}`}>
-            {integrationEvents.filter((event) => event.type === "sienge_created").length} integração(ões)
+            {integrationEvents.filter((event) => event.type === "sienge_created").length} <I18nText text={"integração(ões)"} />
           </i>
         </div>
         {integrationEvents.length ? (
@@ -320,7 +321,7 @@ export function SiengeTab({
                       <h3>{event.title}</h3>
                     </div>
                     <i className={`badge ${event.type === "integration_error" ? "late" : ""}`}>
-                      {event.type === "integration_error" ? "Erro" : "Integrado"}
+                      <I18nText text={event.type === "integration_error" ? "Erro" : "Integrado"} />
                     </i>
                   </div>
                   {event.description && <p>{event.description}</p>}
@@ -329,10 +330,10 @@ export function SiengeTab({
             ))}
           </div>
         ) : (
-          <div className="empty-state">Nenhuma integração gravada no Sienge para esta cotação ainda. Confirmações e erros aparecerão aqui.</div>
+          <div className="empty-state"><I18nText text={"Nenhuma integração gravada no Sienge para esta cotação ainda. Confirmações e erros aparecerão aqui."} /></div>
         )}
         {integrationEvents.length > 10 && (
-          <p className="table-muted">Mostrando as 10 mais recentes. Veja tudo na aba Histórico.</p>
+          <p className="table-muted"><I18nText text={"Mostrando as 10 mais recentes. Veja tudo na aba Histórico."} /></p>
         )}
       </div>
     </section>

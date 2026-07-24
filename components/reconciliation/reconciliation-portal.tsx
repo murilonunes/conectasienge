@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useState } from "react";
 import { ReconciliationExplorer } from "@/components/reconciliation/reconciliation-explorer";
 import { LocalDataList } from "@/components/ui/local-data-list";
@@ -202,8 +203,8 @@ function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?
   if (hasPayload) {
     return (
       <section className="card reconciliation-loaded-note" aria-live="polite">
-        <strong>{refreshing ? "Recarregando leitura" : "Leitura local pronta"}</strong>
-        <span>{progress?.completedAt ? `Concluída às ${new Date(progress.completedAt).toLocaleTimeString("pt-BR")}` : "Dados carregados do SQLite local"}</span>
+        <strong><I18nText text={refreshing ? "Recarregando leitura" : "Leitura local pronta"} /></strong>
+        <span>{progress?.completedAt ? `Concluída às ${new Date(progress.completedAt).toLocaleTimeString("pt-BR")}` : <I18nText text={"Dados carregados do SQLite local"} />}</span>
       </section>
     );
   }
@@ -211,8 +212,8 @@ function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?
   return (
     <section className="card reconciliation-loading" aria-live="polite">
       <div>
-        <strong>Carregando conciliação</strong>
-        <span>{progress?.message || "Aguardando leitura dos dados salvos."}</span>
+        <strong><I18nText text={"Carregando conciliação"} /></strong>
+        <span>{progress?.message || <I18nText text={"Aguardando leitura dos dados salvos."} />}</span>
         {progress?.detail && <small>{progress.detail}</small>}
       </div>
       <div className="reconciliation-step-list">
@@ -220,7 +221,7 @@ function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?
           const status = stepStatus(index, progress, hasPayload);
           return (
             <div className={`reconciliation-step ${status}`} key={step.label}>
-              <i>{status === "done" ? "OK" : status === "active" ? "..." : "-"}</i>
+              <i>{status === "done" ? <I18nText text={"OK"} /> : status === "active" ? <I18nText text={"..."} /> : <I18nText text={"-"} />}</i>
               <span>{step.label}</span>
               <strong>{statusLabel(status)}</strong>
             </div>
@@ -229,10 +230,10 @@ function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?
       </div>
       <div className="reconciliation-loading-meta">
         <span>{`${elapsed}s em andamento`}</span>
-        {progress?.current !== undefined && progress.total !== undefined && <span>{progress.current} de {progress.total} registros</span>}
-        {progress?.updatedAt && <span>Atualizado às {new Date(progress.updatedAt).toLocaleTimeString("pt-BR")}</span>}
+        {progress?.current !== undefined && progress.total !== undefined && <span>{progress.current} <I18nText text={"de"} /> {progress.total} <I18nText text={"registros"} /></span>}
+        {progress?.updatedAt && <span><I18nText text={"Atualizado às"} /> {new Date(progress.updatedAt).toLocaleTimeString("pt-BR")}</span>}
       </div>
-      <p>A abertura normal usa os dados já salvos. Novas buscas no Sienge são feitas pela tela de Configurações.</p>
+      <p><I18nText text={"A abertura normal usa os dados já salvos. Novas buscas no Sienge são feitas pela tela de Configurações."} /></p>
     </section>
   );
 }
@@ -241,24 +242,24 @@ function ErrorPanel({ error }: { error: SiengeErrorDetails }) {
   return (
     <section className="card api-error" aria-live="polite">
       <div className="api-error-heading">
-        <span className="api-error-code">{error.status || "ERRO"}</span>
+        <span className="api-error-code">{error.status || <I18nText text={"ERRO"} />}</span>
         <div>
           <h2>{error.title}</h2>
           <p>{error.explanation}</p>
         </div>
       </div>
       <div className="api-error-action">
-        <strong>Como resolver</strong>
+        <strong><I18nText text={"Como resolver"} /></strong>
         <span>{error.suggestion}</span>
       </div>
       <details>
-        <summary>Ver detalhes do erro</summary>
+        <summary><I18nText text={"Ver detalhes do erro"} /></summary>
         <dl className="api-error-details">
-          <div><dt>Origem da informação</dt><dd>{error.method} {error.endpoint}</dd></div>
-          <div><dt>Status</dt><dd>{error.status ? `${error.status} ${error.statusText || ""}` : "Sem resposta HTTP"}</dd></div>
-          {error.rateLimitType && <div><dt>Limite</dt><dd>{error.rateLimitType} {error.rateLimitDescription || ""}</dd></div>}
-          {error.apiMessage && <div><dt>Resposta do Sienge</dt><dd>{error.apiMessage}</dd></div>}
-          {error.requestId && <div><dt>ID da consulta</dt><dd>{error.requestId}</dd></div>}
+          <div><dt><I18nText text={"Origem da informação"} /></dt><dd>{error.method} {error.endpoint}</dd></div>
+          <div><dt><I18nText text={"Status"} /></dt><dd>{error.status ? `${error.status} ${error.statusText || ""}` : <I18nText text={"Sem resposta HTTP"} />}</dd></div>
+          {error.rateLimitType && <div><dt><I18nText text={"Limite"} /></dt><dd>{error.rateLimitType} {error.rateLimitDescription || <I18nText text={""} />}</dd></div>}
+          {error.apiMessage && <div><dt><I18nText text={"Resposta do Sienge"} /></dt><dd>{error.apiMessage}</dd></div>}
+          {error.requestId && <div><dt><I18nText text={"ID da consulta"} /></dt><dd>{error.requestId}</dd></div>}
         </dl>
       </details>
     </section>
@@ -286,14 +287,14 @@ function MonthlyReconciliationPanel({
     <section className="card panel reconciliation-monthly-panel">
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Visão mensal da conciliação</h2>
-          <span className="panel-note">Conta analisada: {accountLabel}. Clique em um mês para ver cards e registros daquele período</span>
+          <h2 className="panel-title"><I18nText text={"Visão mensal da conciliação"} /></h2>
+          <span className="panel-note"><I18nText text={"Conta analisada:"} /> {accountLabel}<I18nText text={". Clique em um mês para ver cards e registros daquele período"} /></span>
         </div>
         {(years.length > 0 || months.length > 0) && (
           <div className="reconciliation-month-selectors">
             {years.length > 0 && (
               <label>
-                <span>Ano</span>
+                <span><I18nText text={"Ano"} /></span>
                 <select value={selectedYear} onChange={(event) => onSelectYear(event.target.value)}>
                   {years.map((year) => <option value={year} key={year}>{yearLabel(year)}</option>)}
                 </select>
@@ -301,9 +302,9 @@ function MonthlyReconciliationPanel({
             )}
             {months.length > 0 && (
               <label>
-                <span>Mês</span>
+                <span><I18nText text={"Mês"} /></span>
                 <select value={selectedMonth} onChange={(event) => onSelect(event.target.value)}>
-                  <option value="all">Todos os meses do ano</option>
+                  <option value="all"><I18nText text={"Todos os meses do ano"} /></option>
                   {months.map((month) => <option value={month.key} key={month.key}>{month.label}</option>)}
                 </select>
               </label>
@@ -324,16 +325,16 @@ function MonthlyReconciliationPanel({
               key={month.key}
               onClick={() => onSelect(month.key)}
             >
-              <div><strong>{month.label}</strong><span>{percent}% conciliado</span></div>
+              <div><strong>{month.label}</strong><span>{percent}<I18nText text={"% conciliado"} /></span></div>
               <div className="reconciliation-month-track">
                 <i className="done" style={{ width: `${doneWidth}%` }} />
                 <i className="pending" style={{ width: `${pendingWidth}%` }} />
               </div>
-              <small>{month.reconciledCount} conciliados - {month.unreconciledCount} a conciliar</small>
+              <small>{month.reconciledCount} <I18nText text={"conciliados -"} /> {month.unreconciledCount} <I18nText text={"a conciliar"} /></small>
             </button>
           );
         })}
-      </div> : <div className="empty-state">Nenhum movimento mensal encontrado nos dados salvos.</div>}
+      </div> : <div className="empty-state"><I18nText text={"Nenhum movimento mensal encontrado nos dados salvos."} /></div>}
     </section>
   );
 }
@@ -345,8 +346,8 @@ function UntitledMovementsPanel({ movements, periodLabel }: { movements: BankMov
     <section className="card panel reconciliation-untitled-panel">
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">Movimentos sem título/parcela</h2>
-          <span className="panel-note">Movimentos do recorte {periodLabel} sem billId nem installmentId; podem ter cliente, fornecedor ou empresa informados</span>
+          <h2 className="panel-title"><I18nText text={"Movimentos sem título/parcela"} /></h2>
+          <span className="panel-note"><I18nText text={"Movimentos do recorte"} /> {periodLabel} <I18nText text={"sem billId nem installmentId; podem ter cliente, fornecedor ou empresa informados"} /></span>
         </div>
         <div className="reconciliation-untitled-summary">
           <strong>{movements.length}</strong>
@@ -375,16 +376,16 @@ function UntitledMovementsPanel({ movements, periodLabel }: { movements: BankMov
         renderItems={(pageItems) => (
           <div className="table-card reconciliation-untitled-table">
             <table>
-              <thead><tr><th>Movimento</th><th>Data</th><th>Valor</th><th>Conta</th><th>Parte</th><th>Histórico</th></tr></thead>
+              <thead><tr><th><I18nText text={"Movimento"} /></th><th><I18nText text={"Data"} /></th><th><I18nText text={"Valor"} /></th><th><I18nText text={"Conta"} /></th><th><I18nText text={"Parte"} /></th><th><I18nText text={"Histórico"} /></th></tr></thead>
               <tbody>
                 {pageItems.map((movement, index) => (
                   <tr key={`${movement.bankMovementId || index}-sem-titulo`}>
-                    <td><strong>{movementDocument(movement)}</strong><br /><span className="table-muted">Movimento #{movement.bankMovementId || "sem código"}</span></td>
-                    <td>{movement.bankMovementDate ? formatDate(movement.bankMovementDate) : "Não informada"}</td>
-                    <td><strong>{formatCurrency(movementAmount(movement))}</strong><br /><span className="table-muted">{movement.bankMovementOperationType || "Tipo não informado"}</span></td>
-                    <td>{movement.accountNumber || "Não informada"}<br /><span className="table-muted">{movement.companyName || ""}</span></td>
+                    <td><strong>{movementDocument(movement)}</strong><br /><span className="table-muted"><I18nText text={"Movimento #"} />{movement.bankMovementId || <I18nText text={"sem código"} />}</span></td>
+                    <td>{movement.bankMovementDate ? formatDate(movement.bankMovementDate) : <I18nText text={"Não informada"} />}</td>
+                    <td><strong>{formatCurrency(movementAmount(movement))}</strong><br /><span className="table-muted">{movement.bankMovementOperationType || <I18nText text={"Tipo não informado"} />}</span></td>
+                    <td>{movement.accountNumber || <I18nText text={"Não informada"} />}<br /><span className="table-muted">{movement.companyName || <I18nText text={""} />}</span></td>
                     <td>{movementParty(movement)}</td>
-                    <td>{movement.bankMovementHistoricName || movement.bankMovementOperationName || "Não informado"}<br /><span className="table-muted">{movement.bankMovementOriginId || ""}</span></td>
+                    <td>{movement.bankMovementHistoricName || movement.bankMovementOperationName || <I18nText text={"Não informado"} />}<br /><span className="table-muted">{movement.bankMovementOriginId || <I18nText text={""} />}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -553,8 +554,8 @@ export function ReconciliationPortal({
         <LoadingPanel progress={progress} elapsed={elapsed} hasPayload />
       )}
       <div className="card data-notice">
-        <strong>Dados carregados</strong>
-        <span>{loadedMessage} Conta em análise: {accountLabel}. Para trocar, ajuste em Configurações.</span>
+        <strong><I18nText text={"Dados carregados"} /></strong>
+        <span>{loadedMessage} <I18nText text={"Conta em análise:"} /> {accountLabel}<I18nText text={". Para trocar, ajuste em Configurações."} /></span>
       </div>
 
       <MonthlyReconciliationPanel
@@ -569,15 +570,15 @@ export function ReconciliationPortal({
 
       <div className="reconciliation-period-head">
         <div>
-          <span>Período selecionado</span>
+          <span><I18nText text={"Período selecionado"} /></span>
           <strong>{selectedLabel}</strong>
         </div>
         <div>
-          <span>Progresso</span>
-          <strong>{monthDonePercent}% conciliado</strong>
+          <span><I18nText text={"Progresso"} /></span>
+          <strong>{monthDonePercent}<I18nText text={"% conciliado"} /></strong>
         </div>
         <button className="button secondary" type="button" onClick={reloadLocalRead} disabled={refreshing}>
-          {refreshing ? "Recarregando..." : "Recarregar dados salvos"}
+          <I18nText text={refreshing ? "Recarregando..." : "Recarregar dados salvos"} />
         </button>
       </div>
 
@@ -593,23 +594,23 @@ export function ReconciliationPortal({
 
       <div className="grid-main equal-grid">
         <section className="card panel">
-          <div className="panel-head"><div><h2 className="panel-title">Contas com maior movimento</h2><span className="panel-note">Volume dentro da seleção atual</span></div></div>
+          <div className="panel-head"><div><h2 className="panel-title"><I18nText text={"Contas com maior movimento"} /></h2><span className="panel-note"><I18nText text={"Volume dentro da seleção atual"} /></span></div></div>
           <div className="ranking-list">
             {accountRanking.map((item) => {
               const max = Math.max(...accountRanking.map((account) => Math.abs(account.value)), 1);
-              return <div className="ranking-row" key={item.label}><div><span>{item.label}</span><strong>{item.count} movimentos</strong></div><div className="ranking-track"><i style={{ width: `${Math.max(4, (Math.abs(item.value) / max) * 100)}%` }} /></div><small>{formatCompactCurrency(item.value)}</small></div>;
+              return <div className="ranking-row" key={item.label}><div><span>{item.label}</span><strong>{item.count} <I18nText text={"movimentos"} /></strong></div><div className="ranking-track"><i style={{ width: `${Math.max(4, (Math.abs(item.value) / max) * 100)}%` }} /></div><small>{formatCompactCurrency(item.value)}</small></div>;
             })}
-            {!accountRanking.length && <div className="empty-state">Nenhuma conta encontrada para a seleção atual.</div>}
+            {!accountRanking.length && <div className="empty-state"><I18nText text={"Nenhuma conta encontrada para a seleção atual."} /></div>}
           </div>
         </section>
         <section className="card panel reconciliation-method">
-          <div className="panel-head"><div><h2 className="panel-title">Como usar</h2><span className="panel-note">Leitura operacional</span></div></div>
-          <p>Use o mês selecionado para acompanhar o que já foi conciliado e o que ainda precisa de conferência. A lista abaixo fica filtrada pelo mesmo período.</p>
-          <p>A conciliação efetiva continua sendo feita no Sienge. Esta tela ajuda a acompanhar o que já está conferido e o que ainda precisa de atenção.</p>
+          <div className="panel-head"><div><h2 className="panel-title"><I18nText text={"Como usar"} /></h2><span className="panel-note"><I18nText text={"Leitura operacional"} /></span></div></div>
+          <p><I18nText text={"Use o mês selecionado para acompanhar o que já foi conciliado e o que ainda precisa de conferência. A lista abaixo fica filtrada pelo mesmo período."} /></p>
+          <p><I18nText text={"A conciliação efetiva continua sendo feita no Sienge. Esta tela ajuda a acompanhar o que já está conferido e o que ainda precisa de atenção."} /></p>
           <div className="reconciliation-mini-stats">
-            <span>{visibleMovements.length} movimentos no recorte</span>
-            <span>{reconciledInView} conciliados</span>
-            <span>{linkedInView} vinculados</span>
+            <span>{visibleMovements.length} <I18nText text={"movimentos no recorte"} /></span>
+            <span>{reconciledInView} <I18nText text={"conciliados"} /></span>
+            <span>{linkedInView} <I18nText text={"vinculados"} /></span>
           </div>
         </section>
       </div>

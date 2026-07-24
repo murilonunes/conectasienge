@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { PageHeading } from "@/components/ui/page-heading";
 
@@ -24,13 +25,13 @@ export default function Home() {
 
       <section className="card welcome-hero">
         <div>
-          <span>Início rápido</span>
-          <h2>Escolha onde quer começar</h2>
+          <span><I18nText text={"Início rápido"} /></span>
+          <h2><I18nText text={"Escolha onde quer começar"} /></h2>
           <p>
-            Use esta abertura para acessar os portais com calma. As atualizações do Sienge ficam concentradas em Configurações.
+            <I18nText text={"Use esta abertura para acessar os portais com calma. As atualizações do Sienge ficam concentradas em Configurações."} />
           </p>
         </div>
-        <Link className="button" href="/dashboard">Abrir dashboard</Link>
+        <Link className="button" href="/dashboard"><I18nText text={"Abrir dashboard"} /></Link>
       </section>
 
       <section className="welcome-shortcuts">

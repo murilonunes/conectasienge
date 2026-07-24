@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { ApiErrorNotice } from "@/components/ui/api-error-notice";
@@ -54,34 +55,34 @@ export default async function InventoryPage() {
         <StatCard label="Negócios concluídos" value={String(completedBusinessCount)} delta="Vendidos, locados, transferidos ou de terceiros" icon="V" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
-        {result.warning && <div className="card data-notice"><strong>Dados parciais</strong><span>{result.warning}</span></div>}
+        {result.warning && <div className="card data-notice"><strong><I18nText text={"Dados parciais"} /></strong><span>{result.warning}</span></div>}
         {result.sourceStats.some((source) => source.status === "not_configured") && (
           <div className="card data-notice">
-            <strong>Estoque avançado opcional</strong>
-            <span>Para consultar mapa imobiliário consolidado e insumos por centro de custo, informe os centros em Configurações e atualize Estoque e patrimônio.</span>
+            <strong><I18nText text={"Estoque avançado opcional"} /></strong>
+            <span><I18nText text={"Para consultar mapa imobiliário consolidado e insumos por centro de custo, informe os centros em Configurações e atualize Estoque e patrimônio."} /></span>
           </div>
         )}
 
         <section className="card inventory-executive">
           <div>
-            <span>Carteira disponível</span>
+            <span><I18nText text={"Carteira disponível"} /></span>
             <strong>{formatCompactCurrency(summary.saleableUnitValue || mapStockValue)}</strong>
-            <small>{summary.saleableUnitCount} unidades disponíveis e {summary.portfolioPrivateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} m² privativos comerciais.</small>
+            <small>{summary.saleableUnitCount} <I18nText text={"unidades disponíveis e"} /> {summary.portfolioPrivateArea.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} <I18nText text={"m² privativos comerciais."} /></small>
           </div>
           <div>
-            <span>Mapa imobiliário</span>
+            <span><I18nText text={"Mapa imobiliário"} /></span>
             <strong>{formatCompactCurrency(summary.mapVgv)}</strong>
-            <small>{result.realEstateMap.length ? `${result.realEstateMap.length} registros de mapa consolidado` : "Configure centros de custo para enriquecer esta visão."}</small>
+            <small>{result.realEstateMap.length ? `${result.realEstateMap.length} registros de mapa consolidado` : <I18nText text={"Configure centros de custo para enriquecer esta visão."} />}</small>
           </div>
           <div>
-            <span>Insumos em estoque</span>
+            <span><I18nText text={"Insumos em estoque"} /></span>
             <strong>{formatCompactCurrency(summary.stockInputValue)}</strong>
-            <small>{summary.stockInputCount} itens de insumo salvos.</small>
+            <small>{summary.stockInputCount} <I18nText text={"itens de insumo salvos."} /></small>
           </div>
           <div>
-            <span>Propriedade</span>
-            <strong>{portfolioSummary.ownCount} próprios</strong>
-            <small>{portfolioSummary.thirdPartyCount} itens de terceiros na carteira comercial.</small>
+            <span><I18nText text={"Propriedade"} /></span>
+            <strong>{portfolioSummary.ownCount} <I18nText text={"próprios"} /></strong>
+            <small>{portfolioSummary.thirdPartyCount} <I18nText text={"itens de terceiros na carteira comercial."} /></small>
           </div>
         </section>
 
@@ -90,7 +91,7 @@ export default async function InventoryPage() {
             <div key={source.endpoint}>
               <strong>{source.label}</strong>
               <span>{sourceDelta(source)}</span>
-              <small>{source.loadedCount} exibido(s) de {source.apiCount} item(ns) informado(s)</small>
+              <small>{source.loadedCount} <I18nText text={"exibido(s) de"} /> {source.apiCount} <I18nText text={"item(ns) informado(s)"} /></small>
             </div>
           ))}
         </div>
@@ -108,15 +109,15 @@ export default async function InventoryPage() {
         <section className="card panel inventory-stock-panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Qualidade da base de valores</h2>
-              <span className="panel-note">Ajuda a separar estoque sem preço de estoque realmente avaliado.</span>
+              <h2 className="panel-title"><I18nText text={"Qualidade da base de valores"} /></h2>
+              <span className="panel-note"><I18nText text={"Ajuda a separar estoque sem preço de estoque realmente avaliado."} /></span>
             </div>
           </div>
           <div className="inventory-quality-grid">
-            <div><span>Com valor</span><strong>{summary.portfolioPricedCount}</strong><small>{formatCompactCurrency(summary.portfolioPricedValue)}</small></div>
-            <div><span>Sem valor</span><strong>{summary.portfolioNoValueCount}</strong><small>Revisar cadastro, avaliação ou tabela</small></div>
-            <div><span>Tabelas ativas</span><strong>{summary.activePriceTableCount}</strong><small>{result.priceTables.length} tabela(s) salvas</small></div>
-            <div><span>Margem no mapa</span><strong>{(summary.averageMapMargin * 100).toFixed(1).replace(".", ",")}%</strong><small>{formatCompactCurrency(summary.mapGrossProfit)} lucro bruto</small></div>
+            <div><span><I18nText text={"Com valor"} /></span><strong>{summary.portfolioPricedCount}</strong><small>{formatCompactCurrency(summary.portfolioPricedValue)}</small></div>
+            <div><span><I18nText text={"Sem valor"} /></span><strong>{summary.portfolioNoValueCount}</strong><small><I18nText text={"Revisar cadastro, avaliação ou tabela"} /></small></div>
+            <div><span><I18nText text={"Tabelas ativas"} /></span><strong>{summary.activePriceTableCount}</strong><small>{result.priceTables.length} <I18nText text={"tabela(s) salvas"} /></small></div>
+            <div><span><I18nText text={"Margem no mapa"} /></span><strong>{(summary.averageMapMargin * 100).toFixed(1).replace(".", ",")}<I18nText text={"%"} /></strong><small>{formatCompactCurrency(summary.mapGrossProfit)} <I18nText text={"lucro bruto"} /></small></div>
           </div>
         </section>
 
@@ -125,22 +126,22 @@ export default async function InventoryPage() {
           <section className="card panel">
             <div className="panel-head">
               <div>
-                <h2 className="panel-title">Reservas de insumos</h2>
-                <span className="panel-note">Reservas salvas no Sienge que podem indicar compromisso operacional.</span>
+                <h2 className="panel-title"><I18nText text={"Reservas de insumos"} /></h2>
+                <span className="panel-note"><I18nText text={"Reservas salvas no Sienge que podem indicar compromisso operacional."} /></span>
               </div>
             </div>
             <div className="inventory-quality-grid compact">
-              <div><span>Pendentes</span><strong>{summary.pendingReservationCount}</strong><small>Reservas aguardando movimentação</small></div>
-              <div><span>Total salvo</span><strong>{result.stockReservations.length}</strong><small>Reservas integradas</small></div>
-              <div><span>Fontes avançadas</span><strong>{result.sourceStats.filter((source) => source.status === "ok").length}</strong><small>Consultas com dados locais</small></div>
-              <div><span>Mapa imobiliário</span><strong>{result.realEstateMap.length}</strong><small>{formatCompactCurrency(summary.mapStockValue)} em estoque no mapa</small></div>
+              <div><span><I18nText text={"Pendentes"} /></span><strong>{summary.pendingReservationCount}</strong><small><I18nText text={"Reservas aguardando movimentação"} /></small></div>
+              <div><span><I18nText text={"Total salvo"} /></span><strong>{result.stockReservations.length}</strong><small><I18nText text={"Reservas integradas"} /></small></div>
+              <div><span><I18nText text={"Fontes avançadas"} /></span><strong>{result.sourceStats.filter((source) => source.status === "ok").length}</strong><small><I18nText text={"Consultas com dados locais"} /></small></div>
+              <div><span><I18nText text={"Mapa imobiliário"} /></span><strong>{result.realEstateMap.length}</strong><small>{formatCompactCurrency(summary.mapStockValue)} <I18nText text={"em estoque no mapa"} /></small></div>
             </div>
           </section>
         </div>
 
         <div className="card data-notice">
-          <strong>Como ler propriedade e valores</strong>
-          <span>Próprio/terceiro usa proprietário anterior, origem contábil, indicador de uso e estoque comercial quando esses campos existem. Valor informado usa incorporação, valor contábil, avaliação, tabela especial, fração de VGV ou terreno; quando nada vem da API, aparece como sem valor.</span>
+          <strong><I18nText text={"Como ler propriedade e valores"} /></strong>
+          <span><I18nText text={"Próprio/terceiro usa proprietário anterior, origem contábil, indicador de uso e estoque comercial quando esses campos existem. Valor informado usa incorporação, valor contábil, avaliação, tabela especial, fração de VGV ou terreno; quando nada vem da API, aparece como sem valor."} /></span>
         </div>
 
         <InventoryExplorer assets={result.assets} initialScope="portfolio" />

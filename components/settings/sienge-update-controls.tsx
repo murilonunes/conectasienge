@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { updateAreas } from "@/lib/sienge-update-areas";
@@ -141,8 +142,8 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
               <small>{latestJob.message}</small>
             </div>
             <div>
-              <strong>{completedSteps}/{latestJob.steps.length}</strong>
-              <small>etapas feitas</small>
+              <strong>{completedSteps}<I18nText text={"/"} />{latestJob.steps.length}</strong>
+              <small><I18nText text={"etapas feitas"} /></small>
             </div>
           </div>
           <div className="settings-job-steps">
@@ -169,8 +170,8 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
                 <span>{statusLabel(current.status)}</span>
                 <strong>{area.label}</strong>
                 <p>{area.note}</p>
-                <small>Última integração: {formatDate(current.lastUpdatedAt)}</small>
-                <em>{current.successCount} atualizações - {current.errorCount} avisos</em>
+                <small><I18nText text={"Última integração:"} /> {formatDate(current.lastUpdatedAt)}</small>
+                <em>{current.successCount} <I18nText text={"atualizações -"} /> {current.errorCount} <I18nText text={"avisos"} /></em>
               </div>
               <div className="settings-area-actions">
                 <button
@@ -179,7 +180,7 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
                   disabled={isBusy || startingKey === `${area.key}-false`}
                   onClick={() => start(area.key, false)}
                 >
-                  {startingKey === `${area.key}-false` ? "Iniciando..." : "Atualizar"}
+                  <I18nText text={startingKey === `${area.key}-false` ? "Iniciando..." : "Atualizar"} />
                 </button>
                 {showForce && (
                   <button
@@ -188,7 +189,7 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
                     disabled={isBusy || startingKey === `${area.key}-true`}
                     onClick={() => start(area.key, true)}
                   >
-                    {startingKey === `${area.key}-true` ? "Iniciando..." : "Atualizar com força"}
+                    <I18nText text={startingKey === `${area.key}-true` ? "Iniciando..." : "Atualizar com força"} />
                   </button>
                 )}
               </div>

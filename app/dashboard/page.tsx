@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { Suspense } from "react";
 import Link from "next/link";
 import { CashFlowChart } from "@/components/charts/cash-flow-chart";
@@ -52,12 +53,12 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
 
       <section className="dashboard-view-switch">
         <div className="dashboard-view-summary">
-          <span>{isPastView ? "Execução" : "Planejamento"}</span>
+          <span><I18nText text={isPastView ? "Execução" : "Planejamento"} /></span>
           <strong>{periodSummaryLabel}</strong>
-          <small>{overview.dashboardRange.start} até {overview.dashboardRange.end} - {isPastView ? "previsto x realizado" : "previsão por vencimento"}</small>
+          <small>{overview.dashboardRange.start} <I18nText text={"até"} /> {overview.dashboardRange.end} <I18nText text={"-"} /> <I18nText text={isPastView ? "previsto x realizado" : "previsão por vencimento"} /></small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-view-options compact" aria-label="Período">
+          <div className="dashboard-view-options compact" aria-label="Período" data-i18n-aria-label={"Período"}>
             {DASHBOARD_PERIOD_OPTIONS.map((option) => (
               <Link
                 key={option.days}
@@ -68,18 +69,18 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
               </Link>
             ))}
           </div>
-          <div className="dashboard-direction-options" aria-label="Direção do período">
+          <div className="dashboard-direction-options" aria-label="Direção do período" data-i18n-aria-label={"Direção do período"}>
               <Link
               href={`/dashboard?dias=${overview.dashboardDays}&periodo=future`}
               className={overview.dashboardDirection === "future" ? "active" : ""}
             >
-              Futuro
+              <I18nText text={"Futuro"} />
             </Link>
               <Link
               href={`/dashboard?dias=${overview.dashboardDays}&periodo=past${overdueQuery}`}
               className={overview.dashboardDirection === "past" ? "active" : ""}
             >
-              Passado
+              <I18nText text={"Passado"} />
             </Link>
           </div>
         </div>
@@ -87,8 +88,8 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
 
       {overview.unavailable.length > 0 && (
         <section className="card data-notice">
-          <strong>Visão parcial</strong>
-          <span>Algumas áreas não carregaram agora: {overview.unavailable.join(", ")}. O dashboard mostra os módulos disponíveis.</span>
+          <strong><I18nText text={"Visão parcial"} /></strong>
+          <span><I18nText text={"Algumas áreas não carregaram agora:"} /> {overview.unavailable.join(", ")}<I18nText text={". O dashboard mostra os módulos disponíveis."} /></span>
         </section>
       )}
 
@@ -102,37 +103,37 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
           {isPastView ? (
             <>
               <div>
-                <span>Saldo realizado</span>
+                <span><I18nText text={"Saldo realizado"} /></span>
                 <strong className={overview.realizedBalance < 0 ? "negative" : ""}>{formatCompactCurrency(overview.realizedBalance)}</strong>
                 <small>{realizedReading}</small>
               </div>
               <div>
-                <span>Não recebido</span>
+                <span><I18nText text={"Não recebido"} /></span>
                 <strong>{formatCompactCurrency(overview.receivableSummary.periodOpenAmount)}</strong>
-                <small>{overview.receivableSummary.periodOpenCount} parcelas previstas ficaram pendentes</small>
+                <small>{overview.receivableSummary.periodOpenCount} <I18nText text={"parcelas previstas ficaram pendentes"} /></small>
               </div>
               <div>
-                <span>Não pago</span>
+                <span><I18nText text={"Não pago"} /></span>
                 <strong className={overview.payableSummary.periodAmount > 0 ? "negative" : ""}>{formatCompactCurrency(overview.payableSummary.periodAmount)}</strong>
-                <small>{overview.payableSummary.periodCount} parcelas previstas ficaram pendentes</small>
+                <small>{overview.payableSummary.periodCount} <I18nText text={"parcelas previstas ficaram pendentes"} /></small>
               </div>
             </>
           ) : (
             <>
               <div>
-                <span>A receber restante</span>
+                <span><I18nText text={"A receber restante"} /></span>
                 <strong>{formatCompactCurrency(overview.receivableSummary.totalOpen)}</strong>
-                <small>{overview.receivableSummary.forecastCount} parcelas ainda têm saldo</small>
+                <small>{overview.receivableSummary.forecastCount} <I18nText text={"parcelas ainda têm saldo"} /></small>
               </div>
               <div>
-                <span>A pagar restante</span>
+                <span><I18nText text={"A pagar restante"} /></span>
                 <strong className={overview.payableSummary.totalAmount > 0 ? "negative" : ""}>{formatCompactCurrency(overview.payableSummary.totalAmount)}</strong>
-                <small>{overview.payables.totalCount} parcelas ainda têm saldo</small>
+                <small>{overview.payables.totalCount} <I18nText text={"parcelas ainda têm saldo"} /></small>
               </div>
               <div>
-                <span>Já realizado</span>
+                <span><I18nText text={"Já realizado"} /></span>
                 <strong className={futureLinkedBalance < 0 ? "negative" : ""}>{formatCompactCurrency(futureLinkedBalance)}</strong>
-                <small>{formatCompactCurrency(overview.receivableSummary.periodReceivedAmount)} recebido - {formatCompactCurrency(overview.payableSummary.periodPaidAmount)} pago</small>
+                <small>{formatCompactCurrency(overview.receivableSummary.periodReceivedAmount)} <I18nText text={"recebido -"} /> {formatCompactCurrency(overview.payableSummary.periodPaidAmount)} <I18nText text={"pago"} /></small>
               </div>
             </>
           )}
@@ -142,8 +143,8 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
       <div className={`stats dashboard-strategy ${isPastView ? "past" : "future"}`}>
         <section className="dashboard-metric-group">
           <div className="dashboard-group-head">
-            <span>{isPastView ? "Recebimentos" : "Previsão de recebimento"}</span>
-            <strong>{isPastView ? "O que entrou" : "Saldo futuro"}</strong>
+            <span><I18nText text={isPastView ? "Recebimentos" : "Previsão de recebimento"} /></span>
+            <strong><I18nText text={isPastView ? "O que entrou" : "Saldo futuro"} /></strong>
           </div>
           <div className="dashboard-group-stats">
             {isPastView ? (
@@ -163,8 +164,8 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
         </section>
         <section className="dashboard-metric-group">
           <div className="dashboard-group-head">
-            <span>{isPastView ? "Pagamentos" : "Previsão de pagamento"}</span>
-            <strong>{isPastView ? "O que saiu" : "Compromissos futuros"}</strong>
+            <span><I18nText text={isPastView ? "Pagamentos" : "Previsão de pagamento"} /></span>
+            <strong><I18nText text={isPastView ? "O que saiu" : "Compromissos futuros"} /></strong>
           </div>
           <div className="dashboard-group-stats">
             {isPastView ? (
@@ -185,8 +186,8 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
         {isPastView && (
           <section className="dashboard-metric-group compact">
             <div className="dashboard-group-head">
-              <span>Operação</span>
-              <strong>Movimento comercial</strong>
+              <span><I18nText text={"Operação"} /></span>
+              <strong><I18nText text={"Movimento comercial"} /></strong>
             </div>
             <div className="dashboard-group-stats">
               <StatCard label="Vendas" value={formatCompactCurrency(overview.salesSummary.totalValue)} delta={`${overview.salesSummary.activeCount} contratos ativos`} icon="V" />
@@ -256,7 +257,7 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
           <div className="grid-main equal-grid">
             <section className="card panel dashboard-mini-panel">
               <div className="panel-head">
-                <div><h2 className="panel-title">Compras por período</h2><span className="panel-note">Resumo do recorte selecionado</span></div>
+                <div><h2 className="panel-title"><I18nText text={"Compras por período"} /></h2><span className="panel-note"><I18nText text={"Resumo do recorte selecionado"} /></span></div>
               </div>
               <div className="dashboard-period-list">
                 {overview.purchaseSummary.periods.map((period) => (
@@ -265,7 +266,7 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
                     <strong>{formatCompactCurrency(period.amount)}</strong>
                     <small>
                       <span>{period.note}</span>
-                      <span>{period.count} registros - {period.doneCount} concluídos - {period.pendingCount} pendentes</span>
+                      <span>{period.count} <I18nText text={"registros -"} /> {period.doneCount} <I18nText text={"concluídos -"} /> {period.pendingCount} <I18nText text={"pendentes"} /></span>
                     </small>
                   </div>
                 ))}

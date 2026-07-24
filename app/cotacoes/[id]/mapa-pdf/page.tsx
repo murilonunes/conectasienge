@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -75,8 +76,8 @@ export default async function QuotationMapPdfPage({
         <section className="card panel access-denied-panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Acesso não liberado</h2>
-              <span className="panel-note">Seu usuário não tem permissão para relatórios de cotação</span>
+              <h2 className="panel-title"><I18nText text={"Acesso não liberado"} /></h2>
+              <span className="panel-note"><I18nText text={"Seu usuário não tem permissão para relatórios de cotação"} /></span>
             </div>
           </div>
         </section>
@@ -126,34 +127,34 @@ export default async function QuotationMapPdfPage({
       <style>{`@page { size: A4 ${orientation === "horizontal" ? "landscape" : "portrait"}; margin: 10mm; }`}</style>
       <main className={`map-report ${orientation === "horizontal" ? "map-report-horizontal" : "map-report-vertical"}`}>
         <div className="map-report-actions">
-          <Link className="button secondary" href={`/cotacoes/${id}`}>Voltar para a cotação</Link>
+          <Link className="button secondary" href={`/cotacoes/${id}`}><I18nText text={"Voltar para a cotação"} /></Link>
           <Link className="button secondary" href={orientationHref}>
-            {orientation === "horizontal" ? "Versão vertical" : "Versão horizontal"}
+            <I18nText text={orientation === "horizontal" ? "Versão vertical" : "Versão horizontal"} />
           </Link>
           <PrintButton />
         </div>
 
       <header className="map-report-head">
         <div className="map-report-head-brand">
-          <span>Brasin Empreendimentos - Compras</span>
-          <h1>Mapa comparativo de cotação</h1>
-          <p>Cotação #{quotation.code} - {scopeLabel} - gerado em {new Date().toLocaleDateString("pt-BR")}</p>
+          <span><I18nText text={"Brasin Empreendimentos - Compras"} /></span>
+          <h1><I18nText text={"Mapa comparativo de cotação"} /></h1>
+          <p><I18nText text={"Cotação #"} />{quotation.code} <I18nText text={"-"} /> {scopeLabel} <I18nText text={"- gerado em"} /> {new Date().toLocaleDateString("pt-BR")}</p>
         </div>
 
         <div className="map-report-block map-report-grid">
-          <span><strong>Comprador</strong>{quotation.buyerId || "Não informado"}</span>
-          <span><strong>Data da cotação</strong>{formatOptionalDate(quotation.date)}</span>
-          <span><strong>Prazo de resp.</strong>{formatOptionalDate(quotation.deadline, "Não infor.")}</span>
-          <span><strong>Forn. respondentes</strong>{respondingSuppliers}</span>
-          <span><strong>Itens no mapa</strong>{rows.length}</span>
-          <span><strong>Melhor cesta</strong>{formatCurrency(bestBasketTotal)}</span>
+          <span><strong><I18nText text={"Comprador"} /></strong>{quotation.buyerId || <I18nText text={"Não informado"} />}</span>
+          <span><strong><I18nText text={"Data da cotação"} /></strong>{formatOptionalDate(quotation.date)}</span>
+          <span><strong><I18nText text={"Prazo de resp."} /></strong>{formatOptionalDate(quotation.deadline, "Não infor.")}</span>
+          <span><strong><I18nText text={"Forn. respondentes"} /></strong>{respondingSuppliers}</span>
+          <span><strong><I18nText text={"Itens no mapa"} /></strong>{rows.length}</span>
+          <span><strong><I18nText text={"Melhor cesta"} /></strong>{formatCurrency(bestBasketTotal)}</span>
         </div>
       </header>
 
       <section className="map-report-matrix-block">
         <div className="map-report-section-head">
           <div>
-            <span>Comparativo horizontal</span>
+            <span><I18nText text={"Comparativo horizontal"} /></span>
           </div>
         </div>
 
@@ -162,16 +163,16 @@ export default async function QuotationMapPdfPage({
             <table className="map-report-matrix">
               <thead>
                 <tr>
-                  <th className="map-report-item-row-col">Item</th>
-                  <th className="map-report-quantity-col">Quantidade</th>
+                  <th className="map-report-item-row-col"><I18nText text={"Item"} /></th>
+                  <th className="map-report-quantity-col"><I18nText text={"Quantidade"} /></th>
                   {supplierColumns.map(({ response }) => (
                     <th className="map-report-supplier-head" key={response.id}>
                       <strong>{response.supplierName}</strong>
                       <small>{formatDocument(response.document)}</small>
-                      {response.registrationPending && <em>Cadastro pendente</em>}
+                      {response.registrationPending && <em><I18nText text={"Cadastro pendente"} /></em>}
                     </th>
                   ))}
-                  <th className="map-report-choice-col">Melhor cesta</th>
+                  <th className="map-report-choice-col"><I18nText text={"Melhor cesta"} /></th>
                 </tr>
               </thead>
               <tbody>
@@ -179,14 +180,14 @@ export default async function QuotationMapPdfPage({
                   <tr key={row.itemNumber}>
                     <td className="map-report-item-row-col">
                       <strong>
-                        <span className="map-report-item-code">#{row.item?.productId || row.itemNumber}</span>
+                        <span className="map-report-item-code"><I18nText text={"#"} />{row.item?.productId || row.itemNumber}</span>
                         {row.item?.name || `Item ${row.itemNumber}`}
-                        {row.item?.detail ? ` - ${row.item.detail}` : ""}
+                        {row.item?.detail ? ` - ${row.item.detail}` : <I18nText text={""} />}
                       </strong>
                     </td>
                     <td className="map-report-quantity-col">
-                      <strong>{row.item ? row.item.quantity || 0 : "-"}</strong>
-                      <small>{row.item?.unit || "un"}</small>
+                      <strong>{row.item ? row.item.quantity || 0 : <I18nText text={"-"} />}</strong>
+                      <small>{row.item?.unit || <I18nText text={"un"} />}</small>
                     </td>
                     {supplierColumns.map(({ response }) => {
                       const offer = row.offers.find((current) => current.responseId === response.id);
@@ -203,16 +204,16 @@ export default async function QuotationMapPdfPage({
                             <>
                               <div className="map-report-price-line">
                                 <strong>{formatCurrency(offer.unitPrice)}</strong>
-                                <small>Total {formatCurrency(offer.total)}</small>
+                                <small><I18nText text={"Total"} /> {formatCurrency(offer.total)}</small>
                               </div>
                               {offer.deadlineDays > 0 && (
                                 <div className="map-report-price-details">
-                                  <small>Prazo {plural(offer.deadlineDays, "dia", "dias")}</small>
+                                  <small><I18nText text={"Prazo"} /> {plural(offer.deadlineDays, "dia", "dias")}</small>
                                 </div>
                               )}
                             </>
                           ) : (
-                            <span>{offer?.hasResponse ? "Não atende" : "Sem resposta"}</span>
+                            <span><I18nText text={offer?.hasResponse ? "Não atende" : "Sem resposta"} /></span>
                           )}
                         </td>
                       );
@@ -221,7 +222,7 @@ export default async function QuotationMapPdfPage({
                       {row.best ? (
                         <strong>{firstSupplierName(row.best.supplierName)}</strong>
                       ) : (
-                        <span>Sem preço</span>
+                        <span><I18nText text={"Sem preço"} /></span>
                       )}
                     </td>
                   </tr>
@@ -229,7 +230,7 @@ export default async function QuotationMapPdfPage({
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={2}>Total cotado por fornecedor</td>
+                  <td colSpan={2}><I18nText text={"Total cotado por fornecedor"} /></td>
                   {supplierColumns.map(({ response, total }) => (
                     <td className="map-report-price-cell" key={`total-${response.id}`}>
                       <strong>{formatCurrency(total)}</strong>
@@ -237,32 +238,32 @@ export default async function QuotationMapPdfPage({
                   ))}
                   <td className="map-report-choice-col total">
                     <strong>{formatCurrency(bestBasketTotal)}</strong>
-                    <small>Menor cesta item a item</small>
+                    <small><I18nText text={"Menor cesta item a item"} /></small>
                   </td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td colSpan={2}>Itens</td>
+                  <td colSpan={2}><I18nText text={"Itens"} /></td>
                   {supplierColumns.map(({ response, coverageCount }) => (
-                    <td key={`coverage-${response.id}`}>{coverageCount}/{rows.length} com preço</td>
+                    <td key={`coverage-${response.id}`}>{coverageCount}<I18nText text={"/"} />{rows.length} <I18nText text={"com preço"} /></td>
                   ))}
                   <td></td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td colSpan={2}>Melhores</td>
+                  <td colSpan={2}><I18nText text={"Melhores"} /></td>
                   {supplierColumns.map(({ response, bestCount }) => (
-                    <td key={`best-count-${response.id}`}>{bestCount ? plural(bestCount, "preço", "preços") : "Nenhum"}</td>
+                    <td key={`best-count-${response.id}`}>{bestCount ? plural(bestCount, "preço", "preços") : <I18nText text={"Nenhum"} />}</td>
                   ))}
                   <td></td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td colSpan={2}>Pagamento</td>
+                  <td colSpan={2}><I18nText text={"Pagamento"} /></td>
                   {supplierColumns.map(({ response }) => (
                     <td key={`payment-${response.id}`}>{mapPaymentSummary(response.commercialTerms)}</td>
                   ))}
                   <td></td>
                 </tr>
                 <tr className="map-report-extra-row">
-                  <td colSpan={2}>Frete</td>
+                  <td colSpan={2}><I18nText text={"Frete"} /></td>
                   {supplierColumns.map(({ response }) => (
                     <td key={`freight-${response.id}`}>{freightSummary(response.commercialTerms)}</td>
                   ))}
@@ -272,12 +273,12 @@ export default async function QuotationMapPdfPage({
             </table>
           </div>
         ) : (
-          <p className="map-report-empty">Nenhum item corresponde ao filtro selecionado.</p>
+          <p className="map-report-empty"><I18nText text={"Nenhum item corresponde ao filtro selecionado."} /></p>
         )}
       </section>
 
       <footer className="map-report-footer">
-        Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor para a cotação #{quotation.code}.
+        <I18nText text={"Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor para a cotação #"} />{quotation.code}<I18nText text={"."} />
       </footer>
       </main>
     </>

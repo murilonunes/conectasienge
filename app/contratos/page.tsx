@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
 import { ContractsExplorer } from "@/components/contracts/contracts-explorer";
@@ -30,10 +31,9 @@ export default async function ContratosPage() {
 
       {result.error && result.contracts.length === 0 && (
         <section className="card data-notice">
-          <strong>Contratos ainda não salvos</strong>
+          <strong><I18nText text={"Contratos ainda não salvos"} /></strong>
           <span>
-            Esta tela lê somente o banco local. Atualize Contratos em Configurações para consultar o Sienge uma vez,
-            gravar os dados no SQLite e liberar a visão de contratos aqui.
+            <I18nText text={"Esta tela lê somente o banco local. Atualize Contratos em Configurações para consultar o Sienge uma vez, gravar os dados no SQLite e liberar a visão de contratos aqui."} />
           </span>
         </section>
       )}
@@ -44,15 +44,15 @@ export default async function ContratosPage() {
           <section className="card panel">
             <div className="panel-head">
               <div>
-                <h2 className="panel-title">Leitura contratual</h2>
-                <span className="panel-note">Resumo dos contratos salvos para acompanhamento operacional</span>
+                <h2 className="panel-title"><I18nText text={"Leitura contratual"} /></h2>
+                <span className="panel-note"><I18nText text={"Resumo dos contratos salvos para acompanhamento operacional"} /></span>
               </div>
             </div>
             <div className="contract-summary-list">
-              <div><span>Valor medido</span><strong>{formatCurrency(summary.measuredValue)}</strong></div>
-              <div><span>Saldo estimado</span><strong>{formatCurrency(summary.balanceValue)}</strong></div>
-              <div><span>Contratos ativos</span><strong>{summary.activeCount}</strong></div>
-              <div><span>Contratos encerrados</span><strong>{summary.closedCount}</strong></div>
+              <div><span><I18nText text={"Valor medido"} /></span><strong>{formatCurrency(summary.measuredValue)}</strong></div>
+              <div><span><I18nText text={"Saldo estimado"} /></span><strong>{formatCurrency(summary.balanceValue)}</strong></div>
+              <div><span><I18nText text={"Contratos ativos"} /></span><strong>{summary.activeCount}</strong></div>
+              <div><span><I18nText text={"Contratos encerrados"} /></span><strong>{summary.closedCount}</strong></div>
             </div>
           </section>
         </div>

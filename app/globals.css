@@ -114,6 +114,37 @@ button, input, select { font: inherit; }
   padding: 0 38px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.75);
 }
 .user { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.language-switcher {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 5px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--muted);
+}
+.language-switcher-label { font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.language-switcher select {
+  min-width: 96px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.language-switcher.compact select { min-width: 46px; }
+.language-switcher.compact .language-switcher-label { display: none; }
+.public-language-switcher {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 100;
+}
 .integration-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
 .avatar { width: 35px; height: 35px; border-radius: 50%; background: var(--green-soft); display: grid; place-items: center; color: var(--green); font-weight: 700; }
 .logout-button { border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--muted); padding: 8px 10px; cursor: pointer; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
@@ -731,6 +762,7 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
    Contas a pagar): o botão marca <html> com essa classe antes de chamar
    window.print() e remove no evento afterprint. */
 @media print {
+  .public-language-switcher { display: none !important; }
   html.printing-single-panel .sidebar,
   html.printing-single-panel .topbar,
   html.printing-single-panel .content > *:not([data-print-panel]) {

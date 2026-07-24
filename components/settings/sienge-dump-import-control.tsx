@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -144,20 +145,20 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
     <div className="settings-dump-import">
       <div className="settings-dump-summary">
         <div>
-          <span>SQLite do dump</span>
+          <span><I18nText text={"SQLite do dump"} /></span>
           <strong>{formatSize(payload.sqlite?.sizeBytes)}</strong>
-          <small>Última importação: {formatDate(payload.sqlite?.updatedAt)}</small>
+          <small><I18nText text={"Última importação:"} /> {formatDate(payload.sqlite?.updatedAt)}</small>
         </div>
         <div>
-          <span>Tabelas convertidas</span>
+          <span><I18nText text={"Tabelas convertidas"} /></span>
           <strong>{formatNumber(job.tableCount)}</strong>
-          <small>{formatNumber(job.rowCount)} linhas no último processamento</small>
+          <small>{formatNumber(job.rowCount)} <I18nText text={"linhas no último processamento"} /></small>
         </div>
       </div>
 
       <form className="settings-dump-form" onSubmit={submit}>
         <label>
-          Arquivo de dump do Sienge
+          <I18nText text={"Arquivo de dump do Sienge"} />
           <input
             ref={fileRef}
             type="file"
@@ -167,9 +168,9 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
           />
         </label>
         <button className="button" type="submit" disabled={isBusy}>
-          {isBusy ? "Importando..." : "Importar dump"}
+          <I18nText text={isBusy ? "Importando..." : "Importar dump"} />
         </button>
-        {selectedFileName && <small>Selecionado: {selectedFileName}</small>}
+        {selectedFileName && <small><I18nText text={"Selecionado:"} /> {selectedFileName}</small>}
       </form>
 
       {message && <div className="settings-inline-message">{message}</div>}
@@ -178,12 +179,12 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
         <div className="settings-job-head">
           <div>
             <span>{statusLabel(job.status)}</span>
-            <strong>{job.sourceFileName || "Importação do dump"}</strong>
+            <strong>{job.sourceFileName || <I18nText text={"Importação do dump"} />}</strong>
             <small>{job.message}</small>
           </div>
           <div>
-            <strong>{completedSteps}/{job.steps.length}</strong>
-            <small>etapas feitas</small>
+            <strong>{completedSteps}<I18nText text={"/"} />{job.steps.length}</strong>
+            <small><I18nText text={"etapas feitas"} /></small>
           </div>
         </div>
         <div className="settings-job-steps">
@@ -202,7 +203,7 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
           {operationalPreview.map(([table, count]) => (
             <div key={table}>
               <strong>{table}</strong>
-              <span>{formatNumber(count)} registros</span>
+              <span>{formatNumber(count)} <I18nText text={"registros"} /></span>
             </div>
           ))}
         </div>

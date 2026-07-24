@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
@@ -72,12 +73,12 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
       <PageHeading eyebrow="Portal comercial" title="Contratos de vendas" subtitle={`${periodContracts.length} de ${result.totalCount} contratos vendidos no recorte selecionado.`} />
       <section className="dashboard-view-switch">
         <div className="dashboard-view-summary">
-          <span>Vendas realizadas em</span>
+          <span><I18nText text={"Vendas realizadas em"} /></span>
           <strong>{periodLabel}</strong>
-          <small>{range.start} até {range.end} - data da venda (emissão do contrato)</small>
+          <small>{range.start} <I18nText text={"até"} /> {range.end} <I18nText text={"- data da venda (emissão do contrato)"} /></small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-view-options compact" aria-label="Período">
+          <div className="dashboard-view-options compact" aria-label="Período" data-i18n-aria-label={"Período"}>
             {SALES_PERIOD_OPTIONS.map((option) => (
               <Link
                 key={option.days}

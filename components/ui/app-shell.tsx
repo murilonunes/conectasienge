@@ -1,9 +1,12 @@
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
+import { I18nText } from "@/components/i18n/i18n-text";
 import { screenPermissionForPath } from "@/lib/app-permissions";
 import { getAppSettings } from "@/lib/settings";
 import { getSessionUserFromCookieValue } from "@/lib/app-users";
 import { AppShellClient } from "@/components/ui/app-shell-client";
+import { localeCookieName, resolveLocale } from "@/lib/i18n/config";
+import { translateUiText } from "@/lib/i18n/messages";
 
 function initials(name: string) {
   return name
@@ -22,6 +25,7 @@ const roleLabels: Record<string, string> = {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const settings = getAppSettings();
+  const locale = resolveLocale(cookies().get(localeCookieName)?.value);
   const user = getSessionUserFromCookieValue(cookies().get("brasin_session")?.value);
   const path = headers().get("x-current-path") || "/";
   const requiredScreenPermission = screenPermissionForPath(path);
@@ -32,7 +36,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const shellSettings = user
     ? {
         responsibleName: user.name,
-        responsibleRole: user.roles.map((role) => roleLabels[role] || role).join(", ") || "Usuário",
+        responsibleRole: user.roles
+          .map((role) => roleLabels[role] ? translateUiText(roleLabels[role], locale) : role)
+          .join(", ") || translateUiText("Usuário", locale),
         responsibleInitials: initials(user.name)
       }
     : settings;
@@ -43,11 +49,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="card panel access-denied-panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Acesso não liberado</h2>
-              <span className="panel-note">Seu usuário não tem permissão para esta tela</span>
+              <h2 className="panel-title"><I18nText text="Acesso não liberado" /></h2>
+              <span className="panel-note"><I18nText text="Seu usuário não tem permissão para esta tela" /></span>
             </div>
           </div>
-          <div className="empty-state">Peça para um administrador liberar esta tela no cadastro de usuários.</div>
+          <div className="empty-state"><I18nText text="Peça para um administrador liberar esta tela no cadastro de usuários." /></div>
         </div>
       ) : children}
     </AppShellClient>

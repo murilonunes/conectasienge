@@ -1,22 +1,42 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
+import { I18nProvider } from "@/components/i18n/i18n-provider";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { AppShell } from "@/components/ui/app-shell";
+import { localeCookieName, localeLanguage, resolveLocale } from "@/lib/i18n/config";
 
-export const metadata: Metadata = {
-  title: "Brasin Financeiro",
-  description: "Gestão financeira integrada ao Sienge"
-};
+export function generateMetadata(): Metadata {
+  const locale = resolveLocale(cookies().get(localeCookieName)?.value);
+  return {
+    title: locale === "en-US" ? "Brasin Finance" : "Brasin Financeiro",
+    description: locale === "en-US"
+      ? "Financial management integrated with Sienge"
+      : "Gestão financeira integrada ao Sienge"
+  };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const path = headers().get("x-current-path") || "";
+  const locale = resolveLocale(cookies().get(localeCookieName)?.value);
   // O relatório de decisão e o mapa em PDF continuam protegidos por sessão, mas
   // renderizam sem o shell (menu/topbar) para sair limpos na impressão em PDF.
   const publicExperience = path.startsWith("/portal-cotacao") || path.startsWith("/login") || path.endsWith("/relatorio-decisao") || path.endsWith("/mapa-pdf");
 
   return (
-    <html lang="pt-BR">
-      <body>{publicExperience ? children : <AppShell>{children}</AppShell>}</body>
+    <html lang={localeLanguage(locale)}>
+      <body>
+        <I18nProvider initialLocale={locale}>
+          {publicExperience ? (
+            <>
+              <div className="public-language-switcher"><LanguageSwitcher compact /></div>
+              {children}
+            </>
+          ) : (
+            <AppShell>{children}</AppShell>
+          )}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

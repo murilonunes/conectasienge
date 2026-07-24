@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import type { ItemComparisonRow } from "../types";
 
@@ -47,7 +48,7 @@ export function MapaPdfModal({ quotationId, items }: { quotationId: number; item
   return (
     <>
       <button className="button secondary" type="button" onClick={() => setOpen(true)}>
-        Mapa em PDF
+        <I18nText text={"Mapa em PDF"} />
       </button>
 
       {open && (
@@ -55,32 +56,32 @@ export function MapaPdfModal({ quotationId, items }: { quotationId: number; item
           <div className="settings-modal map-pdf-modal" role="dialog" aria-modal="true" aria-labelledby="map-pdf-modal-title">
             <div className="settings-modal-head">
               <div>
-                <h2 id="map-pdf-modal-title">Mapa comparativo em PDF</h2>
-                <span>Gerado a partir das respostas recebidas no portal, sem depender do Sienge.</span>
+                <h2 id="map-pdf-modal-title"><I18nText text={"Mapa comparativo em PDF"} /></h2>
+                <span><I18nText text={"Gerado a partir das respostas recebidas no portal, sem depender do Sienge."} /></span>
               </div>
-              <button type="button" onClick={close}>Fechar</button>
+              <button type="button" onClick={close}><I18nText text={"Fechar"} /></button>
             </div>
 
             <div className="map-pdf-modal-scopes">
               <label className={`map-pdf-scope-option ${scope === "todos" ? "active" : ""}`}>
                 <input type="radio" name="map-pdf-scope" checked={scope === "todos"} onChange={() => setScope("todos")} />
                 <span>
-                  <strong>Todos os itens</strong>
-                  <small>{items.length} {items.length === 1 ? "item" : "itens"} no mapa</small>
+                  <strong><I18nText text={"Todos os itens"} /></strong>
+                  <small>{items.length} <I18nText text={items.length === 1 ? "item" : "itens"} /> <I18nText text={"no mapa"} /></small>
                 </span>
               </label>
               <label className={`map-pdf-scope-option ${scope === "proposta" ? "active" : ""} ${!withProposalCount ? "disabled" : ""}`}>
                 <input type="radio" name="map-pdf-scope" checked={scope === "proposta"} onChange={() => setScope("proposta")} disabled={!withProposalCount} />
                 <span>
-                  <strong>Somente itens com proposta</strong>
-                  <small>{withProposalCount} {withProposalCount === 1 ? "item recebeu" : "itens receberam"} preço válido</small>
+                  <strong><I18nText text={"Somente itens com proposta"} /></strong>
+                  <small>{withProposalCount} <I18nText text={withProposalCount === 1 ? "item recebeu" : "itens receberam"} /> <I18nText text={"preço válido"} /></small>
                 </span>
               </label>
               <label className={`map-pdf-scope-option ${scope === "selecionados" ? "active" : ""}`}>
                 <input type="radio" name="map-pdf-scope" checked={scope === "selecionados"} onChange={() => setScope("selecionados")} />
                 <span>
-                  <strong>Escolher os itens</strong>
-                  <small>{selected.size} {selected.size === 1 ? "selecionado" : "selecionados"}</small>
+                  <strong><I18nText text={"Escolher os itens"} /></strong>
+                  <small>{selected.size} <I18nText text={selected.size === 1 ? "selecionado" : "selecionados"} /></small>
                 </span>
               </label>
             </div>
@@ -91,16 +92,16 @@ export function MapaPdfModal({ quotationId, items }: { quotationId: number; item
                   <label key={row.itemNumber} className="map-pdf-checklist-item">
                     <input type="checkbox" checked={selected.has(row.itemNumber)} onChange={() => toggleItem(row.itemNumber)} />
                     <span>{row.item?.name || `Item ${row.itemNumber}`}</span>
-                    {!row.best && <small>Sem preço</small>}
+                    {!row.best && <small><I18nText text={"Sem preço"} /></small>}
                   </label>
                 ))}
               </div>
             )}
 
             <div className="settings-modal-footer">
-              <span>O PDF abre em uma nova aba; use "Imprimir / salvar PDF" para exportar.</span>
+              <span><I18nText text={"O PDF abre em uma nova aba; use \"Imprimir / salvar PDF\" para exportar."} /></span>
               <button className="button" type="button" onClick={generate} disabled={!canGenerate}>
-                Gerar PDF
+                <I18nText text={"Gerar PDF"} />
               </button>
             </div>
           </div>

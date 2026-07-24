@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import type { ChartItem } from "@/features/financeiro/sienge-data";
 
 export function MonthlyCountLine({
@@ -29,7 +30,7 @@ export function MonthlyCountLine({
 
   return (
     <section className="card panel dashboard-chart">
-      <div className="panel-head"><div><h2 className="panel-title">{title}</h2><span className="panel-note">{note}</span></div></div>
+      <div className="panel-head"><div><h2 className="panel-title"><I18nText text={title} /></h2><span className="panel-note"><I18nText text={note} /></span></div></div>
       {data.length ? <div className="line-chart-wrap">
         <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
           <line x1={padding} x2={width - padding} y1={height - padding} y2={height - padding} className="line-axis" />
@@ -48,7 +49,7 @@ export function MonthlyCountLine({
             );
           })}
         </svg>
-      </div> : <div className="chart-empty">Sem dados para montar o gráfico.</div>}
+      </div> : <div className="chart-empty"><I18nText text={"Sem dados para montar o gráfico."} /></div>}
     </section>
   );
 }

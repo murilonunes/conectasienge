@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import type { FinancialEntry } from "@/features/financeiro/types";
@@ -16,14 +17,14 @@ export function FinancialTable({ entries, dateHeading = "Vencimento" }: { entrie
           <table>
             <thead>
               <tr>
-                <th>Documento</th>
-                <th>Descrição</th>
-                <th>Credor</th>
-                <th>Origem</th>
+                <th><I18nText text={"Documento"} /></th>
+                <th><I18nText text={"Descrição"} /></th>
+                <th><I18nText text={"Credor"} /></th>
+                <th><I18nText text={"Origem"} /></th>
                 <th>{dateHeading}</th>
-                <th>Valor</th>
-                <th>Status</th>
-                <th>Integração</th>
+                <th><I18nText text={"Valor"} /></th>
+                <th><I18nText text={"Status"} /></th>
+                <th><I18nText text={"Integração"} /></th>
               </tr>
             </thead>
             <tbody>
@@ -32,7 +33,7 @@ export function FinancialTable({ entries, dateHeading = "Vencimento" }: { entrie
                   <td><strong>{entry.document}</strong></td>
                   <td>{entry.description}</td>
                   <td>{entry.party}</td>
-                  <td>{entry.originId || "-"}</td>
+                  <td>{entry.originId || <I18nText text={"-"} />}</td>
                   <td>{formatDate(entry.dueDate)}</td>
                   <td><strong>{formatCurrency(entry.amount)}</strong></td>
                   <td><span className={`badge ${entry.status === "Pendente" ? "pending" : entry.status === "Em atraso" ? "late" : ""}`}>{entry.status}</span></td>

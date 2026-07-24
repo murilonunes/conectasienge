@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -93,26 +94,26 @@ export function LocalDataList<T>({
         <div>
           <strong>{items.length}</strong>
           <span>{itemLabel}</span>
-          <small>Exibindo {start + 1}-{end}</small>
+          <small><I18nText text={"Exibindo"} /> {start + 1}<I18nText text={"-"} />{end}</small>
         </div>
         <label>
-          Registros por página
+          <I18nText text={"Registros por página"} />
           <select value={pageSize} onChange={(event) => changePageSize(event.target.value)}>
             {normalizedOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
         </label>
         {csvExport && (
           <button className="local-list-export" type="button" onClick={exportCsv}>
-            {csvExport.buttonLabel || "Exportar CSV"}
+            {csvExport.buttonLabel || <I18nText text={"Exportar CSV"} />}
           </button>
         )}
         <div className="local-list-pages">
           <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={currentPage <= 1}>
-            Anterior
+            <I18nText text={"Anterior"} />
           </button>
-          <span>Página {currentPage} de {totalPages}</span>
+          <span><I18nText text={"Página"} /> {currentPage} <I18nText text={"de"} /> {totalPages}</span>
           <button type="button" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={currentPage >= totalPages}>
-            Próxima
+            <I18nText text={"Próxima"} />
           </button>
         </div>
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n/i18n-provider";
+
 type CsvValue = string | number | boolean | null | undefined;
 
 function csvCell(value: CsvValue) {
@@ -20,6 +22,8 @@ export function CsvExportButton({
   label?: string;
   className?: string;
 }) {
+  const { t } = useI18n();
+
   function handleExport() {
     const header = headers.map(csvCell).join(";");
     const body = rows.map((row) => row.map(csvCell).join(";"));
@@ -38,7 +42,7 @@ export function CsvExportButton({
 
   return (
     <button className={className} type="button" onClick={handleExport}>
-      {label}
+      {t(label)}
     </button>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { FormEvent, useState } from "react";
 import { PayableChargeReviewButton } from "@/components/payables/payable-charge-review-button";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
@@ -88,30 +89,30 @@ export function InstallmentSettlement() {
     <>
       <section className="card settlement-search">
         <form onSubmit={search}>
-          <label><span>Código do título no Sienge</span><input required type="number" min="1" value={billId} onChange={(e) => setBillId(e.target.value)} placeholder="Ex.: 1000" /></label>
-          <button className="button" disabled={loading}>{loading ? "Consultando..." : "Buscar parcelas"}</button>
+          <label><span><I18nText text={"Código do título no Sienge"} /></span><input required type="number" min="1" value={billId} onChange={(e) => setBillId(e.target.value)} placeholder="Ex.: 1000" data-i18n-placeholder={"Ex.: 1000"} /></label>
+          <button className="button" disabled={loading}><I18nText text={loading ? "Consultando..." : "Buscar parcelas"} /></button>
         </form>
-        <p>A consulta mostra vencimento, valores original/corrigido, situação atual da parcela e dia da integração.</p>
+        <p><I18nText text={"A consulta mostra vencimento, valores original/corrigido, situação atual da parcela e dia da integração."} /></p>
       </section>
-      {message && <div className="card data-notice"><strong>Consulta de parcelas</strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Consulta de parcelas"} /></strong><span>{message}</span></div>}
       {bill && <section className="card bill-overview">
-        <div className="bill-overview-head"><div><p className="eyebrow">Título #{bill.id || billId}</p><h2>{bill.documentIdentificationId}-{bill.documentNumber}</h2><span>{bill.notes || "Sem observações cadastradas"}</span></div><div><strong>{formatCurrency(bill.totalInvoiceAmount || 0)}</strong><span>Valor bruto do título</span></div></div>
+        <div className="bill-overview-head"><div><p className="eyebrow"><I18nText text={"Título #"} />{bill.id || billId}</p><h2>{bill.documentIdentificationId}<I18nText text={"-"} />{bill.documentNumber}</h2><span>{bill.notes || <I18nText text={"Sem observações cadastradas"} />}</span></div><div><strong>{formatCurrency(bill.totalInvoiceAmount || 0)}</strong><span><I18nText text={"Valor bruto do título"} /></span></div></div>
         <div className="bill-overview-grid">
-          <div><span>Empresa devedora</span><strong>#{bill.debtorId || "-"}</strong></div>
-          <div><span>Credor</span><strong>#{bill.creditorId || "-"}</strong></div>
-          <div><span>Emissão</span><strong>{bill.issueDate ? formatDate(bill.issueDate) : "-"}</strong></div>
-          <div><span>Origem</span><strong>{bill.originId || "-"}</strong></div>
-          <div><span>Parcelas</span><strong>{bill.installmentsNumber || installments.length}</strong></div>
-          <div><span>Desconto</span><strong>{formatCurrency(bill.discount || 0)}</strong></div>
-          <div><span>Consistência</span><strong>{bill.status === "S" ? "Completo" : bill.status === "I" ? "Em inclusão" : "Incompleto"}</strong></div>
-          <div><span>Anexos</span><strong>{allocations.attachments.length}</strong></div>
-          <div><span>Integração</span><strong><IntegrationStamp record={bill} /></strong></div>
+          <div><span><I18nText text={"Empresa devedora"} /></span><strong><I18nText text={"#"} />{bill.debtorId || <I18nText text={"-"} />}</strong></div>
+          <div><span><I18nText text={"Credor"} /></span><strong><I18nText text={"#"} />{bill.creditorId || <I18nText text={"-"} />}</strong></div>
+          <div><span><I18nText text={"Emissão"} /></span><strong>{bill.issueDate ? formatDate(bill.issueDate) : <I18nText text={"-"} />}</strong></div>
+          <div><span><I18nText text={"Origem"} /></span><strong>{bill.originId || <I18nText text={"-"} />}</strong></div>
+          <div><span><I18nText text={"Parcelas"} /></span><strong>{bill.installmentsNumber || installments.length}</strong></div>
+          <div><span><I18nText text={"Desconto"} /></span><strong>{formatCurrency(bill.discount || 0)}</strong></div>
+          <div><span><I18nText text={"Consistência"} /></span><strong>{bill.status === "S" ? <I18nText text={"Completo"} /> : bill.status === "I" ? <I18nText text={"Em inclusão"} /> : <I18nText text={"Incompleto"} />}</strong></div>
+          <div><span><I18nText text={"Anexos"} /></span><strong>{allocations.attachments.length}</strong></div>
+          <div><span><I18nText text={"Integração"} /></span><strong><IntegrationStamp record={bill} /></strong></div>
         </div>
         {(allocations.budgetCategories.length > 0 || allocations.buildingsCost.length > 0 || allocations.departmentsCost.length > 0) && <div className="bill-allocations">
-          <span>Apropriações vinculadas</span>
-          <strong>{allocations.budgetCategories.length} financeiras</strong>
-          <strong>{allocations.buildingsCost.length} obras</strong>
-          <strong>{allocations.departmentsCost.length} departamentos</strong>
+          <span><I18nText text={"Apropriações vinculadas"} /></span>
+          <strong>{allocations.budgetCategories.length} <I18nText text={"financeiras"} /></strong>
+          <strong>{allocations.buildingsCost.length} <I18nText text={"obras"} /></strong>
+          <strong>{allocations.departmentsCost.length} <I18nText text={"departamentos"} /></strong>
         </div>}
       </section>}
       <section className="settlement-grid">
@@ -119,28 +120,28 @@ export function InstallmentSettlement() {
           const review = analyzePayableCharge(installment);
           return (
             <article className="card settlement-card" key={installment.installmentNumber}>
-              <div className="settlement-top"><span>Parcela {installment.installmentNumber}</span><span className={`badge ${installment.situation === "Totalmente paga" ? "" : "pending"}`}>{installment.situation || "Situação não informada"}</span></div>
+              <div className="settlement-top"><span><I18nText text={"Parcela"} /> {installment.installmentNumber}</span><span className={`badge ${installment.situation === "Totalmente paga" ? "" : "pending"}`}>{installment.situation || <I18nText text={"Situação não informada"} />}</span></div>
               <strong>{formatCurrency(review.correctedAmount)}</strong>
               <dl>
-                <div><dt>Valor original</dt><dd>{formatCurrency(review.originalAmount)}</dd></div>
-                <div><dt>Valor corrigido</dt><dd>{formatCurrency(review.correctedAmount)}</dd></div>
-                <div><dt>Acréscimo corrigido</dt><dd>{formatCurrency(review.correctedIncrease)}</dd></div>
-                <div><dt>Multa/juros pagos a mais</dt><dd>{formatCurrency(review.paidIncrease)}</dd></div>
-                <div><dt>Vencimento</dt><dd>{formatDate(installment.dueDate)}</dd></div>
-                <div><dt>Competência</dt><dd>{installment.billDate ? formatDate(installment.billDate) : "Não informada"}</dd></div>
-                <div><dt>Data-base</dt><dd>{installment.baseDate ? formatDate(installment.baseDate) : "Não informada"}</dd></div>
-                <div><dt>Indexador</dt><dd>{installment.indexId ? `#${installment.indexId}` : "Não informado"}</dd></div>
-                <div><dt>Forma</dt><dd>{installment.paymentType || (installment.paymentTypeId ? `#${installment.paymentTypeId}` : "Não informada")}</dd></div>
-                <div><dt>Enviada ao banco</dt><dd>{installment.sentToBank ? "Sim" : "Não"}</dd></div>
-                <div><dt>Lote bancário</dt><dd>{installment.batchNumber || "Não gerado"}</dd></div>
-                <div><dt>Integração</dt><dd><IntegrationStamp record={installment} /></dd></div>
+                <div><dt><I18nText text={"Valor original"} /></dt><dd>{formatCurrency(review.originalAmount)}</dd></div>
+                <div><dt><I18nText text={"Valor corrigido"} /></dt><dd>{formatCurrency(review.correctedAmount)}</dd></div>
+                <div><dt><I18nText text={"Acréscimo corrigido"} /></dt><dd>{formatCurrency(review.correctedIncrease)}</dd></div>
+                <div><dt><I18nText text={"Multa/juros pagos a mais"} /></dt><dd>{formatCurrency(review.paidIncrease)}</dd></div>
+                <div><dt><I18nText text={"Vencimento"} /></dt><dd>{formatDate(installment.dueDate)}</dd></div>
+                <div><dt><I18nText text={"Competência"} /></dt><dd>{installment.billDate ? formatDate(installment.billDate) : <I18nText text={"Não informada"} />}</dd></div>
+                <div><dt><I18nText text={"Data-base"} /></dt><dd>{installment.baseDate ? formatDate(installment.baseDate) : <I18nText text={"Não informada"} />}</dd></div>
+                <div><dt><I18nText text={"Indexador"} /></dt><dd>{installment.indexId ? `#${installment.indexId}` : <I18nText text={"Não informado"} />}</dd></div>
+                <div><dt><I18nText text={"Forma"} /></dt><dd>{installment.paymentType || (installment.paymentTypeId ? `#${installment.paymentTypeId}` : <I18nText text={"Não informada"} />)}</dd></div>
+                <div><dt><I18nText text={"Enviada ao banco"} /></dt><dd><I18nText text={installment.sentToBank ? "Sim" : "Não"} /></dd></div>
+                <div><dt><I18nText text={"Lote bancário"} /></dt><dd>{installment.batchNumber || <I18nText text={"Não gerado"} />}</dd></div>
+                <div><dt><I18nText text={"Integração"} /></dt><dd><IntegrationStamp record={installment} /></dd></div>
               </dl>
               <PayableChargeReviewButton item={installment} title={`Título #${bill?.id || billId} / Parcela ${installment.installmentNumber}`} />
             </article>
           );
         })}
       </section>
-      <div className="card settlement-notice"><strong>Consulta operacional</strong><p>Esta tela confere parcelas, vencimentos, valores, integrações e baixas já registradas no banco local. Alterações de instrução de pagamento e baixa financeira devem ser feitas diretamente no Sienge.</p></div>
+      <div className="card settlement-notice"><strong><I18nText text={"Consulta operacional"} /></strong><p><I18nText text={"Esta tela confere parcelas, vencimentos, valores, integrações e baixas já registradas no banco local. Alterações de instrução de pagamento e baixa financeira devem ser feitas diretamente no Sienge."} /></p></div>
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 export function DashboardLoadingState() {
   const cards = ["A receber", "A pagar", "Vendas", "Compras"];
   const steps = ["Ler dados salvos", "Montar indicadores", "Atualizar gráficos"];
@@ -6,9 +7,9 @@ export function DashboardLoadingState() {
     <>
       <section className="card dashboard-loading-hero" aria-live="polite">
         <div>
-          <span>Dashboard</span>
-          <h2>Atualizando visão geral</h2>
-          <p>Estamos lendo os dados salvos e montando os gráficos principais. A tela abre com período curto para ficar mais rápida.</p>
+          <span><I18nText text={"Dashboard"} /></span>
+          <h2><I18nText text={"Atualizando visão geral"} /></h2>
+          <p><I18nText text={"Estamos lendo os dados salvos e montando os gráficos principais. A tela abre com período curto para ficar mais rápida."} /></p>
         </div>
         <div className="dashboard-loading-spinner" aria-hidden="true" />
       </section>
@@ -16,9 +17,9 @@ export function DashboardLoadingState() {
       <div className="dashboard-loading-steps">
         {steps.map((step, index) => (
           <div className="card" key={step}>
-            <i>{index === 0 ? "..." : "-"}</i>
+            <i><I18nText text={index === 0 ? "..." : "-"} /></i>
             <strong>{step}</strong>
-            <span>{index === 0 ? "Em andamento" : "Na fila"}</span>
+            <span><I18nText text={index === 0 ? "Em andamento" : "Na fila"} /></span>
           </div>
         ))}
       </div>

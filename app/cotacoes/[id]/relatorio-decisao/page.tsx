@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -26,8 +27,8 @@ export default async function QuotationDecisionReportPage({ params }: { params: 
         <section className="card panel access-denied-panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Acesso não liberado</h2>
-              <span className="panel-note">Seu usuário não tem permissão para relatórios de cotação</span>
+              <h2 className="panel-title"><I18nText text={"Acesso não liberado"} /></h2>
+              <span className="panel-note"><I18nText text={"Seu usuário não tem permissão para relatórios de cotação"} /></span>
             </div>
           </div>
         </section>
@@ -82,108 +83,108 @@ export default async function QuotationDecisionReportPage({ params }: { params: 
   return (
     <main className="decision-report">
       <div className="decision-report-actions">
-        <Link className="button secondary" href={`/cotacoes/${id}`}>Voltar para a cotação</Link>
+        <Link className="button secondary" href={`/cotacoes/${id}`}><I18nText text={"Voltar para a cotação"} /></Link>
         <PrintButton />
       </div>
 
       <header className="decision-report-head">
         <div>
-          <span>Brasin Empreendimentos — Compras</span>
-          <h1>Relatório de decisão de cotação</h1>
-          <p>Cotação #{quotation.code} — emitido em {new Date().toLocaleDateString("pt-BR")}</p>
+          <span><I18nText text={"Brasin Empreendimentos — Compras"} /></span>
+          <h1><I18nText text={"Relatório de decisão de cotação"} /></h1>
+          <p><I18nText text={"Cotação #"} />{quotation.code} <I18nText text={"— emitido em"} /> {new Date().toLocaleDateString("pt-BR")}</p>
         </div>
         <div className="decision-report-summary">
-          <span><strong>{formatCurrency(chosenTotal)}</strong><small>Total decidido</small></span>
-          <span><strong>{itemsWithChoice} de {quotation.items.length}</strong><small>Itens com vencedor</small></span>
-          <span><strong>{responses.length}</strong><small>Propostas consideradas</small></span>
+          <span><strong>{formatCurrency(chosenTotal)}</strong><small><I18nText text={"Total decidido"} /></small></span>
+          <span><strong>{itemsWithChoice} <I18nText text={"de"} /> {quotation.items.length}</strong><small><I18nText text={"Itens com vencedor"} /></small></span>
+          <span><strong>{responses.length}</strong><small><I18nText text={"Propostas consideradas"} /></small></span>
         </div>
       </header>
 
       <section className="decision-report-block decision-report-grid">
-        <span><strong>Comprador</strong>{quotation.buyerId}</span>
-        <span><strong>Data da cotação</strong>{formatOptionalDate(quotation.date)}</span>
-        <span><strong>Prazo de respostas</strong>{formatOptionalDate(quotation.deadline)}</span>
-        <span><strong>Decisão salva em</strong>{decidedAt ? formatOptionalDate(decidedAt) : "Sem decisão salva"}</span>
-        <span><strong>Aprovado por</strong>{awards.find((award) => award.createdBy)?.createdBy || "Não registrado"}</span>
-        <span><strong>Modalidade</strong>{quotationAward ? "Cotação inteira" : itemAwards.size ? "Por item" : "Não definida"}</span>
+        <span><strong><I18nText text={"Comprador"} /></strong>{quotation.buyerId}</span>
+        <span><strong><I18nText text={"Data da cotação"} /></strong>{formatOptionalDate(quotation.date)}</span>
+        <span><strong><I18nText text={"Prazo de respostas"} /></strong>{formatOptionalDate(quotation.deadline)}</span>
+        <span><strong><I18nText text={"Decisão salva em"} /></strong>{decidedAt ? formatOptionalDate(decidedAt) : <I18nText text={"Sem decisão salva"} />}</span>
+        <span><strong><I18nText text={"Aprovado por"} /></strong>{awards.find((award) => award.createdBy)?.createdBy || <I18nText text={"Não registrado"} />}</span>
+        <span><strong><I18nText text={"Modalidade"} /></strong>{quotationAward ? <I18nText text={"Cotação inteira"} /> : itemAwards.size ? <I18nText text={"Por item"} /> : <I18nText text={"Não definida"} />}</span>
       </section>
 
       <section className="decision-report-block">
-        <h2>Fornecedor(es) vencedor(es) e justificativas</h2>
+        <h2><I18nText text={"Fornecedor(es) vencedor(es) e justificativas"} /></h2>
         {winners.length ? (
           <div className="decision-report-winners">
             {winners.map((award) => (
               <article key={award.responseId}>
                 <div>
                   <strong>{award.supplierName}</strong>
-                  <small>{formatDocument(award.document)} — {award.scope === "quotation" ? "cotação inteira" : `${plural(awards.filter((current) => current.scope === "item" && current.responseId === award.responseId).length, "item", "itens")}`}</small>
+                  <small>{formatDocument(award.document)} <I18nText text={"—"} /> {award.scope === "quotation" ? <I18nText text={"cotação inteira"} /> : `${plural(awards.filter((current) => current.scope === "item" && current.responseId === award.responseId).length, "item", "itens")}`}</small>
                 </div>
                 <p>{award.justification}</p>
               </article>
             ))}
           </div>
         ) : (
-          <p className="decision-report-empty">Nenhuma decisão foi salva para esta cotação até o momento.</p>
+          <p className="decision-report-empty"><I18nText text={"Nenhuma decisão foi salva para esta cotação até o momento."} /></p>
         )}
       </section>
 
       <section className="decision-report-block">
-        <h2>Mapa da decisão por item</h2>
+        <h2><I18nText text={"Mapa da decisão por item"} /></h2>
         <table className="decision-report-table">
           <thead>
             <tr>
-              <th>Insumo</th>
-              <th>Qtd.</th>
-              <th>Fornecedor escolhido</th>
-              <th>Preço unit.</th>
-              <th>Total</th>
-              <th>Melhor preço</th>
-              <th>Justificativa</th>
+              <th><I18nText text={"Insumo"} /></th>
+              <th><I18nText text={"Qtd."} /></th>
+              <th><I18nText text={"Fornecedor escolhido"} /></th>
+              <th><I18nText text={"Preço unit."} /></th>
+              <th><I18nText text={"Total"} /></th>
+              <th><I18nText text={"Melhor preço"} /></th>
+              <th><I18nText text={"Justificativa"} /></th>
             </tr>
           </thead>
           <tbody>
             {rows.map(({ item, best, chosen }) => (
               <tr key={item.itemNumber}>
-                <td><strong>{item.name}</strong><br /><small>#{item.productId || item.itemNumber} — {item.unit}</small></td>
+                <td><strong>{item.name}</strong><br /><small><I18nText text={"#"} />{item.productId || item.itemNumber} <I18nText text={"—"} /> {item.unit}</small></td>
                 <td>{item.quantity}</td>
-                <td>{chosen ? chosen.response.supplierName : "—"}</td>
-                <td>{chosen ? formatCurrency(chosen.unitPrice) : "—"}</td>
-                <td>{chosen ? formatCurrency(chosen.total) : "—"}</td>
+                <td>{chosen ? chosen.response.supplierName : <I18nText text={"—"} />}</td>
+                <td>{chosen ? formatCurrency(chosen.unitPrice) : <I18nText text={"—"} />}</td>
+                <td>{chosen ? formatCurrency(chosen.total) : <I18nText text={"—"} />}</td>
                 <td>
-                  {best ? `${formatCurrency(best.unitPrice)} (${best.response.supplierName})` : "Sem preço"}
-                  {chosen && best && chosen.response.id !== best.response.id && <em> — escolha difere do menor preço</em>}
+                  {best ? `${formatCurrency(best.unitPrice)} (${best.response.supplierName})` : <I18nText text={"Sem preço"} />}
+                  {chosen && best && chosen.response.id !== best.response.id && <em> <I18nText text={"— escolha difere do menor preço"} /></em>}
                 </td>
-                <td className="decision-report-justification">{chosen?.justification || "—"}</td>
+                <td className="decision-report-justification">{chosen?.justification || <I18nText text={"—"} />}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={4}>Total da decisão</td>
+              <td colSpan={4}><I18nText text={"Total da decisão"} /></td>
               <td>{formatCurrency(chosenTotal)}</td>
-              <td colSpan={2}>Melhor cesta teórica: {formatCurrency(bestTotal)}</td>
+              <td colSpan={2}><I18nText text={"Melhor cesta teórica:"} /> {formatCurrency(bestTotal)}</td>
             </tr>
           </tfoot>
         </table>
       </section>
 
       <section className="decision-report-block">
-        <h2>Propostas consideradas</h2>
+        <h2><I18nText text={"Propostas consideradas"} /></h2>
         <table className="decision-report-table">
           <thead>
             <tr>
-              <th>Fornecedor</th>
-              <th>CPF/CNPJ</th>
-              <th>Recebida em</th>
-              <th>Total</th>
-              <th>Pagamento</th>
-              <th>Frete e entrega</th>
+              <th><I18nText text={"Fornecedor"} /></th>
+              <th><I18nText text={"CPF/CNPJ"} /></th>
+              <th><I18nText text={"Recebida em"} /></th>
+              <th><I18nText text={"Total"} /></th>
+              <th><I18nText text={"Pagamento"} /></th>
+              <th><I18nText text={"Frete e entrega"} /></th>
             </tr>
           </thead>
           <tbody>
             {responses.map((response) => (
               <tr key={response.id}>
-                <td><strong>{response.supplierName}</strong><br /><small>Resposta #{response.id}</small></td>
+                <td><strong>{response.supplierName}</strong><br /><small><I18nText text={"Resposta #"} />{response.id}</small></td>
                 <td>{formatDocument(response.document)}</td>
                 <td>{formatOptionalDate(response.createdAt)}</td>
                 <td>{formatCurrency(response.totalValue)}</td>
@@ -195,19 +196,19 @@ export default async function QuotationDecisionReportPage({ params }: { params: 
         </table>
         {supersededCount > 0 && (
           <p className="decision-report-note">
-            {plural(supersededCount, "proposta anterior foi substituída por revisão e ficou fora", "propostas anteriores foram substituídas por revisão e ficaram fora")} desta comparação (histórico disponível na aba Respostas).
+            {plural(supersededCount, "proposta anterior foi substituída por revisão e ficou fora", "propostas anteriores foram substituídas por revisão e ficaram fora")} <I18nText text={"desta comparação (histórico disponível na aba Respostas)."} />
           </p>
         )}
-        {!responses.length && <p className="decision-report-empty">Nenhuma proposta ativa recebida pelo portal.</p>}
+        {!responses.length && <p className="decision-report-empty"><I18nText text={"Nenhuma proposta ativa recebida pelo portal."} /></p>}
       </section>
 
       <section className="decision-report-signatures">
-        <div><span /><p>Comprador responsável</p></div>
-        <div><span /><p>Aprovação</p></div>
+        <div><span /><p><I18nText text={"Comprador responsável"} /></p></div>
+        <div><span /><p><I18nText text={"Aprovação"} /></p></div>
       </section>
 
       <footer className="decision-report-footer">
-        Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor e da decisão registrada na cotação #{quotation.code}.
+        <I18nText text={"Documento gerado pelo Brasin Financeiro a partir das propostas recebidas no portal do fornecedor e da decisão registrada na cotação #"} />{quotation.code}<I18nText text={"."} />
       </footer>
     </main>
   );

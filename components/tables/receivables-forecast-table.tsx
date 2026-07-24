@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useState } from "react";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
@@ -165,7 +166,7 @@ export function ReceivablesForecastTable({ totalEntries }: { totalEntries: numbe
     <section className="card table-card">
       <div className="panel-head table-head">
         <div>
-          <h2 className="panel-title">Parcelas previstas a receber</h2>
+          <h2 className="panel-title"><I18nText text={"Parcelas previstas a receber"} /></h2>
           <span className="panel-note">
             {payload.filteredCount === totalEntries
               ? `${totalEntries} parcelas abertas por vencimento`
@@ -176,52 +177,52 @@ export function ReceivablesForecastTable({ totalEntries }: { totalEntries: numbe
       </div>
 
       <div className="card purchases-filters">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar título, cliente, projeto, unidade ou empresa" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar título, cliente, projeto, unidade ou empresa" data-i18n-placeholder={"Buscar título, cliente, projeto, unidade ou empresa"} />
         <select value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="">Todas as situações</option>
+          <option value=""><I18nText text={"Todas as situações"} /></option>
           {payload.statuses.map((item) => <option key={item}>{item}</option>)}
         </select>
         <div>
           <strong>{payload.filteredCount}</strong>
-          <span>parcelas</span>
+          <span><I18nText text={"parcelas"} /></span>
           <strong>{formatCurrency(payload.totalOpen)}</strong>
         </div>
       </div>
 
-      {message && <div className="card data-notice"><strong>Parcelas</strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Parcelas"} /></strong><span>{message}</span></div>}
 
       <div className="local-data-list">
         <div className="local-list-controls top">
           <div>
             <strong>{payload.filteredCount}</strong>
-            <span>parcelas</span>
-            <small>{loading ? "Carregando..." : `Página ${payload.page} de ${payload.totalPages}`}</small>
+            <span><I18nText text={"parcelas"} /></span>
+            <small>{loading ? <I18nText text={"Carregando..."} /> : `Página ${payload.page} de ${payload.totalPages}`}</small>
           </div>
           <label>
-            Registros por página
+            <I18nText text={"Registros por página"} />
             <select value={pageSize} onChange={(event) => changePageSize(event.target.value)}>
               {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <div className="local-list-pages">
-            <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={loading || page <= 1}>Anterior</button>
-            <span>Página {payload.page} de {payload.totalPages}</span>
-            <button type="button" onClick={() => setPage((current) => Math.min(payload.totalPages, current + 1))} disabled={loading || page >= payload.totalPages}>Próxima</button>
+            <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={loading || page <= 1}><I18nText text={"Anterior"} /></button>
+            <span><I18nText text={"Página"} /> {payload.page} <I18nText text={"de"} /> {payload.totalPages}</span>
+            <button type="button" onClick={() => setPage((current) => Math.min(payload.totalPages, current + 1))} disabled={loading || page >= payload.totalPages}><I18nText text={"Próxima"} /></button>
           </div>
         </div>
 
-        {loading ? <div className="empty-state">Carregando parcelas a receber...</div> : payload.items.length ? (
+        {loading ? <div className="empty-state"><I18nText text={"Carregando parcelas a receber..."} /></div> : payload.items.length ? (
           <table>
           <thead>
             <tr>
-              <th>Título</th>
-              <th>Cliente</th>
-              <th>Vencimento</th>
-              <th>Projeto / unidade</th>
-              <th>Valor em aberto</th>
-              <th>Recebido</th>
-              <th>Situação</th>
-              <th>Integração</th>
+              <th><I18nText text={"Título"} /></th>
+              <th><I18nText text={"Cliente"} /></th>
+              <th><I18nText text={"Vencimento"} /></th>
+              <th><I18nText text={"Projeto / unidade"} /></th>
+              <th><I18nText text={"Valor em aberto"} /></th>
+              <th><I18nText text={"Recebido"} /></th>
+              <th><I18nText text={"Situação"} /></th>
+              <th><I18nText text={"Integração"} /></th>
             </tr>
           </thead>
           <tbody>
@@ -232,24 +233,24 @@ export function ReceivablesForecastTable({ totalEntries }: { totalEntries: numbe
                   <td>
                     <strong>{receivableDocument(entry)}</strong>
                     <br />
-                    <span className="table-muted">Título #{titleNumber(entry)} - Parcela {entry.installmentNumber || entry.installmentId || "não informada"}</span>
+                    <span className="table-muted"><I18nText text={"Título #"} />{titleNumber(entry)} <I18nText text={"- Parcela"} /> {entry.installmentNumber || entry.installmentId || <I18nText text={"não informada"} />}</span>
                   </td>
                   <td>
-                    {entry.clientName || "Cliente não informado"}
+                    {entry.clientName || <I18nText text={"Cliente não informado"} />}
                     <br />
-                    <span className="table-muted">{entry.clientId ? `Cliente #${entry.clientId}` : entry.companyName || ""}</span>
+                    <span className="table-muted">{entry.clientId ? `Cliente #${entry.clientId}` : entry.companyName || <I18nText text={""} />}</span>
                   </td>
                   <td>{formatOptionalDate(entry.dueDate)}</td>
                   <td>
-                    {entry.projectName || entry.businessAreaName || "Não informado"}
+                    {entry.projectName || entry.businessAreaName || <I18nText text={"Não informado"} />}
                     <br />
-                    <span className="table-muted">{entry.mainUnit || entry.companyName || ""}</span>
+                    <span className="table-muted">{entry.mainUnit || entry.companyName || <I18nText text={""} />}</span>
                   </td>
                   <td><strong>{formatCurrency(receivableOpenAmount(entry))}</strong></td>
                   <td>
                     {formatCurrency(receivablePaidAmount(entry))}
                     <br />
-                    <span className="table-muted">{entry.receipts?.length || 0} baixa{entry.receipts?.length === 1 ? "" : "s"}</span>
+                    <span className="table-muted">{entry.receipts?.length || 0} <I18nText text={"baixa"} /><I18nText text={entry.receipts?.length === 1 ? "" : "s"} /></span>
                   </td>
                   <td><span className={badgeClass(currentStatus)}>{currentStatus}</span></td>
                   <td><IntegrationStamp record={entry} /></td>
@@ -258,7 +259,7 @@ export function ReceivablesForecastTable({ totalEntries }: { totalEntries: numbe
             })}
           </tbody>
         </table>
-        ) : <div className="empty-state">Nenhuma parcela aberta encontrada para a previsão.</div>}
+        ) : <div className="empty-state"><I18nText text={"Nenhuma parcela aberta encontrada para a previsão."} /></div>}
       </div>
     </section>
   );

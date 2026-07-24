@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { formatCompactCurrency } from "@/lib/formatters";
 
 type MonthlySalesItem = {
@@ -14,8 +15,8 @@ export function MonthlySalesChart({ data }: { data: MonthlySalesItem[] }) {
   return (
     <section className="card panel sales-monthly-panel">
       <div className="panel-head">
-        <div><h2 className="panel-title">Vendas por mês</h2><span className="panel-note">Valor vendido separado em caixa (à vista/prazo/financiamento) e permuta (bem recebido, sem caixa), com quantidade de contratos emitidos</span></div>
-        <div className="chart-legend"><span><i className="dot" />Caixa</span><span><i className="dot exchange" />Permuta</span><span><i className="dot out" />Contratos</span></div>
+        <div><h2 className="panel-title"><I18nText text={"Vendas por mês"} /></h2><span className="panel-note"><I18nText text={"Valor vendido separado em caixa (à vista/prazo/financiamento) e permuta (bem recebido, sem caixa), com quantidade de contratos emitidos"} /></span></div>
+        <div className="chart-legend"><span><i className="dot" /><I18nText text={"Caixa"} /></span><span><i className="dot exchange" /><I18nText text={"Permuta"} /></span><span><i className="dot out" /><I18nText text={"Contratos"} /></span></div>
       </div>
       {data.length ? <div className="sales-monthly-chart">
         {data.map((item) => {
@@ -34,7 +35,7 @@ export function MonthlySalesChart({ data }: { data: MonthlySalesItem[] }) {
             </div>
           );
         })}
-      </div> : <div className="chart-empty">Nenhum contrato com data de emissão foi encontrado.</div>}
+      </div> : <div className="chart-empty"><I18nText text={"Nenhum contrato com data de emissão foi encontrado."} /></div>}
     </section>
   );
 }

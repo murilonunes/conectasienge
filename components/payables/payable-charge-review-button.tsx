@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { analyzePayableCharge, type PayableChargeForReview } from "@/lib/payables-abuse-analysis";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
@@ -28,31 +29,31 @@ export function PayableChargeReviewButton({ item, title = "Análise de cobrança
             <div className="settings-modal-head">
               <div>
                 <h2 id="payable-review-title">{title}</h2>
-                <span>{review.hasRisk ? "Possível cobrança acima do critério informado." : "Nenhum excesso identificado pelo critério informado."}</span>
+                <span><I18nText text={review.hasRisk ? "Possível cobrança acima do critério informado." : "Nenhum excesso identificado pelo critério informado."} /></span>
               </div>
-              <button type="button" onClick={() => setOpen(false)}>Fechar</button>
+              <button type="button" onClick={() => setOpen(false)}><I18nText text={"Fechar"} /></button>
             </div>
 
             <div className={`payable-review-status ${review.hasRisk ? "warn" : ""}`}>
-              <strong>{review.hasRisk ? "Atenção para revisar" : "Dentro do critério"}</strong>
-              <span>Critério usado: até 2% no ato mais 1% ao mês de atraso.</span>
+              <strong><I18nText text={review.hasRisk ? "Atenção para revisar" : "Dentro do critério"} /></strong>
+              <span><I18nText text={"Critério usado: até 2% no ato mais 1% ao mês de atraso."} /></span>
             </div>
 
             <div className="payable-review-grid">
-              <div><span>Valor original</span><strong>{formatCurrency(review.originalAmount)}</strong></div>
-              <div><span>Valor corrigido</span><strong>{formatCurrency(review.correctedAmount)}</strong></div>
-              <div><span>Acréscimo corrigido</span><strong>{formatCurrency(review.correctedIncrease)}</strong></div>
-              <div><span>Valor pago</span><strong>{formatCurrency(review.paidAmount)}</strong></div>
-              <div><span>Multa/juros pagos a mais</span><strong>{formatCurrency(review.paidIncrease)}</strong></div>
-              <div><span>Limite pelo critério</span><strong>{formatCurrency(review.allowedIncrease)}</strong></div>
-              <div><span>Meses de atraso considerados</span><strong>{review.monthsLate}</strong></div>
-              <div><span>Data de referência</span><strong>{formatOptionalDate(review.referenceDate)}</strong></div>
-              <div><span>Excesso na correção</span><strong className={review.correctedExcess > 0 ? "negative" : ""}>{formatCurrency(review.correctedExcess)}</strong></div>
-              <div><span>Excesso no valor pago</span><strong className={review.paidExcess > 0 ? "negative" : ""}>{formatCurrency(review.paidExcess)}</strong></div>
+              <div><span><I18nText text={"Valor original"} /></span><strong>{formatCurrency(review.originalAmount)}</strong></div>
+              <div><span><I18nText text={"Valor corrigido"} /></span><strong>{formatCurrency(review.correctedAmount)}</strong></div>
+              <div><span><I18nText text={"Acréscimo corrigido"} /></span><strong>{formatCurrency(review.correctedIncrease)}</strong></div>
+              <div><span><I18nText text={"Valor pago"} /></span><strong>{formatCurrency(review.paidAmount)}</strong></div>
+              <div><span><I18nText text={"Multa/juros pagos a mais"} /></span><strong>{formatCurrency(review.paidIncrease)}</strong></div>
+              <div><span><I18nText text={"Limite pelo critério"} /></span><strong>{formatCurrency(review.allowedIncrease)}</strong></div>
+              <div><span><I18nText text={"Meses de atraso considerados"} /></span><strong>{review.monthsLate}</strong></div>
+              <div><span><I18nText text={"Data de referência"} /></span><strong>{formatOptionalDate(review.referenceDate)}</strong></div>
+              <div><span><I18nText text={"Excesso na correção"} /></span><strong className={review.correctedExcess > 0 ? "negative" : ""}>{formatCurrency(review.correctedExcess)}</strong></div>
+              <div><span><I18nText text={"Excesso no valor pago"} /></span><strong className={review.paidExcess > 0 ? "negative" : ""}>{formatCurrency(review.paidExcess)}</strong></div>
             </div>
 
             <p className="payable-review-note">
-              Esta análise é uma triagem operacional. Ela usa os valores salvos do Sienge e ajuda a separar parcelas para conferência antes de tratar como cobrança indevida.
+              <I18nText text={"Esta análise é uma triagem operacional. Ela usa os valores salvos do Sienge e ajuda a separar parcelas para conferência antes de tratar como cobrança indevida."} />
             </p>
           </div>
         </div>

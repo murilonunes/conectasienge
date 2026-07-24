@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import type { ChartItem } from "@/features/financeiro/sienge-data";
 
 const colors = ["#1f6b4f", "#4d9879", "#77b096", "#d6a04e", "#c46655", "#8d7baf", "#6f8792", "#c9a15b"];
@@ -21,11 +22,11 @@ export function PercentPieChart({ title, note, data, centerLabel = "itens" }: Pe
 
   return (
     <section className="card panel">
-      <div className="panel-head"><div><h2 className="panel-title">{title}</h2><span className="panel-note">{note}</span></div></div>
+      <div className="panel-head"><div><h2 className="panel-title"><I18nText text={title} /></h2><span className="panel-note"><I18nText text={note} /></span></div></div>
       {data.length ? (
         <div className="percent-pie-layout">
           <div className="percent-pie" style={{ background: `conic-gradient(${gradient || "#edf1ee 0 100%"})` }}>
-            <div><strong>{total}</strong><span>{centerLabel}</span></div>
+            <div><strong>{total}</strong><span><I18nText text={centerLabel} /></span></div>
           </div>
           <div className="percent-pie-legend">
             {data.map((item, index) => {
@@ -34,14 +35,14 @@ export function PercentPieChart({ title, note, data, centerLabel = "itens" }: Pe
                 <div key={item.label}>
                   <i style={{ background: colors[index % colors.length] }} />
                   <span>{item.label}</span>
-                  <strong>{percentage.toFixed(0)}%</strong>
-                  <small>{item.count} unidade{item.count === 1 ? "" : "s"}</small>
+                  <strong>{percentage.toFixed(0)}<I18nText text={"%"} /></strong>
+                  <small>{item.count} <I18nText text={"unidade"} /><I18nText text={item.count === 1 ? "" : "s"} /></small>
                 </div>
               );
             })}
           </div>
         </div>
-      ) : <div className="chart-empty">Sem dados para montar o grafico.</div>}
+      ) : <div className="chart-empty"><I18nText text={"Sem dados para montar o grafico."} /></div>}
     </section>
   );
 }

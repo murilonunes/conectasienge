@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { ReconciliationAccountPicker } from "@/components/settings/reconciliation-account-picker";
@@ -104,8 +105,8 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
 
       {searchParams?.salvo && (
         <section className="card data-notice">
-          <strong>Preferências salvas</strong>
-          <span>As próximas aberturas das telas já usam os parâmetros atualizados.</span>
+          <strong><I18nText text={"Preferências salvas"} /></strong>
+          <span><I18nText text={"As próximas aberturas das telas já usam os parâmetros atualizados."} /></span>
         </section>
       )}
 
@@ -118,30 +119,30 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
 
       <section className="card settings-flow">
         <div>
-          <strong>Como o sistema trabalha agora</strong>
-          <span>As telas abrem usando os dados já salvos.</span>
+          <strong><I18nText text={"Como o sistema trabalha agora"} /></strong>
+          <span><I18nText text={"As telas abrem usando os dados já salvos."} /></span>
         </div>
         <div>
-          <strong>Quando atualizar</strong>
-          <span>Use esta tela para buscar dados novos no Sienge.</span>
+          <strong><I18nText text={"Quando atualizar"} /></strong>
+          <span><I18nText text={"Use esta tela para buscar dados novos no Sienge."} /></span>
         </div>
         <div>
-          <strong>Proteção de dados fechados</strong>
-          <span>Pagos, baixados e finalizados ficam preservados na atualização normal.</span>
+          <strong><I18nText text={"Proteção de dados fechados"} /></strong>
+          <span><I18nText text={"Pagos, baixados e finalizados ficam preservados na atualização normal."} /></span>
         </div>
       </section>
 
       <section className="card data-notice">
-        <strong>Período de atualização ativo</strong>
-        <span>As consultas com data buscam de {settings.siengeStartDate} até {settings.siengeEndDate}. Ajuste abaixo em Preferências e salve antes de atualizar.</span>
+        <strong><I18nText text={"Período de atualização ativo"} /></strong>
+        <span><I18nText text={"As consultas com data buscam de"} /> {settings.siengeStartDate} <I18nText text={"até"} /> {settings.siengeEndDate}<I18nText text={". Ajuste abaixo em Preferências e salve antes de atualizar."} /></span>
       </section>
 
       <div className="settings-command-layout">
         <section className="card panel">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Atualizar dados</h2>
-              <span className="panel-note">Escolha uma área. A atualização roda em segundo plano e mostra o andamento abaixo.</span>
+              <h2 className="panel-title"><I18nText text={"Atualizar dados"} /></h2>
+              <span className="panel-note"><I18nText text={"Escolha uma área. A atualização roda em segundo plano e mostra o andamento abaixo."} /></span>
             </div>
           </div>
           <SiengeUpdateControls areas={updateAreas} statuses={updateStatuses} />
@@ -150,37 +151,37 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
         <section className="card panel settings-form-card">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Preferências de exibição</h2>
-              <span className="panel-note">Essas escolhas não consultam o Sienge.</span>
+              <h2 className="panel-title"><I18nText text={"Preferências de exibição"} /></h2>
+              <span className="panel-note"><I18nText text={"Essas escolhas não consultam o Sienge."} /></span>
             </div>
           </div>
           <form action={saveSettingsAction} className="settings-form">
             <div className="settings-form-note">
-              <strong>Período usado para atualizar o Sienge</strong>
-              <span>As consultas com data usam esse intervalo ao salvar os dados.</span>
+              <strong><I18nText text={"Período usado para atualizar o Sienge"} /></strong>
+              <span><I18nText text={"As consultas com data usam esse intervalo ao salvar os dados."} /></span>
             </div>
             <label>
-              Data inicial da integração
+              <I18nText text={"Data inicial da integração"} />
               <input name="siengeStartDate" type="date" defaultValue={settings.siengeStartDate} />
             </label>
             <label>
-              Data final da integração
+              <I18nText text={"Data final da integração"} />
               <input name="siengeEndDate" type="date" defaultValue={settings.siengeEndDate} />
             </label>
             <label>
-              Nome exibido no topo
+              <I18nText text={"Nome exibido no topo"} />
               <input name="responsibleName" defaultValue={settings.responsibleName} />
             </label>
             <label>
-              Função exibida
+              <I18nText text={"Função exibida"} />
               <input name="responsibleRole" defaultValue={settings.responsibleRole} />
             </label>
             <label>
-              Iniciais
+              <I18nText text={"Iniciais"} />
               <input name="responsibleInitials" defaultValue={settings.responsibleInitials} maxLength={3} />
             </label>
             <label>
-              Período inicial do dashboard
+              <I18nText text={"Período inicial do dashboard"} />
               <select name="dashboardDays" defaultValue={settings.dashboardDays}>
                 {[
                   [7, "7 dias"],
@@ -198,15 +199,15 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
               </select>
             </label>
             <label>
-              Meses futuros no contas a pagar
+              <I18nText text={"Meses futuros no contas a pagar"} />
               <select name="payablesFutureMonths" defaultValue={settings.payablesFutureMonths}>
-                {[1, 2, 3, 4, 5, 6].map((months) => <option key={months} value={months}>{months} meses</option>)}
+                {[1, 2, 3, 4, 5, 6].map((months) => <option key={months} value={months}>{months} <I18nText text={"meses"} /></option>)}
               </select>
             </label>
             <label>
-              Centros de custo para estoque avançado
-              <input name="inventoryCostCenterIds" defaultValue={settings.inventoryCostCenterIds} placeholder="Ex.: 1, 2, 15" />
-              <small>Usado para consultar mapa imobiliário consolidado e insumos em estoque quando o Sienge exigir centro de custo.</small>
+              <I18nText text={"Centros de custo para estoque avançado"} />
+              <input name="inventoryCostCenterIds" defaultValue={settings.inventoryCostCenterIds} placeholder="Ex.: 1, 2, 15" data-i18n-placeholder={"Ex.: 1, 2, 15"} />
+              <small><I18nText text={"Usado para consultar mapa imobiliário consolidado e insumos em estoque quando o Sienge exigir centro de custo."} /></small>
             </label>
             <ReconciliationAccountPicker
               accounts={reconciliationAccounts}
@@ -215,9 +216,9 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
             />
             <label className="settings-check">
               <input name="showUpdateWarnings" type="checkbox" defaultChecked={settings.showUpdateWarnings} />
-              Mostrar avisos quando alguma área não atualizar
+              <I18nText text={"Mostrar avisos quando alguma área não atualizar"} />
             </label>
-            <button className="button" type="submit">Salvar preferências</button>
+            <button className="button" type="submit"><I18nText text={"Salvar preferências"} /></button>
           </form>
         </section>
       </div>
@@ -225,8 +226,8 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
       <section className="card panel">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Histórico por portal</h2>
-            <span className="panel-note">Resumo da última integração registrada para cada visão.</span>
+            <h2 className="panel-title"><I18nText text={"Histórico por portal"} /></h2>
+            <span className="panel-note"><I18nText text={"Resumo da última integração registrada para cada visão."} /></span>
           </div>
         </div>
         <div className="settings-history-list">
@@ -239,7 +240,7 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
               <div>
                 <b>{statusLabel(item.status)}</b>
                 <small>{formatDate(item.lastUpdatedAt)}</small>
-                <em>{item.successCount} atualizações - {item.errorCount} avisos</em>
+                <em>{item.successCount} <I18nText text={"atualizações -"} /> {item.errorCount} <I18nText text={"avisos"} /></em>
               </div>
             </article>
           ))}
@@ -249,8 +250,8 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
       <section className="card panel">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Importar dump do Sienge</h2>
-            <span className="panel-note">Use quando receber um arquivo .dmpc. Ele Ã© convertido para SQLite e passa a complementar os dados do sistema.</span>
+            <h2 className="panel-title"><I18nText text={"Importar dump do Sienge"} /></h2>
+            <span className="panel-note"><I18nText text={"Use quando receber um arquivo .dmpc. Ele Ã© convertido para SQLite e passa a complementar os dados do sistema."} /></span>
           </div>
         </div>
         <SiengeDumpImportControl initialStatus={{ job: dumpImportStatus, sqlite: dumpSqliteInfo }} />
@@ -259,8 +260,8 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
       <section className="card panel">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Arquivos de dados</h2>
-            <span className="panel-note">Acompanhe o tamanho dos dados salvos por área.</span>
+            <h2 className="panel-title"><I18nText text={"Arquivos de dados"} /></h2>
+            <span className="panel-note"><I18nText text={"Acompanhe o tamanho dos dados salvos por área."} /></span>
           </div>
         </div>
         <div className="settings-database-grid">
@@ -268,9 +269,9 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
             <div key={file.name}>
               <strong>{file.name}</strong>
               <span>{file.sizeLabel}</span>
-              <small>Atualizado em {formatDate(file.updatedAt)}</small>
+              <small><I18nText text={"Atualizado em"} /> {formatDate(file.updatedAt)}</small>
             </div>
-          )) : <p className="empty-state">Nenhum arquivo de dados criado ainda.</p>}
+          )) : <p className="empty-state"><I18nText text={"Nenhum arquivo de dados criado ainda."} /></p>}
         </div>
       </section>
     </>

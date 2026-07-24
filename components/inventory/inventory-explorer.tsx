@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import type { InventoryAsset, InventoryAssetKind } from "@/features/inventory/types";
@@ -57,30 +58,30 @@ export function InventoryExplorer({ assets, initialScope = "portfolio" }: { asse
   return (
     <section>
       <div className="card inventory-filters">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar patrimônio, unidade, matrícula, placa ou código" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar patrimônio, unidade, matrícula, placa ou código" data-i18n-placeholder={"Buscar patrimônio, unidade, matrícula, placa ou código"} />
         <select value={scope} onChange={(event) => setScope(event.target.value as "portfolio" | "all")}>
-          <option value="portfolio">Carteira comercial</option>
-          <option value="all">Histórico completo</option>
+          <option value="portfolio"><I18nText text={"Carteira comercial"} /></option>
+          <option value="all"><I18nText text={"Histórico completo"} /></option>
         </select>
         <select value={type} onChange={(event) => setType(event.target.value)}>
-          <option value="">Todos os tipos</option>
+          <option value=""><I18nText text={"Todos os tipos"} /></option>
           {TYPES.map((item) => <option value={item} key={item}>{assetKindLabel(item)}</option>)}
         </select>
         <select value={situation} onChange={(event) => setSituation(event.target.value)}>
-          <option value="">Todas as situações</option>
+          <option value=""><I18nText text={"Todas as situações"} /></option>
           {situations.map((item) => <option value={item} key={item}>{item}</option>)}
         </select>
         <select value={ownership} onChange={(event) => setOwnership(event.target.value)}>
-          <option value="">Próprio e terceiros</option>
-          <option>Próprio</option>
-          <option>Terceiro</option>
+          <option value=""><I18nText text={"Próprio e terceiros"} /></option>
+          <option><I18nText text={"Próprio"} /></option>
+          <option><I18nText text={"Terceiro"} /></option>
         </select>
         <select value={valueStatus} onChange={(event) => setValueStatus(event.target.value)}>
-          <option value="">Com e sem valor</option>
-          <option value="priced">Com valor informado</option>
-          <option value="missing">Sem valor informado</option>
+          <option value=""><I18nText text={"Com e sem valor"} /></option>
+          <option value="priced"><I18nText text={"Com valor informado"} /></option>
+          <option value="missing"><I18nText text={"Sem valor informado"} /></option>
         </select>
-        <div><strong>{filtered.length}</strong><span>bens</span></div>
+        <div><strong>{filtered.length}</strong><span><I18nText text={"bens"} /></span></div>
       </div>
 
       <LocalDataList
@@ -91,7 +92,7 @@ export function InventoryExplorer({ assets, initialScope = "portfolio" }: { asse
         renderItems={(pageItems) => (
           <div className="card table-card">
             <table>
-              <thead><tr><th>Bem</th><th>Tipo</th><th>Valor</th><th>Propriedade</th><th>Situação</th><th>Localização / identificação</th><th>Data de entrada no estoque</th></tr></thead>
+              <thead><tr><th><I18nText text={"Bem"} /></th><th><I18nText text={"Tipo"} /></th><th><I18nText text={"Valor"} /></th><th><I18nText text={"Propriedade"} /></th><th><I18nText text={"Situação"} /></th><th><I18nText text={"Localização / identificação"} /></th><th><I18nText text={"Data de entrada no estoque"} /></th></tr></thead>
               <tbody>
                 {pageItems.map((asset) => {
                   const value = assetValue(asset);
@@ -101,11 +102,11 @@ export function InventoryExplorer({ assets, initialScope = "portfolio" }: { asse
                     <tr key={asset.id}>
                       <td><strong>{assetTitle(asset)}</strong><br /><span className="table-muted">{assetSubtitle(asset)}</span></td>
                       <td>{assetKindLabel(asset.kind)}</td>
-                      <td><strong>{value.value ? formatCurrency(value.value) : "Não informado"}</strong><br /><span className="table-muted">{value.source}</span></td>
+                      <td><strong>{value.value ? formatCurrency(value.value) : <I18nText text={"Não informado"} />}</strong><br /><span className="table-muted">{value.source}</span></td>
                       <td>{ownershipLabel(asset)}</td>
                       <td><span className={`badge ${isWarning ? "pending" : ""}`}>{situationLabel(asset)}</span></td>
-                      <td>{assetLocation(asset)}<br /><span className="table-muted">{asset.privateArea ? `${asset.privateArea} m² priv.` : asset.plateId ? `Placa ${asset.plateId}` : asset.barCode ? `Código ${asset.barCode}` : ""}</span></td>
-                      <td>{date ? formatDate(date) : "Não informada"}</td>
+                      <td>{assetLocation(asset)}<br /><span className="table-muted">{asset.privateArea ? `${asset.privateArea} m² priv.` : asset.plateId ? `Placa ${asset.plateId}` : asset.barCode ? `Código ${asset.barCode}` : <I18nText text={""} />}</span></td>
+                      <td>{date ? formatDate(date) : <I18nText text={"Não informada"} />}</td>
                     </tr>
                   );
                 })}

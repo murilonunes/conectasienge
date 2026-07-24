@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { FormEvent, useMemo, useState } from "react";
 import { PayablesAbuseDashboardModal } from "@/components/payables/payables-abuse-dashboard-modal";
 import { PayableChargeReviewButton } from "@/components/payables/payable-charge-review-button";
@@ -206,47 +207,47 @@ export function AdvancedPayablesSearch() {
   return (
     <section className="advanced-search">
       <form className="card advanced-filter-card" onSubmit={search}>
-        <div className="form-section-head"><span>BUSCA</span><div><h2>Busca avançada de contas a pagar</h2><p>Localize parcelas e baixas por período, empresa ou obra.</p></div></div>
+        <div className="form-section-head"><span><I18nText text={"BUSCA"} /></span><div><h2><I18nText text={"Busca avançada de contas a pagar"} /></h2><p><I18nText text={"Localize parcelas e baixas por período, empresa ou obra."} /></p></div></div>
         <div className="advanced-filter-grid">
-          <label><span>Data inicial *</span><input required type="date" value={filters.startDate} onChange={(e) => set("startDate", e.target.value)} /></label>
-          <label><span>Data final *</span><input required type="date" value={filters.endDate} onChange={(e) => set("endDate", e.target.value)} /></label>
-          <label><span>Pesquisar período por *</span><select value={filters.selectionType} onChange={(e) => setSelectionType(e.target.value)}><option value="D">Data de vencimento</option><option value="I">Data de emissão</option><option value="B">Data de competência</option><option value="P">Data de pagamento</option></select></label>
-          <label><span>Situação da baixa</span><select value={paymentStatus} onChange={(e) => setStatus(e.target.value as "all" | "unpaid" | "paid")}><option value="all">Todas as parcelas</option><option value="unpaid">Somente sem baixa</option><option value="paid">Somente com baixa</option></select></label>
-          <label><span>Empresa</span><input type="number" min="1" value={filters.companyId} onChange={(e) => set("companyId", e.target.value)} placeholder="Todas" /></label>
-          <label><span>Obra</span><input type="number" min="1" value={filters.buildingId} onChange={(e) => set("buildingId", e.target.value)} placeholder="Todas" /></label>
-          <label><span>Unidade construtiva</span><input type="number" min="1" value={filters.buildingUnitId} onChange={(e) => set("buildingUnitId", e.target.value)} placeholder="Todas" /></label>
-          <label><span>Indexador de correção *</span><input required type="number" min="1" value={filters.correctionIndexerId} onChange={(e) => set("correctionIndexerId", e.target.value)} /></label>
-          <label><span>Data de correção *</span><input required type="date" value={filters.correctionDate} onChange={(e) => set("correctionDate", e.target.value)} /></label>
-          <label className="check-field"><input type="checkbox" checked={filters.withBankMovements} onChange={(e) => set("withBankMovements", e.target.checked)} /><span>Incluir movimentos bancários</span></label>
-          <label className="check-field"><input type="checkbox" checked={filters.withAuthorizations} onChange={(e) => set("withAuthorizations", e.target.checked)} /><span>Incluir autorizações</span></label>
-          <label className="check-field"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /><span>Somente possíveis cobranças abusivas</span></label>
+          <label><span><I18nText text={"Data inicial *"} /></span><input required type="date" value={filters.startDate} onChange={(e) => set("startDate", e.target.value)} /></label>
+          <label><span><I18nText text={"Data final *"} /></span><input required type="date" value={filters.endDate} onChange={(e) => set("endDate", e.target.value)} /></label>
+          <label><span><I18nText text={"Pesquisar período por *"} /></span><select value={filters.selectionType} onChange={(e) => setSelectionType(e.target.value)}><option value="D"><I18nText text={"Data de vencimento"} /></option><option value="I"><I18nText text={"Data de emissão"} /></option><option value="B"><I18nText text={"Data de competência"} /></option><option value="P"><I18nText text={"Data de pagamento"} /></option></select></label>
+          <label><span><I18nText text={"Situação da baixa"} /></span><select value={paymentStatus} onChange={(e) => setStatus(e.target.value as "all" | "unpaid" | "paid")}><option value="all"><I18nText text={"Todas as parcelas"} /></option><option value="unpaid"><I18nText text={"Somente sem baixa"} /></option><option value="paid"><I18nText text={"Somente com baixa"} /></option></select></label>
+          <label><span><I18nText text={"Empresa"} /></span><input type="number" min="1" value={filters.companyId} onChange={(e) => set("companyId", e.target.value)} placeholder="Todas" data-i18n-placeholder={"Todas"} /></label>
+          <label><span><I18nText text={"Obra"} /></span><input type="number" min="1" value={filters.buildingId} onChange={(e) => set("buildingId", e.target.value)} placeholder="Todas" data-i18n-placeholder={"Todas"} /></label>
+          <label><span><I18nText text={"Unidade construtiva"} /></span><input type="number" min="1" value={filters.buildingUnitId} onChange={(e) => set("buildingUnitId", e.target.value)} placeholder="Todas" data-i18n-placeholder={"Todas"} /></label>
+          <label><span><I18nText text={"Indexador de correção *"} /></span><input required type="number" min="1" value={filters.correctionIndexerId} onChange={(e) => set("correctionIndexerId", e.target.value)} /></label>
+          <label><span><I18nText text={"Data de correção *"} /></span><input required type="date" value={filters.correctionDate} onChange={(e) => set("correctionDate", e.target.value)} /></label>
+          <label className="check-field"><input type="checkbox" checked={filters.withBankMovements} onChange={(e) => set("withBankMovements", e.target.checked)} /><span><I18nText text={"Incluir movimentos bancários"} /></span></label>
+          <label className="check-field"><input type="checkbox" checked={filters.withAuthorizations} onChange={(e) => set("withAuthorizations", e.target.checked)} /><span><I18nText text={"Incluir autorizações"} /></span></label>
+          <label className="check-field"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /><span><I18nText text={"Somente possíveis cobranças abusivas"} /></span></label>
         </div>
         <div className={`advanced-search-hint ${filters.selectionType === "P" ? "warn" : ""}`}>
-          {filters.selectionType === "P"
+          <I18nText text={filters.selectionType === "P"
             ? "Data de pagamento retorna somente parcelas com baixa, pois parcelas não pagas não possuem essa data."
-            : "A consulta pelo período selecionado retorna parcelas com e sem baixa. Use Situação da baixa para filtrar os resultados."}
+            : "A consulta pelo período selecionado retorna parcelas com e sem baixa. Use Situação da baixa para filtrar os resultados."} />
         </div>
         <div className="advanced-search-actions">
-          <button className="button advanced-search-button" disabled={loading}>{loading ? "Buscando..." : "Buscar contas a pagar"}</button>
-          <a className="button secondary advanced-search-button" href="/configuracoes">Atualizar dados</a>
+          <button className="button advanced-search-button" disabled={loading}><I18nText text={loading ? "Buscando..." : "Buscar contas a pagar"} /></button>
+          <a className="button secondary advanced-search-button" href="/configuracoes"><I18nText text={"Atualizar dados"} /></a>
         </div>
       </form>
 
       {cacheStatus && <div className="advanced-cache-status">{cacheStatus}</div>}
-      {message && <div className="card data-notice"><strong>Busca avançada</strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Busca avançada"} /></strong><span>{message}</span></div>}
       {results.length > 0 && <>
         <div className="stats advanced-stats">
-          <article className="card stat"><div className="stat-top"><span>Parcelas encontradas</span></div><div className="stat-value">{filtered.length}</div><span className="panel-note">Após filtro na tela</span></article>
-          <article className="card stat"><div className="stat-top"><span>Valor original</span></div><div className="stat-value">{formatCurrency(totals.original)}</div><span className="panel-note">Total das parcelas</span></article>
-          <article className="card stat"><div className="stat-top"><span>Valor corrigido</span></div><div className="stat-value">{formatCurrency(totals.corrected)}</div><span className="panel-note">Conforme dados salvos</span></article>
-          <article className="card stat"><div className="stat-top"><span>Valor pago</span></div><div className="stat-value">{formatCurrency(totals.paid)}</div><span className="panel-note">Baixas retornadas</span></article>
-          <article className="card stat"><div className="stat-top"><span>Multa/juros pagos a mais</span></div><div className="stat-value">{formatCurrency(totals.paidIncrease)}</div><span className="panel-note">Pago acima do original</span></article>
-          <article className="card stat"><div className="stat-top"><span>Saldo em aberto</span></div><div className="stat-value">{formatCurrency(totals.balance)}</div><span className="panel-note">Saldo atual</span></article>
-          <article className="card stat"><div className="stat-top"><span>Possíveis abusos</span></div><div className="stat-value">{totals.riskCount}</div><span className="panel-note">Acima de 2% + 1% ao mês</span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Parcelas encontradas"} /></span></div><div className="stat-value">{filtered.length}</div><span className="panel-note"><I18nText text={"Após filtro na tela"} /></span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Valor original"} /></span></div><div className="stat-value">{formatCurrency(totals.original)}</div><span className="panel-note"><I18nText text={"Total das parcelas"} /></span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Valor corrigido"} /></span></div><div className="stat-value">{formatCurrency(totals.corrected)}</div><span className="panel-note"><I18nText text={"Conforme dados salvos"} /></span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Valor pago"} /></span></div><div className="stat-value">{formatCurrency(totals.paid)}</div><span className="panel-note"><I18nText text={"Baixas retornadas"} /></span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Multa/juros pagos a mais"} /></span></div><div className="stat-value">{formatCurrency(totals.paidIncrease)}</div><span className="panel-note"><I18nText text={"Pago acima do original"} /></span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Saldo em aberto"} /></span></div><div className="stat-value">{formatCurrency(totals.balance)}</div><span className="panel-note"><I18nText text={"Saldo atual"} /></span></article>
+          <article className="card stat"><div className="stat-top"><span><I18nText text={"Possíveis abusos"} /></span></div><div className="stat-value">{totals.riskCount}</div><span className="panel-note"><I18nText text={"Acima de 2% + 1% ao mês"} /></span></article>
         </div>
         <div className="card filters">
-          <input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código. Use #385 para buscar só o título 385" />
-          <label className="advanced-inline-check"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /> Somente possíveis abusos</label>
+          <input className="field search-field" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Filtrar por credor, CNPJ, documento, empresa ou código. Use #385 para buscar só o título 385" data-i18n-placeholder={"Filtrar por credor, CNPJ, documento, empresa ou código. Use #385 para buscar só o título 385"} />
+          <label className="advanced-inline-check"><input type="checkbox" checked={onlyAbusiveCharges} onChange={(e) => setOnlyAbusiveCharges(e.target.checked)} /> <I18nText text={"Somente possíveis abusos"} /></label>
           <PayablesAbuseDashboardModal items={filtered} referenceDate={filters.correctionDate} />
         </div>
         <LocalDataList
@@ -264,19 +265,19 @@ export function AdvancedPayablesSearch() {
                   <button className="advanced-result-main payable-result-main" onClick={() => setExpanded(expanded === key ? undefined : key)}>
                     <span className="title-installment-block">
                       <span className="title-installment-row">
-                        <span className="advanced-title-id" onClick={(event) => copyBillId(event, item.billId)} title="Copiar número do título">
-                          <small>Título</small>
-                          <strong>#{item.billId}</strong>
-                          <span className="copy-title-icon" aria-label="Copiar título">{copiedBillId === item.billId ? "OK" : "⧉"}</span>
+                        <span className="advanced-title-id" onClick={(event) => copyBillId(event, item.billId)} title="Copiar número do título" data-i18n-title={"Copiar número do título"}>
+                          <small><I18nText text={"Título"} /></small>
+                          <strong><I18nText text={"#"} />{item.billId}</strong>
+                          <span className="copy-title-icon" aria-label="Copiar título" data-i18n-aria-label={"Copiar título"}><I18nText text={copiedBillId === item.billId ? "OK" : "⧉"} /></span>
                         </span>
                         <span className="title-installment-connector" aria-hidden="true" />
                         <span className="installment-pill">
-                          <small>Parcela</small>
+                          <small><I18nText text={"Parcela"} /></small>
                           <strong>{installmentLabel(item, installmentTotals.get(item.billId)).replace(/^Parcela\s*/i, "")}</strong>
                         </span>
                         <span className="title-installment-connector" aria-hidden="true" />
                         <span className={`due-pill ${dueStatus(item)}`}>
-                          <small>Vencimento</small>
+                          <small><I18nText text={"Vencimento"} /></small>
                           <strong>{formatOptionalDate(item.dueDate)}</strong>
                         </span>
                       </span>
@@ -285,37 +286,37 @@ export function AdvancedPayablesSearch() {
                     <span>
                       <strong>{item.creditorName || `Credor #${item.creditorId}`}</strong>
                       <small className="advanced-creditor-document">
-                        {item.creditorCnpj ? `CNPJ ${formatTaxId(item.creditorCnpj)}` : item.creditorCpf ? `CPF ${formatTaxId(item.creditorCpf)}` : "CNPJ não informado"}
+                        {item.creditorCnpj ? `CNPJ ${formatTaxId(item.creditorCnpj)}` : item.creditorCpf ? `CPF ${formatTaxId(item.creditorCpf)}` : <I18nText text={"CNPJ não informado"} />}
                       </small>
                       <small>{item.companyName || `Empresa #${item.companyId}`}</small>
                     </span>
-                    <span><strong>{formatCurrency(review.originalAmount)}</strong><small>Original</small></span>
-                    <span><strong>{formatCurrency(review.correctedAmount)}</strong><small>Corrigido</small></span>
-                    <span><strong>{formatCurrency(review.paidIncrease)}</strong><small>Multa/juros pagos a mais</small></span>
-                    <span className={`badge ${payments.length ? "" : "pending"}`}>{payments.length ? `${payments.length} baixa(s)` : "Sem baixa"}</span>
-                    <span className="sales-expand">{expanded === key ? "-" : "+"}</span>
+                    <span><strong>{formatCurrency(review.originalAmount)}</strong><small><I18nText text={"Original"} /></small></span>
+                    <span><strong>{formatCurrency(review.correctedAmount)}</strong><small><I18nText text={"Corrigido"} /></small></span>
+                    <span><strong>{formatCurrency(review.paidIncrease)}</strong><small><I18nText text={"Multa/juros pagos a mais"} /></small></span>
+                    <span className={`badge ${payments.length ? "" : "pending"}`}>{payments.length ? `${payments.length} baixa(s)` : <I18nText text={"Sem baixa"} />}</span>
+                    <span className="sales-expand"><I18nText text={expanded === key ? "-" : "+"} /></span>
                   </button>
                   {expanded === key && <div className="advanced-result-details">
                     <div className="sales-detail-grid">
-                      <div><span>Vencimento</span><strong>{item.dueDate ? formatDate(item.dueDate) : "-"}</strong></div>
-                      <div><span>Emissão</span><strong>{item.issueDate ? formatDate(item.issueDate) : "-"}</strong></div>
-                      <div><span>Autorizada</span><strong>{item.authorizationStatus === "S" ? "Sim" : "Não"}</strong></div>
-                      <div><span>Saldo em aberto</span><strong>{formatCurrency(item.balanceAmount || 0)}</strong></div>
-                      <div><span>Acréscimo corrigido</span><strong>{formatCurrency(review.correctedIncrease)}</strong></div>
-                      <div><span>Limite 2% + 1% ao mês</span><strong>{formatCurrency(review.allowedIncrease)}</strong></div>
-                      <div><span>Integração</span><strong><IntegrationStamp record={item} /></strong></div>
+                      <div><span><I18nText text={"Vencimento"} /></span><strong>{item.dueDate ? formatDate(item.dueDate) : <I18nText text={"-"} />}</strong></div>
+                      <div><span><I18nText text={"Emissão"} /></span><strong>{item.issueDate ? formatDate(item.issueDate) : <I18nText text={"-"} />}</strong></div>
+                      <div><span><I18nText text={"Autorizada"} /></span><strong><I18nText text={item.authorizationStatus === "S" ? "Sim" : "Não"} /></strong></div>
+                      <div><span><I18nText text={"Saldo em aberto"} /></span><strong>{formatCurrency(item.balanceAmount || 0)}</strong></div>
+                      <div><span><I18nText text={"Acréscimo corrigido"} /></span><strong>{formatCurrency(review.correctedIncrease)}</strong></div>
+                      <div><span><I18nText text={"Limite 2% + 1% ao mês"} /></span><strong>{formatCurrency(review.allowedIncrease)}</strong></div>
+                      <div><span><I18nText text={"Integração"} /></span><strong><IntegrationStamp record={item} /></strong></div>
                     </div>
                     <PayableChargeReviewButton item={item} title={`Título #${item.billId} / Parcela ${item.installmentId}`} referenceDate={filters.correctionDate} />
                     <div className="payments-list">
-                      <h3>Baixas e pagamentos</h3>
+                      <h3><I18nText text={"Baixas e pagamentos"} /></h3>
                       {payments.length ? payments.map((payment, index) => (
                         <div key={`${payment.sequencialNumber}-${index}`}>
-                          <span>{payment.paymentDate ? formatDate(payment.paymentDate) : "Sem data"}</span>
+                          <span>{payment.paymentDate ? formatDate(payment.paymentDate) : <I18nText text={"Sem data"} />}</span>
                           <strong>{formatCurrency(paymentValue(payment))}</strong>
-                          <span>{payment.operationTypeName || "Operação não informada"}</span>
-                          <small>{payment.bankMovements?.length || 0} movimento(s) bancário(s)</small>
+                          <span>{payment.operationTypeName || <I18nText text={"Operação não informada"} />}</span>
+                          <small>{payment.bankMovements?.length || 0} <I18nText text={"movimento(s) bancário(s)"} /></small>
                         </div>
-                      )) : <p>Nenhuma baixa retornada para esta parcela.</p>}
+                      )) : <p><I18nText text={"Nenhuma baixa retornada para esta parcela."} /></p>}
                     </div>
                   </div>}
                 </article>;

@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
@@ -465,19 +466,19 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
     <section className="supplier-portal-form">
       <header className="supplier-public-hero">
         <div>
-          <span>Portal de cotação</span>
-          <h1>Cotação #{quotationCode}</h1>
+          <span><I18nText text={"Portal de cotação"} /></span>
+          <h1><I18nText text={"Cotação #"} />{quotationCode}</h1>
           {deadlineEnd && deadlineDaysLeft !== undefined && deadlineDaysLeft >= 0 && (
             <p className={`supplier-deadline-note ${deadlineDaysLeft <= 1 ? "warn" : ""}`}>
-              Prazo para envio: {deadlineEnd.toLocaleDateString("pt-BR")}
-              {deadlineDaysLeft === 0 ? " — encerra hoje" : deadlineDaysLeft === 1 ? " — falta 1 dia" : ` — faltam ${deadlineDaysLeft} dias`}
+              <I18nText text={"Prazo para envio:"} /> {deadlineEnd.toLocaleDateString("pt-BR")}
+              {deadlineDaysLeft === 0 ? <I18nText text={" — encerra hoje"} /> : deadlineDaysLeft === 1 ? <I18nText text={" — falta 1 dia"} /> : ` — faltam ${deadlineDaysLeft} dias`}
             </p>
           )}
         </div>
         <div className="supplier-public-hero-metrics">
-          <strong className="count">{items.length}<small>Itens</small></strong>
-          <strong className="count">{quotedCount}<small>Marcados</small></strong>
-          <strong className="amount">{formatCurrency(quotedTotal)}<small>Total</small></strong>
+          <strong className="count">{items.length}<small><I18nText text={"Itens"} /></small></strong>
+          <strong className="count">{quotedCount}<small><I18nText text={"Marcados"} /></small></strong>
+          <strong className="amount">{formatCurrency(quotedTotal)}<small><I18nText text={"Total"} /></small></strong>
         </div>
       </header>
 
@@ -490,7 +491,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
             aria-disabled={item.id > maxStepReached}
             onClick={() => (item.id <= maxStepReached ? goToStep(item.id) : goNext())}
           >
-            <i>{step > item.id ? "✓" : item.id}</i>
+            <i>{step > item.id ? <I18nText text={"✓"} /> : item.id}</i>
             <span>{item.label}</span>
           </button>
         ))}
@@ -610,7 +611,7 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
               <button className="button supplier-step-primary" type="button" onClick={goNext}>{nextActionLabels[step]}</button>
             ) : (
               <button className="button supplier-step-primary" type="button" disabled={submitting || !canSubmit} onClick={submit}>
-                {submitting ? "Enviando proposta..." : nextActionLabels[step]}
+                {submitting ? <I18nText text={"Enviando proposta..."} /> : nextActionLabels[step]}
               </button>
             )}
           </div>

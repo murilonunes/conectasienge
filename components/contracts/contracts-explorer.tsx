@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
@@ -44,12 +45,12 @@ export function ContractsExplorer({ contracts }: { contracts: SupplyContract[] }
   return (
     <section>
       <div className="card contracts-filters">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar contrato, fornecedor, empresa ou obra" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar contrato, fornecedor, empresa ou obra" data-i18n-placeholder={"Buscar contrato, fornecedor, empresa ou obra"} />
         <select value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="">Todas as situações</option>
+          <option value=""><I18nText text={"Todas as situações"} /></option>
           {statuses.map((item) => <option key={item}>{item}</option>)}
         </select>
-        <div><strong>{filtered.length}</strong><span>contratos</span></div>
+        <div><strong>{filtered.length}</strong><span><I18nText text={"contratos"} /></span></div>
       </div>
 
       <LocalDataList
@@ -62,15 +63,15 @@ export function ContractsExplorer({ contracts }: { contracts: SupplyContract[] }
             <table>
               <thead>
                 <tr>
-                  <th>Contrato</th>
-                  <th>Fornecedor</th>
-                  <th>Empresa / obra</th>
-                  <th>Data</th>
-                  <th>Valor</th>
-                  <th>Medido</th>
-                  <th>Saldo</th>
-                  <th>Situação</th>
-                  <th>Integração</th>
+                  <th><I18nText text={"Contrato"} /></th>
+                  <th><I18nText text={"Fornecedor"} /></th>
+                  <th><I18nText text={"Empresa / obra"} /></th>
+                  <th><I18nText text={"Data"} /></th>
+                  <th><I18nText text={"Valor"} /></th>
+                  <th><I18nText text={"Medido"} /></th>
+                  <th><I18nText text={"Saldo"} /></th>
+                  <th><I18nText text={"Situação"} /></th>
+                  <th><I18nText text={"Integração"} /></th>
                 </tr>
               </thead>
               <tbody>
@@ -79,9 +80,9 @@ export function ContractsExplorer({ contracts }: { contracts: SupplyContract[] }
                   const closed = isClosedContract(contract);
                   return (
                     <tr key={`${contract.id || contract.contractId || code}`}>
-                      <td><strong>{contractTitle(contract)}</strong><br /><span className="table-muted">Contrato #{code}</span></td>
+                      <td><strong>{contractTitle(contract)}</strong><br /><span className="table-muted"><I18nText text={"Contrato #"} />{code}</span></td>
                       <td>{supplierName(contract)}</td>
-                      <td>{contract.companyName || "Empresa não informada"}<br /><span className="table-muted">{contract.buildingName || contract.projectName || ""}</span></td>
+                      <td>{contract.companyName || <I18nText text={"Empresa não informada"} />}<br /><span className="table-muted">{contract.buildingName || contract.projectName || <I18nText text={""} />}</span></td>
                       <td>{formatOptionalDate(contractDate(contract), "Sem data")}</td>
                       <td><strong>{formatCurrency(contractValue(contract))}</strong></td>
                       <td>{formatCurrency(measuredValue(contract))}</td>

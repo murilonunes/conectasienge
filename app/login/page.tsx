@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const dynamic = "force-dynamic";
@@ -16,17 +17,17 @@ export default function LoginPage({
     <section className="auth-public-shell">
       <div className="card auth-login-card">
         <div className="brand auth-brand">
-          <div className="brand-mark">B</div>
-          <div><strong>Brasin</strong><span>ACESSO PROTEGIDO</span></div>
+          <div className="brand-mark"><I18nText text={"B"} /></div>
+          <div><strong><I18nText text={"Brasin"} /></strong><span><I18nText text={"ACESSO PROTEGIDO"} /></span></div>
         </div>
         <div className="auth-login-head">
-          <span>Portal interno</span>
-          <h1>Entrar</h1>
+          <span><I18nText text={"Portal interno"} /></span>
+          <h1><I18nText text={"Entrar"} /></h1>
         </div>
         {missingConfig ? (
           <div className="auth-config-warning">
-            <strong>Senha não configurada</strong>
-            <span>Defina `APP_ACCESS_PASSWORD` com pelo menos 12 caracteres no `.env` e reinicie o servidor.</span>
+            <strong><I18nText text={"Senha não configurada"} /></strong>
+            <span><I18nText text={"Defina `APP_ACCESS_PASSWORD` com pelo menos 12 caracteres no `.env` e reinicie o servidor."} /></span>
           </div>
         ) : (
           <LoginForm next={next} invalid={invalid} blocked={blocked} />

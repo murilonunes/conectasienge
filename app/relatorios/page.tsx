@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { SiengeUpdateControls } from "@/components/settings/sienge-update-controls";
 import { PageHeading } from "@/components/ui/page-heading";
@@ -188,12 +189,12 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
 
       <section className="reports-filter card">
         <div>
-          <span>Período padrão</span>
+          <span><I18nText text={"Período padrão"} /></span>
           <strong>{periodLabel(days, direction)}</strong>
-          <small>{overview.dashboardRange.start} até {overview.dashboardRange.end}</small>
+          <small>{overview.dashboardRange.start} <I18nText text={"até"} /> {overview.dashboardRange.end}</small>
         </div>
         <div className="dashboard-view-controls">
-          <div className="dashboard-view-options compact" aria-label="Período dos relatórios">
+          <div className="dashboard-view-options compact" aria-label="Período dos relatórios" data-i18n-aria-label={"Período dos relatórios"}>
             {DASHBOARD_PERIOD_OPTIONS.map((option) => (
               <Link
                 key={option.days}
@@ -204,41 +205,40 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
               </Link>
             ))}
           </div>
-          <div className="dashboard-direction-options" aria-label="Tipo de relatório">
-            <Link href={`/relatorios?dias=${days}&periodo=past`} className={isPast ? "active" : ""}>Passado</Link>
-            <Link href={`/relatorios?dias=${days}&periodo=future`} className={!isPast ? "active" : ""}>Futuro</Link>
+          <div className="dashboard-direction-options" aria-label="Tipo de relatório" data-i18n-aria-label={"Tipo de relatório"}>
+            <Link href={`/relatorios?dias=${days}&periodo=past`} className={isPast ? "active" : ""}><I18nText text={"Passado"} /></Link>
+            <Link href={`/relatorios?dias=${days}&periodo=future`} className={!isPast ? "active" : ""}><I18nText text={"Futuro"} /></Link>
           </div>
         </div>
       </section>
 
       {unavailable.length > 0 && (
         <section className="card data-notice">
-          <strong>Relatórios parciais</strong>
-          <span>Algumas áreas ainda não têm dados salvos: {unavailable.join(", ")}. Atualize essas áreas em Configurações para completar os relatórios.</span>
+          <strong><I18nText text={"Relatórios parciais"} /></strong>
+          <span><I18nText text={"Algumas áreas ainda não têm dados salvos:"} /> {unavailable.join(", ")}<I18nText text={". Atualize essas áreas em Configurações para completar os relatórios."} /></span>
         </section>
       )}
 
       <section className="reports-intro card">
         <div>
-          <span>Como usar</span>
-          <h2>Abra o relatório certo para cada análise</h2>
+          <span><I18nText text={"Como usar"} /></span>
+          <h2><I18nText text={"Abra o relatório certo para cada análise"} /></h2>
           <p>
-            Cada cartão abre a tela detalhada correspondente e usa apenas um resumo salvo para orientar a escolha.
-            O relatório completo é montado só quando você entra na análise, mantendo esta central rápida.
+            <I18nText text={"Cada cartão abre a tela detalhada correspondente e usa apenas um resumo salvo para orientar a escolha. O relatório completo é montado só quando você entra na análise, mantendo esta central rápida."} />
           </p>
         </div>
         <div className="reports-intro-grid">
           <div>
             <strong>{reports.length}</strong>
-            <span>relatórios disponíveis</span>
+            <span><I18nText text={"relatórios disponíveis"} /></span>
           </div>
           <div>
             <strong>{periodLabel(days, direction)}</strong>
-            <span>recorte selecionado</span>
+            <span><I18nText text={"recorte selecionado"} /></span>
           </div>
           <div>
-            <strong>Dados salvos</strong>
-            <span>sem consulta ao Sienge na abertura</span>
+            <strong><I18nText text={"Dados salvos"} /></strong>
+            <span><I18nText text={"sem consulta ao Sienge na abertura"} /></span>
           </div>
         </div>
       </section>
@@ -246,10 +246,10 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
       <section className="card panel reports-update-panel" id="atualizar-relatorios">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Atualizar dados dos relatórios</h2>
-            <span className="panel-note">Inicie a carga em segundo plano e continue usando o sistema enquanto os dados são salvos.</span>
+            <h2 className="panel-title"><I18nText text={"Atualizar dados dos relatórios"} /></h2>
+            <span className="panel-note"><I18nText text={"Inicie a carga em segundo plano e continue usando o sistema enquanto os dados são salvos."} /></span>
           </div>
-          <Link className="button secondary" href="/configuracoes">Configurações</Link>
+          <Link className="button secondary" href="/configuracoes"><I18nText text={"Configurações"} /></Link>
         </div>
         <SiengeUpdateControls areas={reportUpdateAreas} statuses={updateStatuses} showForce={false} />
       </section>
@@ -274,8 +274,8 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
               </div>
             </div>
             <div className="report-card-actions">
-              <Link className="button" href={report.href}>Abrir relatório</Link>
-              <span>Exportar PDF/Excel em breve</span>
+              <Link className="button" href={report.href}><I18nText text={"Abrir relatório"} /></Link>
+              <span><I18nText text={"Exportar PDF/Excel em breve"} /></span>
             </div>
           </article>
         ))}

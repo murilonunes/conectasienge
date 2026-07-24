@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { MonthlyVolumeChart } from "@/components/charts/monthly-volume-chart";
 import { RankingChart } from "@/components/charts/ranking-chart";
 import { ReceivablesForecastTable } from "@/components/tables/receivables-forecast-table";
@@ -35,10 +36,9 @@ export default async function ContasReceberPage() {
       {!forecast.error && (
         <>
           <section className="card data-notice">
-            <strong>Dados carregados</strong>
+            <strong><I18nText text={"Dados carregados"} /></strong>
             <span>
-              Leitura de {forecast.range.startDate} até {forecast.range.endDate}, por vencimento da parcela.
-              Para trazer dados novos, use a atualização em Configurações.
+              <I18nText text={"Leitura de"} /> {forecast.range.startDate} <I18nText text={"até"} /> {forecast.range.endDate}<I18nText text={", por vencimento da parcela. Para trazer dados novos, use a atualização em Configurações."} />
             </span>
           </section>
 
@@ -65,10 +65,9 @@ export default async function ContasReceberPage() {
               countLabel="parcela"
             />
             <section className="card methodology">
-              <strong>Como a previsão é calculada</strong>
+              <strong><I18nText text={"Como a previsão é calculada"} /></strong>
               <p>
-                A tela considera parcelas abertas por vencimento. O valor previsto usa o saldo corrigido quando disponível;
-                se ele não vier, usa o saldo em aberto e, por último, o valor original. Parcelas com saldo zero ficam fora da previsão.
+                <I18nText text={"A tela considera parcelas abertas por vencimento. O valor previsto usa o saldo corrigido quando disponível; se ele não vier, usa o saldo em aberto e, por último, o valor original. Parcelas com saldo zero ficam fora da previsão."} />
               </p>
             </section>
           </div>

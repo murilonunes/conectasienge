@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useState } from "react";
 import type { QuotationItemSummary } from "@/features/quotations/data";
 import { formatCurrency } from "@/lib/formatters";
@@ -61,26 +62,26 @@ export function SupplierQuoteSubmittedView({
     <section className="supplier-portal-form supplier-submitted-view">
       <header className="supplier-public-hero supplier-print-header">
         <div>
-          <span>Proposta enviada</span>
-          <h1>Cotação #{quotationCode}</h1>
+          <span><I18nText text={"Proposta enviada"} /></span>
+          <h1><I18nText text={"Cotação #"} />{quotationCode}</h1>
         </div>
         <div className="supplier-public-hero-metrics">
-          <strong className="count">{attendedItems.length}<small>Itens</small></strong>
-          <strong className="count">{terms.deliveryDays || "-"}<small>Dias</small></strong>
-          <strong className="amount">{formatCurrency(response.totalValue)}<small>Total</small></strong>
+          <strong className="count">{attendedItems.length}<small><I18nText text={"Itens"} /></small></strong>
+          <strong className="count">{terms.deliveryDays || <I18nText text={"-"} />}<small><I18nText text={"Dias"} /></small></strong>
+          <strong className="amount">{formatCurrency(response.totalValue)}<small><I18nText text={"Total"} /></small></strong>
         </div>
       </header>
 
       <div className="card supplier-portal-card supplier-print-actions">
         <div>
-          <span>Detalhe da proposta</span>
-          <p>{message || "Este link já possui uma proposta enviada. A proposta abaixo está disponível apenas para consulta."}</p>
+          <span><I18nText text={"Detalhe da proposta"} /></span>
+          <p>{message || <I18nText text={"Este link já possui uma proposta enviada. A proposta abaixo está disponível apenas para consulta."} />}</p>
         </div>
         <div className="supplier-submitted-actions">
-          <button className="button secondary supplier-print-button" type="button" onClick={() => window.print()}>Imprimir ou salvar PDF</button>
+          <button className="button secondary supplier-print-button" type="button" onClick={() => window.print()}><I18nText text={"Imprimir ou salvar PDF"} /></button>
           {canRequestNewLink && !newLinkUrl && (
             <button className="button supplier-new-link-button" type="button" onClick={requestNewLink} disabled={requestingLink}>
-              {requestingLink ? "Gerando link de revisão..." : "Solicitar link para revisar"}
+              <I18nText text={requestingLink ? "Gerando link de revisão..." : "Solicitar link para revisar"} />
             </button>
           )}
         </div>
@@ -89,36 +90,36 @@ export function SupplierQuoteSubmittedView({
           <div className="quotation-copy-link supplier-new-link">
             <input readOnly value={newLinkUrl} onFocus={(event) => event.currentTarget.select()} />
             <button className="button secondary" type="button" onClick={() => void navigator.clipboard.writeText(newLinkUrl).then(() => setRequestMessage("Link copiado."), () => setRequestMessage("Não foi possível copiar automaticamente. Selecione o texto e copie manualmente."))}>
-              Copiar link
+              <I18nText text={"Copiar link"} />
             </button>
-            <a className="button" href={newLinkUrl}>Abrir novo link</a>
+            <a className="button" href={newLinkUrl}><I18nText text={"Abrir novo link"} /></a>
           </div>
         )}
       </div>
 
       <section className="card supplier-portal-card supplier-print-section">
         <div className="supplier-card-head">
-          <span>Fornecedor</span>
+          <span><I18nText text={"Fornecedor"} /></span>
           <h2>{response.supplierName}</h2>
         </div>
         <div className="supplier-review-grid">
-          <span><strong>CPF/CNPJ</strong>{formatDocument(response.document)}</span>
-          <span><strong>E-mail</strong>{response.email || "Não informado"}</span>
-          <span><strong>Telefone</strong>{response.phone || "Não informado"}</span>
-          <span><strong>Enviado em</strong>{new Date(response.createdAt).toLocaleString("pt-BR")}</span>
+          <span><strong><I18nText text={"CPF/CNPJ"} /></strong>{formatDocument(response.document)}</span>
+          <span><strong><I18nText text={"E-mail"} /></strong>{response.email || <I18nText text={"Não informado"} />}</span>
+          <span><strong><I18nText text={"Telefone"} /></strong>{response.phone || <I18nText text={"Não informado"} />}</span>
+          <span><strong><I18nText text={"Enviado em"} /></strong>{new Date(response.createdAt).toLocaleString("pt-BR")}</span>
         </div>
       </section>
 
       <section className="card supplier-portal-card supplier-print-section">
         <div className="supplier-card-head">
-          <span>Condições</span>
-          <h2>Pagamento, frete e entrega</h2>
+          <span><I18nText text={"Condições"} /></span>
+          <h2><I18nText text={"Pagamento, frete e entrega"} /></h2>
         </div>
         <div className="supplier-review-grid supplier-print-summary-grid">
-          {terms.offersCash && <span><strong>À vista</strong>{cashSummaryText(String(terms.cashDiscountPercentage), terms.cashDiscountMode, terms.cashDiscountValue)}</span>}
-          {terms.offersTerm && <span><strong>A prazo</strong>{termSummaryText(terms.installments.map((item) => ({ days: String(item.days), percentage: String(item.percentage) })))}</span>}
-          <span><strong>Frete e entrega</strong>{freightSummaryText(terms.freightType, String(terms.freightPrice), terms.deliveryDays)}</span>
-          <span><strong>Valor total cotado</strong>{formatCurrency(response.totalValue)}</span>
+          {terms.offersCash && <span><strong><I18nText text={"À vista"} /></strong>{cashSummaryText(String(terms.cashDiscountPercentage), terms.cashDiscountMode, terms.cashDiscountValue)}</span>}
+          {terms.offersTerm && <span><strong><I18nText text={"A prazo"} /></strong>{termSummaryText(terms.installments.map((item) => ({ days: String(item.days), percentage: String(item.percentage) })))}</span>}
+          <span><strong><I18nText text={"Frete e entrega"} /></strong>{freightSummaryText(terms.freightType, String(terms.freightPrice), terms.deliveryDays)}</span>
+          <span><strong><I18nText text={"Valor total cotado"} /></strong>{formatCurrency(response.totalValue)}</span>
         </div>
         {terms.generalNotes && <p className="quotation-response-notes">{terms.generalNotes}</p>}
       </section>
@@ -126,13 +127,13 @@ export function SupplierQuoteSubmittedView({
       {proposalAttachment && (
         <section className="card supplier-portal-card supplier-print-section supplier-attachment-print">
           <div className="supplier-card-head">
-            <span>Anexo</span>
-            <h2>Proposta do sistema do fornecedor</h2>
+            <span><I18nText text={"Anexo"} /></span>
+            <h2><I18nText text={"Proposta do sistema do fornecedor"} /></h2>
           </div>
           <div className="supplier-attachment-card">
             <div>
               <strong>{proposalAttachment.fileName}</strong>
-              <span>{proposalAttachment.mimeType === "application/pdf" ? "PDF" : "Imagem"} - {Math.max(1, Math.round(proposalAttachment.sizeBytes / 1024))} KB</span>
+              <span><I18nText text={proposalAttachment.mimeType === "application/pdf" ? "PDF" : "Imagem"} /> <I18nText text={"-"} /> {Math.max(1, Math.round(proposalAttachment.sizeBytes / 1024))} <I18nText text={"KB"} /></span>
             </div>
             {(proposalAttachment.dataUrl || token) && (
               <a
@@ -140,7 +141,7 @@ export function SupplierQuoteSubmittedView({
                 href={proposalAttachment.dataUrl || `/api/supplier-portal/attachments?token=${encodeURIComponent(token || "")}`}
                 download={proposalAttachment.fileName}
               >
-                Abrir anexo
+                <I18nText text={"Abrir anexo"} />
               </a>
             )}
           </div>
@@ -149,20 +150,20 @@ export function SupplierQuoteSubmittedView({
 
       <section className="card supplier-portal-card supplier-print-section">
         <div className="supplier-card-head">
-          <span>Itens</span>
-          <h2>Itens cotados</h2>
+          <span><I18nText text={"Itens"} /></span>
+          <h2><I18nText text={"Itens cotados"} /></h2>
         </div>
         <div className="supplier-review-items">
           <div className="supplier-review-items-row supplier-review-items-head">
-            <span>Insumo</span><span>Valor unitário</span><span>Quantidade</span><span>Prazo especial</span><span>Total</span>
+            <span><I18nText text={"Insumo"} /></span><span><I18nText text={"Valor unitário"} /></span><span><I18nText text={"Quantidade"} /></span><span><I18nText text={"Prazo especial"} /></span><span><I18nText text={"Total"} /></span>
           </div>
           {quotedItems.map(({ original, item }) => {
             return (
               <div className={`supplier-review-items-row ${item.partial ? "partial" : ""}`} key={item.itemNumber}>
                 <span>{original.name || `Item ${item.itemNumber}`}</span>
                 <span>{formatCurrency(Number(item.unitPrice || 0))}</span>
-                <span>{item.quantity || 0} {original.unit || ""}{item.partial ? " (parcial)" : ""}</span>
-                <span>{item.deadlineDays ? `${item.deadlineDays}d` : "-"}</span>
+                <span>{item.quantity || 0} {original.unit || <I18nText text={""} />}<I18nText text={item.partial ? " (parcial)" : ""} /></span>
+                <span>{item.deadlineDays ? `${item.deadlineDays}d` : <I18nText text={"-"} />}</span>
                 <strong>{formatCurrency(itemTotal({
                   itemNumber: item.itemNumber,
                   attends: item.attends,
@@ -181,20 +182,20 @@ export function SupplierQuoteSubmittedView({
       {missingItems.length > 0 && (
         <section className="card supplier-portal-card supplier-print-section">
           <div className="supplier-card-head">
-            <span>Fora da cotação</span>
-            <h2>Itens não cotados pelo fornecedor</h2>
+            <span><I18nText text={"Fora da cotação"} /></span>
+            <h2><I18nText text={"Itens não cotados pelo fornecedor"} /></h2>
           </div>
           <div className="supplier-review-items">
             <div className="supplier-review-items-row supplier-review-items-head">
-              <span>Insumo</span><span>Situação</span><span>Quantidade solicitada</span><span>Prazo especial</span><span>Total</span>
+              <span><I18nText text={"Insumo"} /></span><span><I18nText text={"Situação"} /></span><span><I18nText text={"Quantidade solicitada"} /></span><span><I18nText text={"Prazo especial"} /></span><span><I18nText text={"Total"} /></span>
             </div>
             {missingItems.map((original) => (
               <div className="supplier-review-items-row not-quoted" key={original.itemNumber}>
                 <span>{original.name || `Item ${original.itemNumber}`}</span>
-                <span>Não cotado</span>
-                <span>{original.quantity} {original.unit || ""}</span>
-                <span>-</span>
-                <strong>-</strong>
+                <span><I18nText text={"Não cotado"} /></span>
+                <span>{original.quantity} {original.unit || <I18nText text={""} />}</span>
+                <span><I18nText text={"-"} /></span>
+                <strong><I18nText text={"-"} /></strong>
               </div>
             ))}
           </div>

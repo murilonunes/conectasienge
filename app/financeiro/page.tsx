@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { PageHeading } from "@/components/ui/page-heading";
 
@@ -67,14 +68,13 @@ export default function FinanceiroPage() {
 
       <section className="card welcome-hero">
         <div>
-          <span>Fluxo atual</span>
-          <h2>Dados salvos primeiro, telas rápidas depois</h2>
+          <span><I18nText text={"Fluxo atual"} /></span>
+          <h2><I18nText text={"Dados salvos primeiro, telas rápidas depois"} /></h2>
           <p>
-            Esta central serve como ponto de partida. As consultas ao Sienge ficam em Configurações;
-            as telas operacionais leem os dados já integrados e mostram a data da última integração.
+            <I18nText text={"Esta central serve como ponto de partida. As consultas ao Sienge ficam em Configurações; as telas operacionais leem os dados já integrados e mostram a data da última integração."} />
           </p>
         </div>
-        <Link className="button" href="/dashboard">Ver visão geral</Link>
+        <Link className="button" href="/dashboard"><I18nText text={"Ver visão geral"} /></Link>
       </section>
 
       <section className="card settings-flow">

@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { notFound } from "next/navigation";
 import { SupplierQuoteResponseForm } from "@/components/suppliers/supplier-quote-response-form";
 import { SupplierQuoteSubmittedView } from "@/components/suppliers/supplier-quote-submitted-view";
@@ -45,9 +46,9 @@ export default async function SupplierQuotePortalPage({ params }: { params: { to
     return (
       <section className="supplier-public-shell">
         <div className="card supplier-portal-success supplier-portal-error">
-          <span>Portal de cotação</span>
-          <h2>Link indisponível</h2>
-          <p>{error instanceof Error ? error.message : "Não foi possível validar este link."}</p>
+          <span><I18nText text={"Portal de cotação"} /></span>
+          <h2><I18nText text={"Link indisponível"} /></h2>
+          <p>{error instanceof Error ? error.message : <I18nText text={"Não foi possível validar este link."} />}</p>
         </div>
       </section>
     );
@@ -64,11 +65,10 @@ export default async function SupplierQuotePortalPage({ params }: { params: { to
     return (
       <section className="supplier-public-shell">
         <div className="card supplier-portal-success supplier-portal-error">
-          <span>Portal de cotação</span>
-          <h2>Prazo encerrado</h2>
+          <span><I18nText text={"Portal de cotação"} /></span>
+          <h2><I18nText text={"Prazo encerrado"} /></h2>
           <p>
-            O prazo para envio de propostas da cotação #{quotation.code} encerrou em {deadlineEnd?.toLocaleDateString("pt-BR")}.
-            Entre em contato com o comprador para verificar uma prorrogação.
+            <I18nText text={"O prazo para envio de propostas da cotação #"} />{quotation.code} <I18nText text={"encerrou em"} /> {deadlineEnd?.toLocaleDateString("pt-BR")}<I18nText text={". Entre em contato com o comprador para verificar uma prorrogação."} />
           </p>
         </div>
       </section>

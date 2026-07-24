@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useState } from "react";
 import type { PurchaseRequestForQuotation } from "@/features/quotations/data";
 
@@ -24,7 +25,7 @@ export function ItemSelectionModal({
   return (
     <>
       <button className="button secondary" type="button" onClick={() => setOpen(true)}>
-        Escolher itens ({selected.size} de {request.items.length})
+        <I18nText text={"Escolher itens ("} />{selected.size} <I18nText text={"de"} /> {request.items.length}<I18nText text={")"} />
       </button>
 
       {open && (
@@ -32,18 +33,18 @@ export function ItemSelectionModal({
           <div className="settings-modal quotation-item-select-modal" role="dialog" aria-modal="true" aria-labelledby="item-select-modal-title">
             <div className="settings-modal-head">
               <div>
-                <h2 id="item-select-modal-title">Escolher itens da {request.code}</h2>
-                <span>Marque só os insumos que devem entrar nesta cotação. Dá para criar outra cotação depois com o restante.</span>
+                <h2 id="item-select-modal-title"><I18nText text={"Escolher itens da"} /> {request.code}</h2>
+                <span><I18nText text={"Marque só os insumos que devem entrar nesta cotação. Dá para criar outra cotação depois com o restante."} /></span>
               </div>
-              <button type="button" onClick={() => setOpen(false)}>Fechar</button>
+              <button type="button" onClick={() => setOpen(false)}><I18nText text={"Fechar"} /></button>
             </div>
 
             <div className="settings-modal-actions">
               <button className="button secondary" type="button" onClick={() => onChange(new Set(request.items.map((item) => item.itemNumber)))}>
-                Marcar todos
+                <I18nText text={"Marcar todos"} />
               </button>
               <button className="button secondary" type="button" onClick={() => onChange(new Set())}>
-                Desmarcar todos
+                <I18nText text={"Desmarcar todos"} />
               </button>
             </div>
 
@@ -51,15 +52,15 @@ export function ItemSelectionModal({
               {request.items.map((item) => (
                 <label key={item.itemNumber} className="map-pdf-checklist-item">
                   <input type="checkbox" checked={selected.has(item.itemNumber)} onChange={() => toggle(item.itemNumber)} />
-                  <span>#{item.itemNumber} {item.name}{item.detail ? ` - ${item.detail}` : ""}</span>
+                  <span><I18nText text={"#"} />{item.itemNumber} {item.name}{item.detail ? ` - ${item.detail}` : <I18nText text={""} />}</span>
                   <small>{item.quantity} {item.unit}</small>
                 </label>
               ))}
             </div>
 
             <div className="settings-modal-footer">
-              <span>{selected.size} de {request.items.length} itens selecionados.</span>
-              <button className="button" type="button" onClick={() => setOpen(false)}>Aplicar seleção</button>
+              <span>{selected.size} <I18nText text={"de"} /> {request.items.length} <I18nText text={"itens selecionados."} /></span>
+              <button className="button" type="button" onClick={() => setOpen(false)}><I18nText text={"Aplicar seleção"} /></button>
             </div>
           </div>
         </div>

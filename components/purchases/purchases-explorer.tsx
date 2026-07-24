@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useState } from "react";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import type { PurchaseFlowItem } from "@/features/purchases/types";
@@ -94,63 +95,63 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
   return (
     <section>
       <div className="card purchases-filters">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar solicitação, pedido, nota, fornecedor, comprador ou obra" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar solicitação, pedido, nota, fornecedor, comprador ou obra" data-i18n-placeholder={"Buscar solicitação, pedido, nota, fornecedor, comprador ou obra"} />
         <select value={kind} onChange={(event) => setKind(event.target.value)}>
-          <option value="">Todos os tipos</option>
-          <option value="request">Solicitações</option>
-          <option value="quotation">Cotações</option>
-          <option value="order">Pedidos</option>
-          <option value="invoice">Notas fiscais</option>
+          <option value=""><I18nText text={"Todos os tipos"} /></option>
+          <option value="request"><I18nText text={"Solicitações"} /></option>
+          <option value="quotation"><I18nText text={"Cotações"} /></option>
+          <option value="order"><I18nText text={"Pedidos"} /></option>
+          <option value="invoice"><I18nText text={"Notas fiscais"} /></option>
         </select>
         <select value={status} onChange={(event) => setStatus(event.target.value)}>
-          <option value="">Todas as situações</option>
+          <option value=""><I18nText text={"Todas as situações"} /></option>
           {payload.statuses.map((item) => <option key={item}>{item}</option>)}
         </select>
         <div>
           <strong>{payload.filteredCount}</strong>
-          <span>{payload.filteredCount === totalRecords ? "registros" : `de ${totalRecords} registros salvos`}</span>
+          <span>{payload.filteredCount === totalRecords ? <I18nText text={"registros"} /> : `de ${totalRecords} registros salvos`}</span>
           <strong>{formatCompactCurrency(payload.totalAmount)}</strong>
         </div>
       </div>
 
-      {message && <div className="card data-notice"><strong>Registros</strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Registros"} /></strong><span>{message}</span></div>}
 
       <div className="local-data-list">
         <div className="local-list-controls top">
           <div>
             <strong>{payload.filteredCount}</strong>
-            <span>registros de compra</span>
-            <small>{loading ? "Carregando..." : `Página ${payload.page} de ${payload.totalPages}`}</small>
+            <span><I18nText text={"registros de compra"} /></span>
+            <small>{loading ? <I18nText text={"Carregando..."} /> : `Página ${payload.page} de ${payload.totalPages}`}</small>
           </div>
           <label>
-            Registros por página
+            <I18nText text={"Registros por página"} />
             <select value={pageSize} onChange={(event) => changePageSize(event.target.value)}>
               {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <div className="local-list-pages">
             <button type="button" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={loading || page <= 1}>
-              Anterior
+              <I18nText text={"Anterior"} />
             </button>
-            <span>Página {payload.page} de {payload.totalPages}</span>
+            <span><I18nText text={"Página"} /> {payload.page} <I18nText text={"de"} /> {payload.totalPages}</span>
             <button type="button" onClick={() => setPage((current) => Math.min(payload.totalPages, current + 1))} disabled={loading || page >= payload.totalPages}>
-              Próxima
+              <I18nText text={"Próxima"} />
             </button>
           </div>
         </div>
 
-        {loading ? <div className="empty-state">Carregando registros de compra...</div> : payload.items.length ? (
+        {loading ? <div className="empty-state"><I18nText text={"Carregando registros de compra..."} /></div> : payload.items.length ? (
           <div className="card table-card">
           <table>
             <thead>
               <tr>
-                <th>Origem</th>
-                <th>Descrição</th>
-                <th>Data</th>
-                <th>Valor / quantidade</th>
-                <th>Responsável</th>
-                <th>Situação</th>
-                <th>Integração</th>
+                <th><I18nText text={"Origem"} /></th>
+                <th><I18nText text={"Descrição"} /></th>
+                <th><I18nText text={"Data"} /></th>
+                <th><I18nText text={"Valor / quantidade"} /></th>
+                <th><I18nText text={"Responsável"} /></th>
+                <th><I18nText text={"Situação"} /></th>
+                <th><I18nText text={"Integração"} /></th>
               </tr>
             </thead>
             <tbody>
@@ -159,7 +160,7 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
                   <td>
                     <strong>{item.kindLabel}</strong>
                     <br />
-                    <span className="table-muted">#{item.code}</span>
+                    <span className="table-muted"><I18nText text={"#"} />{item.code}</span>
                   </td>
                   <td>
                     <strong>{item.title}</strong>
@@ -168,23 +169,23 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
                   </td>
                   <td>{formatOptionalDate(item.date, "Sem data")}</td>
                   <td>
-                    <strong>{item.amount ? formatCurrency(item.amount) : "Sem valor"}</strong>
+                    <strong>{item.amount ? formatCurrency(item.amount) : <I18nText text={"Sem valor"} />}</strong>
                     <br />
                     <span className="table-muted">{item.quantity ? `${item.quantity} unidade(s)` : item.kindLabel}</span>
                   </td>
                   <td>
-                    {item.buyer || item.supplier || item.building || "Não informado"}
+                    {item.buyer || item.supplier || item.building || <I18nText text={"Não informado"} />}
                     <br />
                     <span className="table-muted">{[item.supplier, item.building].filter(Boolean).join(" - ")}</span>
                   </td>
-                  <td><span className={badgeClass(item)}>{item.late ? "Entrega atrasada" : item.status}</span></td>
+                  <td><span className={badgeClass(item)}>{item.late ? <I18nText text={"Entrega atrasada"} /> : item.status}</span></td>
                   <td><IntegrationStamp record={item.raw} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        ) : <div className="empty-state">Nenhum registro de compra encontrado.</div>}
+        ) : <div className="empty-state"><I18nText text={"Nenhum registro de compra encontrado."} /></div>}
       </div>
     </section>
   );

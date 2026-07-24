@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
 import type { SupplierQuoteAwardSummary, SupplierQuoteResponseSummary } from "@/lib/supplier-quote-portal";
 import { formatDocument, plural } from "../helpers";
@@ -120,44 +121,44 @@ export function AprovacaoTab({
       <div className="card panel quotation-approval-main">
         <div className="panel-head quotation-approval-hero">
           <div>
-            <span>Central de decisão</span>
-            <h2 className="panel-title">Aprovação do vencedor</h2>
-            <p>Compare recomendação, risco e cobertura antes de salvar a escolha final.</p>
+            <span><I18nText text={"Central de decisão"} /></span>
+            <h2 className="panel-title"><I18nText text={"Aprovação do vencedor"} /></h2>
+            <p><I18nText text={"Compare recomendação, risco e cobertura antes de salvar a escolha final."} /></p>
           </div>
           <i className={`badge ${rowsWithoutPrice.length || partialBestRows.length ? "warn" : ""}`}>{approvalReadiness}</i>
         </div>
 
         <div className="quotation-approval-command">
           <article>
-            <span>Melhor cesta</span>
+            <span><I18nText text={"Melhor cesta"} /></span>
             <strong>{formatCurrency(bestBasketTotal)}</strong>
-            <small>{rowsWithBest.length} de {plural(itemComparison.length, "item", "itens")} com vencedor sugerido</small>
+            <small>{rowsWithBest.length} <I18nText text={"de"} /> {plural(itemComparison.length, "item", "itens")} <I18nText text={"com vencedor sugerido"} /></small>
           </article>
           <article className={rowsWithoutPrice.length ? "warn" : ""}>
-            <span>Pendências</span>
+            <span><I18nText text={"Pendências"} /></span>
             <strong>{rowsWithoutPrice.length + partialBestRows.length}</strong>
             <small>{readinessDetail}</small>
           </article>
           <article>
-            <span>Recomendação</span>
-            <strong>{recommendedSupplier?.response.supplierName || "-"}</strong>
-            <small>{recommendedSupplier ? `${plural(recommendedSupplier.bestCount, "melhor item", "melhores itens")}, ${recommendedSupplier.coverage}% cobertura` : "Sem resposta elegível"}</small>
+            <span><I18nText text={"Recomendação"} /></span>
+            <strong>{recommendedSupplier?.response.supplierName || <I18nText text={"-"} />}</strong>
+            <small>{recommendedSupplier ? `${plural(recommendedSupplier.bestCount, "melhor item", "melhores itens")}, ${recommendedSupplier.coverage}% cobertura` : <I18nText text={"Sem resposta elegível"} />}</small>
           </article>
           <article>
-            <span>Salvo</span>
-            <strong>{savedCoverage}%</strong>
-            <small>{awards.length ? `${plural(awards.length, "decisão registrada", "decisões registradas")}` : "Nenhuma decisão salva"}</small>
+            <span><I18nText text={"Salvo"} /></span>
+            <strong>{savedCoverage}<I18nText text={"%"} /></strong>
+            <small>{awards.length ? `${plural(awards.length, "decisão registrada", "decisões registradas")}` : <I18nText text={"Nenhuma decisão salva"} />}</small>
           </article>
         </div>
 
         <div className="quotation-approval-mode">
           <button className={approvalMode === "quotation" ? "active" : ""} type="button" onClick={() => onApprovalModeChange("quotation")}>
-            <strong>Cotação inteira</strong>
-            <small>Um fornecedor vence tudo</small>
+            <strong><I18nText text={"Cotação inteira"} /></strong>
+            <small><I18nText text={"Um fornecedor vence tudo"} /></small>
           </button>
           <button className={approvalMode === "item" ? "active" : ""} type="button" onClick={() => onApprovalModeChange("item")}>
-            <strong>Por item</strong>
-            <small>Melhor decisão por insumo</small>
+            <strong><I18nText text={"Por item"} /></strong>
+            <small><I18nText text={"Melhor decisão por insumo"} /></small>
           </button>
         </div>
 
@@ -165,35 +166,35 @@ export function AprovacaoTab({
           <div className="quotation-approval-board">
             <div className="quotation-approval-form">
               <label>
-                <span>Fornecedor vencedor</span>
+                <span><I18nText text={"Fornecedor vencedor"} /></span>
                 <select className="field" value={approvalResponseId} onChange={(event) => onApprovalResponseIdChange(event.target.value)}>
-                  <option value="">Selecione</option>
+                  <option value=""><I18nText text={"Selecione"} /></option>
                   {supplierResponses.map((response) => (
                     <option value={response.id} key={response.id}>
-                      {response.supplierName} - {formatCurrency(response.totalValue)}
+                      {response.supplierName} <I18nText text={"-"} /> {formatCurrency(response.totalValue)}
                     </option>
                   ))}
                 </select>
               </label>
               <label>
-                <span>Justificativa executiva</span>
-                <textarea className="field" value={approvalJustification} onChange={(event) => onApprovalJustificationChange(event.target.value)} placeholder="Ex.: menor preço global, atende prazo, cobertura e quantidade total." />
+                <span><I18nText text={"Justificativa executiva"} /></span>
+                <textarea className="field" value={approvalJustification} onChange={(event) => onApprovalJustificationChange(event.target.value)} placeholder="Ex.: menor preço global, atende prazo, cobertura e quantidade total." data-i18n-placeholder={"Ex.: menor preço global, atende prazo, cobertura e quantidade total."} />
               </label>
             </div>
 
             <div className="quotation-approval-selected">
               <div>
-                <span>Fornecedor em análise</span>
-                <h3>{selectedResponse?.supplierName || "Selecione um fornecedor"}</h3>
-                <small>{selectedResponse ? formatDocument(selectedResponse.document) : "Os indicadores aparecem aqui ao escolher o vencedor."}</small>
+                <span><I18nText text={"Fornecedor em análise"} /></span>
+                <h3>{selectedResponse?.supplierName || <I18nText text={"Selecione um fornecedor"} />}</h3>
+                <small>{selectedResponse ? formatDocument(selectedResponse.document) : <I18nText text={"Os indicadores aparecem aqui ao escolher o vencedor."} />}</small>
               </div>
               <div className="quotation-approval-selected-grid">
-                <span><strong>{selectedCoverage}%</strong><small>Cobertura</small></span>
-                <span><strong>{selectedBestCount}</strong><small>Melhores itens</small></span>
-                <span><strong>{selectedPartialCount}</strong><small>Parciais</small></span>
-                <span><strong>{selectedAverageDeadline || "-"}</strong><small>Prazo médio</small></span>
+                <span><strong>{selectedCoverage}<I18nText text={"%"} /></strong><small><I18nText text={"Cobertura"} /></small></span>
+                <span><strong>{selectedBestCount}</strong><small><I18nText text={"Melhores itens"} /></small></span>
+                <span><strong>{selectedPartialCount}</strong><small><I18nText text={"Parciais"} /></small></span>
+                <span><strong>{selectedAverageDeadline || <I18nText text={"-"} />}</strong><small><I18nText text={"Prazo médio"} /></small></span>
               </div>
-              <p>{selectedResponse ? `${selectedResponse.supplierName} soma ${formatCurrency(selectedResponse.totalValue)} na proposta enviada. Compare com a melhor cesta de ${formatCurrency(bestBasketTotal)} antes de confirmar.` : "Escolha o fornecedor para avaliar aderência, prazo e risco de compra integral."}</p>
+              <p>{selectedResponse ? `${selectedResponse.supplierName} soma ${formatCurrency(selectedResponse.totalValue)} na proposta enviada. Compare com a melhor cesta de ${formatCurrency(bestBasketTotal)} antes de confirmar.` : <I18nText text={"Escolha o fornecedor para avaliar aderência, prazo e risco de compra integral."} />}</p>
             </div>
           </div>
         ) : (
@@ -205,22 +206,22 @@ export function AprovacaoTab({
               return (
                 <article className={row.best?.partial ? "partial" : !row.best ? "muted" : ""} key={row.itemNumber}>
                   <div className="quotation-approval-item-main">
-                    <span>Insumo #{row.item?.productId || row.itemNumber}</span>
+                    <span><I18nText text={"Insumo #"} />{row.item?.productId || row.itemNumber}</span>
                     <strong>{row.item?.name || `Item ${row.itemNumber}`}</strong>
-                    <small>{row.item?.quantity || 0} {row.item?.unit || "un"} solicitados</small>
-                    <p>{row.best ? `Sugestão: ${row.best.supplierName} por ${formatCurrency(row.best.unitPrice)}.` : "Sem preço válido para recomendação automática."}</p>
+                    <small>{row.item?.quantity || 0} {row.item?.unit || <I18nText text={"un"} />} <I18nText text={"solicitados"} /></small>
+                    <p>{row.best ? `Sugestão: ${row.best.supplierName} por ${formatCurrency(row.best.unitPrice)}.` : <I18nText text={"Sem preço válido para recomendação automática."} />}</p>
                   </div>
                   <div className="quotation-approval-item-score">
                     <span>{plural(validOffers.length, "oferta", "ofertas")}</span>
-                    <strong>{selectedOffer?.attends ? formatCurrency(selectedOffer.unitPrice) : "-"}</strong>
-                    <small>{selectedOffer?.attends ? `${plural(selectedOffer.quantity, "atendido", "atendidos")} - ${plural(selectedOffer.deadlineDays || 0, "dia", "dias")}` : "Escolha uma proposta"}</small>
-                    {selectedOffer?.partial && <i className="badge warn">Parcial</i>}
+                    <strong>{selectedOffer?.attends ? formatCurrency(selectedOffer.unitPrice) : <I18nText text={"-"} />}</strong>
+                    <small>{selectedOffer?.attends ? `${plural(selectedOffer.quantity, "atendido", "atendidos")} - ${plural(selectedOffer.deadlineDays || 0, "dia", "dias")}` : <I18nText text={"Escolha uma proposta"} />}</small>
+                    {selectedOffer?.partial && <i className="badge warn"><I18nText text={"Parcial"} /></i>}
                   </div>
                   <select className="field" value={selectedResponseId} onChange={(event) => onItemAwardChange(row.itemNumber, event.target.value)}>
-                    <option value="">Selecione</option>
+                    <option value=""><I18nText text={"Selecione"} /></option>
                     {validOffers.map((offer) => (
                       <option value={offer.responseId} key={offer.responseId}>
-                        {offer.supplierName} - {formatCurrency(offer.unitPrice)} - qtd. {offer.quantity}
+                        {offer.supplierName} <I18nText text={"-"} /> {formatCurrency(offer.unitPrice)} <I18nText text={"- qtd."} /> {offer.quantity}
                       </option>
                     ))}
                   </select>
@@ -238,62 +239,62 @@ export function AprovacaoTab({
 
         {approvalMode === "item" && (
           <label className="quotation-approval-common">
-            <span>Justificativa padrão para itens sem texto próprio</span>
-            <textarea className="field" value={approvalJustification} onChange={(event) => onApprovalJustificationChange(event.target.value)} placeholder="Ex.: menor preço por item, respeitando quantidade atendida e prazo." />
+            <span><I18nText text={"Justificativa padrão para itens sem texto próprio"} /></span>
+            <textarea className="field" value={approvalJustification} onChange={(event) => onApprovalJustificationChange(event.target.value)} placeholder="Ex.: menor preço por item, respeitando quantidade atendida e prazo." data-i18n-placeholder={"Ex.: menor preço por item, respeitando quantidade atendida e prazo."} />
           </label>
         )}
 
         {approvalMessage && <div className="settings-inline-message">{approvalMessage}</div>}
         <div className="quotation-operation-actions quotation-approval-actions">
           <button className="button" type="button" disabled={approvalSaving || !supplierResponses.length} onClick={onSaveAward}>
-            {approvalSaving ? "Salvando..." : "Salvar aprovação"}
+            <I18nText text={approvalSaving ? "Salvando..." : "Salvar aprovação"} />
           </button>
           <button className="button secondary" type="button" disabled={!awards.length || loadingAction !== null} onClick={() => onSendAwardsToSienge(false)}>
-            Preparar decisão no Sienge
+            <I18nText text={"Preparar decisão no Sienge"} />
           </button>
           <button className="button sienge-write" type="button" disabled={!awards.length || loadingAction !== null} onClick={() => onSendAwardsToSienge(true)}>
-            {loadingAction === "negotiation-confirm" ? "Registrando..." : "Registrar decisão no Sienge"}
+            <I18nText text={loadingAction === "negotiation-confirm" ? "Registrando..." : "Registrar decisão no Sienge"} />
           </button>
           {awards.length > 0 && (
             <a className="button secondary" href={reportHref} target="_blank" rel="noreferrer">
-              Relatório de decisão (PDF)
+              <I18nText text={"Relatório de decisão (PDF)"} />
             </a>
           )}
-          {!supplierResponses.length && <span className="table-muted">Receba respostas de fornecedores antes de aprovar.</span>}
+          {!supplierResponses.length && <span className="table-muted"><I18nText text={"Receba respostas de fornecedores antes de aprovar."} /></span>}
         </div>
       </div>
 
       <aside className="card panel quotation-approval-side">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">Decisão salva</h2>
-            <span className="panel-note">Controle local da aprovação</span>
+            <h2 className="panel-title"><I18nText text={"Decisão salva"} /></h2>
+            <span className="panel-note"><I18nText text={"Controle local da aprovação"} /></span>
           </div>
         </div>
         <div className="quotation-approval-status">
-          <span><strong>{awards.length}</strong><small>{awards.length === 1 ? "Registro" : "Registros"}</small></span>
-          <span><strong>{savedCoverage}%</strong><small>Cobertura salva</small></span>
-          <span><strong>{loadingAction ? "Em envio" : awards.length ? "Pronto" : "Pendente"}</strong><small>Sienge</small></span>
+          <span><strong>{awards.length}</strong><small><I18nText text={awards.length === 1 ? "Registro" : "Registros"} /></small></span>
+          <span><strong>{savedCoverage}<I18nText text={"%"} /></strong><small><I18nText text={"Cobertura salva"} /></small></span>
+          <span><strong>{loadingAction ? <I18nText text={"Em envio"} /> : awards.length ? <I18nText text={"Pronto"} /> : <I18nText text={"Pendente"} />}</strong><small><I18nText text={"Sienge"} /></small></span>
         </div>
         <div className="quotation-approval-checklist">
-          <span className={supplierResponses.length ? "done" : ""}>Propostas recebidas</span>
-          <span className={rowsWithoutPrice.length ? "" : "done"}>Itens com preço analisado</span>
-          <span className={approvalJustification.trim() ? "done" : ""}>Justificativa preenchida</span>
-          <span className={awards.length ? "done" : ""}>Decisão salva</span>
+          <span className={supplierResponses.length ? "done" : ""}><I18nText text={"Propostas recebidas"} /></span>
+          <span className={rowsWithoutPrice.length ? "" : "done"}><I18nText text={"Itens com preço analisado"} /></span>
+          <span className={approvalJustification.trim() ? "done" : ""}><I18nText text={"Justificativa preenchida"} /></span>
+          <span className={awards.length ? "done" : ""}><I18nText text={"Decisão salva"} /></span>
         </div>
         <div className="quotation-award-list">
           {awards.map((award) => (
             <article key={award.id}>
-              <span>{award.scope === "quotation" ? "Cotação inteira" : `Item ${award.itemNumber}`}</span>
+              <span>{award.scope === "quotation" ? <I18nText text={"Cotação inteira"} /> : `Item ${award.itemNumber}`}</span>
               <strong>{award.supplierName}</strong>
-              <small>{formatDocument(award.document)} - {formatOptionalDate(award.createdAt)}</small>
+              <small>{formatDocument(award.document)} <I18nText text={"-"} /> {formatOptionalDate(award.createdAt)}</small>
               <p>{award.justification}</p>
             </article>
           ))}
         </div>
-        {!awards.length && <div className="empty-state">Nenhuma aprovação salva para esta cotação.</div>}
+        {!awards.length && <div className="empty-state"><I18nText text={"Nenhuma aprovação salva para esta cotação."} /></div>}
         <div className="advanced-search-hint warn">
-          A aprovação fica registrada na base local e pode ser enviada ao Sienge como negociação autorizada, marcando os itens escolhidos de cada fornecedor vencedor. A geração do pedido de compra é concluída dentro do próprio Sienge.
+          <I18nText text={"A aprovação fica registrada na base local e pode ser enviada ao Sienge como negociação autorizada, marcando os itens escolhidos de cada fornecedor vencedor. A geração do pedido de compra é concluída dentro do próprio Sienge."} />
         </div>
       </aside>
     </section>

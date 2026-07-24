@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useState } from "react";
 import { operationalPermissionDefinitions, screenPermissionDefinitions } from "@/lib/app-permissions";
 import type { AppRole, AppUser } from "@/lib/app-users";
@@ -46,7 +47,7 @@ function ModalShell({ title, subtitle, onClose, children }: { title: string; sub
             <h2>{title}</h2>
             <span>{subtitle}</span>
           </div>
-          <button className="payable-review-button compact" type="button" onClick={onClose}>Fechar</button>
+          <button className="payable-review-button compact" type="button" onClick={onClose}><I18nText text={"Fechar"} /></button>
         </div>
         {children}
       </section>
@@ -78,24 +79,24 @@ function CreateUserModal({
   return (
     <ModalShell title="Novo usuário" subtitle="Crie o acesso inicial; permissões finas podem ser editadas depois" onClose={onClose}>
       <div className="settings-modal-form">
-        <label><span>Nome</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome completo" /></label>
-        <label><span>E-mail</span><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="pessoa@brasin.com.br" /></label>
-        <label><span>Senha inicial</span><input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="Mínimo 8 caracteres" /></label>
+        <label><span><I18nText text={"Nome"} /></span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome completo" data-i18n-placeholder={"Nome completo"} /></label>
+        <label><span><I18nText text={"E-mail"} /></span><input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="pessoa@brasin.com.br" data-i18n-placeholder={"pessoa@brasin.com.br"} /></label>
+        <label><span><I18nText text={"Senha inicial"} /></span><input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="Mínimo 8 caracteres" data-i18n-placeholder={"Mínimo 8 caracteres"} /></label>
         <label>
-          <span>Papel inicial</span>
+          <span><I18nText text={"Papel inicial"} /></span>
           <select value={role} onChange={(event) => setRole(event.target.value)}>
             {roles.map((current) => (
               <option value={current.name} key={current.id}>
-                {roleLabel(current.name)}{current.approvalLimit !== null ? ` - alçada ${formatCurrency(current.approvalLimit)}` : " - sem limite"}
+                {roleLabel(current.name)}{current.approvalLimit !== null ? ` - alçada ${formatCurrency(current.approvalLimit)}` : <I18nText text={" - sem limite"} />}
               </option>
             ))}
           </select>
         </label>
       </div>
       <div className="settings-modal-actions">
-        <button className="payable-review-button compact" type="button" onClick={onClose}>Cancelar</button>
+        <button className="payable-review-button compact" type="button" onClick={onClose}><I18nText text={"Cancelar"} /></button>
         <button className="button" type="button" disabled={saving || !name || !email || !password} onClick={() => void submit()}>
-          {saving ? "Salvando..." : "Criar usuário"}
+          <I18nText text={saving ? "Salvando..." : "Criar usuário"} />
         </button>
       </div>
     </ModalShell>
@@ -136,19 +137,19 @@ function ProfileModal({
     <ModalShell title="Perfil e alçada" subtitle={user.name} onClose={onClose}>
       <div className="settings-modal-form">
         <label>
-          <span>Papel</span>
+          <span><I18nText text={"Papel"} /></span>
           <select value={role} disabled={saving} onChange={(event) => setRole(event.target.value)}>
             {roles.map((current) => <option value={current.name} key={current.id}>{roleLabel(current.name)}</option>)}
           </select>
         </label>
         <label>
-          <span>Alçada</span>
+          <span><I18nText text={"Alçada"} /></span>
           <select value={approvalLimitMode} disabled={saving} onChange={(event) => setApprovalLimitMode(event.target.value as AppUser["approvalLimitMode"])}>
             {Object.entries(approvalModeLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
           </select>
         </label>
         <label>
-          <span>Valor da alçada</span>
+          <span><I18nText text={"Valor da alçada"} /></span>
           <input
             disabled={saving || approvalLimitMode !== "limited"}
             min="0"
@@ -161,13 +162,13 @@ function ProfileModal({
         </label>
         <label className="settings-checkline">
           <input type="checkbox" checked={inheritGroupPermissions} disabled={saving} onChange={(event) => setInheritGroupPermissions(event.target.checked)} />
-          <span>Usar permissões do grupo selecionado</span>
+          <span><I18nText text={"Usar permissões do grupo selecionado"} /></span>
         </label>
       </div>
       <div className="settings-modal-actions">
-        <button className="payable-review-button compact" type="button" onClick={onClose}>Cancelar</button>
+        <button className="payable-review-button compact" type="button" onClick={onClose}><I18nText text={"Cancelar"} /></button>
         <button className="button" type="button" disabled={saving || (approvalLimitMode === "limited" && Number(approvalLimit || 0) < 0)} onClick={() => void save()}>
-          {saving ? "Salvando..." : "Salvar perfil"}
+          <I18nText text={saving ? "Salvando..." : "Salvar perfil"} />
         </button>
       </div>
     </ModalShell>
@@ -228,9 +229,9 @@ function PermissionModal({
         ))}
       </div>
       <div className="settings-modal-actions">
-        <button className="payable-review-button compact" type="button" onClick={onClose}>Cancelar</button>
+        <button className="payable-review-button compact" type="button" onClick={onClose}><I18nText text={"Cancelar"} /></button>
         <button className="button" type="button" disabled={saving} onClick={() => void save()}>
-          {saving ? "Salvando..." : "Salvar permissões"}
+          <I18nText text={saving ? "Salvando..." : "Salvar permissões"} />
         </button>
       </div>
     </ModalShell>
@@ -303,13 +304,13 @@ function RolesModal({
       <div className="roles-modal-layout">
         <div className="roles-list">
           <button className={`role-list-item ${selectedId === "new" ? "active" : ""}`} type="button" onClick={newRole}>
-            <strong>Novo grupo</strong>
-            <small>Cadastro em branco</small>
+            <strong><I18nText text={"Novo grupo"} /></strong>
+            <small><I18nText text={"Cadastro em branco"} /></small>
           </button>
           {roles.map((role) => (
             <button className={`role-list-item ${selectedId === role.id ? "active" : ""}`} type="button" key={role.id} onClick={() => editRole(role)}>
               <strong>{roleLabel(role.name)}</strong>
-              <small>{role.userCount} usuário(s) - {role.approvalLimit !== null ? formatCurrency(role.approvalLimit) : "sem limite"}</small>
+              <small>{role.userCount} <I18nText text={"usuário(s) -"} /> {role.approvalLimit !== null ? formatCurrency(role.approvalLimit) : <I18nText text={"sem limite"} />}</small>
             </button>
           ))}
         </div>
@@ -317,19 +318,19 @@ function RolesModal({
         <div className="role-editor">
           <div className="settings-modal-form">
             <label>
-              <span>Nome do grupo</span>
-              <input value={name} disabled={saving || Boolean(selectedRole?.system)} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Compras obra norte" />
+              <span><I18nText text={"Nome do grupo"} /></span>
+              <input value={name} disabled={saving || Boolean(selectedRole?.system)} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Compras obra norte" data-i18n-placeholder={"Ex.: Compras obra norte"} />
             </label>
             <label>
-              <span>Alçada do grupo</span>
+              <span><I18nText text={"Alçada do grupo"} /></span>
               <select value={unlimited ? "unlimited" : "limited"} disabled={saving} onChange={(event) => setUnlimited(event.target.value === "unlimited")}>
-                <option value="unlimited">Sem limite</option>
-                <option value="limited">Limite por valor</option>
+                <option value="unlimited"><I18nText text={"Sem limite"} /></option>
+                <option value="limited"><I18nText text={"Limite por valor"} /></option>
               </select>
             </label>
             <label>
-              <span>Valor da alçada</span>
-              <input disabled={saving || unlimited} min="0" step="0.01" type="number" value={approvalLimit} onChange={(event) => setApprovalLimit(event.target.value)} placeholder="50000" />
+              <span><I18nText text={"Valor da alçada"} /></span>
+              <input disabled={saving || unlimited} min="0" step="0.01" type="number" value={approvalLimit} onChange={(event) => setApprovalLimit(event.target.value)} placeholder="50000" data-i18n-placeholder={"50000"} />
             </label>
           </div>
 
@@ -355,12 +356,12 @@ function RolesModal({
       <div className="settings-modal-actions">
         {selectedRole && !selectedRole.system && (
           <button className="payable-review-button compact warn" type="button" disabled={saving || selectedRole.userCount > 0} onClick={() => void deleteRole()}>
-            Excluir grupo
+            <I18nText text={"Excluir grupo"} />
           </button>
         )}
-        <button className="payable-review-button compact" type="button" onClick={onClose}>Fechar</button>
+        <button className="payable-review-button compact" type="button" onClick={onClose}><I18nText text={"Fechar"} /></button>
         <button className="button" type="button" disabled={saving || !name.trim()} onClick={() => void saveRole()}>
-          {saving ? "Salvando..." : selectedId === "new" ? "Criar grupo" : "Salvar grupo"}
+          {saving ? <I18nText text={"Salvando..."} /> : selectedId === "new" ? <I18nText text={"Criar grupo"} /> : <I18nText text={"Salvar grupo"} />}
         </button>
       </div>
     </ModalShell>
@@ -430,12 +431,12 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
     <section className="users-manager">
       <div className="users-toolbar card panel">
         <div>
-          <h2 className="panel-title">Usuários e acessos</h2>
-          <span className="panel-note">Edite cada responsabilidade em uma janela própria</span>
+          <h2 className="panel-title"><I18nText text={"Usuários e acessos"} /></h2>
+          <span className="panel-note"><I18nText text={"Edite cada responsabilidade em uma janela própria"} /></span>
         </div>
         <div className="users-toolbar-actions">
-          <button className="button secondary" type="button" onClick={() => setModal({ type: "roles" })}>Papéis e grupos</button>
-          <button className="button" type="button" onClick={() => setModal({ type: "create" })}>Novo usuário</button>
+          <button className="button secondary" type="button" onClick={() => setModal({ type: "roles" })}><I18nText text={"Papéis e grupos"} /></button>
+          <button className="button" type="button" onClick={() => setModal({ type: "create" })}><I18nText text={"Novo usuário"} /></button>
         </div>
       </div>
 
@@ -448,28 +449,28 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
               <div>
                 <h2 className="panel-title">
                   {user.name}
-                  {user.id === currentUserId && <i className="badge">você</i>}
-                  {!user.active && <i className="badge muted">inativo</i>}
+                  {user.id === currentUserId && <i className="badge"><I18nText text={"você"} /></i>}
+                  {!user.active && <i className="badge muted"><I18nText text={"inativo"} /></i>}
                 </h2>
                 <span className="panel-note">{user.email}</span>
               </div>
               <div className="user-card-summary">
-                <span><strong>{roleLabel(user.roles[0] || "Sem papel")}</strong><small>Papel</small></span>
-                <span><strong>{approvalText(user)}</strong><small>Alçada</small></span>
-                <span><strong>{user.permissions.filter((permission) => permission.startsWith("screen.")).length}</strong><small>Telas</small></span>
+                <span><strong>{roleLabel(user.roles[0] || "Sem papel")}</strong><small><I18nText text={"Papel"} /></small></span>
+                <span><strong>{approvalText(user)}</strong><small><I18nText text={"Alçada"} /></small></span>
+                <span><strong>{user.permissions.filter((permission) => permission.startsWith("screen.")).length}</strong><small><I18nText text={"Telas"} /></small></span>
               </div>
               <div className="users-manager-actions">
                 <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => setModal({ type: "profile", user })}>
-                  Perfil e alçada
+                  <I18nText text={"Perfil e alçada"} />
                 </button>
                 <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => setModal({ type: "screens", user })}>
-                  Telas
+                  <I18nText text={"Telas"} />
                 </button>
                 <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => setModal({ type: "operations", user })}>
-                  Operações
+                  <I18nText text={"Operações"} />
                 </button>
                 <button className="payable-review-button compact" type="button" disabled={saving} onClick={() => void resetPassword(user)}>
-                  Senha
+                  <I18nText text={"Senha"} />
                 </button>
                 <button
                   className={`payable-review-button compact ${user.active ? "warn" : ""}`}
@@ -477,7 +478,7 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
                   disabled={saving || user.id === currentUserId}
                   onClick={() => void callUsersApi("PATCH", { id: user.id, active: !user.active }, `${user.name} ${user.active ? "desativado" : "reativado"}.`)}
                 >
-                  {user.active ? "Desativar" : "Reativar"}
+                  <I18nText text={user.active ? "Desativar" : "Reativar"} />
                 </button>
               </div>
             </div>
@@ -486,7 +487,7 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
       </div>
 
       <div className="advanced-search-hint">
-        Telas controlam menu e acesso por URL. Operações controlam ações sensíveis dentro das telas, como aprovar cotação, gerar links, gerenciar usuários e gravar no Sienge.
+        <I18nText text={"Telas controlam menu e acesso por URL. Operações controlam ações sensíveis dentro das telas, como aprovar cotação, gerar links, gerenciar usuários e gravar no Sienge."} />
       </div>
 
       {modal?.type === "create" && (

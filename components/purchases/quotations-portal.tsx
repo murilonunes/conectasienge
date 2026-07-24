@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { QuotationPortalData, QuotationStatus } from "@/features/quotations/data";
@@ -124,8 +125,8 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
 
   return (
     <section className="advanced-search quotation-search">
-      {data.error && <div className="card data-notice"><strong>Atenção</strong><span>{data.error}</span></div>}
-      {data.warning && <div className="card data-notice"><strong>Atenção</strong><span>{data.warning}</span></div>}
+      {data.error && <div className="card data-notice"><strong><I18nText text={"Atenção"} /></strong><span>{data.error}</span></div>}
+      {data.warning && <div className="card data-notice"><strong><I18nText text={"Atenção"} /></strong><span>{data.warning}</span></div>}
 
       <QuotationsFiltersBar
         data={data}

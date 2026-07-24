@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import { formatCompactCurrency } from "@/lib/formatters";
 
 export type DreYearlyStackedItem = {
@@ -24,7 +25,7 @@ export function DreYearlyStackedChart({
   return (
     <section className="card panel dre-yearly-panel">
       <div className="panel-head">
-        <div><h2 className="panel-title">{title}</h2><span className="panel-note">{note}</span></div>
+        <div><h2 className="panel-title"><I18nText text={title} /></h2><span className="panel-note"><I18nText text={note} /></span></div>
         <div className="chart-legend"><span><i className="dot" />{positiveLabel}</span><span><i className="dot out" />{negativeLabel}</span></div>
       </div>
       {data.length ? (
@@ -50,7 +51,7 @@ export function DreYearlyStackedChart({
             );
           })}
         </div>
-      ) : <div className="chart-empty">Sem dados para montar o gráfico.</div>}
+      ) : <div className="chart-empty"><I18nText text={"Sem dados para montar o gráfico."} /></div>}
     </section>
   );
 }

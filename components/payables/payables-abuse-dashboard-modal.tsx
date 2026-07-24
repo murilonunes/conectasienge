@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import { analyzePayableCharge, type PayableChargeForReview } from "@/lib/payables-abuse-analysis";
@@ -92,7 +93,7 @@ export function PayablesAbuseDashboardModal({ items, referenceDate }: PayablesAb
   return (
     <>
       <button className="button secondary advanced-search-button" type="button" disabled={!groups.length} onClick={() => setOpen(true)}>
-        Dashboard de cobranças abusivas
+        <I18nText text={"Dashboard de cobranças abusivas"} />
       </button>
 
       {open && (
@@ -100,43 +101,43 @@ export function PayablesAbuseDashboardModal({ items, referenceDate }: PayablesAb
           <div className="settings-modal payable-abuse-dashboard-modal" role="dialog" aria-modal="true" aria-labelledby="payable-abuse-dashboard-title">
             <div className="settings-modal-head">
               <div>
-                <h2 id="payable-abuse-dashboard-title">Dashboard de cobranças abusivas</h2>
-                <span>Agrupado por credor e ordenado pela soma do possível excesso.</span>
+                <h2 id="payable-abuse-dashboard-title"><I18nText text={"Dashboard de cobranças abusivas"} /></h2>
+                <span><I18nText text={"Agrupado por credor e ordenado pela soma do possível excesso."} /></span>
               </div>
-              <button type="button" onClick={() => setOpen(false)}>Fechar</button>
+              <button type="button" onClick={() => setOpen(false)}><I18nText text={"Fechar"} /></button>
             </div>
 
             <div className="payable-abuse-summary">
-              <div><span>Possível excesso total</span><strong>{formatCurrency(totalExcess)}</strong></div>
-              <div><span>Credores com alerta</span><strong>{groups.length}</strong></div>
-              <div><span>Parcelas em revisão</span><strong>{totalInstallments}</strong></div>
+              <div><span><I18nText text={"Possível excesso total"} /></span><strong>{formatCurrency(totalExcess)}</strong></div>
+              <div><span><I18nText text={"Credores com alerta"} /></span><strong>{groups.length}</strong></div>
+              <div><span><I18nText text={"Parcelas em revisão"} /></span><strong>{totalInstallments}</strong></div>
             </div>
 
             <section className="payable-abuse-chart">
               <div className="panel-head">
                 <div>
-                  <h3 className="panel-title">10 maiores por possível excesso</h3>
-                  <span className="panel-note">% sobre o total encontrado e valor agrupado por credor.</span>
+                  <h3 className="panel-title"><I18nText text={"10 maiores por possível excesso"} /></h3>
+                  <span className="panel-note"><I18nText text={"% sobre o total encontrado e valor agrupado por credor."} /></span>
                 </div>
               </div>
               {topTen.length ? topTen.map((row) => (
                 <div className="payable-abuse-chart-row" key={row.key}>
                   <div>
                     <strong>{row.creditor}</strong>
-                    <span>{row.document || "Documento não informado"} - {row.count} parcela{row.count === 1 ? "" : "s"}</span>
+                    <span>{row.document || <I18nText text={"Documento não informado"} />} <I18nText text={"-"} /> {row.count} <I18nText text={"parcela"} /><I18nText text={row.count === 1 ? "" : "s"} /></span>
                   </div>
                   <div className="payable-abuse-track"><i style={{ width: `${Math.max(3, row.possibleExcess / maxExcess * 100)}%` }} /></div>
-                  <strong>{row.percent.toFixed(1)}%</strong>
+                  <strong>{row.percent.toFixed(1)}<I18nText text={"%"} /></strong>
                   <b>{formatCurrency(row.possibleExcess)}</b>
                 </div>
-              )) : <div className="empty-state">Nenhuma possível cobrança abusiva encontrada.</div>}
+              )) : <div className="empty-state"><I18nText text={"Nenhuma possível cobrança abusiva encontrada."} /></div>}
             </section>
 
             <section className="payable-abuse-list">
               <div className="panel-head">
                 <div>
-                  <h3 className="panel-title">Lista completa por credor</h3>
-                  <span className="panel-note">Ordenada por quem mais pode ter cobrado acima do critério.</span>
+                  <h3 className="panel-title"><I18nText text={"Lista completa por credor"} /></h3>
+                  <span className="panel-note"><I18nText text={"Ordenada por quem mais pode ter cobrado acima do critério."} /></span>
                 </div>
               </div>
               <LocalDataList
@@ -150,12 +151,12 @@ export function PayablesAbuseDashboardModal({ items, referenceDate }: PayablesAb
                       <article key={row.key}>
                         <div>
                           <strong>{row.creditor}</strong>
-                          <span>{row.document || "Documento não informado"}</span>
+                          <span>{row.document || <I18nText text={"Documento não informado"} />}</span>
                         </div>
-                        <div><span>Possível excesso</span><strong>{formatCurrency(row.possibleExcess)}</strong></div>
-                        <div><span>% do total</span><strong>{row.percent.toFixed(1)}%</strong></div>
-                        <div><span>Parcelas</span><strong>{row.count}</strong></div>
-                        <div><span>Pago acima do original</span><strong>{formatCurrency(row.paidIncrease)}</strong></div>
+                        <div><span><I18nText text={"Possível excesso"} /></span><strong>{formatCurrency(row.possibleExcess)}</strong></div>
+                        <div><span><I18nText text={"% do total"} /></span><strong>{row.percent.toFixed(1)}<I18nText text={"%"} /></strong></div>
+                        <div><span><I18nText text={"Parcelas"} /></span><strong>{row.count}</strong></div>
+                        <div><span><I18nText text={"Pago acima do original"} /></span><strong>{formatCurrency(row.paidIncrease)}</strong></div>
                       </article>
                     ))}
                   </div>

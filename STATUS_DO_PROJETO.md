@@ -1,11 +1,13 @@
 # Status do projeto Brasin
 
-Atualizado em: 10/07/2026
+Atualizado em: 24/07/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
+- Foi adicionada internacionalização das telas em Português (`pt-BR`, padrão) e Inglês (`en-US`). O seletor de idioma aparece no cabeçalho interno e nas experiências públicas, persiste a escolha no cookie `brasin_locale` e atualiza também o idioma do documento e os metadados.
+- Somente textos de interface entram no i18n: menus, títulos, botões, filtros, opções, ajuda, validações, tooltips e estados vazios. Dados vindos do Sienge ou cadastrados no sistema, como fornecedores, obras, insumos, documentos e observações, não são enviados ao tradutor nem alterados.
 - O sistema passou a exigir senha para acesso: todas as telas e rotas internas ficam atrás de login, com exceção explícita do portal público do fornecedor.
 - Foi criado o fluxo completo de cotações de compra: tela de solicitações (`/solicitacoes-compra`), portal de cotações (`/cotacoes`), detalhe da cotação (`/cotacoes/[id]`) e portal público do fornecedor (`/portal-cotacao/[token]`).
 - A tela `/cotacoes` foi revisada e separada em componentes por responsabilidade: filtros, origem/criação no Sienge, estatísticas, abas rápidas de status, lista/exportação e helpers.
@@ -33,6 +35,13 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Uma nova proposta enviada pelo mesmo fornecedor passa a substituir a anterior (revisão), que fica marcada como superada em vez de excluída; mapa, aprovação, envio ao Sienge, exportação do mapa comparativo e relatório usam a proposta ativa mais recente, enquanto a aba Respostas mantém o histórico visível.
 
 ## Acesso e autenticação
+
+### Idiomas das telas
+
+- O núcleo fica em `lib/i18n`, com locale tipado, catálogo local e fallback controlado para textos estáticos de interface.
+- `I18nProvider` mantém o idioma ativo, os formatadores regionais e a persistência; `I18nText` marca conteúdo de interface sem envolver os dados renderizados por expressões.
+- `scripts/mark-ui-text-for-i18n.mjs` é o codemod idempotente usado para marcar novos textos estáticos e atributos de interface (`placeholder`, `title`, `aria-label` e `alt`).
+- O idioma pode ser trocado sem mudar as URLs existentes. Português continua sendo o padrão quando não há preferência salva.
 
 - O acesso ao sistema é protegido por senha única definida em `APP_ACCESS_PASSWORD` (mínimo de 12 caracteres) no `.env`; `APP_AUTH_SECRET` pode definir um segredo de assinatura separado.
 - O `middleware.ts` valida um cookie de sessão HMAC (`brasin_session`) em toda requisição; sessão dura 12 horas, cookie `httpOnly`, `sameSite lax` e `secure` em produção.

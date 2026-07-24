@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import type { ReconciliationAccountOption } from "@/features/reconciliation/types";
 
@@ -51,37 +52,37 @@ export function ReconciliationAccountPicker({ accounts, missingAccounts, selecte
         <input key={account} type="hidden" name="reconciliationAccountNumbers" value={account} />
       ))}
 
-      <span>Contas da conciliação</span>
+      <span><I18nText text={"Contas da conciliação"} /></span>
       <button className="settings-picker-trigger" type="button" onClick={() => setOpen(true)}>
         <strong>{selectedLabel}</strong>
-        <small>{selectedList.length ? selectedList.join(", ") : "Sem seleção: mostra todas as contas"}</small>
+        <small>{selectedList.length ? selectedList.join(", ") : <I18nText text={"Sem seleção: mostra todas as contas"} />}</small>
       </button>
-      <em>Escolha uma ou mais contas para aparecer no portal de conciliação.</em>
+      <em><I18nText text={"Escolha uma ou mais contas para aparecer no portal de conciliação."} /></em>
 
       {open && (
         <div className="settings-modal-backdrop" role="presentation">
           <div className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="reconciliation-accounts-title">
             <div className="settings-modal-head">
               <div>
-                <h2 id="reconciliation-accounts-title">Selecionar contas</h2>
+                <h2 id="reconciliation-accounts-title"><I18nText text={"Selecionar contas"} /></h2>
                 <span>{selectedLabel}</span>
               </div>
-              <button type="button" onClick={() => setOpen(false)}>Fechar</button>
+              <button type="button" onClick={() => setOpen(false)}><I18nText text={"Fechar"} /></button>
             </div>
 
             <input
               className="settings-modal-search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar conta..."
+              placeholder="Buscar conta..." data-i18n-placeholder={"Buscar conta..."}
             />
 
             <div className="settings-modal-actions">
               <button type="button" onClick={() => setSelected(new Set(options.map((account) => account.accountNumber)))}>
-                Marcar todas
+                <I18nText text={"Marcar todas"} />
               </button>
               <button type="button" onClick={() => setSelected(new Set())}>
-                Usar todas sem filtro
+                <I18nText text={"Usar todas sem filtro"} />
               </button>
             </div>
 
@@ -95,16 +96,16 @@ export function ReconciliationAccountPicker({ accounts, missingAccounts, selecte
                   />
                   <span>
                     <strong>{account.accountNumber}</strong>
-                    <small>{account.label} - {account.count} movimento{account.count === 1 ? "" : "s"}</small>
+                    <small>{account.label} <I18nText text={"-"} /> {account.count} <I18nText text={"movimento"} /><I18nText text={account.count === 1 ? "" : "s"} /></small>
                   </span>
                 </label>
               ))}
-              {!filtered.length && <div className="empty-state">Nenhuma conta encontrada.</div>}
+              {!filtered.length && <div className="empty-state"><I18nText text={"Nenhuma conta encontrada."} /></div>}
             </div>
 
             <div className="settings-modal-footer">
-              <span>Sem nenhuma conta marcada, a conciliação mostra todas.</span>
-              <button className="button" type="button" onClick={() => setOpen(false)}>Aplicar seleção</button>
+              <span><I18nText text={"Sem nenhuma conta marcada, a conciliação mostra todas."} /></span>
+              <button className="button" type="button" onClick={() => setOpen(false)}><I18nText text={"Aplicar seleção"} /></button>
             </div>
           </div>
         </div>

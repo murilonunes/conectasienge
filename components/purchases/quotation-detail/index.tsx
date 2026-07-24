@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { QuotationSummary } from "@/features/quotations/data";
@@ -746,21 +747,21 @@ export function QuotationDetail({
     <main className="quotation-detail-workspace">
       <section className="card quotation-detail-hero">
         <div>
-          <span>Cotação</span>
-          <h2>#{quotation.code}</h2>
+          <span><I18nText text={"Cotação"} /></span>
+          <h2><I18nText text={"#"} />{quotation.code}</h2>
           {quotation.notes && <p>{quotation.notes}</p>}
         </div>
         <div className="quotation-detail-hero-actions">
           <i className="badge">{quotation.status}</i>
           <button className="button secondary" type="button" onClick={() => activeResponses.length ? exportItemComparison(quotation, activeResponses) : exportComparison(quotation)}>
-            Exportar mapa
+            <I18nText text={"Exportar mapa"} />
           </button>
         </div>
         <div className="quotation-detail-hero-grid">
-          <span><strong>{quotation.buyerId}</strong><small>Comprador</small></span>
-          <span><strong>{formatOptionalDate(quotation.date)}</strong><small>Data</small></span>
-          <span><strong>{formatOptionalDate(quotation.deadline)}</strong><small>Prazo</small></span>
-          <span><strong>{formatCurrency(quotation.totalValue)}</strong><small>Total</small></span>
+          <span><strong>{quotation.buyerId}</strong><small><I18nText text={"Comprador"} /></small></span>
+          <span><strong>{formatOptionalDate(quotation.date)}</strong><small><I18nText text={"Data"} /></small></span>
+          <span><strong>{formatOptionalDate(quotation.deadline)}</strong><small><I18nText text={"Prazo"} /></small></span>
+          <span><strong>{formatCurrency(quotation.totalValue)}</strong><small><I18nText text={"Total"} /></small></span>
         </div>
       </section>
 

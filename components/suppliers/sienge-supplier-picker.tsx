@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useEffect, useMemo, useState } from "react";
 
 export type SupplierOption = {
@@ -126,19 +127,19 @@ export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sien
   return (
     <div className={`supplier-picker ${compact ? "compact" : ""}`}>
       <label className="supplier-picker-field">
-        <span>{label}{required ? " *" : ""}</span>
+        <span>{label}<I18nText text={required ? " *" : ""} /></span>
         <div className="supplier-picker-input-row">
           <input
             required={required}
             value={value}
             onChange={(event) => onChange(event.target.value.replace(/\D/g, ""))}
-            placeholder="ID"
+            placeholder="ID" data-i18n-placeholder={"ID"}
           />
           <button className="button secondary" type="button" onClick={() => setOpen((current) => !current)}>
-            Buscar
+            <I18nText text={"Buscar"} />
           </button>
         </div>
-        <small>{selected ? selected.name : value ? `Fornecedor #${value}` : "Busque na base local ou informe o ID."}</small>
+        <small>{selected ? selected.name : value ? `Fornecedor #${value}` : <I18nText text={"Busque na base local ou informe o ID."} />}</small>
       </label>
       {selected && (
         <div className="supplier-picker-selected">
@@ -150,9 +151,9 @@ export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sien
       {open && (
         <section className="supplier-picker-panel">
           <div className="supplier-picker-search">
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, CNPJ, CPF ou ID" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar por nome, CNPJ, CPF ou ID" data-i18n-placeholder={"Buscar por nome, CNPJ, CPF ou ID"} />
             <button className="button secondary" type="button" onClick={() => setCreating((current) => !current)}>
-              {creating ? "Voltar à busca" : "Criar fornecedor"}
+              <I18nText text={creating ? "Voltar à busca" : "Criar fornecedor"} />
             </button>
           </div>
 
@@ -167,28 +168,28 @@ export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sien
                 >
                   <span>
                     <strong>{supplier.name}</strong>
-                    <small>{supplierDetailLine(supplier)} - {supplier.source === "creditors" ? "Cadastro" : "Financeiro"}</small>
+                    <small>{supplierDetailLine(supplier)} <I18nText text={"-"} /> <I18nText text={supplier.source === "creditors" ? "Cadastro" : "Financeiro"} /></small>
                   </span>
-                  <b>Usar</b>
+                  <b><I18nText text={"Usar"} /></b>
                 </button>
               ))}
-              {!loading && !result.suppliers.length && <div className="empty-state">Nenhum fornecedor encontrado na base local.</div>}
-              {loading && <div className="empty-state">Buscando fornecedores...</div>}
+              {!loading && !result.suppliers.length && <div className="empty-state"><I18nText text={"Nenhum fornecedor encontrado na base local."} /></div>}
+              {loading && <div className="empty-state"><I18nText text={"Buscando fornecedores..."} /></div>}
             </div>
           )}
 
           {creating && (
             <div className="supplier-create-form">
-              <label><span>Razão social / Nome</span><input value={createData.name} onChange={(event) => updateCreate("name", event.target.value)} /></label>
-              <label><span>Nome fantasia</span><input value={createData.tradeName} onChange={(event) => updateCreate("tradeName", event.target.value)} /></label>
-              <label><span>Tipo</span><select value={createData.type} onChange={(event) => updateCreate("type", event.target.value)}><option value="JURIDICA">Pessoa jurídica</option><option value="FISICA">Pessoa física</option></select></label>
-              <label><span>CNPJ</span><input value={createData.cnpj} onChange={(event) => updateCreate("cnpj", event.target.value.replace(/\D/g, ""))} /></label>
-              <label><span>CPF</span><input value={createData.cpf} onChange={(event) => updateCreate("cpf", event.target.value.replace(/\D/g, ""))} /></label>
-              <label><span>E-mail</span><input value={createData.email} onChange={(event) => updateCreate("email", event.target.value)} /></label>
-              <label><span>Telefone</span><input value={createData.phone} onChange={(event) => updateCreate("phone", event.target.value)} /></label>
+              <label><span><I18nText text={"Razão social / Nome"} /></span><input value={createData.name} onChange={(event) => updateCreate("name", event.target.value)} /></label>
+              <label><span><I18nText text={"Nome fantasia"} /></span><input value={createData.tradeName} onChange={(event) => updateCreate("tradeName", event.target.value)} /></label>
+              <label><span><I18nText text={"Tipo"} /></span><select value={createData.type} onChange={(event) => updateCreate("type", event.target.value)}><option value="JURIDICA"><I18nText text={"Pessoa jurídica"} /></option><option value="FISICA"><I18nText text={"Pessoa física"} /></option></select></label>
+              <label><span><I18nText text={"CNPJ"} /></span><input value={createData.cnpj} onChange={(event) => updateCreate("cnpj", event.target.value.replace(/\D/g, ""))} /></label>
+              <label><span><I18nText text={"CPF"} /></span><input value={createData.cpf} onChange={(event) => updateCreate("cpf", event.target.value.replace(/\D/g, ""))} /></label>
+              <label><span><I18nText text={"E-mail"} /></span><input value={createData.email} onChange={(event) => updateCreate("email", event.target.value)} /></label>
+              <label><span><I18nText text={"Telefone"} /></span><input value={createData.phone} onChange={(event) => updateCreate("phone", event.target.value)} /></label>
               <div className="supplier-create-actions">
-                <button className="button secondary" type="button" disabled={creatingSupplier || !createData.name} onClick={() => createSupplier(false)}>Preparar</button>
-                <button className="button" type="button" disabled={creatingSupplier || !createData.name} onClick={() => createSupplier(true)}>{creatingSupplier ? "Enviando..." : "Criar no Sienge"}</button>
+                <button className="button secondary" type="button" disabled={creatingSupplier || !createData.name} onClick={() => createSupplier(false)}><I18nText text={"Preparar"} /></button>
+                <button className="button" type="button" disabled={creatingSupplier || !createData.name} onClick={() => createSupplier(true)}><I18nText text={creatingSupplier ? "Enviando..." : "Criar no Sienge"} /></button>
               </div>
             </div>
           )}

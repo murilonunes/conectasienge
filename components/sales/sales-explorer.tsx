@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useMemo, useState } from "react";
 import { IntegrationStamp } from "@/components/ui/integration-stamp";
 import { LocalDataList } from "@/components/ui/local-data-list";
@@ -50,9 +51,9 @@ export function SalesExplorer({
   return (
     <section>
       <div className="card sales-filters">
-        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar contrato, cliente, unidade ou empreendimento" />
+        <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar contrato, cliente, unidade ou empreendimento" data-i18n-placeholder={"Buscar contrato, cliente, unidade ou empreendimento"} />
         <select value={situation} onChange={(event) => setSituation(event.target.value)}>
-          <option value="">Todas as situações</option>
+          <option value=""><I18nText text={"Todas as situações"} /></option>
           {situations.map((item) => <option key={item}>{item}</option>)}
         </select>
         <div>
@@ -60,10 +61,10 @@ export function SalesExplorer({
           <span>
             {contracts.length < totalContracts
               ? `de ${totalContracts} contratos carregados para consulta rápida`
-              : "contratos - venda mais recente primeiro"}
+              : <I18nText text={"contratos - venda mais recente primeiro"} />}
           </span>
           <strong>{formatCompactCurrency(total)}</strong>
-          <span>em caixa, sem permutas</span>
+          <span><I18nText text={"em caixa, sem permutas"} /></span>
         </div>
       </div>
       <LocalDataList
@@ -88,28 +89,28 @@ export function SalesExplorer({
                 <article className="card sales-contract" key={contract.id}>
                   <button className="sales-contract-main" onClick={() => setExpanded(expanded === contract.id ? undefined : contract.id)}>
                     <span className="sales-code">{contract.number || `#${contract.id}`}</span>
-                    <span><strong>{customer?.name || "Cliente não informado"}</strong><small>{unit?.name || "Unidade não informada"} - {contract.enterpriseName || "Empreendimento não informado"}</small></span>
-                    <span><strong>{formatCurrency(fullExchange ? gross : net)}</strong><small>{fullExchange ? "100% permuta - sem entrada de caixa" : exchange > 0 ? `${formatCompactCurrency(exchange)} em permuta, restante em caixa` : "Valor em caixa"}</small></span>
-                    <span><strong>{contract.issueDate ? formatDate(contract.issueDate) : contract.contractDate ? formatDate(contract.contractDate) : "-"}</strong><small>Data da venda</small></span>
-                    <span><strong><IntegrationStamp record={contract} /></strong><small>Integração</small></span>
-                    <span><i className={`sales-status ${/cancelad|distrat/i.test(contract.situation || "") ? "cancelled" : ""}`}>{contract.situation || "Não informada"}</i></span>
-                    <span className="sales-expand">{expanded === contract.id ? "-" : "+"}</span>
+                    <span><strong>{customer?.name || <I18nText text={"Cliente não informado"} />}</strong><small>{unit?.name || <I18nText text={"Unidade não informada"} />} <I18nText text={"-"} /> {contract.enterpriseName || <I18nText text={"Empreendimento não informado"} />}</small></span>
+                    <span><strong>{formatCurrency(fullExchange ? gross : net)}</strong><small>{fullExchange ? <I18nText text={"100% permuta - sem entrada de caixa"} /> : exchange > 0 ? `${formatCompactCurrency(exchange)} em permuta, restante em caixa` : <I18nText text={"Valor em caixa"} />}</small></span>
+                    <span><strong>{contract.issueDate ? formatDate(contract.issueDate) : contract.contractDate ? formatDate(contract.contractDate) : <I18nText text={"-"} />}</strong><small><I18nText text={"Data da venda"} /></small></span>
+                    <span><strong><IntegrationStamp record={contract} /></strong><small><I18nText text={"Integração"} /></small></span>
+                    <span><i className={`sales-status ${/cancelad|distrat/i.test(contract.situation || "") ? "cancelled" : ""}`}>{contract.situation || <I18nText text={"Não informada"} />}</i></span>
+                    <span className="sales-expand"><I18nText text={expanded === contract.id ? "-" : "+"} /></span>
                   </button>
                   {expanded === contract.id && <div className="sales-details">
                     <div className="sales-detail-grid">
-                      <div><span>Empresa</span><strong>{contract.companyName || "-"}</strong></div>
-                      <div><span>Data do contrato</span><strong>{contract.contractDate ? formatDate(contract.contractDate) : "-"}</strong></div>
-                      <div><span>Título a receber</span><strong>{contract.receivableBillId ? `#${contract.receivableBillId}` : "-"}</strong></div>
-                      <div><span>Valor bruto contratado</span><strong>{formatCurrency(gross)}</strong></div>
-                      <div><span>Permuta abatida</span><strong>{formatCurrency(exchange)}</strong></div>
-                      <div><span>Valor líquido comercial</span><strong>{formatCurrency(net)}</strong></div>
-                      <div><span>Saldo financeiro aberto</span><strong>{formatCurrency(open)}</strong></div>
-                      <div><span>Valor recebido financeiro</span><strong>{formatCurrency(paid)}</strong></div>
-                      <div><span>Previsão de entrega</span><strong>{contract.expectedDeliveryDate ? formatDate(contract.expectedDeliveryDate) : "-"}</strong></div>
-                      <div><span>Integração</span><strong><IntegrationStamp record={contract} /></strong></div>
+                      <div><span><I18nText text={"Empresa"} /></span><strong>{contract.companyName || <I18nText text={"-"} />}</strong></div>
+                      <div><span><I18nText text={"Data do contrato"} /></span><strong>{contract.contractDate ? formatDate(contract.contractDate) : <I18nText text={"-"} />}</strong></div>
+                      <div><span><I18nText text={"Título a receber"} /></span><strong>{contract.receivableBillId ? `#${contract.receivableBillId}` : <I18nText text={"-"} />}</strong></div>
+                      <div><span><I18nText text={"Valor bruto contratado"} /></span><strong>{formatCurrency(gross)}</strong></div>
+                      <div><span><I18nText text={"Permuta abatida"} /></span><strong>{formatCurrency(exchange)}</strong></div>
+                      <div><span><I18nText text={"Valor líquido comercial"} /></span><strong>{formatCurrency(net)}</strong></div>
+                      <div><span><I18nText text={"Saldo financeiro aberto"} /></span><strong>{formatCurrency(open)}</strong></div>
+                      <div><span><I18nText text={"Valor recebido financeiro"} /></span><strong>{formatCurrency(paid)}</strong></div>
+                      <div><span><I18nText text={"Previsão de entrega"} /></span><strong>{contract.expectedDeliveryDate ? formatDate(contract.expectedDeliveryDate) : <I18nText text={"-"} />}</strong></div>
+                      <div><span><I18nText text={"Integração"} /></span><strong><IntegrationStamp record={contract} /></strong></div>
                     </div>
                     {conditions.length > 0 && <div className="sales-conditions">
-                      <h3>Condições de pagamento</h3>
+                      <h3><I18nText text={"Condições de pagamento"} /></h3>
                       {conditions.map((condition, index) => {
                         const exchangeCondition = isExchangeCondition(condition);
                         const conditionAmount = exchangeCondition
@@ -117,9 +118,9 @@ export function SalesExplorer({
                           : condition.outstandingBalance || 0;
                         return (
                           <div key={`${condition.conditionTypeName}-${index}`} className={exchangeCondition ? "exchange" : ""}>
-                            <span>{condition.conditionTypeName || "Condição"}</span>
-                            <strong>{exchangeCondition ? "Permuta abatida da carteira líquida" : `${condition.openInstallmentsNumber || 0} de ${condition.installmentsNumber || 0} parcelas abertas`}</strong>
-                            <span>{formatCurrency(conditionAmount)} {exchangeCondition ? "em permuta" : "em aberto"}</span>
+                            <span>{condition.conditionTypeName || <I18nText text={"Condição"} />}</span>
+                            <strong>{exchangeCondition ? <I18nText text={"Permuta abatida da carteira líquida"} /> : `${condition.openInstallmentsNumber || 0} de ${condition.installmentsNumber || 0} parcelas abertas`}</strong>
+                            <span>{formatCurrency(conditionAmount)} <I18nText text={exchangeCondition ? "em permuta" : "em aberto"} /></span>
                           </div>
                         );
                       })}

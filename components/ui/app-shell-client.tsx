@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import {
   ArrowLeftRight,
   Boxes,
@@ -30,6 +31,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { useI18n } from "@/components/i18n/i18n-provider";
 
 type ShellSettings = {
   responsibleName: string;
@@ -129,6 +132,7 @@ function isPathActive(pathname: string, href: string) {
 
 export function AppShellClient({ children, settings, allowedPermissions }: { children: React.ReactNode; settings: ShellSettings; allowedPermissions?: string[] }) {
   const pathname = usePathname() || "/";
+  const { t } = useI18n();
   const [pinned, setPinned] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -194,7 +198,7 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
     <div className={`shell${pinned ? "" : " sidebar-collapsed"}${!pinned && hovering ? " sidebar-hover-open" : ""}`}>
       <aside
         className="sidebar"
-        aria-label="Menu principal"
+        aria-label={t("Menu principal")}
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
         onFocusCapture={() => setHovering(true)}
@@ -203,20 +207,20 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
         }}
       >
         <div className="sidebar-top">
-          <Link className="brand" href="/" aria-label="Ir para a tela inicial">
-            <div className="brand-mark">B</div>
-            <div className="brand-text"><strong>Brasin</strong><span>GESTAO FINANCEIRA</span></div>
+          <Link className="brand" href="/" aria-label={t("Ir para a tela inicial")}>
+            <div className="brand-mark"><I18nText text={"B"} /></div>
+            <div className="brand-text"><strong><I18nText text={"Brasin"} /></strong><span>{t("GESTAO FINANCEIRA")}</span></div>
           </Link>
           {expanded && (
             <button
-              aria-label={pinned ? "Soltar menu (expande ao passar o mouse)" : "Fixar menu aberto"}
+              aria-label={t(pinned ? "Soltar menu (expande ao passar o mouse)" : "Fixar menu aberto")}
               aria-pressed={pinned}
               className={`sidebar-toggle${pinned ? " pinned" : ""}`}
               onClick={() => setPinned((current) => !current)}
-              title={pinned ? "Soltar menu (expande ao passar o mouse)" : "Fixar menu aberto"}
+              title={t(pinned ? "Soltar menu (expande ao passar o mouse)" : "Fixar menu aberto")}
               type="button"
             >
-              {pinned ? "Soltar" : "Fixar"}
+              {t(pinned ? "Soltar" : "Fixar")}
             </button>
           )}
         </div>
@@ -232,12 +236,12 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
                   aria-expanded={expanded}
                   className="nav-section-button"
                   onClick={() => toggleSection(section.key)}
-                  title={section.label}
+                  title={t(section.label)}
                   type="button"
                 >
                   <span className="nav-section-icon"><section.icon aria-hidden="true" size={16} strokeWidth={2.1} /></span>
-                  <span className="nav-section-title">{section.label}</span>
-                  <span className="nav-caret" aria-hidden="true">{expanded ? "-" : "+"}</span>
+                  <span className="nav-section-title">{t(section.label)}</span>
+                  <span className="nav-caret" aria-hidden="true"><I18nText text={expanded ? "-" : "+"} /></span>
                 </button>
 
                 <div className={`nav-submenu${expanded ? " open" : ""}`}>
@@ -249,10 +253,10 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
                         className={`nav-link${active ? " active" : ""}`}
                         href={item.href}
                         key={item.href}
-                        title={item.label}
+                        title={t(item.label)}
                       >
                         <span className="nav-icon"><item.icon aria-hidden="true" size={14} strokeWidth={2} /></span>
-                        <span className="nav-link-text">{item.label}</span>
+                        <span className="nav-link-text">{t(item.label)}</span>
                       </Link>
                     );
                   })}
@@ -266,12 +270,13 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
       <main className="main">
         <header className="topbar">
           <div className="user">
+            <LanguageSwitcher compact />
             <span className="integration-dot" aria-hidden="true" />
-            <div><strong>Sienge</strong><br /><span className="panel-note">Integracao</span></div>
+            <div><strong><I18nText text={"Sienge"} /></strong><br /><span className="panel-note">{t("Integracao")}</span></div>
             <div><strong>{settings.responsibleName}</strong><br /><span className="panel-note">{settings.responsibleRole}</span></div>
             <div className="avatar">{settings.responsibleInitials}</div>
             <form action="/api/auth/logout" method="post">
-              <button className="logout-button" type="submit">Sair</button>
+              <button className="logout-button" type="submit">{t("Sair")}</button>
             </form>
           </div>
         </header>

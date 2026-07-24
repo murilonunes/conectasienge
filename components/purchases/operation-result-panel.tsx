@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import { useState } from "react";
 
 export type OperationResultKind = "success" | "error" | "info";
@@ -51,7 +52,7 @@ export function OperationResultPanel({
         <i className={`badge ${badgeClassByKind[kind]}`}>{badgeLabelByKind[kind]}</i>
       </div>
       <button className="button secondary quotation-result-toggle" type="button" onClick={() => setShowDetails((value) => !value)}>
-        {showDetails ? "Ocultar detalhes técnicos" : "Ver detalhes técnicos"}
+        <I18nText text={showDetails ? "Ocultar detalhes técnicos" : "Ver detalhes técnicos"} />
       </button>
       {showDetails && <pre className="quotation-payload-preview">{json}</pre>}
     </div>

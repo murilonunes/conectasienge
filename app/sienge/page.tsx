@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { PageHeading } from "@/components/ui/page-heading";
 import { StatCard } from "@/components/ui/stat-card";
@@ -47,32 +48,32 @@ function ModuleCard({ module }: { module: SiengeCoverageModule }) {
         </div>
         <div className={statusClass(module.status)}>
           <strong>{statusLabels[module.status]}</strong>
-          <small>{module.coverage}%</small>
+          <small>{module.coverage}<I18nText text={"%"} /></small>
         </div>
       </div>
 
       <div className="sienge-module-metrics">
         <div>
           <strong>{compactNumber(module.totalRecords)}</strong>
-          <span>registros salvos</span>
+          <span><I18nText text={"registros salvos"} /></span>
         </div>
         <div>
           <strong>{formatDate(module.lastUpdatedAt)}</strong>
-          <span>última integração</span>
+          <span><I18nText text={"última integração"} /></span>
         </div>
         <div>
-          <strong>{module.endpoints.filter((endpoint) => endpoint.implemented).length}/{module.endpoints.length}</strong>
-          <span>fontes implementadas</span>
+          <strong>{module.endpoints.filter((endpoint) => endpoint.implemented).length}<I18nText text={"/"} />{module.endpoints.length}</strong>
+          <span><I18nText text={"fontes implementadas"} /></span>
         </div>
       </div>
 
       <div className="sienge-module-purpose">
         <div>
-          <strong>Melhor uso no Sienge</strong>
+          <strong><I18nText text={"Melhor uso no Sienge"} /></strong>
           <p>{module.bestUse}</p>
         </div>
         <div>
-          <strong>Uso no sistema</strong>
+          <strong><I18nText text={"Uso no sistema"} /></strong>
           <p>{module.systemUse}</p>
         </div>
       </div>
@@ -86,8 +87,8 @@ function ModuleCard({ module }: { module: SiengeCoverageModule }) {
               <small>{endpoint.role}</small>
             </div>
             <div>
-              <b>{endpoint.implemented ? endpoint.records.toLocaleString("pt-BR") : "não usado"}</b>
-              <small>{endpoint.implemented ? endpoint.database : "fora do fluxo atual"}</small>
+              <b>{endpoint.implemented ? endpoint.records.toLocaleString("pt-BR") : <I18nText text={"não usado"} />}</b>
+              <small>{endpoint.implemented ? endpoint.database : <I18nText text={"fora do fluxo atual"} />}</small>
             </div>
           </div>
         ))}
@@ -95,18 +96,18 @@ function ModuleCard({ module }: { module: SiengeCoverageModule }) {
 
       <div className="sienge-module-footer">
         <div>
-          <strong>Pontos fortes</strong>
+          <strong><I18nText text={"Pontos fortes"} /></strong>
           <span>{module.strengths.join(" • ")}</span>
         </div>
         <div>
-          <strong>O que falta</strong>
+          <strong><I18nText text={"O que falta"} /></strong>
           <span>{module.gaps.join(" • ")}</span>
         </div>
       </div>
 
       <div className="sienge-module-action">
         <span>{statusNotes[module.status]}</span>
-        {module.route ? <Link className="button secondary" href={module.route}>Abrir tela</Link> : <Link className="button secondary" href="/configuracoes">Configurações</Link>}
+        {module.route ? <Link className="button secondary" href={module.route}><I18nText text={"Abrir tela"} /></Link> : <Link className="button secondary" href="/configuracoes"><I18nText text={"Configurações"} /></Link>}
       </div>
     </article>
   );
@@ -131,17 +132,16 @@ export default function SiengeCoveragePage() {
 
       <section className="card reports-intro sienge-hero">
         <div>
-          <span>Leitura executiva</span>
-          <h2>{summary.coverage}% das fontes implementadas têm dados locais</h2>
+          <span><I18nText text={"Leitura executiva"} /></span>
+          <h2>{summary.coverage}<I18nText text={"% das fontes implementadas têm dados locais"} /></h2>
           <p>
-            Esta tela não consulta o Sienge. Ela olha para o repositório local e mostra o que já virou rotina operacional no sistema,
-            o que está parcial e o que ainda é oportunidade.
+            <I18nText text={"Esta tela não consulta o Sienge. Ela olha para o repositório local e mostra o que já virou rotina operacional no sistema, o que está parcial e o que ainda é oportunidade."} />
           </p>
         </div>
         <div className="reports-intro-grid">
-          <div><strong>{summary.activeModules}</strong><span>módulos em uso</span></div>
-          <div><strong>{summary.partialModules + summary.readyModules}</strong><span>módulos a completar</span></div>
-          <div><strong>{compactNumber(summary.totalRecords)}</strong><span>registros locais</span></div>
+          <div><strong>{summary.activeModules}</strong><span><I18nText text={"módulos em uso"} /></span></div>
+          <div><strong>{summary.partialModules + summary.readyModules}</strong><span><I18nText text={"módulos a completar"} /></span></div>
+          <div><strong>{compactNumber(summary.totalRecords)}</strong><span><I18nText text={"registros locais"} /></span></div>
         </div>
       </section>
 
@@ -156,8 +156,8 @@ export default function SiengeCoveragePage() {
         <section className="card panel sienge-priority">
           <div className="panel-head">
             <div>
-              <h2 className="panel-title">Prioridades para aproveitar melhor o Sienge</h2>
-              <span className="panel-note">Itens que mais ajudam a transformar dado salvo em gestão operacional.</span>
+              <h2 className="panel-title"><I18nText text={"Prioridades para aproveitar melhor o Sienge"} /></h2>
+              <span className="panel-note"><I18nText text={"Itens que mais ajudam a transformar dado salvo em gestão operacional."} /></span>
             </div>
           </div>
           <div className="sienge-priority-list">

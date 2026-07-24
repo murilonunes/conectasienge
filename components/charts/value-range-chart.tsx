@@ -1,3 +1,4 @@
+import { I18nText } from "@/components/i18n/i18n-text";
 import type { ChartItem } from "@/features/financeiro/sienge-data";
 
 export function ValueRangeChart({ data }: { data: ChartItem[] }) {
@@ -13,9 +14,9 @@ export function ValueRangeChart({ data }: { data: ChartItem[] }) {
 
   return (
     <section className="card panel dashboard-chart">
-      <div className="panel-head"><div><h2 className="panel-title">Distribuição por faixa de valor</h2><span className="panel-note">Quantidade de títulos por porte</span></div></div>
+      <div className="panel-head"><div><h2 className="panel-title"><I18nText text={"Distribuição por faixa de valor"} /></h2><span className="panel-note"><I18nText text={"Quantidade de títulos por porte"} /></span></div></div>
       <div className="range-layout">
-        <div className="range-donut" style={{ background: `conic-gradient(${stops || "#edf1ee 0 100%"})` }}><div><strong>{total}</strong><span>títulos</span></div></div>
+        <div className="range-donut" style={{ background: `conic-gradient(${stops || "#edf1ee 0 100%"})` }}><div><strong>{total}</strong><span><I18nText text={"títulos"} /></span></div></div>
         <div className="range-legend">{data.map((item, index) => <div key={item.label}><i style={{ background: colors[index] }} /><span>{item.label}</span><strong>{item.count}</strong></div>)}</div>
       </div>
     </section>

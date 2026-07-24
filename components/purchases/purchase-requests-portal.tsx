@@ -1,5 +1,6 @@
 "use client";
 
+import { I18nText } from "@/components/i18n/i18n-text";
 import Link from "next/link";
 import { MessageSquareText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -313,15 +314,15 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
     <>
       <section className="card purchase-request-command">
         <div>
-          <span>Fila de compras</span>
-          <strong>{summary.open} solicitações abertas</strong>
-          <small>{summary.quoting} em cotação - {summary.items} insumos na carteira</small>
+          <span><I18nText text={"Fila de compras"} /></span>
+          <strong>{summary.open} <I18nText text={"solicitações abertas"} /></strong>
+          <small>{summary.quoting} <I18nText text={"em cotação -"} /> {summary.items} <I18nText text={"insumos na carteira"} /></small>
         </div>
         <form onSubmit={(event) => { event.preventDefault(); createRequest(); }}>
-          <input className="field" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Nova solicitação" />
-          <input className="field" value={form.costCenter} onChange={(event) => setForm({ ...form, costCenter: event.target.value })} placeholder="Centro de custo" />
+          <input className="field" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="Nova solicitação" data-i18n-placeholder={"Nova solicitação"} />
+          <input className="field" value={form.costCenter} onChange={(event) => setForm({ ...form, costCenter: event.target.value })} placeholder="Centro de custo" data-i18n-placeholder={"Centro de custo"} />
           <input className="field" type="date" value={form.neededAt} onChange={(event) => setForm({ ...form, neededAt: event.target.value })} />
-          <button className="button" type="submit">Criar</button>
+          <button className="button" type="submit"><I18nText text={"Criar"} /></button>
         </form>
       </section>
 
@@ -330,10 +331,10 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
           <section className="card panel">
             <div className="panel-head">
               <div>
-                <h2 className="panel-title">Solicitações</h2>
-                <span className="panel-note">Clique para abrir</span>
+                <h2 className="panel-title"><I18nText text={"Solicitações"} /></h2>
+                <span className="panel-note"><I18nText text={"Clique para abrir"} /></span>
               </div>
-              <button className="button secondary" type="button" onClick={exportAllQuote} disabled={!requests.length}>Exportar tudo</button>
+              <button className="button secondary" type="button" onClick={exportAllQuote} disabled={!requests.length}><I18nText text={"Exportar tudo"} /></button>
             </div>
 
             <div className="purchase-request-list">
@@ -349,7 +350,7 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                       <strong>{request.title}</strong>
                       <NoteIndicator label="Observação da solicitação" note={request.notes} />
                     </span>
-                    <small>{request.code} - {request.items.length} insumos</small>
+                    <small>{request.code} <I18nText text={"-"} /> {request.items.length} <I18nText text={"insumos"} /></small>
                   </span>
                   <i className={`badge ${statusClass(request.status)}`}>{request.status}</i>
                 </button>
@@ -366,7 +367,7 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                     <h2>{selected.title}</h2>
                     <NoteIndicator label="Observação da solicitação" note={selected.notes} />
                   </div>
-                  <p>{selected.costCenter} - necessidade em {selected.neededAt || "data não informada"}</p>
+                  <p>{selected.costCenter} <I18nText text={"- necessidade em"} /> {selected.neededAt || <I18nText text={"data não informada"} />}</p>
                 </div>
                 <div>
                   <select className="field" value={selected.status} onChange={(event) => updateSelectedStatus(event.target.value as RequestStatus)}>
@@ -374,21 +375,21 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                   </select>
                   {requestNumber(selected) ? (
                     <Link className="button secondary" href={`/cotacoes?solicitacao=${requestNumber(selected)}`}>
-                      Iniciar cotação
+                      <I18nText text={"Iniciar cotação"} />
                     </Link>
                   ) : null}
-                  <button className="button" type="button" onClick={exportSelectedQuote} disabled={!selected.items.length}>Exportar cotação</button>
+                  <button className="button" type="button" onClick={exportSelectedQuote} disabled={!selected.items.length}><I18nText text={"Exportar cotação"} /></button>
                 </div>
               </div>
 
               <div className="purchase-item-editor compact">
-                <strong>Insumos para cotação</strong>
+                <strong><I18nText text={"Insumos para cotação"} /></strong>
                 <div className="purchase-item-grid">
-                  <input className="field" value={detailItem.name} onChange={(event) => setDetailItem({ ...detailItem, name: event.target.value })} placeholder="Insumo" />
-                  <input className="field" type="number" min="0" step="0.01" value={detailItem.quantity} onChange={(event) => setDetailItem({ ...detailItem, quantity: Number(event.target.value) })} placeholder="Qtd." />
-                  <input className="field" value={detailItem.unit} onChange={(event) => setDetailItem({ ...detailItem, unit: event.target.value })} placeholder="Unidade" />
-                  <input className="field" value={detailItem.details} onChange={(event) => setDetailItem({ ...detailItem, details: event.target.value })} placeholder="Especificação" />
-                  <button className="button secondary" type="button" onClick={addDetailItem}>Adicionar</button>
+                  <input className="field" value={detailItem.name} onChange={(event) => setDetailItem({ ...detailItem, name: event.target.value })} placeholder="Insumo" data-i18n-placeholder={"Insumo"} />
+                  <input className="field" type="number" min="0" step="0.01" value={detailItem.quantity} onChange={(event) => setDetailItem({ ...detailItem, quantity: Number(event.target.value) })} placeholder="Qtd." data-i18n-placeholder={"Qtd."} />
+                  <input className="field" value={detailItem.unit} onChange={(event) => setDetailItem({ ...detailItem, unit: event.target.value })} placeholder="Unidade" data-i18n-placeholder={"Unidade"} />
+                  <input className="field" value={detailItem.details} onChange={(event) => setDetailItem({ ...detailItem, details: event.target.value })} placeholder="Especificação" data-i18n-placeholder={"Especificação"} />
+                  <button className="button secondary" type="button" onClick={addDetailItem}><I18nText text={"Adicionar"} /></button>
                 </div>
               </div>
 
@@ -396,10 +397,10 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                 <table>
                   <thead>
                     <tr>
-                      <th>Insumo</th>
-                      <th>Quantidade</th>
-                      <th>Unidade</th>
-                      <th>Especificação</th>
+                      <th><I18nText text={"Insumo"} /></th>
+                      <th><I18nText text={"Quantidade"} /></th>
+                      <th><I18nText text={"Unidade"} /></th>
+                      <th><I18nText text={"Especificação"} /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -413,16 +414,16 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                         </td>
                         <td>{item.quantity}</td>
                         <td>{item.unit}</td>
-                        <td>{item.details || "Sem detalhe"}</td>
+                        <td>{item.details || <I18nText text={"Sem detalhe"} />}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                {!selected.items.length && <div className="empty-state">Adicione insumos para liberar a exportação da cotação.</div>}
+                {!selected.items.length && <div className="empty-state"><I18nText text={"Adicione insumos para liberar a exportação da cotação."} /></div>}
               </div>
             </section>
           ) : (
-            <section className="card empty-state">Cadastre a primeira solicitação de compra.</section>
+            <section className="card empty-state"><I18nText text={"Cadastre a primeira solicitação de compra."} /></section>
           )}
         </div>
       </section>
