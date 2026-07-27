@@ -37,7 +37,7 @@ export default function Home() {
       <section className="welcome-shortcuts">
         {shortcuts.map((shortcut) => (
           <Link className="card welcome-shortcut" href={shortcut.href} key={shortcut.href}>
-            <strong>{shortcut.title}</strong>
+            <strong><I18nText text={shortcut.title} /></strong>
             <span><I18nText text={shortcut.note} /></span>
           </Link>
         ))}

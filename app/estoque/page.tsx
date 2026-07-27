@@ -55,7 +55,7 @@ export default async function InventoryPage() {
         <StatCard label="Negócios concluídos" value={String(completedBusinessCount)} delta="Vendidos, locados, transferidos ou de terceiros" icon="V" />
       </div>
       {result.error ? <ApiErrorNotice error={result.error} /> : <>
-        {result.warning && <div className="card data-notice"><strong><I18nText text={"Dados parciais"} /></strong><span>{result.warning}</span></div>}
+        {result.warning && <div className="card data-notice"><strong><I18nText text={"Dados parciais"} /></strong><span><I18nText text={result.warning} /></span></div>}
         {result.sourceStats.some((source) => source.status === "not_configured") && (
           <div className="card data-notice">
             <strong><I18nText text={"Estoque avançado opcional"} /></strong>
@@ -89,8 +89,8 @@ export default async function InventoryPage() {
         <div className="card inventory-source-panel">
           {result.sourceStats.map((source) => (
             <div key={source.endpoint}>
-              <strong>{source.label}</strong>
-              <span>{sourceDelta(source)}</span>
+              <strong><I18nText text={source.label} /></strong>
+              <span><I18nText text={sourceDelta(source)} /></span>
               <small>{source.loadedCount} <I18nText text={"exibido(s) de"} /> {source.apiCount} <I18nText text={"item(ns) informado(s)"} /></small>
             </div>
           ))}

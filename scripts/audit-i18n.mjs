@@ -3,7 +3,7 @@ import path from "node:path";
 import vm from "node:vm";
 import ts from "typescript";
 
-const roots = ["app", "components"];
+const roots = ["app", "components", "features"];
 const uiAttributes = new Set([
   "action",
   "aria-label",
@@ -17,29 +17,46 @@ const uiAttributes = new Set([
   "text",
   "title"
 ]);
+const uiPropertyNames = new Set([
+  "action",
+  "description",
+  "eyebrow",
+  "label",
+  "note",
+  "primaryLabel",
+  "scope",
+  "secondaryLabel",
+  "subtitle",
+  "text",
+  "title"
+]);
 const portugueseWords = new Set([
   "aba", "abaixo", "aberta", "abertas", "aberto", "abertos", "abertura", "acima", "acompanhar",
   "aguarde", "ainda", "ajuste", "algum", "alguma", "algumas", "alguns", "antes", "apenas", "aparece",
   "aparecem", "aplicado", "apropriação", "apropriações", "aqui", "área", "áreas", "assim", "atualização",
   "atualizações", "atualize", "avaliação", "aviso", "avisos", "banco", "base", "baixa", "baixas",
   "busca", "cadastrado", "cadastrada", "cadastrados", "cadastro", "cálculo", "carteira", "cenário",
+  "cliente", "clientes",
   "cobrança", "cobranças", "código", "competência", "completar", "conciliação", "conferência", "configuração",
   "configurações", "consulta", "consultas", "consultar", "contábil", "contratado", "contratada", "correção",
   "credor", "critério", "dados", "depois", "despesa", "despesas", "detalhada", "diretamente", "disponível",
   "disponíveis", "documento", "emissão", "encerrado", "encerrados", "enquanto", "entrou", "erro", "escolha",
   "esperando", "estoque", "excesso", "exercício", "exibição", "falta", "fechados", "fechar", "fica", "ficam",
-  "finalizados", "fonte", "fontes", "fornecedor", "fornecedores", "futura", "futuras", "gerado", "gerada",
+  "finalizados", "financeira", "financeiras", "fonte", "fontes", "fornecedor", "fornecedores", "futuro",
+  "futuros", "futura", "futuras", "gerado", "gerada",
   "gráfico", "gráficos", "gravado", "gravada", "histórico", "imobiliário", "indicado", "informada", "informado",
   "insumo", "insumos", "integração", "integrações", "lançado", "lançados", "leitura", "líquido", "líquida",
   "medição", "medições", "melhor", "mensal", "mestre", "módulo", "módulos", "movimento", "movimentos",
   "nenhum", "nenhuma", "novo", "nova", "obra", "obras", "oportunidade", "pagamento", "pagamentos", "parcela",
-  "parcelas", "parcial", "pendente", "pendências", "período", "possível", "possíveis", "prazo", "preço",
-  "preços", "preenchimento", "primeiro", "própria", "próprio", "próximas", "recebimento", "recebimentos",
-  "receita", "recomendação", "reconhecido", "reconhecida", "registro", "registros", "relatório", "relatórios",
+  "parcelas", "parcial", "passado", "passados", "passada", "passadas", "pendente", "pendências", "período",
+  "possível", "possíveis", "prazo", "preço", "previsão", "previsões",
+  "preços", "preenchimento", "primeiro", "própria", "próprio", "próximo", "próximos", "próxima",
+  "próximas", "recebimento", "recebimentos", "recebíveis", "receita", "recomendação", "reconhecido",
+  "reconhecida", "registro", "registros", "relatório", "relatórios",
   "resposta", "respostas", "resultado", "revisão", "salva", "salvas", "salvo", "salvos", "saldo", "senha",
   "situação", "solicitação", "solicitações", "somente", "tela", "telas", "título", "títulos", "última",
   "último", "unidade", "unidades", "usuário", "usuários", "validar", "valor", "valores", "vencimento",
-  "venda", "vendas", "visão", "vínculo", "vínculos"
+  "vencida", "vencidas", "vencido", "vencidos", "venda", "vendas", "visão", "vínculo", "vínculos"
 ]);
 
 function loadTranslator() {
@@ -78,7 +95,10 @@ function walk(directory) {
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) {
       if (!absolute.includes(path.join("components", "i18n"))) files.push(...walk(absolute));
-    } else if (entry.isFile() && entry.name.endsWith(".tsx")) {
+    } else if (
+      entry.isFile()
+      && (entry.name.endsWith(".tsx") || (entry.name.endsWith(".ts") && !entry.name.endsWith(".d.ts")))
+    ) {
       files.push(absolute);
     }
   }
@@ -159,6 +179,12 @@ function collectMessages() {
       ) {
         collectStaticStrings(node.arguments[0]);
       }
+      if (ts.isPropertyAssignment(node)) {
+        const name = ts.isIdentifier(node.name) || ts.isStringLiteral(node.name)
+          ? node.name.text
+          : undefined;
+        if (name && uiPropertyNames.has(name)) collectStaticStrings(node.initializer);
+      }
       ts.forEachChild(node, visit);
     }
 
@@ -177,13 +203,37 @@ function remainingPortuguese(value) {
 
 const translateUiText = loadTranslator();
 const audit = collectMessages();
+const expectedTranslations = new Map([
+  ["Previsão financeira", "Financial forecast"],
+  ["Próximos 30 dias", "Next 30 days"],
+  ["304 parcelas vencidas", "304 overdue installments"],
+  ["1 parcela", "1 installment"],
+  ["4 parcelas", "4 installments"],
+  ["7 dias futuros", "Next 7 days"],
+  ["R$ 593,5 mil", "R$593.5K"],
+  ["passado", "past"],
+  ["Recebíveis por cliente", "Receivables by customer"]
+]);
+const expectationFailures = [...expectedTranslations]
+  .map(([source, expected]) => ({
+    source,
+    expected,
+    translated: translateUiText(source, "en-US")
+  }))
+  .filter((entry) => entry.translated !== entry.expected);
 const failures = audit.messages
   .map((source) => ({ source, translated: translateUiText(source, "en-US") }))
   .map((entry) => ({ ...entry, residual: remainingPortuguese(entry.translated) }))
   .filter((entry) => entry.residual.length > 0)
   .sort((left, right) => left.source.localeCompare(right.source, "pt-BR"));
 
-if (failures.length || audit.unmarkedMessages.length) {
+if (failures.length || audit.unmarkedMessages.length || expectationFailures.length) {
+  if (expectationFailures.length) {
+    console.error(`${expectationFailures.length} representative translations do not match:`);
+    for (const failure of expectationFailures) {
+      console.error(`- ${failure.source}\n  expected: ${failure.expected}\n  received: ${failure.translated}`);
+    }
+  }
   if (audit.unmarkedMessages.length) {
     console.error(`${audit.unmarkedMessages.length} direct JSX messages bypass i18n:`);
     for (const message of audit.unmarkedMessages) console.error(`- ${message}`);

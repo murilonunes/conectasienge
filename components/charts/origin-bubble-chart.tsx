@@ -9,7 +9,7 @@ export function OriginBubbleChart({ data }: { data: ChartItem[] }) {
       <div className="panel-head"><div><h2 className="panel-title"><I18nText text={"Peso financeiro por origem"} /></h2><span className="panel-note"><I18nText text={"Tamanho representa valor bruto; número representa quantidade"} /></span></div></div>
       {data.length ? <div className="bubble-grid">{data.map((item) => {
         const size = 90 + (item.value / max) * 85;
-        return <div className="bubble-item" key={item.label}><div className="bubble" style={{ width: size, height: size }}><strong>{item.count}</strong><span>{formatCompactCurrency(item.value)}</span></div><p>{item.label}</p></div>;
+        return <div className="bubble-item" key={item.label}><div className="bubble" style={{ width: size, height: size }}><strong>{item.count}</strong><span><I18nText text={formatCompactCurrency(item.value)} /></span></div><p>{item.label}</p></div>;
       })}</div> : <div className="chart-empty"><I18nText text={"Sem dados para montar o gráfico."} /></div>}
     </section>
   );

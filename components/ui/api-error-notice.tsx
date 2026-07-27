@@ -7,7 +7,7 @@ export function ApiErrorNotice({ error }: { error: SiengeErrorDetails }) {
       <div className="api-error-heading">
         <span className="api-error-code">{error.status || <I18nText text={"ERRO"} />}</span>
         <div>
-          <h2>{error.title}</h2>
+          <h2><I18nText text={error.title} /></h2>
           <p>{error.explanation}</p>
         </div>
       </div>

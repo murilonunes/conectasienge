@@ -14,7 +14,7 @@ export function QuotationsSummaryStats({ filteredCount, open, decision, total }:
       <article className="card stat quotation-stat"><span><I18nText text={"Cotações"} /></span><strong>{filteredCount}</strong></article>
       <article className="card stat quotation-stat"><span><I18nText text={"Abertas"} /></span><strong>{open}</strong></article>
       <article className="card stat quotation-stat"><span><I18nText text={"Decisão"} /></span><strong>{decision}</strong></article>
-      <article className="card stat quotation-stat"><span><I18nText text={"Total"} /></span><strong>{formatCompactCurrency(total)}</strong></article>
+      <article className="card stat quotation-stat"><span><I18nText text={"Total"} /></span><strong><I18nText text={formatCompactCurrency(total)} /></strong></article>
     </div>
   );
 }

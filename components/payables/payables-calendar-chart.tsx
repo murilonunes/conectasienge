@@ -7,7 +7,7 @@ export function PayablesCalendarChart({ buckets }: { buckets: ScheduleBucket[] }
   return (
     <section className="card panel payables-calendar-chart">
       <div className="panel-head"><div><h2 className="panel-title"><I18nText text={"Programação financeira"} /></h2><span className="panel-note"><I18nText text={"Saldo corrigido previsto por janela de vencimento"} /></span></div></div>
-      <div className="payables-bars">{buckets.map((bucket) => <div key={bucket.id}><span>{formatCompactCurrency(bucket.amount)}</span><div><i style={{ height: `${Math.max(bucket.amount ? 6 : 0, (bucket.amount / max) * 100)}%` }} /></div><strong>{bucket.label}</strong><small>{bucket.items.length} <I18nText text={"parcela"} /><I18nText text={bucket.items.length === 1 ? "" : "s"} /></small></div>)}</div>
+      <div className="payables-bars">{buckets.map((bucket) => <div key={bucket.id}><span><I18nText text={formatCompactCurrency(bucket.amount)} /></span><div><i style={{ height: `${Math.max(bucket.amount ? 6 : 0, (bucket.amount / max) * 100)}%` }} /></div><strong><I18nText text={bucket.label} /></strong><small><I18nText text={`${bucket.items.length} ${bucket.items.length === 1 ? "parcela" : "parcelas"}`} /></small></div>)}</div>
     </section>
   );
 }

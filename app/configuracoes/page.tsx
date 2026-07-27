@@ -195,7 +195,7 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
                   [1095, "36 meses"],
                   [1460, "48 meses"],
                   [1825, "60 meses"]
-                ].map(([days, label]) => <option key={days} value={days}>{label}</option>)}
+                ].map(([days, label]) => <option key={days} value={days}><I18nText text={String(label)} /></option>)}
               </select>
             </label>
             <label>
@@ -234,11 +234,11 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
           {history.map((item) => (
             <article key={item.key} className={`settings-history-item ${item.status}`}>
               <div>
-                <strong>{item.label}</strong>
-                <span>{item.description}</span>
+                <strong><I18nText text={item.label} /></strong>
+                <span><I18nText text={item.description} /></span>
               </div>
               <div>
-                <b>{statusLabel(item.status)}</b>
+                <b><I18nText text={statusLabel(item.status)} /></b>
                 <small>{formatDate(item.lastUpdatedAt)}</small>
                 <em>{item.successCount} <I18nText text={"atualizações -"} /> {item.errorCount} <I18nText text={"avisos"} /></em>
               </div>

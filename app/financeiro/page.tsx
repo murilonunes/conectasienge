@@ -80,8 +80,8 @@ export default function FinanceiroPage() {
       <section className="card settings-flow">
         {flow.map((item) => (
           <div key={item.title}>
-            <strong>{item.title}</strong>
-            <span>{item.text}</span>
+            <strong><I18nText text={item.title} /></strong>
+            <span><I18nText text={item.text} /></span>
           </div>
         ))}
       </section>
@@ -89,7 +89,7 @@ export default function FinanceiroPage() {
       <section className="welcome-shortcuts">
         {mainShortcuts.map((shortcut) => (
           <Link className="card welcome-shortcut" href={shortcut.href} key={shortcut.href}>
-            <strong>{shortcut.title}</strong>
+            <strong><I18nText text={shortcut.title} /></strong>
             <span><I18nText text={shortcut.note} /></span>
           </Link>
         ))}

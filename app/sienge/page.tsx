@@ -43,8 +43,8 @@ function ModuleCard({ module }: { module: SiengeCoverageModule }) {
       <div className="sienge-module-head">
         <div>
           <span>{module.area}</span>
-          <h2>{module.title}</h2>
-          <p>{module.description}</p>
+          <h2><I18nText text={module.title} /></h2>
+          <p><I18nText text={module.description} /></p>
         </div>
         <div className={statusClass(module.status)}>
           <strong>{statusLabels[module.status]}</strong>
@@ -82,7 +82,7 @@ function ModuleCard({ module }: { module: SiengeCoverageModule }) {
         {module.endpoints.map((endpoint) => (
           <div key={`${module.id}-${endpoint.endpoint}-${endpoint.label}`} className={endpoint.records > 0 ? "loaded" : endpoint.implemented ? "empty" : "unused"}>
             <div>
-              <strong>{endpoint.label}</strong>
+              <strong><I18nText text={endpoint.label} /></strong>
               <span>{endpoint.endpoint}</span>
               <small>{endpoint.role}</small>
             </div>
@@ -164,7 +164,7 @@ export default function SiengeCoveragePage() {
             {priority.map((module) => (
               <div key={module.id}>
                 <span className={statusClass(module.status)}>{statusLabels[module.status]}</span>
-                <strong>{module.title}</strong>
+                <strong><I18nText text={module.title} /></strong>
                 <p>{module.nextStep}</p>
               </div>
             ))}

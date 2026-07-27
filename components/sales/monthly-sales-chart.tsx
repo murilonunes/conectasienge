@@ -23,7 +23,7 @@ export function MonthlySalesChart({ data }: { data: MonthlySalesItem[] }) {
           const gross = item.value + item.exchangeValue;
           return (
             <div className="sales-monthly-column" key={item.label} title={`${item.label}: ${formatCompactCurrency(item.value)} em caixa + ${formatCompactCurrency(item.exchangeValue)} em permuta = ${formatCompactCurrency(gross)} em ${item.count} contratos`}>
-              <span>{formatCompactCurrency(gross)}</span>
+              <span><I18nText text={formatCompactCurrency(gross)} /></span>
               <div className="sales-monthly-bars">
                 <div className="sales-value-stack" style={{ height: `${gross > 0 ? Math.max(4, (gross / maxGross) * 100) : 0}%` }}>
                   <i className="sales-cash-bar" style={{ flexGrow: Math.max(item.value, 0) || (item.exchangeValue > 0 ? 0 : 1) }} />
@@ -31,7 +31,7 @@ export function MonthlySalesChart({ data }: { data: MonthlySalesItem[] }) {
                 </div>
                 <i className="sales-count-bar" style={{ height: `${item.count > 0 ? Math.max(4, (item.count / maxCount) * 100) : 0}%` }}><b>{item.count}</b></i>
               </div>
-              <strong>{item.label}</strong>
+              <strong><I18nText text={item.label} /></strong>
             </div>
           );
         })}

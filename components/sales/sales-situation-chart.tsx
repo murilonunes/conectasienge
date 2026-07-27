@@ -17,7 +17,7 @@ export function SalesSituationChart({ data }: { data: ChartItem[] }) {
       <div className="panel-head"><div><h2 className="panel-title"><I18nText text={"Situação dos contratos"} /></h2><span className="panel-note"><I18nText text={"Quantidade e valor em caixa (sem permutas) por situação comercial"} /></span></div></div>
       <div className="sales-situation-layout">
         <div className="sales-situation-donut" style={{ background: `conic-gradient(${gradient || "#edf1ee 0 100%"})` }}><div><strong>{total}</strong><span><I18nText text={"contratos"} /></span></div></div>
-        <div className="sales-situation-legend">{data.map((item, index) => <div key={item.label}><i style={{ background: colors[index % colors.length] }} /><span>{item.label}</span><strong>{item.count}</strong><small>{formatCompactCurrency(item.value)}</small></div>)}</div>
+        <div className="sales-situation-legend">{data.map((item, index) => <div key={item.label}><i style={{ background: colors[index % colors.length] }} /><span>{item.label}</span><strong>{item.count}</strong><small><I18nText text={formatCompactCurrency(item.value)} /></small></div>)}</div>
       </div>
     </section>
   );

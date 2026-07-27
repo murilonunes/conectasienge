@@ -222,8 +222,8 @@ function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?
           return (
             <div className={`reconciliation-step ${status}`} key={step.label}>
               <i>{status === "done" ? <I18nText text={"OK"} /> : status === "active" ? <I18nText text={"..."} /> : <I18nText text={"-"} />}</i>
-              <span>{step.label}</span>
-              <strong>{statusLabel(status)}</strong>
+              <span><I18nText text={step.label} /></span>
+              <strong><I18nText text={statusLabel(status)} /></strong>
             </div>
           );
         })}
@@ -244,7 +244,7 @@ function ErrorPanel({ error }: { error: SiengeErrorDetails }) {
       <div className="api-error-heading">
         <span className="api-error-code">{error.status || <I18nText text={"ERRO"} />}</span>
         <div>
-          <h2>{error.title}</h2>
+          <h2><I18nText text={error.title} /></h2>
           <p>{error.explanation}</p>
         </div>
       </div>
@@ -305,7 +305,7 @@ function MonthlyReconciliationPanel({
                 <span><I18nText text={"Mês"} /></span>
                 <select value={selectedMonth} onChange={(event) => onSelect(event.target.value)}>
                   <option value="all"><I18nText text={"Todos os meses do ano"} /></option>
-                  {months.map((month) => <option value={month.key} key={month.key}>{month.label}</option>)}
+                  {months.map((month) => <option value={month.key} key={month.key}><I18nText text={month.label} /></option>)}
                 </select>
               </label>
             )}
@@ -325,7 +325,7 @@ function MonthlyReconciliationPanel({
               key={month.key}
               onClick={() => onSelect(month.key)}
             >
-              <div><strong>{month.label}</strong><span>{percent}<I18nText text={"% conciliado"} /></span></div>
+              <div><strong><I18nText text={month.label} /></strong><span>{percent}<I18nText text={"% conciliado"} /></span></div>
               <div className="reconciliation-month-track">
                 <i className="done" style={{ width: `${doneWidth}%` }} />
                 <i className="pending" style={{ width: `${pendingWidth}%` }} />
@@ -351,7 +351,7 @@ function UntitledMovementsPanel({ movements, periodLabel }: { movements: BankMov
         </div>
         <div className="reconciliation-untitled-summary">
           <strong>{movements.length}</strong>
-          <span>{formatCompactCurrency(amount)}</span>
+          <span><I18nText text={formatCompactCurrency(amount)} /></span>
         </div>
       </div>
       <LocalDataList
@@ -598,7 +598,7 @@ export function ReconciliationPortal({
           <div className="ranking-list">
             {accountRanking.map((item) => {
               const max = Math.max(...accountRanking.map((account) => Math.abs(account.value)), 1);
-              return <div className="ranking-row" key={item.label}><div><span>{item.label}</span><strong>{item.count} <I18nText text={"movimentos"} /></strong></div><div className="ranking-track"><i style={{ width: `${Math.max(4, (Math.abs(item.value) / max) * 100)}%` }} /></div><small>{formatCompactCurrency(item.value)}</small></div>;
+              return <div className="ranking-row" key={item.label}><div><span>{item.label}</span><strong>{item.count} <I18nText text={"movimentos"} /></strong></div><div className="ranking-track"><i style={{ width: `${Math.max(4, (Math.abs(item.value) / max) * 100)}%` }} /></div><small><I18nText text={formatCompactCurrency(item.value)} /></small></div>;
             })}
             {!accountRanking.length && <div className="empty-state"><I18nText text={"Nenhuma conta encontrada para a seleção atual."} /></div>}
           </div>

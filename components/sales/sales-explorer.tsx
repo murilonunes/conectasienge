@@ -63,7 +63,7 @@ export function SalesExplorer({
               ? `de ${totalContracts} contratos carregados para consulta rápida`
               : <I18nText text={"contratos - venda mais recente primeiro"} />}
           </span>
-          <strong>{formatCompactCurrency(total)}</strong>
+          <strong><I18nText text={formatCompactCurrency(total)} /></strong>
           <span><I18nText text={"em caixa, sem permutas"} /></span>
         </div>
       </div>

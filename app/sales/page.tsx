@@ -74,7 +74,7 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
       <section className="dashboard-view-switch">
         <div className="dashboard-view-summary">
           <span><I18nText text={"Vendas realizadas em"} /></span>
-          <strong>{periodLabel}</strong>
+          <strong><I18nText text={periodLabel} /></strong>
           <small>{range.start} <I18nText text={"até"} /> {range.end} <I18nText text={"- data da venda (emissão do contrato)"} /></small>
         </div>
         <div className="dashboard-view-controls">

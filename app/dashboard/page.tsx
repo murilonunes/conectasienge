@@ -54,7 +54,7 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
       <section className="dashboard-view-switch">
         <div className="dashboard-view-summary">
           <span><I18nText text={isPastView ? "Execução" : "Planejamento"} /></span>
-          <strong>{periodSummaryLabel}</strong>
+          <strong><I18nText text={periodSummaryLabel} /></strong>
           <small>{overview.dashboardRange.start} <I18nText text={"até"} /> {overview.dashboardRange.end} <I18nText text={"-"} /> <I18nText text={isPastView ? "previsto x realizado" : "previsão por vencimento"} /></small>
         </div>
         <div className="dashboard-view-controls">
@@ -95,26 +95,26 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
 
       <section className={`card dashboard-executive ${executiveBalance < 0 ? "warning" : ""}`}>
         <div className="dashboard-executive-main">
-          <span>{executiveLabel}</span>
-          <h2>{formatCompactCurrency(executiveBalance)}</h2>
-          <p>{cashReading} {executiveDescription}</p>
+          <span><I18nText text={executiveLabel} /></span>
+          <h2><I18nText text={formatCompactCurrency(executiveBalance)} /></h2>
+          <p><I18nText text={`${cashReading} ${executiveDescription}`} /></p>
         </div>
         <div className="dashboard-executive-grid">
           {isPastView ? (
             <>
               <div>
                 <span><I18nText text={"Saldo realizado"} /></span>
-                <strong className={overview.realizedBalance < 0 ? "negative" : ""}>{formatCompactCurrency(overview.realizedBalance)}</strong>
-                <small>{realizedReading}</small>
+                <strong className={overview.realizedBalance < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(overview.realizedBalance)} /></strong>
+                <small><I18nText text={realizedReading} /></small>
               </div>
               <div>
                 <span><I18nText text={"Não recebido"} /></span>
-                <strong>{formatCompactCurrency(overview.receivableSummary.periodOpenAmount)}</strong>
+                <strong><I18nText text={formatCompactCurrency(overview.receivableSummary.periodOpenAmount)} /></strong>
                 <small>{overview.receivableSummary.periodOpenCount} <I18nText text={"parcelas previstas ficaram pendentes"} /></small>
               </div>
               <div>
                 <span><I18nText text={"Não pago"} /></span>
-                <strong className={overview.payableSummary.periodAmount > 0 ? "negative" : ""}>{formatCompactCurrency(overview.payableSummary.periodAmount)}</strong>
+                <strong className={overview.payableSummary.periodAmount > 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(overview.payableSummary.periodAmount)} /></strong>
                 <small>{overview.payableSummary.periodCount} <I18nText text={"parcelas previstas ficaram pendentes"} /></small>
               </div>
             </>
@@ -122,17 +122,17 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
             <>
               <div>
                 <span><I18nText text={"A receber restante"} /></span>
-                <strong>{formatCompactCurrency(overview.receivableSummary.totalOpen)}</strong>
+                <strong><I18nText text={formatCompactCurrency(overview.receivableSummary.totalOpen)} /></strong>
                 <small>{overview.receivableSummary.forecastCount} <I18nText text={"parcelas ainda têm saldo"} /></small>
               </div>
               <div>
                 <span><I18nText text={"A pagar restante"} /></span>
-                <strong className={overview.payableSummary.totalAmount > 0 ? "negative" : ""}>{formatCompactCurrency(overview.payableSummary.totalAmount)}</strong>
+                <strong className={overview.payableSummary.totalAmount > 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(overview.payableSummary.totalAmount)} /></strong>
                 <small>{overview.payables.totalCount} <I18nText text={"parcelas ainda têm saldo"} /></small>
               </div>
               <div>
                 <span><I18nText text={"Já realizado"} /></span>
-                <strong className={futureLinkedBalance < 0 ? "negative" : ""}>{formatCompactCurrency(futureLinkedBalance)}</strong>
+                <strong className={futureLinkedBalance < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(futureLinkedBalance)} /></strong>
                 <small>{formatCompactCurrency(overview.receivableSummary.periodReceivedAmount)} <I18nText text={"recebido -"} /> {formatCompactCurrency(overview.payableSummary.periodPaidAmount)} <I18nText text={"pago"} /></small>
               </div>
             </>
@@ -262,10 +262,10 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
               <div className="dashboard-period-list">
                 {overview.purchaseSummary.periods.map((period) => (
                   <div key={period.key}>
-                    <span>{period.label}</span>
-                    <strong>{formatCompactCurrency(period.amount)}</strong>
+                    <span><I18nText text={period.label} /></span>
+                    <strong><I18nText text={formatCompactCurrency(period.amount)} /></strong>
                     <small>
-                      <span>{period.note}</span>
+                      <span><I18nText text={period.note} /></span>
                       <span>{period.count} <I18nText text={"registros -"} /> {period.doneCount} <I18nText text={"concluídos -"} /> {period.pendingCount} <I18nText text={"pendentes"} /></span>
                     </small>
                   </div>

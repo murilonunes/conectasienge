@@ -4,7 +4,7 @@ export function StatCard({ label, value, delta, warn, icon }: { label: string; v
   return (
     <article className="card stat">
       <div className="stat-top"><span><I18nText text={label} /></span><span className="stat-icon">{icon}</span></div>
-      <div className="stat-value">{value}</div>
+      <div className="stat-value"><I18nText text={value} /></div>
       <span className={`delta ${warn ? "warn" : ""}`}><I18nText text={delta} /></span>
     </article>
   );

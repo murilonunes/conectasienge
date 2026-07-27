@@ -110,7 +110,7 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
         <div>
           <strong>{payload.filteredCount}</strong>
           <span>{payload.filteredCount === totalRecords ? <I18nText text={"registros"} /> : `de ${totalRecords} registros salvos`}</span>
-          <strong>{formatCompactCurrency(payload.totalAmount)}</strong>
+          <strong><I18nText text={formatCompactCurrency(payload.totalAmount)} /></strong>
         </div>
       </div>
 

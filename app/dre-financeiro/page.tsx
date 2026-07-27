@@ -42,7 +42,7 @@ function IntegrationSummary({ integrations }: { integrations: Awaited<ReturnType
     <section className="card dre-integration-panel">
       {integrations.map((item) => (
         <div key={item.label}>
-          <span>{item.label}</span>
+          <span><I18nText text={item.label} /></span>
           <strong>{item.count} <I18nText text={"registros"} /></strong>
           <small>
             {item.lastIntegrationDay
@@ -82,7 +82,7 @@ function MonthlyTable({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
             const openNet = item.openReceivables - item.openPayables;
             return (
               <tr key={item.key}>
-                <td><strong>{item.label}</strong></td>
+                <td><strong><I18nText text={item.label} /></strong></td>
                 <td>{formatCurrency(item.receivableDue)}</td>
                 <td>{formatCurrency(item.receivableReceived)}</td>
                 <td>{formatCurrency(item.payableDue)}</td>
@@ -137,7 +137,7 @@ function FutureGroups({ groups, details }: { groups: FinancialDreFutureGroup[]; 
         <tbody>
           {groups.map((item) => (
             <tr key={item.key}>
-              <td><strong>{item.label}</strong></td>
+              <td><strong><I18nText text={item.label} /></strong></td>
               <td>{formatCurrency(item.receivableOpen)}</td>
               <td>{item.receivableCount}</td>
               <td>{formatCurrency(item.payableOpen)}</td>
@@ -256,14 +256,14 @@ function ResultTrend({ monthly }: { monthly: FinancialDreMonthlyItem[] }) {
           const positive = item.projectedResult >= 0;
           return (
             <div key={item.key} title={`${item.label}: ${formatCurrency(item.projectedResult)}`}>
-              <span>{formatCompactCurrency(item.projectedResult)}</span>
+              <span><I18nText text={formatCompactCurrency(item.projectedResult)} /></span>
               <div className="dre-result-track">
                 <i
                   className={positive ? "positive" : "negative"}
                   style={{ height: `${Math.max(5, (Math.abs(item.projectedResult) / max) * 100)}%` }}
                 />
               </div>
-              <strong>{item.label}</strong>
+              <strong><I18nText text={item.label} /></strong>
             </div>
           );
         })}
@@ -400,7 +400,7 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
       <section className={`card dashboard-executive dre-executive ${projectedPositive ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
           <span><I18nText text={projectedPositive ? "Resultado previsto positivo" : "Resultado previsto negativo"} /></span>
-          <h2>{formatCompactCurrency(dre.projectedResult)}</h2>
+          <h2><I18nText text={formatCompactCurrency(dre.projectedResult)} /></h2>
           <p>
             <I18nText text={"A receber previsto de"} /> {formatCompactCurrency(dre.receivableDue)} <I18nText text={"menos a pagar previsto de"} /> {formatCompactCurrency(dre.payableDue)}<I18nText text={". A visão considera somente títulos e parcelas do contas a receber/pagar."} />
           </p>
@@ -408,17 +408,17 @@ export default async function FinancialDrePage({ searchParams }: FinancialDrePag
         <div className="dashboard-executive-grid">
           <div>
             <span><I18nText text={"Resultado realizado"} /></span>
-            <strong className={realizedPositive ? "" : "negative"}>{formatCompactCurrency(dre.realizedResult)}</strong>
+            <strong className={realizedPositive ? "" : "negative"}><I18nText text={formatCompactCurrency(dre.realizedResult)} /></strong>
             <small>{formatCompactCurrency(dre.receivableReceived)} <I18nText text={"recebido e"} /> {formatCompactCurrency(dre.payablePaid)} <I18nText text={"pago no ano."} /></small>
           </div>
           <div>
             <span><I18nText text={"Aberto líquido do ano"} /></span>
-            <strong className={dre.openResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.openResult)}</strong>
+            <strong className={dre.openResult < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(dre.openResult)} /></strong>
             <small>{dre.openReceivablesCount} <I18nText text={"parcelas a receber e"} /> {dre.openPayablesCount} <I18nText text={"a pagar ainda abertas."} /></small>
           </div>
           <div>
             <span><I18nText text={"Saldo futuro aberto"} /></span>
-            <strong className={dre.futureNetResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.futureNetResult)}</strong>
+            <strong className={dre.futureNetResult < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(dre.futureNetResult)} /></strong>
             <small><I18nText text={"Vencimentos abertos a partir de"} /> {dre.baseDate}<I18nText text={", agrupados abaixo."} /></small>
           </div>
         </div>

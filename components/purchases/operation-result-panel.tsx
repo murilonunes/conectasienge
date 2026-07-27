@@ -46,8 +46,8 @@ export function OperationResultPanel({
     <div className={`card panel quotation-operation-result quotation-result-${kind}`}>
       <div className="panel-head">
         <div>
-          <h2 className="panel-title">{message || title}</h2>
-          {message && <span className="panel-note">{title}</span>}
+          <h2 className="panel-title"><I18nText text={message || title} /></h2>
+          {message && <span className="panel-note"><I18nText text={title} /></span>}
         </div>
         <i className={`badge ${badgeClassByKind[kind]}`}>{badgeLabelByKind[kind]}</i>
       </div>

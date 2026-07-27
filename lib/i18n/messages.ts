@@ -528,6 +528,15 @@ const exactEnglish: Record<string, string> = {
 };
 
 const phraseEnglish: Array<[string, string]> = [
+  ["parcelas vencidas e ainda abertas", "overdue installments that are still open"],
+  ["parcelas vencidas", "overdue installments"],
+  ["parcela vencida", "overdue installment"],
+  ["parcelas abertas", "open installments"],
+  ["parcela aberta", "open installment"],
+  ["dias futuros", "future days"],
+  ["dias passados", "past days"],
+  ["meses futuros", "future months"],
+  ["meses passados", "past months"],
   ["itens em carteira comercial para análise de venda, reserva, preço e propriedade.", "items in the sales portfolio for sale, reservation, price, and ownership analysis."],
   ["Novo link gerado, mas o anterior continua ativo:", "New link generated, but the previous one remains active:"],
   ["Valor e quantidade de vendas,", "Sales value and volume,"],
@@ -676,7 +685,6 @@ const wordEnglish: Record<string, string> = {
   fornecedor: "supplier",
   fornecedores: "suppliers",
   frete: "freight",
-  futuro: "future",
   geral: "general",
   gerar: "generate",
   gráfico: "chart",
@@ -741,6 +749,27 @@ const wordEnglish: Record<string, string> = {
   página: "page",
   parcelas: "installments",
   parcela: "installment",
+  cliente: "customer",
+  clientes: "customers",
+  financeira: "financial",
+  financeiras: "financial",
+  futuro: "future",
+  futura: "future",
+  futuros: "future",
+  futuras: "future",
+  passado: "past",
+  passada: "past",
+  passados: "past",
+  passadas: "past",
+  "previsão": "forecast",
+  "previsões": "forecasts",
+  "próximos": "next",
+  "próximas": "next",
+  "recebíveis": "receivables",
+  vencida: "overdue",
+  vencidas: "overdue",
+  vencido: "overdue",
+  vencidos: "overdue",
   período: "period",
   períodos: "periods",
   permissão: "permission",
@@ -995,6 +1024,54 @@ function replacePhrase(source: string, phrase: string, translated: string) {
   return source.replace(new RegExp(escaped, "giu"), (match) => matchCase(match, translated));
 }
 
+function translateParameterizedEnglish(value: string) {
+  const patterns: Array<[RegExp, (...values: string[]) => string]> = [
+    [/^Próximos (\d+) dias$/i, (days) => `Next ${days} days`],
+    [/^Próximos (\d+) meses$/i, (months) => `Next ${months} months`],
+    [/^(\d+) dias futuros$/i, (days) => `Next ${days} days`],
+    [/^(\d+) dias passados$/i, (days) => `Last ${days} days`],
+    [/^(\d+) meses futuros$/i, (months) => `Next ${months} months`],
+    [/^(\d+) meses passados$/i, (months) => `Last ${months} months`],
+    [/^Exercício (\d+)$/i, (year) => `Fiscal year ${year}`],
+    [/^(.+) \(sem movimentos salvos\)$/i, (account) => `${account} (no saved transactions)`],
+    [/^1 parcela vencida$/i, () => "1 overdue installment"],
+    [/^(\d+) parcelas vencidas$/i, (count) => `${count} overdue installments`],
+    [/^1 parcela aberta$/i, () => "1 open installment"],
+    [/^(\d+) parcelas abertas$/i, (count) => `${count} open installments`],
+    [/^1 parcela$/i, () => "1 installment"],
+    [/^(\d+) parcelas$/i, (count) => `${count} installments`]
+  ];
+
+  for (const [pattern, replacement] of patterns) {
+    const match = value.match(pattern);
+    if (match) return replacement(...match.slice(1));
+  }
+  return undefined;
+}
+
+function translateBrazilianCurrencyText(value: string) {
+  return value.replace(
+    /(-?)R\$\s*([\d.]+(?:,\d+)?)(?:\s*(mil|mi|bi))?/gi,
+    (_match, sign: string, numberText: string, compactUnit?: string) => {
+      const numeric = Number(numberText.replace(/\./g, "").replace(",", "."));
+      if (!Number.isFinite(numeric)) return _match;
+      const multiplier = compactUnit?.toLocaleLowerCase("pt-BR") === "mil"
+        ? 1_000
+        : compactUnit?.toLocaleLowerCase("pt-BR") === "mi"
+          ? 1_000_000
+          : compactUnit?.toLocaleLowerCase("pt-BR") === "bi"
+            ? 1_000_000_000
+            : 1;
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "BRL",
+        notation: compactUnit ? "compact" : "standard",
+        maximumFractionDigits: compactUnit ? 1 : 2
+      }).format((sign ? -1 : 1) * numeric * multiplier);
+    }
+  );
+}
+
 export function translateUiText(source: string, locale: AppLocale) {
   if (locale === "pt-BR" || !source.trim()) return source;
 
@@ -1003,8 +1080,10 @@ export function translateUiText(source: string, locale: AppLocale) {
   const value = source.trim();
   const exact = exactEnglish[value];
   if (exact) return `${leading}${exact}${trailing}`;
+  const parameterized = translateParameterizedEnglish(value);
+  if (parameterized) return `${leading}${parameterized}${trailing}`;
 
-  let translated = value;
+  let translated = translateBrazilianCurrencyText(value);
   for (const [phrase, replacement] of phraseEnglish) {
     translated = replacePhrase(translated, phrase, replacement);
   }

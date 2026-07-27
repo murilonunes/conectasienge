@@ -18,7 +18,7 @@ export function DashboardLoadingState() {
         {steps.map((step, index) => (
           <div className="card" key={step}>
             <i><I18nText text={index === 0 ? "..." : "-"} /></i>
-            <strong>{step}</strong>
+            <strong><I18nText text={step} /></strong>
             <span><I18nText text={index === 0 ? "Em andamento" : "Na fila"} /></span>
           </div>
         ))}
@@ -27,7 +27,7 @@ export function DashboardLoadingState() {
       <div className="stats dashboard-loading-stats">
         {cards.map((card) => (
           <article className="card stat" key={card}>
-            <div className="stat-top"><span>{card}</span></div>
+            <div className="stat-top"><span><I18nText text={card} /></span></div>
             <div className="dashboard-loading-line wide" />
             <div className="dashboard-loading-line" />
           </article>

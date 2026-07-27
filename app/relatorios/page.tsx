@@ -190,7 +190,7 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
       <section className="reports-filter card">
         <div>
           <span><I18nText text={"Período padrão"} /></span>
-          <strong>{periodLabel(days, direction)}</strong>
+          <strong><I18nText text={periodLabel(days, direction)} /></strong>
           <small>{overview.dashboardRange.start} <I18nText text={"até"} /> {overview.dashboardRange.end}</small>
         </div>
         <div className="dashboard-view-controls">
@@ -233,7 +233,7 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
             <span><I18nText text={"relatórios disponíveis"} /></span>
           </div>
           <div>
-            <strong>{periodLabel(days, direction)}</strong>
+            <strong><I18nText text={periodLabel(days, direction)} /></strong>
             <span><I18nText text={"recorte selecionado"} /></span>
           </div>
           <div>
@@ -259,17 +259,17 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
           <article className="card report-card" key={report.title}>
             <div className="report-card-top">
               <div className="report-icon">{report.icon}</div>
-              <span>{report.scope}</span>
+              <span><I18nText text={report.scope} /></span>
             </div>
-            <h2>{report.title}</h2>
-            <p>{report.description}</p>
+            <h2><I18nText text={report.title} /></h2>
+            <p><I18nText text={report.description} /></p>
             <div className="report-card-metrics">
               <div>
-                <strong>{report.primaryMetric}</strong>
+                <strong><I18nText text={report.primaryMetric} /></strong>
                 <span><I18nText text={report.primaryLabel} /></span>
               </div>
               <div>
-                <strong>{report.secondaryMetric}</strong>
+                <strong><I18nText text={report.secondaryMetric} /></strong>
                 <span><I18nText text={report.secondaryLabel} /></span>
               </div>
             </div>

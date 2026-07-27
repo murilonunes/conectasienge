@@ -27,7 +27,7 @@ function IntegrationSummary({ integrations }: { integrations: DreGerencialData["
     <section className="card dre-integration-panel">
       {integrations.map((item) => (
         <div key={item.label}>
-          <span>{item.label}</span>
+          <span><I18nText text={item.label} /></span>
           <strong>{item.count} <I18nText text={"registros"} /></strong>
           <small>
             {item.lastIntegrationDay
@@ -65,14 +65,14 @@ function ResultTrend({ monthly }: { monthly: DreMonthlyItem[] }) {
             const positive = item.competenceResult >= 0;
             return (
               <div key={item.key} title={`${item.label}: ${formatCurrency(item.competenceResult)}`}>
-                <span>{formatCompactCurrency(item.competenceResult)}</span>
+                <span><I18nText text={formatCompactCurrency(item.competenceResult)} /></span>
                 <div className="dre-result-track">
                   <i
                     className={positive ? "positive" : "negative"}
                     style={{ height: `${Math.max(5, (Math.abs(item.competenceResult) / max) * 100)}%` }}
                   />
                 </div>
-                <strong>{item.label}</strong>
+                <strong><I18nText text={item.label} /></strong>
               </div>
             );
           })}
@@ -108,7 +108,7 @@ function MonthlyTable({ monthly }: { monthly: DreMonthlyItem[] }) {
           <tbody>
             {rows.map((item) => (
               <tr key={item.key}>
-                <td><strong>{item.label}</strong></td>
+                <td><strong><I18nText text={item.label} /></strong></td>
                 <td>{formatCurrency(item.contractedRevenue)}</td>
                 <td>{formatCurrency(item.netRevenue)}</td>
                 <td>{formatCurrency(item.costs)}</td>
@@ -146,7 +146,7 @@ function FutureGroups({ groups }: { groups: DreFutureGroup[] }) {
         <tbody>
           {groups.map((item) => (
             <tr key={item.key}>
-              <td><strong>{item.label}</strong></td>
+              <td><strong><I18nText text={item.label} /></strong></td>
               <td>{formatCurrency(item.receivableOpen)}</td>
               <td>{item.receivableCount}</td>
               <td>{formatCurrency(item.payableOpen)}</td>
@@ -169,7 +169,7 @@ function FuturePocView({ dre }: { dre: DreGerencialData }) {
       <section className={`card dashboard-executive dre-executive ${hasFutureMargin ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
           <span><I18nText text={hasFutureMargin ? "Potencial POC futuro positivo" : "Potencial POC futuro pressionado"} /></span>
-          <h2>{formatCompactCurrency(dre.futureRemainingPocRevenue)}</h2>
+          <h2><I18nText text={formatCompactCurrency(dre.futureRemainingPocRevenue)} /></h2>
           <p>
             <I18nText text={"Receita POC ainda a reconhecer pela carteira ativa, considerando o percentual de avanço salvo hoje. Essa leitura não cria cronograma de medição; ela mostra o estoque de resultado ainda não reconhecido."} />
           </p>
@@ -177,12 +177,12 @@ function FuturePocView({ dre }: { dre: DreGerencialData }) {
         <div className="dashboard-executive-grid">
           <div>
             <span><I18nText text={"POC já reconhecido"} /></span>
-            <strong>{formatCompactCurrency(dre.futureCurrentPocRevenue)}</strong>
+            <strong><I18nText text={formatCompactCurrency(dre.futureCurrentPocRevenue)} /></strong>
             <small>{formatPercent(dre.futurePocCoverage)} <I18nText text={"da carteira ativa já está reconhecida pela base atual."} /></small>
           </div>
           <div>
             <span><I18nText text={"Saldo futuro de caixa"} /></span>
-            <strong className={dre.futureCashResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.futureCashResult)}</strong>
+            <strong className={dre.futureCashResult < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(dre.futureCashResult)} /></strong>
             <small>{formatCompactCurrency(dre.futureOpenReceivables)} <I18nText text={"a receber e"} /> {formatCompactCurrency(dre.futureOpenPayables)} <I18nText text={"a pagar."} /></small>
           </div>
           <div>
@@ -226,7 +226,7 @@ function FuturePocView({ dre }: { dre: DreGerencialData }) {
             </div>
             <div>
               <span><I18nText text={"Receita remanescente"} /></span>
-              <strong>{formatCompactCurrency(dre.futureRemainingPocRevenue)}</strong>
+              <strong><I18nText text={formatCompactCurrency(dre.futureRemainingPocRevenue)} /></strong>
               <small><span><I18nText text={"POC"} /></span><span><I18nText text={"Carteira vendida menos POC reconhecido pela última medição."} /></span></small>
             </div>
             <div>
@@ -332,7 +332,7 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
       <section className={`card dashboard-executive dre-executive ${hasProfit ? "" : "warning"}`}>
         <div className="dashboard-executive-main">
           <span><I18nText text={hasProfit ? "Lucro POC estimado" : "Prejuízo POC estimado"} /></span>
-          <h2>{formatCompactCurrency(dre.netResult)}</h2>
+          <h2><I18nText text={formatCompactCurrency(dre.netResult)} /></h2>
           <p>
             <I18nText text={"Receita POC líquida de"} /> {formatCompactCurrency(dre.netRevenue)} <I18nText text={"menos"} /> {formatCompactCurrency(dre.costAmount)}
             <I18nText text={" "} /><I18nText text={"em custos e despesas lançados. POC médio ponderado de"} /> {formatPercent(dre.averagePoc * 100)}<I18nText text={"."} />
@@ -341,12 +341,12 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
         <div className="dashboard-executive-grid">
           <div>
             <span><I18nText text={"Caixa realizado"} /></span>
-            <strong className={dre.cashResult < 0 ? "negative" : ""}>{formatCompactCurrency(dre.cashResult)}</strong>
+            <strong className={dre.cashResult < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(dre.cashResult)} /></strong>
             <small><I18nText text={cashPositive ? "Entrou mais dinheiro do que saiu." : "Saiu mais dinheiro do que entrou."} /></small>
           </div>
           <div>
             <span><I18nText text={"A receber até o ano"} /></span>
-            <strong>{formatCompactCurrency(dre.openReceivables)}</strong>
+            <strong><I18nText text={formatCompactCurrency(dre.openReceivables)} /></strong>
             <small>{dre.openReceivablesCount} <I18nText text={"parcelas abertas com vencimento até"} /> {selectedYear}</small>
           </div>
           <div>
@@ -403,12 +403,12 @@ export default async function DreGerencialPage({ searchParams }: DreGerencialPag
           <div className="dashboard-period-list">
             <div>
               <span><I18nText text={"Valor contratado"} /></span>
-              <strong>{formatCompactCurrency(dre.pocSourcePlannedCost)}</strong>
+              <strong><I18nText text={formatCompactCurrency(dre.pocSourcePlannedCost)} /></strong>
               <small><span><I18nText text={"Base de custo"} /></span><span>{dre.pocSourceContractCount} <I18nText text={"contratos com medição"} /></span></small>
             </div>
             <div>
               <span><I18nText text={"Valor medido"} /></span>
-              <strong>{formatCompactCurrency(dre.pocSourceMeasuredCost)}</strong>
+              <strong><I18nText text={formatCompactCurrency(dre.pocSourceMeasuredCost)} /></strong>
               <small><span><I18nText text={"Avanço reconhecido"} /></span><span>{formatPercent(dre.pocSourceAveragePercent * 100)} <I18nText text={"medido sobre contratado"} /></span></small>
             </div>
             <div>

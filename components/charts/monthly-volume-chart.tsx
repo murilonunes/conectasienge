@@ -25,10 +25,10 @@ export function MonthlyVolumeChart({
             const countText = `${item.count} ${countLabel}${item.count === 1 ? "" : "s"}`;
             return (
               <div className="monthly-column" key={item.label} title={`${item.label}: ${formatCompactCurrency(item.value)} em ${countText}`}>
-                <span>{formatCompactCurrency(item.value)}</span>
-                <small>{countText}</small>
+                <span><I18nText text={formatCompactCurrency(item.value)} /></span>
+                <small><I18nText text={countText} /></small>
                 <div className="monthly-track"><i style={{ height: `${Math.max(4, (item.value / max) * 100)}%` }} /></div>
-                <strong>{item.label}</strong>
+                <strong><I18nText text={item.label} /></strong>
               </div>
             );
           })}

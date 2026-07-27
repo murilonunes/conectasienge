@@ -39,7 +39,7 @@ export function DreYearlyStackedChart({
                 key={item.label}
                 title={`${item.label}: ${formatCompactCurrency(item.positive)} ${positiveLabel.toLowerCase()} + ${formatCompactCurrency(item.negative)} ${negativeLabel.toLowerCase()} - resultado ${formatCompactCurrency(net)}`}
               >
-                <span className={net < 0 ? "negative" : ""}>{formatCompactCurrency(net)}</span>
+                <span className={net < 0 ? "negative" : ""}><I18nText text={formatCompactCurrency(net)} /></span>
                 <div className="dre-yearly-bars">
                   <div className="dre-yearly-stack" style={{ height: `${total > 0 ? Math.max(4, (total / max) * 100) : 0}%` }}>
                     <i className="dre-yearly-positive" style={{ flexGrow: Math.max(item.positive, 0) || (item.negative > 0 ? 0 : 1) }} />

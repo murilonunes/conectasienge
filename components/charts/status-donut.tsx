@@ -30,7 +30,7 @@ export function StatusDonut({
         <div className="donut-legend">
           <div><i className="dot" /><span><I18nText text={completeLabel} /></span><strong>{complete}</strong></div>
           <div><i className="dot out" /><span><I18nText text={incompleteLabel} /></span><strong>{incomplete}</strong></div>
-          {description && <p>{description}</p>}
+          {description && <p><I18nText text={description} /></p>}
         </div>
       </div>
     </section>

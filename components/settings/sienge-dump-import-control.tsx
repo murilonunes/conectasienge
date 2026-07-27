@@ -178,7 +178,7 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
       <section className={`settings-job-card ${job.status === "idle" ? "" : job.status}`}>
         <div className="settings-job-head">
           <div>
-            <span>{statusLabel(job.status)}</span>
+            <span><I18nText text={statusLabel(job.status)} /></span>
             <strong>{job.sourceFileName || <I18nText text={"Importação do dump"} />}</strong>
             <small><I18nText text={job.message} /></small>
           </div>

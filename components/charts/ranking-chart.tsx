@@ -25,9 +25,9 @@ export function RankingChart({ title, note, data, valueKind = "currency", countL
       {data.length ? <div className="ranking-list">
         {data.map((item) => (
           <div className="ranking-row" key={item.label}>
-            <div><span>{item.label}</span><strong>{formatValue(item.value)}</strong></div>
+            <div><span>{item.label}</span><strong><I18nText text={formatValue(item.value)} /></strong></div>
             <div className="ranking-track"><i style={{ width: `${(item.value / max) * 100}%` }} /></div>
-            <small>{item.count} <I18nText text={noun} /><I18nText text={item.count === 1 ? "" : "s"} /></small>
+            <small><I18nText text={`${item.count} ${noun}${item.count === 1 ? "" : "s"}`} /></small>
           </div>
         ))}
       </div> : <div className="chart-empty"><I18nText text={"Sem dados para montar o ranking."} /></div>}

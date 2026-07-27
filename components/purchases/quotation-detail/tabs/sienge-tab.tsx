@@ -131,7 +131,7 @@ export function SiengeTab({
               onClick={() => setActiveTopic(topic.key)}
             >
               <span><I18nText text={topic.label} /></span>
-              <strong>{topic.title}</strong>
+              <strong><I18nText text={topic.title} /></strong>
               <small><I18nText text={topic.status} /></small>
             </button>
           ))}
@@ -142,8 +142,8 @@ export function SiengeTab({
       <div className="card panel quotation-operation-main">
         <div className="panel-head">
           <div>
-            <h2 className="panel-title">{selectedTopic.title}</h2>
-            <span className="panel-note">{selectedTopic.description}</span>
+            <h2 className="panel-title"><I18nText text={selectedTopic.title} /></h2>
+            <span className="panel-note"><I18nText text={selectedTopic.description} /></span>
           </div>
           <i className="badge"><I18nText text={selectedTopic.label} /></i>
         </div>

@@ -44,7 +44,7 @@ function ModalShell({ title, subtitle, onClose, children }: { title: string; sub
       <section className="settings-modal" role="dialog" aria-modal="true" aria-label={title}>
         <div className="settings-modal-head">
           <div>
-            <h2>{title}</h2>
+            <h2><I18nText text={title} /></h2>
             <span>{subtitle}</span>
           </div>
           <button className="payable-review-button compact" type="button" onClick={onClose}><I18nText text={"Fechar"} /></button>
@@ -145,7 +145,7 @@ function ProfileModal({
         <label>
           <span><I18nText text={"Alçada"} /></span>
           <select value={approvalLimitMode} disabled={saving} onChange={(event) => setApprovalLimitMode(event.target.value as AppUser["approvalLimitMode"])}>
-            {Object.entries(approvalModeLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+            {Object.entries(approvalModeLabels).map(([value, label]) => <option value={value} key={value}><I18nText text={label} /></option>)}
           </select>
         </label>
         <label>
@@ -223,7 +223,7 @@ function PermissionModal({
             />
             <span>
               <strong><I18nText text={permission.label} /></strong>
-              <small>{permission.description}</small>
+              <small><I18nText text={permission.description} /></small>
             </span>
           </label>
         ))}
@@ -345,7 +345,7 @@ function RolesModal({
                 />
                 <span>
                   <strong><I18nText text={permission.label} /></strong>
-                  <small>{permission.description}</small>
+                  <small><I18nText text={permission.description} /></small>
                 </span>
               </label>
             ))}

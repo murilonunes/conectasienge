@@ -54,7 +54,7 @@ export function ReconciliationAccountPicker({ accounts, missingAccounts, selecte
 
       <span><I18nText text={"Contas da conciliação"} /></span>
       <button className="settings-picker-trigger" type="button" onClick={() => setOpen(true)}>
-        <strong>{selectedLabel}</strong>
+        <strong><I18nText text={selectedLabel} /></strong>
         <small>{selectedList.length ? selectedList.join(", ") : <I18nText text={"Sem seleção: mostra todas as contas"} />}</small>
       </button>
       <em><I18nText text={"Escolha uma ou mais contas para aparecer no portal de conciliação."} /></em>
@@ -65,7 +65,7 @@ export function ReconciliationAccountPicker({ accounts, missingAccounts, selecte
             <div className="settings-modal-head">
               <div>
                 <h2 id="reconciliation-accounts-title"><I18nText text={"Selecionar contas"} /></h2>
-                <span>{selectedLabel}</span>
+                <span><I18nText text={selectedLabel} /></span>
               </div>
               <button type="button" onClick={() => setOpen(false)}><I18nText text={"Fechar"} /></button>
             </div>
