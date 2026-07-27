@@ -752,7 +752,7 @@ export function QuotationDetail({
           {quotation.notes && <p>{quotation.notes}</p>}
         </div>
         <div className="quotation-detail-hero-actions">
-          <i className="badge">{quotation.status}</i>
+          <i className="badge"><I18nText text={quotation.status} /></i>
           <button className="button secondary" type="button" onClick={() => activeResponses.length ? exportItemComparison(quotation, activeResponses) : exportComparison(quotation)}>
             <I18nText text={"Exportar mapa"} />
           </button>

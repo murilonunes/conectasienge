@@ -1,6 +1,7 @@
 "use client";
 
 import { I18nText } from "@/components/i18n/i18n-text";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import Link from "next/link";
 import { MessageSquareText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -63,14 +64,16 @@ const emptyItem: Omit<PurchaseRequestItem, "id"> = {
 };
 
 function NoteIndicator({ label, note }: { label: string; note?: string }) {
+  const { t } = useI18n();
   const text = note?.trim();
   if (!text) return null;
+  const translatedLabel = t(label);
 
   return (
     <span
       className="purchase-note-indicator"
-      aria-label={`${label}: ${text}`}
-      title={`${label}: ${text}`}
+      aria-label={`${translatedLabel}: ${text}`}
+      title={`${translatedLabel}: ${text}`}
     >
       <MessageSquareText aria-hidden="true" size={14} strokeWidth={2} />
     </span>
@@ -347,12 +350,12 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                 >
                   <span>
                     <span className="purchase-request-title-line">
-                      <strong>{request.title}</strong>
+                      <strong>{request.source === "sienge" ? <I18nText text={request.title} /> : request.title}</strong>
                       <NoteIndicator label="Observação da solicitação" note={request.notes} />
                     </span>
                     <small>{request.code} <I18nText text={"-"} /> {request.items.length} <I18nText text={"insumos"} /></small>
                   </span>
-                  <i className={`badge ${statusClass(request.status)}`}>{request.status}</i>
+                  <i className={`badge ${statusClass(request.status)}`}><I18nText text={request.status} /></i>
                 </button>
               ))}
             </div>
@@ -364,14 +367,14 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                 <div>
                   <span className="eyebrow">{selected.code}</span>
                   <div className="purchase-request-title-line">
-                    <h2>{selected.title}</h2>
+                    <h2>{selected.source === "sienge" ? <I18nText text={selected.title} /> : selected.title}</h2>
                     <NoteIndicator label="Observação da solicitação" note={selected.notes} />
                   </div>
                   <p>{selected.costCenter} <I18nText text={"- necessidade em"} /> {selected.neededAt || <I18nText text={"data não informada"} />}</p>
                 </div>
                 <div>
                   <select className="field" value={selected.status} onChange={(event) => updateSelectedStatus(event.target.value as RequestStatus)}>
-                    {statuses.map((status) => <option key={status}>{status}</option>)}
+                    {statuses.map((status) => <option key={status} value={status}><I18nText text={status} /></option>)}
                   </select>
                   {requestNumber(selected) ? (
                     <Link className="button secondary" href={`/cotacoes?solicitacao=${requestNumber(selected)}`}>

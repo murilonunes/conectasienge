@@ -39,8 +39,8 @@ export function ResumoTab({ quotation, bestSupplier, hasPortalResponses }: { quo
             </div>
           </div>
           <div className="quotation-next-actions">
-            <span><strong><I18nText text={"Status"} /></strong>{quotation.status}</span>
-            <span><strong><I18nText text={"Ação"} /></strong>{suggestedNextAction(quotation)}</span>
+            <span><strong><I18nText text={"Status"} /></strong><I18nText text={quotation.status} /></span>
+            <span><strong><I18nText text={"Ação"} /></strong><I18nText text={suggestedNextAction(quotation)} /></span>
             <span><strong><I18nText text={"Sienge"} /></strong>{quotation.integratedAt ? formatOptionalDate(quotation.integratedAt) : <I18nText text={"Pendente"} />}</span>
             <span><strong><I18nText text={"Mapa"} /></strong><I18nText text={hasPortalResponses ? "Pronto" : "Aguardando"} /></span>
           </div>

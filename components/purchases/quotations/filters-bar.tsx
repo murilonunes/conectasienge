@@ -1,4 +1,5 @@
 import { I18nText } from "@/components/i18n/i18n-text";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import type { QuotationPortalData, QuotationStatus } from "@/features/quotations/data";
 import { statusOrder } from "./helpers";
 
@@ -23,14 +24,16 @@ export function QuotationsFiltersBar({
   onSearchChange,
   onClear
 }: QuotationsFiltersBarProps) {
+  const { t } = useI18n();
+
   return (
     <form className="card quotation-toolbar" onSubmit={(event) => event.preventDefault()}>
       <div className="advanced-filter-grid quotation-filter-grid">
         <label>
           <span><I18nText text={"Status"} /></span>
           <select value={status} onChange={(event) => onStatusChange(event.target.value as QuotationStatus | "Todas")}>
-            <option><I18nText text={"Todas"} /></option>
-            {statusOrder.map((item) => <option key={item}>{item}</option>)}
+            <option value="Todas"><I18nText text={"Todas"} /></option>
+            {statusOrder.map((item) => <option key={item} value={item}><I18nText text={item} /></option>)}
           </select>
         </label>
         <label>
@@ -43,7 +46,7 @@ export function QuotationsFiltersBar({
         </label>
         <label>
           <span><I18nText text={"Origem"} /></span>
-          <input value={data.request?.code || "Todas as cotações"} readOnly />
+          <input value={data.request?.code || t("Todas as cotações")} readOnly />
         </label>
         <button className="button secondary quotation-clear-button" type="button" onClick={onClear}>
           <I18nText text={"Limpar"} />

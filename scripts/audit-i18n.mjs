@@ -261,7 +261,15 @@ const expectedTranslations = new Map([
   ["Áreas prontas", "Ready areas"],
   ["Resumo executivo dos próximos ou últimos 7 dias. Altere a visão abaixo sem sair do dashboard.", "Executive summary for the next or last 7 days. Change the view below without leaving the dashboard."],
   ["Maiores compromissos futuros", "Largest future commitments"],
-  ["Maiores saldos futuros a receber", "Largest future receivable balances"]
+  ["Maiores saldos futuros a receber", "Largest future receivable balances"],
+  ["Todas as cotações", "All quotations"],
+  ["Sem fornecedores", "No suppliers"],
+  ["Registrada", "Registered"],
+  ["Nova", "New"],
+  ["Negociação", "Negotiation"],
+  ["Cotada", "Quoted"],
+  ["Aprovada", "Approved"],
+  ["Saídas previstas superam as entradas.", "Forecast outflows exceed inflows."]
 ]);
 const expectationFailures = [...expectedTranslations]
   .map(([source, expected]) => ({

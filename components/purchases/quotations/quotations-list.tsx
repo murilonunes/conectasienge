@@ -41,7 +41,7 @@ export function QuotationsList({ items, resetKey }: QuotationsListProps) {
                 <span><strong>{quotation.supplierCount}</strong><small><I18nText text={"Forn."} /></small></span>
                 <span><strong>{quotation.responseCount}</strong><small><I18nText text={"Propostas"} /></small></span>
                 <span><strong>{formatCurrency(quotation.totalValue)}</strong><small><I18nText text={"Total"} /></small></span>
-                <span className={`badge ${statusClass(quotation.status)}`}>{quotation.status}</span>
+                <span className={`badge ${statusClass(quotation.status)}`}><I18nText text={quotation.status} /></span>
                 <Link className="payable-review-button compact" href={`/cotacoes/${quotation.id}`}><I18nText text={"Abrir"} /></Link>
               </div>
             </article>

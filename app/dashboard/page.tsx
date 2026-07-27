@@ -37,7 +37,11 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
     : `${formatCompactCurrency(overview.receivableSummary.totalOpen)} a receber - ${formatCompactCurrency(overview.payableSummary.totalAmount)} a pagar.`;
   const cashReading = isPastView
     ? (executiveBalance >= 0 ? "Resultado positivo no recorte selecionado." : "Resultado negativo no recorte selecionado.")
-    : (executiveBalance >= 0 ? "Folga prevista de caixa." : "Pressão prevista de caixa.");
+    : executiveBalance > 0
+      ? "Entradas previstas superam as saídas."
+      : executiveBalance < 0
+        ? "Saídas previstas superam as entradas."
+        : "Entradas e saídas previstas estão equilibradas.";
   const realizedReading = overview.realizedBalance >= 0
     ? "Entrou mais dinheiro do que saiu no período."
     : "Saiu mais dinheiro do que entrou no período.";

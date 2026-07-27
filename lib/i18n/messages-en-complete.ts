@@ -285,7 +285,9 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Resultado positivo no recorte selecionado.": "Positive result for the selected period.",
   "Resultado negativo no recorte selecionado.": "Negative result for the selected period.",
   "Folga prevista de caixa.": "Forecast cash surplus.",
-  "Pressão prevista de caixa.": "Forecast cash shortfall.",
+  "Entradas previstas superam as saídas.": "Forecast inflows exceed outflows.",
+  "Saídas previstas superam as entradas.": "Forecast outflows exceed inflows.",
+  "Entradas e saídas previstas estão equilibradas.": "Forecast inflows and outflows are balanced.",
   "Entrou mais dinheiro do que saiu no período.": "Cash inflows exceeded outflows during the period.",
   "Saiu mais dinheiro do que entrou no período.": "Cash outflows exceeded inflows during the period.",
   "Não recebido": "Not received",
@@ -316,5 +318,14 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Distribuição comercial das unidades em estoque": "Sales distribution of inventory units",
   "Compras por período": "Purchases by period",
   "Maiores saldos pendentes no recorte": "Largest outstanding balances in the selected period",
-  "Carteira comercial consolidada": "Consolidated sales portfolio"
+  "Carteira comercial consolidada": "Consolidated sales portfolio",
+  "Todas as cotações": "All quotations",
+  "Sem fornecedores": "No suppliers",
+  "Registrada": "Registered",
+  "Nova": "New",
+  "Negociação": "Negotiation",
+  "Cotada": "Quoted",
+  "Em negociação": "Under negotiation",
+  "Pronta para decisão": "Ready for decision",
+  "Negociação fechada": "Negotiation closed"
 };
