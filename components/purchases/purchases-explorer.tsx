@@ -167,7 +167,7 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
                     <br />
                     <span className="table-muted">{item.subtitle}</span>
                   </td>
-                  <td>{formatOptionalDate(item.date, "Sem data")}</td>
+                  <td>{formatOptionalDate(item.date)}</td>
                   <td>
                     <strong>{item.amount ? formatCurrency(item.amount) : <I18nText text={"Sem valor"} />}</strong>
                     <br />

@@ -332,5 +332,12 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Recarregando...": "Reloading...",
   "Recarregando dados salvos.": "Reloading saved data.",
   "Concluída às": "Completed at",
-  "Parcelas em dinheiro ainda não pagas - considera o contrato inteiro, não só este período": "Unpaid cash installments - includes the entire contract, not only this period"
+  "Parcelas em dinheiro ainda não pagas - considera o contrato inteiro, não só este período": "Unpaid cash installments - includes the entire contract, not only this period",
+  "Parcelas programadas": "Scheduled installments",
+  "No período consultado": "In the selected period",
+  "Vencimentos do dia": "Due today",
+  "Até domingo": "Through Sunday",
+  "Autorizada": "Authorized",
+  "Não autorizada": "Not authorized",
+  "Autorização não informada": "Authorization not provided"
 };

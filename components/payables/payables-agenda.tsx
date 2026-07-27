@@ -23,7 +23,7 @@ export function PayablesAgenda({ buckets }: { buckets: ScheduleBucket[] }) {
       {buckets.map((bucket) => (
         <section className="card payables-period" key={bucket.id}>
           <div className="payables-period-head">
-            <div><p>{bucket.note}</p><h2>{bucket.label}</h2></div>
+            <div><p><I18nText text={bucket.note} /></p><h2><I18nText text={bucket.label} /></h2></div>
             <div><strong>{formatCurrency(bucket.amount)}</strong><span>{bucket.items.length} <I18nText text={"parcela"} /><I18nText text={bucket.items.length === 1 ? "" : "s"} /></span></div>
           </div>
           <div className="payables-period-list">
@@ -33,7 +33,7 @@ export function PayablesAgenda({ buckets }: { buckets: ScheduleBucket[] }) {
                 <article key={`${item.billId}-${item.installmentId}`}>
                   <div className={`due-marker ${bucket.id === "today" ? "urgent" : ""}`}>
                     <strong>{new Date(`${item.dueDate}T12:00:00`).getDate()}</strong>
-                    <span>{new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(new Date(`${item.dueDate}T12:00:00`))}</span>
+                    <span><I18nText text={new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(new Date(`${item.dueDate}T12:00:00`))} /></span>
                   </div>
                   <div>
                     <strong>{item.creditorName || `Credor #${item.creditorId || "não informado"}`}</strong>
@@ -45,7 +45,7 @@ export function PayablesAgenda({ buckets }: { buckets: ScheduleBucket[] }) {
                   <div>
                     <strong>{formatCurrency(review.correctedAmount)}</strong>
                     <span><I18nText text={"Valor corrigido"} /></span>
-                    <span>{authorizationLabel(item.authorizationStatus)}</span>
+                    <span><I18nText text={authorizationLabel(item.authorizationStatus)} /></span>
                     <PayableChargeReviewButton item={item} title={`Título #${item.billId} / Parcela ${item.installmentId}`} compact />
                   </div>
                 </article>

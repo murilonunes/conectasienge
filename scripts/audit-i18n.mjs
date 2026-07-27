@@ -278,7 +278,20 @@ const expectedTranslations = new Map([
   ["Recarregar dados salvos", "Reload saved data"],
   ["25% do valor em caixa - considera o contrato inteiro, não só este período", "25% of the cash amount - includes the entire contract, not only this period"],
   ["3 pedidos em mês atual + 1 mês anterior", "3 orders in current month + 1 prior month"],
-  ["Recarregando dados salvos.", "Reloading saved data."]
+  ["Recarregando dados salvos.", "Reloading saved data."],
+  ["Não informada", "Not provided"],
+  ["Parcelas programadas", "Scheduled installments"],
+  ["No período consultado", "In the selected period"],
+  ["3 possíveis cobranças abusivas", "3 potentially excessive charges"],
+  ["Vencimentos do dia", "Due today"],
+  ["Hoje", "Today"],
+  ["Até domingo", "Through Sunday"],
+  ["Restante da semana", "Remainder of the week"],
+  ["Restante do mês", "Remainder of the month"],
+  ["Próximo mês", "Next month"],
+  ["Daqui a 2 meses", "In 2 months"],
+  ["julho", "July"],
+  ["agosto de 2026", "August 2026"]
 ]);
 const expectationFailures = [...expectedTranslations]
   .map(([source, expected]) => ({

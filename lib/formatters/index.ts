@@ -7,7 +7,7 @@ export const formatCompactCurrency = (value: number) =>
 export const formatDate = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value));
 
-export const formatOptionalDate = (value?: string, fallback = "Não informada") => {
+export const formatOptionalDate = (value?: string, fallback = "—") => {
   if (!value) return fallback;
   try {
     return formatDate(value);

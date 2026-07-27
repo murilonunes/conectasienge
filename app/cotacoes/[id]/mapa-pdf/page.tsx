@@ -144,7 +144,7 @@ export default async function QuotationMapPdfPage({
         <div className="map-report-block map-report-grid">
           <span><strong><I18nText text={"Comprador"} /></strong>{quotation.buyerId || <I18nText text={"Não informado"} />}</span>
           <span><strong><I18nText text={"Data da cotação"} /></strong>{formatOptionalDate(quotation.date)}</span>
-          <span><strong><I18nText text={"Prazo de resp."} /></strong>{formatOptionalDate(quotation.deadline, "Não infor.")}</span>
+          <span><strong><I18nText text={"Prazo de resp."} /></strong>{formatOptionalDate(quotation.deadline)}</span>
           <span><strong><I18nText text={"Forn. respondentes"} /></strong>{respondingSuppliers}</span>
           <span><strong><I18nText text={"Itens no mapa"} /></strong>{rows.length}</span>
           <span><strong><I18nText text={"Melhor cesta"} /></strong>{formatCurrency(bestBasketTotal)}</span>

@@ -83,7 +83,7 @@ export function ContractsExplorer({ contracts }: { contracts: SupplyContract[] }
                       <td><strong>{contractTitle(contract)}</strong><br /><span className="table-muted"><I18nText text={"Contrato #"} />{code}</span></td>
                       <td>{supplierName(contract)}</td>
                       <td>{contract.companyName || <I18nText text={"Empresa não informada"} />}<br /><span className="table-muted">{contract.buildingName || contract.projectName || <I18nText text={""} />}</span></td>
-                      <td>{formatOptionalDate(contractDate(contract), "Sem data")}</td>
+                      <td>{formatOptionalDate(contractDate(contract))}</td>
                       <td><strong>{formatCurrency(contractValue(contract))}</strong></td>
                       <td>{formatCurrency(measuredValue(contract))}</td>
                       <td>{formatCurrency(balanceValue(contract))}</td>

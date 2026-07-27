@@ -37,7 +37,7 @@ export default async function ContasPagarPage() {
         <StatCard label="Mês atual" value={formatCompactCurrency(monthAmount)} delta="Hoje, semana e restante do mês" icon="M" />
         <StatCard label={futureLabel} value={formatCompactCurrency(schedule.totalAmount - monthAmount)} delta="Planejamento futuro" icon={`${schedule.futureMonths}M`} />
         <StatCard label="Valor corrigido" value={formatCompactCurrency(correctedAmount)} delta="Parcelas programadas" icon="C" />
-        <StatCard label="Multa/juros pagos a mais" value={formatCompactCurrency(paidIncrease)} delta={`${riskCount} possível(is) abuso(s)`} warn={riskCount > 0} icon="!" />
+        <StatCard label="Multa/juros pagos a mais" value={formatCompactCurrency(paidIncrease)} delta={riskCount === 1 ? "1 possível cobrança abusiva" : `${riskCount} possíveis cobranças abusivas`} warn={riskCount > 0} icon="!" />
         <StatCard label="Parcelas autorizadas" value={`${schedule.authorizedCount}/${schedule.totalCount}`} delta="No período consultado" warn={schedule.authorizedCount < schedule.totalCount} icon="A" />
       </div>
       {schedule.error ? <ApiErrorNotice error={schedule.error} /> : <>

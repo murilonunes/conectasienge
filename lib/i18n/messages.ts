@@ -1540,6 +1540,45 @@ function translateParameterizedEnglish(value: string) {
     [/^(\d+) pedidos em (.+)$/i, (count, period) => `${count} orders in ${asSentenceFragment(translateUiText(period, "en-US"))}`],
     [/^Valor e quantidade dos pedidos em (.+)$/i, (period) => `Order amount and quantity in ${asSentenceFragment(translateUiText(period, "en-US"))}`],
     [/^Pedidos por fornecedor em (.+)$/i, (period) => `Orders by supplier in ${asSentenceFragment(translateUiText(period, "en-US"))}`],
+    [/^1 possível cobrança abusiva$/i, () => "1 potentially excessive charge"],
+    [/^(\d+) possíveis cobranças abusivas$/i, (count) => `${count} potentially excessive charges`],
+    [/^Daqui a 1 mês$/i, () => "In 1 month"],
+    [/^Daqui a (\d+) meses$/i, (months) => `In ${months} months`],
+    [/^(janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?: de (\d{4}))?$/i, (month, year) => {
+      const months: Record<string, string> = {
+        janeiro: "January",
+        fevereiro: "February",
+        março: "March",
+        abril: "April",
+        maio: "May",
+        junho: "June",
+        julho: "July",
+        agosto: "August",
+        setembro: "September",
+        outubro: "October",
+        novembro: "November",
+        dezembro: "December"
+      };
+      const translatedMonth = months[month.toLocaleLowerCase("pt-BR")] || month;
+      return year ? `${translatedMonth} ${year}` : translatedMonth;
+    }],
+    [/^(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\.?$/i, (month) => {
+      const months: Record<string, string> = {
+        jan: "Jan",
+        fev: "Feb",
+        mar: "Mar",
+        abr: "Apr",
+        mai: "May",
+        jun: "Jun",
+        jul: "Jul",
+        ago: "Aug",
+        set: "Sep",
+        out: "Oct",
+        nov: "Nov",
+        dez: "Dec"
+      };
+      return months[month.toLocaleLowerCase("pt-BR")] || month;
+    }],
     [/^1 conta selecionada$/i, () => "1 selected account"],
     [/^(\d+) contas selecionadas$/i, (count) => `${count} selected accounts`],
     [/^1 movimento lido em (.+)\.$/i, (date) => `1 transaction loaded on ${date}.`],
