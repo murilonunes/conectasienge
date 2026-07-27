@@ -1513,6 +1513,10 @@ function replacePhrase(source: string, phrase: string, translated: string) {
   return source.replace(new RegExp(escaped, "giu"), (match) => matchCase(match, translated));
 }
 
+function asSentenceFragment(value: string) {
+  return value.charAt(0).toLocaleLowerCase("en-US") + value.slice(1);
+}
+
 function translateParameterizedEnglish(value: string) {
   const patterns: Array<[RegExp, (...values: string[]) => string]> = [
     [/^(\d+) dias$/i, (days) => `${days} days`],
@@ -1521,8 +1525,26 @@ function translateParameterizedEnglish(value: string) {
       const translatedPeriod = translateParameterizedEnglish(period) || period;
       return `Executive summary for the next or last ${translatedPeriod}. Change the view below without leaving the dashboard.`;
     }],
+    [/^Entradas previstas superam as saídas\. (.+)$/i, (details) => `Forecast inflows exceed outflows. ${translateUiText(details, "en-US")}`],
+    [/^Saídas previstas superam as entradas\. (.+)$/i, (details) => `Forecast outflows exceed inflows. ${translateUiText(details, "en-US")}`],
+    [/^Entradas e saídas previstas estão equilibradas\. (.+)$/i, (details) => `Forecast inflows and outflows are balanced. ${translateUiText(details, "en-US")}`],
     [/^(.+) recebido - (.+) pago\.$/i, (received, paid) => `${translateBrazilianCurrencyText(received)} received - ${translateBrazilianCurrencyText(paid)} paid.`],
     [/^(.+) a receber - (.+) a pagar\.$/i, (receivable, payable) => `${translateBrazilianCurrencyText(receivable)} receivable - ${translateBrazilianCurrencyText(payable)} payable.`],
+    [/^Mês atual \+ 1 mês anterior$/i, () => "Current month + 1 prior month"],
+    [/^Mês atual \+ (\d+) meses anteriores$/i, (months) => `Current month + ${months} prior months`],
+    [/^Mês atual \+ todo o histórico$/i, () => "Current month + all history"],
+    [/^1 mês anterior$/i, () => "1 prior month"],
+    [/^(\d+) meses anteriores$/i, (months) => `${months} prior months`],
+    [/^Todo o histórico até o mês passado$/i, () => "All history through last month"],
+    [/^(.+), sem o mês atual$/i, (period) => `${translateUiText(period, "en-US")}, excluding the current month`],
+    [/^(\d+) pedidos em (.+)$/i, (count, period) => `${count} orders in ${asSentenceFragment(translateUiText(period, "en-US"))}`],
+    [/^Valor e quantidade dos pedidos em (.+)$/i, (period) => `Order amount and quantity in ${asSentenceFragment(translateUiText(period, "en-US"))}`],
+    [/^Pedidos por fornecedor em (.+)$/i, (period) => `Orders by supplier in ${asSentenceFragment(translateUiText(period, "en-US"))}`],
+    [/^1 conta selecionada$/i, () => "1 selected account"],
+    [/^(\d+) contas selecionadas$/i, (count) => `${count} selected accounts`],
+    [/^1 movimento lido em (.+)\.$/i, (date) => `1 transaction loaded on ${date}.`],
+    [/^(\d+) movimentos lidos em (.+)\.$/i, (count, date) => `${count} transactions loaded on ${date}.`],
+    [/^(.+)% do valor em caixa - considera o contrato inteiro, não só este período$/i, (percentage) => `${percentage}% of the cash amount - includes the entire contract, not only this period`],
     [/^(\d+) parcelas previstas ficaram pendentes$/i, (count) => `${count} forecast installments remain outstanding`],
     [/^(\d+) parcelas ainda têm saldo$/i, (count) => `${count} installments still have an outstanding balance`],
     [/^(\d+) parcelas venciam no período$/i, (count) => `${count} installments were due during the period`],

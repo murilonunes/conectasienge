@@ -327,5 +327,10 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Cotada": "Quoted",
   "Em negociação": "Under negotiation",
   "Pronta para decisão": "Ready for decision",
-  "Negociação fechada": "Negotiation closed"
+  "Negociação fechada": "Negotiation closed",
+  "Recarregar dados salvos": "Reload saved data",
+  "Recarregando...": "Reloading...",
+  "Recarregando dados salvos.": "Reloading saved data.",
+  "Concluída às": "Completed at",
+  "Parcelas em dinheiro ainda não pagas - considera o contrato inteiro, não só este período": "Unpaid cash installments - includes the entire contract, not only this period"
 };

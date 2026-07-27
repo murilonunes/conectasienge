@@ -370,7 +370,7 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
                     <h2>{selected.source === "sienge" ? <I18nText text={selected.title} /> : selected.title}</h2>
                     <NoteIndicator label="Observação da solicitação" note={selected.notes} />
                   </div>
-                  <p>{selected.costCenter} <I18nText text={"- necessidade em"} /> {selected.neededAt || <I18nText text={"data não informada"} />}</p>
+                  <p>{selected.source === "sienge" ? <I18nText text={selected.costCenter} /> : selected.costCenter} <I18nText text={"- necessidade em"} /> {selected.neededAt || <I18nText text={"data não informada"} />}</p>
                 </div>
                 <div>
                   <select className="field" value={selected.status} onChange={(event) => updateSelectedStatus(event.target.value as RequestStatus)}>

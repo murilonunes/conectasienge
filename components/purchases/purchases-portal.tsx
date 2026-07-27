@@ -59,7 +59,7 @@ export function PurchasesPortal({
               </select>
             </label>
             <button className="button secondary" type="submit"><I18nText text={"Aplicar período"} /></button>
-            <small>{overview.period.label}</small>
+            <small><I18nText text={overview.period.label} /></small>
           </form>
 
           {warning && <div className="card data-notice"><strong><I18nText text={"Atenção"} /></strong><span>{warning}</span></div>}

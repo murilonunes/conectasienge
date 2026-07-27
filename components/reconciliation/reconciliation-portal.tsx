@@ -1,6 +1,7 @@
 "use client";
 
 import { I18nText } from "@/components/i18n/i18n-text";
+import { useI18n } from "@/components/i18n/i18n-provider";
 import { useEffect, useMemo, useState } from "react";
 import { ReconciliationExplorer } from "@/components/reconciliation/reconciliation-explorer";
 import { LocalDataList } from "@/components/ui/local-data-list";
@@ -200,11 +201,13 @@ function buildAccountRanking(movements: BankMovement[]) {
 }
 
 function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?: ServerProgress; elapsed: number; hasPayload?: boolean; refreshing?: boolean }) {
+  const { locale } = useI18n();
+
   if (hasPayload) {
     return (
       <section className="card reconciliation-loaded-note" aria-live="polite">
         <strong><I18nText text={refreshing ? "Recarregando leitura" : "Leitura local pronta"} /></strong>
-        <span>{progress?.completedAt ? `Concluída às ${new Date(progress.completedAt).toLocaleTimeString("pt-BR")}` : <I18nText text={"Dados carregados do SQLite local"} />}</span>
+        <span>{progress?.completedAt ? <><I18nText text={"Concluída às"} /> {new Date(progress.completedAt).toLocaleTimeString(locale)}</> : <I18nText text={"Dados carregados do SQLite local"} />}</span>
       </section>
     );
   }
@@ -213,8 +216,8 @@ function LoadingPanel({ progress, elapsed, hasPayload, refreshing }: { progress?
     <section className="card reconciliation-loading" aria-live="polite">
       <div>
         <strong><I18nText text={"Carregando conciliação"} /></strong>
-        <span>{progress?.message || <I18nText text={"Aguardando leitura dos dados salvos."} />}</span>
-        {progress?.detail && <small>{progress.detail}</small>}
+        <span>{progress?.message ? <I18nText text={progress.message} /> : <I18nText text={"Aguardando leitura dos dados salvos."} />}</span>
+        {progress?.detail && <small><I18nText text={progress.detail} /></small>}
       </div>
       <div className="reconciliation-step-list">
         {reconciliationSteps.map((step, index) => {
@@ -288,7 +291,7 @@ function MonthlyReconciliationPanel({
       <div className="panel-head">
         <div>
           <h2 className="panel-title"><I18nText text={"Visão mensal da conciliação"} /></h2>
-          <span className="panel-note"><I18nText text={"Conta analisada:"} /> {accountLabel}<I18nText text={". Clique em um mês para ver cards e registros daquele período"} /></span>
+          <span className="panel-note"><I18nText text={"Conta analisada:"} /> <I18nText text={accountLabel} /><I18nText text={". Clique em um mês para ver cards e registros daquele período"} /></span>
         </div>
         {(years.length > 0 || months.length > 0) && (
           <div className="reconciliation-month-selectors">
@@ -417,6 +420,7 @@ export function ReconciliationPortal({
   configuredAccountNumbers?: string;
   initialPayload: ReconciliationPayload;
 }) {
+  const { locale } = useI18n();
   const [payload, setPayload] = useState<ReconciliationPayload>(initialPayload);
   const [error, setError] = useState<SiengeErrorDetails | undefined>(initialPayload.error);
   const [progress, setProgress] = useState<ServerProgress>();
@@ -524,8 +528,8 @@ export function ReconciliationPortal({
 
   const loadedMessage = useMemo(() => {
     if (!payload) return "";
-    return `${payload.totalCount} movimentos lidos em ${new Date(payload.loadedAt).toLocaleString("pt-BR")}.`;
-  }, [payload]);
+    return `${payload.totalCount} movimentos lidos em ${new Date(payload.loadedAt).toLocaleString(locale)}.`;
+  }, [locale, payload]);
 
   if (error && !payload?.movements.length) {
     return (
@@ -555,7 +559,7 @@ export function ReconciliationPortal({
       )}
       <div className="card data-notice">
         <strong><I18nText text={"Dados carregados"} /></strong>
-        <span>{loadedMessage} <I18nText text={"Conta em análise:"} /> {accountLabel}<I18nText text={". Para trocar, ajuste em Configurações."} /></span>
+        <span><I18nText text={loadedMessage} /> <I18nText text={"Conta em análise:"} /> <I18nText text={accountLabel} /><I18nText text={". Para trocar, ajuste em Configurações."} /></span>
       </div>
 
       <MonthlyReconciliationPanel

@@ -269,7 +269,16 @@ const expectedTranslations = new Map([
   ["Negociação", "Negotiation"],
   ["Cotada", "Quoted"],
   ["Aprovada", "Approved"],
-  ["Saídas previstas superam as entradas.", "Forecast outflows exceed inflows."]
+  ["Saídas previstas superam as entradas.", "Forecast outflows exceed inflows."],
+  ["Dados integrados", "Integrated data"],
+  ["Mês atual + 1 mês anterior", "Current month + 1 prior month"],
+  ["Saídas previstas superam as entradas. R$ 10,00 a receber - R$ 20,00 a pagar.", "Forecast outflows exceed inflows. R$10.00 receivable - R$20.00 payable."],
+  ["12 movimentos lidos em 27/07/2026 10:30:00.", "12 transactions loaded on 27/07/2026 10:30:00."],
+  ["3 contas selecionadas", "3 selected accounts"],
+  ["Recarregar dados salvos", "Reload saved data"],
+  ["25% do valor em caixa - considera o contrato inteiro, não só este período", "25% of the cash amount - includes the entire contract, not only this period"],
+  ["3 pedidos em mês atual + 1 mês anterior", "3 orders in current month + 1 prior month"],
+  ["Recarregando dados salvos.", "Reloading saved data."]
 ]);
 const expectationFailures = [...expectedTranslations]
   .map(([source, expected]) => ({
