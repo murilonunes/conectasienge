@@ -65,7 +65,7 @@ async function DashboardContent({ days, direction, overdueMode }: { days: number
                 href={`/dashboard?dias=${option.days}&periodo=${overview.dashboardDirection}${overdueQuery}`}
                 className={option.days === overview.dashboardDays ? "active" : ""}
               >
-                {option.label}
+                <I18nText text={option.label} />
               </Link>
             ))}
           </div>

@@ -1,6 +1,6 @@
 # Revisão das telas
 
-Atualizado em: 2026-07-07
+Atualizado em: 2026-07-27
 
 Este arquivo é o quadro de acompanhamento da revisão das telas do projeto. A ideia é revisar por etapas, corrigir uma frente por vez e manter este arquivo atualizado a cada ciclo.
 
@@ -27,7 +27,7 @@ Cada tela deve ser conferida pelos mesmos pontos:
 
 | Status | Prioridade | Rota | Evidência no código | O que precisa arrumar |
 | --- | --- | --- | --- | --- |
-| Revisado | Alta | Todas as telas | `app/layout.tsx`, `components/i18n/*`, `lib/i18n/*`, `components/ui/app-shell-client.tsx`, `scripts/mark-ui-text-for-i18n.mjs` | Adicionado i18n em Português e Inglês com Português como padrão, seletor persistente por cookie no cabeçalho e nas telas públicas, idioma do documento/metadados e marcação dos textos estáticos em páginas, formulários, tabelas, modais e relatórios. A tradução é limitada à interface; dados do Sienge e cadastros permanecem no idioma original. |
+| Revisado | Alta | Todas as telas | `app/layout.tsx`, `components/i18n/*`, `lib/i18n/*`, `components/ui/app-shell-client.tsx`, `scripts/mark-ui-text-for-i18n.mjs`, `scripts/audit-i18n.mjs` | Adicionado i18n em Português e Inglês com Português como padrão, seletor persistente por cookie no cabeçalho e nas telas públicas, idioma do documento/metadados e marcação dos textos estáticos em páginas, formulários, tabelas, modais e relatórios. O catálogo inglês cobre também textos longos, mensagens operacionais, etapas, permissões e estados dinâmicos da interface; a auditoria automática bloqueia português residual e JSX sem marcação. Dados do Sienge e cadastros permanecem no idioma original. |
 | Revisado | Média | `/` | `app/page.tsx` | Tela inicial confirmada como abertura rápida: não carrega dados pesados e mantém atalhos para os portais principais. |
 | Revisado | Média | `/dashboard` | `app/dashboard/page.tsx`, `features/dashboard/data.ts` | Revisado: a tela segue local, usa consultas resumidas por período e separa corretamente visão passada, futura, previsto, realizado e pendente. |
 | Revisado | Média | `/financeiro` | `app/financeiro/page.tsx` | Central financeira revisada: removido atalho direto para `Novo lançamento`; a central fica como ponto de acesso a consultas, baixas e conciliação. |

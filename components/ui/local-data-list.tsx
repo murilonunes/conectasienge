@@ -93,7 +93,7 @@ export function LocalDataList<T>({
       <div className={`local-list-controls ${position}`}>
         <div>
           <strong>{items.length}</strong>
-          <span>{itemLabel}</span>
+          <span><I18nText text={itemLabel} /></span>
           <small><I18nText text={"Exibindo"} /> {start + 1}<I18nText text={"-"} />{end}</small>
         </div>
         <label>
@@ -121,7 +121,7 @@ export function LocalDataList<T>({
   }
 
   if (!items.length) {
-    return <div className="empty-state">{emptyMessage}</div>;
+    return <div className="empty-state"><I18nText text={emptyMessage} /></div>;
   }
 
   return (

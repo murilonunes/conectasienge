@@ -94,7 +94,7 @@ export function InstallmentSettlement() {
         </form>
         <p><I18nText text={"A consulta mostra vencimento, valores original/corrigido, situação atual da parcela e dia da integração."} /></p>
       </section>
-      {message && <div className="card data-notice"><strong><I18nText text={"Consulta de parcelas"} /></strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Consulta de parcelas"} /></strong><span><I18nText text={message} /></span></div>}
       {bill && <section className="card bill-overview">
         <div className="bill-overview-head"><div><p className="eyebrow"><I18nText text={"Título #"} />{bill.id || billId}</p><h2>{bill.documentIdentificationId}<I18nText text={"-"} />{bill.documentNumber}</h2><span>{bill.notes || <I18nText text={"Sem observações cadastradas"} />}</span></div><div><strong>{formatCurrency(bill.totalInvoiceAmount || 0)}</strong><span><I18nText text={"Valor bruto do título"} /></span></div></div>
         <div className="bill-overview-grid">

@@ -601,8 +601,8 @@ export function SupplierQuoteResponseForm({ token, quotationCode, items, initial
         )}
 
         <div className="card supplier-step-nav" ref={stepNavRef}>
-          {stepMessage && <div className="settings-inline-message">{stepMessage}</div>}
-          {message && <div className="settings-inline-message">{message}</div>}
+          {stepMessage && <div className="settings-inline-message"><I18nText text={stepMessage} /></div>}
+          {message && <div className="settings-inline-message"><I18nText text={message} /></div>}
           <div className={`supplier-step-actions ${step === 1 ? "single" : ""}`}>
             {step > 1 && (
               <button className="button secondary supplier-step-secondary" type="button" onClick={goBack}>{backActionLabels[step]}</button>

@@ -85,7 +85,7 @@ export default async function SalesPage({ searchParams }: SalesPageProps) {
                 href={`/sales?dias=${option.days}`}
                 className={option.days === range.days ? "active" : ""}
               >
-                {option.label}
+                <I18nText text={option.label} />
               </Link>
             ))}
           </div>

@@ -194,7 +194,7 @@ export function SiengeSupplierPicker({ value, onChange, label = "Fornecedor Sien
             </div>
           )}
 
-          {message && <div className="settings-inline-message">{message}</div>}
+          {message && <div className="settings-inline-message"><I18nText text={message} /></div>}
         </section>
       )}
     </div>

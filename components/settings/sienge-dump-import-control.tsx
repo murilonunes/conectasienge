@@ -173,14 +173,14 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
         {selectedFileName && <small><I18nText text={"Selecionado:"} /> {selectedFileName}</small>}
       </form>
 
-      {message && <div className="settings-inline-message">{message}</div>}
+      {message && <div className="settings-inline-message"><I18nText text={message} /></div>}
 
       <section className={`settings-job-card ${job.status === "idle" ? "" : job.status}`}>
         <div className="settings-job-head">
           <div>
             <span>{statusLabel(job.status)}</span>
             <strong>{job.sourceFileName || <I18nText text={"Importação do dump"} />}</strong>
-            <small>{job.message}</small>
+            <small><I18nText text={job.message} /></small>
           </div>
           <div>
             <strong>{completedSteps}<I18nText text={"/"} />{job.steps.length}</strong>
@@ -191,8 +191,8 @@ export function SiengeDumpImportControl({ initialStatus }: { initialStatus: Dump
           {job.steps.map((step) => (
             <div key={step.key} className={step.status}>
               <b>{stepStatusLabel(step.status)}</b>
-              <span>{step.label}</span>
-              <small>{step.message}</small>
+              <span><I18nText text={step.label} /></span>
+              {step.message && <small><I18nText text={step.message} /></small>}
             </div>
           ))}
         </div>

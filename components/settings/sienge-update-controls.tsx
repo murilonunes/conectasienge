@@ -137,9 +137,9 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
         <section className={`settings-job-card ${latestJob.status}`}>
           <div className="settings-job-head">
             <div>
-              <span>{jobStatusLabel(latestJob.status)}</span>
-              <strong>{latestJob.areaLabel}</strong>
-              <small>{latestJob.message}</small>
+              <span><I18nText text={jobStatusLabel(latestJob.status)} /></span>
+              <strong><I18nText text={latestJob.areaLabel} /></strong>
+              <small><I18nText text={latestJob.message} /></small>
             </div>
             <div>
               <strong>{completedSteps}<I18nText text={"/"} />{latestJob.steps.length}</strong>
@@ -149,16 +149,16 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
           <div className="settings-job-steps">
             {latestJob.steps.map((step) => (
               <div key={step.key} className={step.status}>
-                <b>{stepStatusLabel(step.status)}</b>
-                <span>{step.label}</span>
-                <small>{step.message}</small>
+                <b><I18nText text={stepStatusLabel(step.status)} /></b>
+                <span><I18nText text={step.label} /></span>
+                {step.message && <small><I18nText text={step.message} /></small>}
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {message && <div className="settings-inline-message">{message}</div>}
+      {message && <div className="settings-inline-message"><I18nText text={message} /></div>}
 
       <div className="settings-area-grid">
         {areas.map((area) => {
@@ -167,9 +167,9 @@ export function SiengeUpdateControls({ areas, statuses, showForce = true }: Sien
           return (
             <article key={area.key} className={`settings-area-card ${current.status}`}>
               <div className="settings-area-main">
-                <span>{statusLabel(current.status)}</span>
-                <strong>{area.label}</strong>
-                <p>{area.note}</p>
+                <span><I18nText text={statusLabel(current.status)} /></span>
+                <strong><I18nText text={area.label} /></strong>
+                <p><I18nText text={area.note} /></p>
                 <small><I18nText text={"Última integração:"} /> {formatDate(current.lastUpdatedAt)}</small>
                 <em>{current.successCount} <I18nText text={"atualizações -"} /> {current.errorCount} <I18nText text={"avisos"} /></em>
               </div>

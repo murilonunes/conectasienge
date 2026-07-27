@@ -305,8 +305,8 @@ export function AdvancedReceivablesSearch() {
         </div>
       </form>
 
-      {cacheStatus && <div className="advanced-cache-status">{cacheStatus}</div>}
-      {message && <div className="card data-notice"><strong><I18nText text={"Busca avançada"} /></strong><span>{message}</span></div>}
+      {cacheStatus && <div className="advanced-cache-status"><I18nText text={cacheStatus} /></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Busca avançada"} /></strong><span><I18nText text={message} /></span></div>}
       {results.length > 0 && <>
         <div className="stats advanced-stats">
           <article className="card stat"><div className="stat-top"><span><I18nText text={"Parcelas encontradas"} /></span></div><div className="stat-value">{filtered.length}</div><span className="panel-note"><I18nText text={"Após filtro na tela"} /></span></article>

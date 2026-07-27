@@ -28,8 +28,8 @@ export function StatusDonut({
           <div><strong>{percentage.toFixed(0)}<I18nText text={"%"} /></strong><span><I18nText text={centerLabel} /></span></div>
         </div>
         <div className="donut-legend">
-          <div><i className="dot" /><span>{completeLabel}</span><strong>{complete}</strong></div>
-          <div><i className="dot out" /><span>{incompleteLabel}</span><strong>{incomplete}</strong></div>
+          <div><i className="dot" /><span><I18nText text={completeLabel} /></span><strong>{complete}</strong></div>
+          <div><i className="dot out" /><span><I18nText text={incompleteLabel} /></span><strong>{incomplete}</strong></div>
           {description && <p>{description}</p>}
         </div>
       </div>

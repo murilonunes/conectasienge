@@ -772,7 +772,7 @@ export function QuotationDetail({
             <div>
               {group.items.map((item) => (
                 <button className={tab === item.key ? "active" : ""} key={item.key} type="button" onClick={() => setTab(item.key)}>
-                  {item.label}
+                  <I18nText text={item.label} />
                   {tabCounts[item.key] !== undefined && <strong>{tabCounts[item.key]}</strong>}
                 </button>
               ))}

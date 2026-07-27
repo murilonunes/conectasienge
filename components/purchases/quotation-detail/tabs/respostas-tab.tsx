@@ -64,7 +64,7 @@ export function RespostasTab({
           </div>
         )}
 
-        {message && <div className="settings-inline-message">{message}</div>}
+        {message && <div className="settings-inline-message"><I18nText text={message} /></div>}
 
         {supplierResponses.length ? (
           <div className="quotation-response-list">

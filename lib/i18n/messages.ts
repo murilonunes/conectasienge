@@ -1,6 +1,8 @@
 import type { AppLocale } from "@/lib/i18n/config";
+import { completeEnglishUiMessages } from "@/lib/i18n/messages-en-complete";
 
 const exactEnglish: Record<string, string> = {
+  ...completeEnglishUiMessages,
   "Acesso não liberado": "Access not granted",
   "Seu usuário não tem permissão para esta tela": "Your user does not have permission to access this screen",
   "Peça para um administrador liberar esta tela no cadastro de usuários.": "Ask an administrator to grant access to this screen in user management.",
@@ -526,6 +528,9 @@ const exactEnglish: Record<string, string> = {
 };
 
 const phraseEnglish: Array<[string, string]> = [
+  ["itens em carteira comercial para análise de venda, reserva, preço e propriedade.", "items in the sales portfolio for sale, reservation, price, and ownership analysis."],
+  ["Novo link gerado, mas o anterior continua ativo:", "New link generated, but the previous one remains active:"],
+  ["Valor e quantidade de vendas,", "Sales value and volume,"],
   ["solicitações de compra", "purchase requests"],
   ["solicitação de compra", "purchase request"],
   ["contas a receber", "accounts receivable"],

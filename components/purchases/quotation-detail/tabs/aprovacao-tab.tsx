@@ -244,7 +244,7 @@ export function AprovacaoTab({
           </label>
         )}
 
-        {approvalMessage && <div className="settings-inline-message">{approvalMessage}</div>}
+        {approvalMessage && <div className="settings-inline-message"><I18nText text={approvalMessage} /></div>}
         <div className="quotation-operation-actions quotation-approval-actions">
           <button className="button" type="button" disabled={approvalSaving || !supplierResponses.length} onClick={onSaveAward}>
             <I18nText text={approvalSaving ? "Salvando..." : "Salvar aprovação"} />

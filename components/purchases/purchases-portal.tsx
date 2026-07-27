@@ -122,10 +122,10 @@ export function PurchasesPortal({
               {funnel.map((stage, index) => {
                 const body = (
                   <>
-                    <span>{stage.label}</span>
+                    <span><I18nText text={stage.label} /></span>
                     <strong>{stage.count}</strong>
                     {stage.amount !== undefined && <em>{formatCompactCurrency(stage.amount)}</em>}
-                    <small>{stage.note}</small>
+                    <small><I18nText text={stage.note} /></small>
                   </>
                 );
                 return (

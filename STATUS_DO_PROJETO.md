@@ -1,12 +1,13 @@
 # Status do projeto Brasin
 
-Atualizado em: 24/07/2026
+Atualizado em: 27/07/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
 - Foi adicionada internacionalização das telas em Português (`pt-BR`, padrão) e Inglês (`en-US`). O seletor de idioma aparece no cabeçalho interno e nas experiências públicas, persiste a escolha no cookie `brasin_locale` e atualiza também o idioma do documento e os metadados.
+- O catálogo em inglês foi completado para textos longos e mensagens operacionais dinâmicas. A auditoria `scripts/audit-i18n.mjs` verifica textos marcados, mensagens de estado e conteúdo JSX direto para impedir português residual na interface em inglês.
 - Somente textos de interface entram no i18n: menus, títulos, botões, filtros, opções, ajuda, validações, tooltips e estados vazios. Dados vindos do Sienge ou cadastrados no sistema, como fornecedores, obras, insumos, documentos e observações, não são enviados ao tradutor nem alterados.
 - O sistema passou a exigir senha para acesso: todas as telas e rotas internas ficam atrás de login, com exceção explícita do portal público do fornecedor.
 - Foi criado o fluxo completo de cotações de compra: tela de solicitações (`/solicitacoes-compra`), portal de cotações (`/cotacoes`), detalhe da cotação (`/cotacoes/[id]`) e portal público do fornecedor (`/portal-cotacao/[token]`).
@@ -41,6 +42,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O núcleo fica em `lib/i18n`, com locale tipado, catálogo local e fallback controlado para textos estáticos de interface.
 - `I18nProvider` mantém o idioma ativo, os formatadores regionais e a persistência; `I18nText` marca conteúdo de interface sem envolver os dados renderizados por expressões.
 - `scripts/mark-ui-text-for-i18n.mjs` é o codemod idempotente usado para marcar novos textos estáticos e atributos de interface (`placeholder`, `title`, `aria-label` e `alt`).
+- `scripts/audit-i18n.mjs` valida o catálogo inglês e falha quando encontra termos portugueses residuais ou texto JSX de interface que não passa pelo i18n.
 - O idioma pode ser trocado sem mudar as URLs existentes. Português continua sendo o padrão quando não há preferência salva.
 
 - O acesso ao sistema é protegido por senha única definida em `APP_ACCESS_PASSWORD` (mínimo de 12 caracteres) no `.env`; `APP_AUTH_SECRET` pode definir um segredo de assinatura separado.

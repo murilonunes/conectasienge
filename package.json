@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "audit:i18n": "node scripts/audit-i18n.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.24.0",

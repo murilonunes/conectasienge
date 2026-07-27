@@ -201,7 +201,7 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
                 href={`/relatorios?dias=${option.days}&periodo=${direction}`}
                 className={option.days === days ? "active" : ""}
               >
-                {option.label}
+                <I18nText text={option.label} />
               </Link>
             ))}
           </div>
@@ -266,11 +266,11 @@ export default async function RelatoriosPage({ searchParams }: RelatoriosPagePro
             <div className="report-card-metrics">
               <div>
                 <strong>{report.primaryMetric}</strong>
-                <span>{report.primaryLabel}</span>
+                <span><I18nText text={report.primaryLabel} /></span>
               </div>
               <div>
                 <strong>{report.secondaryMetric}</strong>
-                <span>{report.secondaryLabel}</span>
+                <span><I18nText text={report.secondaryLabel} /></span>
               </div>
             </div>
             <div className="report-card-actions">

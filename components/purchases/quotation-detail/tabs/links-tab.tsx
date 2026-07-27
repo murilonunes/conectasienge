@@ -41,7 +41,7 @@ export function LinksTab({
           </button>
         </div>
 
-        {linkMessage && <div className="settings-inline-message">{linkMessage}</div>}
+        {linkMessage && <div className="settings-inline-message"><I18nText text={linkMessage} /></div>}
 
         {invitations.length ? (
           <div className="quotation-link-list">

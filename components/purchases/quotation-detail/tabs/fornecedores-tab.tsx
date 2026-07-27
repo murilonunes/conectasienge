@@ -63,7 +63,7 @@ export function FornecedoresTab({
             <I18nText text={loadingAction === "supplier-link" ? "Gerando..." : "Gerar link"} />
           </button>
           {!canGenerateLink && <small className="table-muted"><I18nText text={"Informe ou busque o ID do fornecedor para liberar o link."} /></small>}
-          {linkMessage && !generatedLink && <div className="settings-inline-message">{linkMessage}</div>}
+          {linkMessage && !generatedLink && <div className="settings-inline-message"><I18nText text={linkMessage} /></div>}
         </article>
 
         {quotation.suppliers.map((supplier) => (
@@ -105,7 +105,7 @@ export function FornecedoresTab({
               <button type="button" onClick={onDismissGeneratedLink}><I18nText text={"Fechar"} /></button>
             </div>
 
-            {linkMessage && <div className="settings-inline-message">{linkMessage}</div>}
+            {linkMessage && <div className="settings-inline-message"><I18nText text={linkMessage} /></div>}
 
             <div className="quotation-copy-link quotation-link-modal-copy">
               <input readOnly value={generatedLink.url} onFocus={(event) => event.currentTarget.select()} />

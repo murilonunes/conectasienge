@@ -222,7 +222,7 @@ function PermissionModal({
               onChange={() => togglePermission(permission.permission)}
             />
             <span>
-              <strong>{permission.label}</strong>
+              <strong><I18nText text={permission.label} /></strong>
               <small>{permission.description}</small>
             </span>
           </label>
@@ -344,7 +344,7 @@ function RolesModal({
                   onChange={() => togglePermission(permission.permission)}
                 />
                 <span>
-                  <strong>{permission.label}</strong>
+                  <strong><I18nText text={permission.label} /></strong>
                   <small>{permission.description}</small>
                 </span>
               </label>
@@ -440,7 +440,7 @@ export function UsersManager({ initialUsers, roles, currentUserId }: { initialUs
         </div>
       </div>
 
-      {message && <div className="settings-inline-message">{message}</div>}
+      {message && <div className="settings-inline-message"><I18nText text={message} /></div>}
 
       <div className="users-list">
         {users.map((user) => (

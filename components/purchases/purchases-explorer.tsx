@@ -114,7 +114,7 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
         </div>
       </div>
 
-      {message && <div className="card data-notice"><strong><I18nText text={"Registros"} /></strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Registros"} /></strong><span><I18nText text={message} /></span></div>}
 
       <div className="local-data-list">
         <div className="local-list-controls top">

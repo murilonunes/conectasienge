@@ -130,9 +130,9 @@ export function SiengeTab({
               type="button"
               onClick={() => setActiveTopic(topic.key)}
             >
-              <span>{topic.label}</span>
+              <span><I18nText text={topic.label} /></span>
               <strong>{topic.title}</strong>
-              <small>{topic.status}</small>
+              <small><I18nText text={topic.status} /></small>
             </button>
           ))}
         </div>
@@ -145,7 +145,7 @@ export function SiengeTab({
             <h2 className="panel-title">{selectedTopic.title}</h2>
             <span className="panel-note">{selectedTopic.description}</span>
           </div>
-          <i className="badge">{selectedTopic.label}</i>
+          <i className="badge"><I18nText text={selectedTopic.label} /></i>
         </div>
 
         {selectedTopicIntegration && (

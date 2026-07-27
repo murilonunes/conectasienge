@@ -85,7 +85,7 @@ export function SupplierQuoteSubmittedView({
             </button>
           )}
         </div>
-        {requestMessage && <div className="settings-inline-message">{requestMessage}</div>}
+        {requestMessage && <div className="settings-inline-message"><I18nText text={requestMessage} /></div>}
         {newLinkUrl && (
           <div className="quotation-copy-link supplier-new-link">
             <input readOnly value={newLinkUrl} onFocus={(event) => event.currentTarget.select()} />

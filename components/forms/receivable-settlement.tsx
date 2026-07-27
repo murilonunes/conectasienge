@@ -126,7 +126,7 @@ export function ReceivableSettlement() {
         </form>
         <p><I18nText text={"A consulta mostra vencimento, saldo a receber, recebimentos já registrados e dia da integração."} /></p>
       </section>
-      {message && <div className="card data-notice"><strong><I18nText text={"Consulta de parcelas"} /></strong><span>{message}</span></div>}
+      {message && <div className="card data-notice"><strong><I18nText text={"Consulta de parcelas"} /></strong><span><I18nText text={message} /></span></div>}
       {bill && <section className="card bill-overview">
         <div className="bill-overview-head">
           <div>

@@ -107,7 +107,7 @@ export function BillEntryForm() {
           <div><dt><I18nText text={"Parcelas"} /></dt><dd>{data.installmentsNumber}</dd></div>
         </dl>
         {reviewing && <div className="operation-warning"><strong><I18nText text={"Ação real"} /></strong><span><I18nText text={"Ao confirmar, um título será criado no Sienge."} /></span></div>}
-        {result && <div className={`form-result ${result.type}`}>{result.message}</div>}
+        {result && <div className={`form-result ${result.type}`}><I18nText text={result.message} /></div>}
         <button className="button operation-submit" disabled={submitting}>{submitting ? <I18nText text={"Enviando..."} /> : reviewing ? <I18nText text={"Confirmar lançamento"} /> : <I18nText text={"Revisar lançamento"} />}</button>
         {reviewing && <button type="button" className="button secondary operation-submit" onClick={() => setReviewing(false)}><I18nText text={"Voltar e editar"} /></button>}
       </aside>
