@@ -61,6 +61,21 @@ const portugueseWords = new Set([
   "pagar", "restante",
   "vencida", "vencidas", "vencido", "vencidos", "venda", "vendas", "visão", "vínculo", "vínculos"
 ]);
+const unchangedAllowed = new Set([
+  "access", "api", "app", "area", "areas", "automatic", "backlog", "billid", "brasin", "cards",
+  "cnpj", "compare", "complete", "configure", "continue", "cpf", "create", "create-supplier", "creditors",
+  "csv", "dashboard", "data", "dmpc", "dre", "dump", "e-mail", "email", "endpoint", "endpoints",
+  "en-us", "env", "etc", "excel", "final", "finance", "financial", "fiscal", "force", "global",
+  "horizontal", "http", "https", "id", "installmentid", "integrated", "item", "items", "jan", "jpg",
+  "jul", "jun", "link", "link-supplier-registration", "links", "local", "login", "long", "management",
+  "manual", "mar", "menu", "modal", "murilo", "no", "numeric", "original", "password", "payload",
+  "pdf", "png", "poc", "portal", "portals", "purchase-quotations", "ranking", "real", "sienge",
+  "site", "sqlite", "status", "total", "unit", "url", "use", "vgv", "volume", "volumes", "with", "zero"
+]);
+const portugueseConnectors = new Set([
+  "ao", "aos", "com", "da", "das", "de", "do", "dos", "em", "na", "nas", "no", "nos", "ou",
+  "para", "pela", "pelas", "pelo", "pelos", "por", "que", "sem", "sob", "uma", "um"
+]);
 
 function loadTranslator() {
   const completeSource = fs.readFileSync(path.join("lib", "i18n", "messages-en-complete.ts"), "utf8");
@@ -204,6 +219,27 @@ function remainingPortuguese(value) {
   return words.filter((word) => portugueseWords.has(word));
 }
 
+function normalizedWords(value) {
+  return (value.match(/\p{L}+(?:-\p{L}+)*/gu) || [])
+    .map((word) => word.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/\p{M}/gu, ""));
+}
+
+function unchangedPortuguese(source, translated) {
+  if (
+    source.startsWith("/")
+    || source.includes("@")
+    || /^(?:attach-items|send-negotiation|quotation|pt-BR)$/i.test(source)
+    || /^Brasin Empreendimentos\b/.test(source)
+  ) {
+    return [];
+  }
+  const translatedWords = new Set(normalizedWords(translated));
+  return [...new Set(normalizedWords(source))]
+    .filter((word) => translatedWords.has(word))
+    .filter((word) => !unchangedAllowed.has(word))
+    .filter((word) => word.length >= 3 || portugueseConnectors.has(word));
+}
+
 const translateUiText = loadTranslator();
 const audit = collectMessages();
 const expectedTranslations = new Map([
@@ -221,7 +257,11 @@ const expectedTranslations = new Map([
   ["Solicitação", "Request"],
   ["Planejamento", "Planning"],
   ["A pagar restante", "Remaining payables"],
-  ["Todas as áreas", "All areas"]
+  ["Todas as áreas", "All areas"],
+  ["Áreas prontas", "Ready areas"],
+  ["Resumo executivo dos próximos ou últimos 7 dias. Altere a visão abaixo sem sair do dashboard.", "Executive summary for the next or last 7 days. Change the view below without leaving the dashboard."],
+  ["Maiores compromissos futuros", "Largest future commitments"],
+  ["Maiores saldos futuros a receber", "Largest future receivable balances"]
 ]);
 const expectationFailures = [...expectedTranslations]
   .map(([source, expected]) => ({
@@ -235,8 +275,13 @@ const failures = audit.messages
   .map((entry) => ({ ...entry, residual: remainingPortuguese(entry.translated) }))
   .filter((entry) => entry.residual.length > 0)
   .sort((left, right) => left.source.localeCompare(right.source, "pt-BR"));
+const unchangedFailures = audit.messages
+  .map((source) => ({ source, translated: translateUiText(source, "en-US") }))
+  .map((entry) => ({ ...entry, unchanged: unchangedPortuguese(entry.source, entry.translated) }))
+  .filter((entry) => entry.unchanged.length > 0)
+  .sort((left, right) => left.source.localeCompare(right.source, "pt-BR"));
 
-if (failures.length || audit.unmarkedMessages.length || expectationFailures.length) {
+if (failures.length || unchangedFailures.length || audit.unmarkedMessages.length || expectationFailures.length) {
   if (expectationFailures.length) {
     console.error(`${expectationFailures.length} representative translations do not match:`);
     for (const failure of expectationFailures) {
@@ -250,6 +295,15 @@ if (failures.length || audit.unmarkedMessages.length || expectationFailures.leng
   console.error(`${failures.length} UI messages still contain Portuguese terms:`);
   for (const failure of failures) {
     console.error(`- ${failure.source}\n  -> ${failure.translated}\n  residual: ${[...new Set(failure.residual)].join(", ")}`);
+  }
+  if (unchangedFailures.length) {
+    console.error(`${unchangedFailures.length} UI messages retain words from the Portuguese source:`);
+    const unchangedTerms = [...new Set(unchangedFailures.flatMap((failure) => failure.unchanged))]
+      .sort((left, right) => left.localeCompare(right, "pt-BR"));
+    console.error(`Untranslated terms (${unchangedTerms.length}): ${unchangedTerms.join(", ")}`);
+    for (const failure of unchangedFailures) {
+      console.error(`- ${failure.source}\n  -> ${failure.translated}\n  unchanged: ${failure.unchanged.join(", ")}`);
+    }
   }
   process.exitCode = 1;
 } else {

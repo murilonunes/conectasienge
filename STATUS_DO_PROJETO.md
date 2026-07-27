@@ -43,7 +43,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O núcleo fica em `lib/i18n`, com locale tipado, catálogo local e fallback controlado para textos estáticos de interface.
 - `I18nProvider` mantém o idioma ativo, os formatadores regionais e a persistência; `I18nText` marca conteúdo de interface sem envolver os dados renderizados por expressões.
 - `scripts/mark-ui-text-for-i18n.mjs` é o codemod idempotente usado para marcar novos textos estáticos e atributos de interface (`placeholder`, `title`, `aria-label` e `alt`).
-- `scripts/audit-i18n.mjs` valida o catálogo inglês em arquivos `.ts` e `.tsx`, incluindo propriedades internas de interface, mensagens parametrizadas representativas, termos portugueses residuais e texto JSX que não passa pelo i18n.
+- `scripts/audit-i18n.mjs` valida o catálogo inglês em arquivos `.ts` e `.tsx`, incluindo propriedades internas de interface, mensagens parametrizadas representativas, termos portugueses residuais, palavras do texto-fonte que permaneceram sem tradução e texto JSX que não passa pelo i18n. Rotas, identificadores técnicos, marcas e termos realmente compartilhados entre os idiomas são preservados por uma lista explícita.
 - O idioma pode ser trocado sem mudar as URLs existentes. Português continua sendo o padrão quando não há preferência salva.
 
 - O acesso ao sistema é protegido por senha única definida em `APP_ACCESS_PASSWORD` (mínimo de 12 caracteres) no `.env`; `APP_AUTH_SECRET` pode definir um segredo de assinatura separado.
