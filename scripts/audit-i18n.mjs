@@ -34,7 +34,7 @@ const portugueseWords = new Set([
   "aba", "abaixo", "aberta", "abertas", "aberto", "abertos", "abertura", "acima", "acompanhar",
   "aguarde", "ainda", "ajuste", "algum", "alguma", "algumas", "alguns", "antes", "apenas", "aparece",
   "aparecem", "aplicado", "apropriação", "apropriações", "aqui", "área", "áreas", "assim", "atualização",
-  "atualizações", "atualize", "avaliação", "aviso", "avisos", "banco", "base", "baixa", "baixas",
+  "atualizações", "atualizar", "atualize", "avaliação", "aviso", "avisos", "banco", "base", "baixa", "baixas",
   "busca", "cadastrado", "cadastrada", "cadastrados", "cadastro", "cálculo", "carteira", "cenário",
   "cliente", "clientes",
   "cobrança", "cobranças", "código", "competência", "completar", "conciliação", "conferência", "configuração",
@@ -49,13 +49,16 @@ const portugueseWords = new Set([
   "medição", "medições", "melhor", "mensal", "mestre", "módulo", "módulos", "movimento", "movimentos",
   "nenhum", "nenhuma", "novo", "nova", "obra", "obras", "oportunidade", "pagamento", "pagamentos", "parcela",
   "parcelas", "parcial", "passado", "passados", "passada", "passadas", "pendente", "pendências", "período",
+  "planejamento",
   "possível", "possíveis", "prazo", "preço", "previsão", "previsões",
   "preços", "preenchimento", "primeiro", "própria", "próprio", "próximo", "próximos", "próxima",
   "próximas", "recebimento", "recebimentos", "recebíveis", "receita", "recomendação", "reconhecido",
   "reconhecida", "registro", "registros", "relatório", "relatórios",
   "resposta", "respostas", "resultado", "revisão", "salva", "salvas", "salvo", "salvos", "saldo", "senha",
-  "situação", "solicitação", "solicitações", "somente", "tela", "telas", "título", "títulos", "última",
+  "situação", "solicitação", "solicitações", "somente", "suprimentos", "tela", "telas", "título", "títulos",
+  "todas", "última",
   "último", "unidade", "unidades", "usuário", "usuários", "validar", "valor", "valores", "vencimento",
+  "pagar", "restante",
   "vencida", "vencidas", "vencido", "vencidos", "venda", "vendas", "visão", "vínculo", "vínculos"
 ]);
 
@@ -212,7 +215,13 @@ const expectedTranslations = new Map([
   ["7 dias futuros", "Next 7 days"],
   ["R$ 593,5 mil", "R$593.5K"],
   ["passado", "past"],
-  ["Recebíveis por cliente", "Receivables by customer"]
+  ["Recebíveis por cliente", "Receivables by customer"],
+  ["Atualizar dados", "Update data"],
+  ["Suprimentos", "Procurement"],
+  ["Solicitação", "Request"],
+  ["Planejamento", "Planning"],
+  ["A pagar restante", "Remaining payables"],
+  ["Todas as áreas", "All areas"]
 ]);
 const expectationFailures = [...expectedTranslations]
   .map(([source, expected]) => ({

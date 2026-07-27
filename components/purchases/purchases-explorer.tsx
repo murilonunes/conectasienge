@@ -158,7 +158,7 @@ export function PurchasesExplorer({ totalRecords }: { totalRecords: number }) {
               {payload.items.map((item) => (
                 <tr key={item.id}>
                   <td>
-                    <strong>{item.kindLabel}</strong>
+                    <strong><I18nText text={item.kindLabel} /></strong>
                     <br />
                     <span className="table-muted"><I18nText text={"#"} />{item.code}</span>
                   </td>
