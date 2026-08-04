@@ -6,6 +6,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Atualização mais recente
 
+- A aba Insumos de `/cotacoes/[id]` ganhou o botão `PDF para fornecedor`, que abre uma solicitação de proposta em A4 horizontal com os itens da cotação, quantidades, especificações, observações e campos em branco para preços, prazos e condições comerciais. O documento não expõe propostas recebidas nem comparações internas e pode ser impresso ou salvo em PDF para envio manual.
 - Foi criada a tela `/rastreabilidade-insumos`, no menu Compras, para pesquisar insumos por código, descrição, sinônimo ou código auxiliar e reunir as solicitações, pedidos e notas fiscais em que cada insumo apareceu. A consulta usa as tabelas detalhadas do dump local, mostra vínculos SC → pedido e pedido → nota, quantidades, valores, fornecedor, obra e a data da importação usada como fonte.
 - Foi adicionada internacionalização das telas em Português (`pt-BR`, padrão) e Inglês (`en-US`). O seletor de idioma aparece no cabeçalho interno e nas experiências públicas, persiste a escolha no cookie `brasin_locale` e atualiza também o idioma do documento e os metadados.
 - O catálogo em inglês foi completado para textos longos e mensagens operacionais dinâmicas. A auditoria `scripts/audit-i18n.mjs` verifica textos marcados, mensagens de estado e conteúdo JSX direto para impedir português residual na interface em inglês.
@@ -90,6 +91,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - A tela `/cotacoes` lista as cotações do espelho local com filtros por status, comprador, pesquisa e origem, cards de resumo (abertas, em decisão, total), abas rápidas por status e exportação CSV.
 - A implementação da tela `/cotacoes` fica separada em `components/purchases/quotations`: `filters-bar.tsx`, `request-bridge.tsx`, `summary-stats.tsx`, `status-tabs.tsx`, `quotations-list.tsx` e `helpers.ts`.
 - O detalhe `/cotacoes/[id]` organiza a operação em abas: Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico.
+- Na aba Insumos, `PDF para fornecedor` abre `/cotacoes/[id]/solicitacao-fornecedor`, uma versão protegida por sessão e sem o menu do sistema, própria para impressão ou salvamento em PDF. Ela contém somente a solicitação e campos comerciais em branco, sem preços, propostas recebidas ou decisões internas.
 - As abas do detalhe ficam separadas em arquivos próprios em `components/purchases/quotation-detail/tabs`, enquanto `index.tsx` coordena estado, chamadas e navegação entre abas.
 - A aba de fornecedores permite escolher um credor do Sienge (busca local com criação quando necessário) e gerar o link público de resposta em um modal na própria tela do fornecedor.
 - Quando o link do portal é gerado para um fornecedor pré-definido, o portal público abre com nome, CPF/CNPJ, e-mail e telefone disponíveis já preenchidos; os campos vindos do convite ficam somente leitura e a API rejeita alteração manual desses dados.

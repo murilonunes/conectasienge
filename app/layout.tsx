@@ -19,9 +19,13 @@ export function generateMetadata(): Metadata {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const path = headers().get("x-current-path") || "";
   const locale = resolveLocale(cookies().get(localeCookieName)?.value);
-  // O relatório de decisão e o mapa em PDF continuam protegidos por sessão, mas
-  // renderizam sem o shell (menu/topbar) para sair limpos na impressão em PDF.
-  const publicExperience = path.startsWith("/portal-cotacao") || path.startsWith("/login") || path.endsWith("/relatorio-decisao") || path.endsWith("/mapa-pdf");
+  // Os relatórios continuam protegidos por sessão, mas renderizam sem o shell
+  // (menu/topbar) para saírem limpos na impressão em PDF.
+  const publicExperience = path.startsWith("/portal-cotacao")
+    || path.startsWith("/login")
+    || path.endsWith("/relatorio-decisao")
+    || path.endsWith("/mapa-pdf")
+    || path.endsWith("/solicitacao-fornecedor");
 
   return (
     <html lang={localeLanguage(locale)}>
