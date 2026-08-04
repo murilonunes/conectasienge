@@ -64,6 +64,7 @@ const defaultRoles: Array<{ name: string; approvalLimit: number | null; permissi
     permissions: [
       "screen.dashboard",
       "screen.compras",
+      "screen.rastreabilidade-insumos",
       "screen.solicitacoes",
       "screen.cotacoes",
       "screen.relatorios",

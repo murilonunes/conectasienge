@@ -1,11 +1,12 @@
 # Status do projeto Brasin
 
-Atualizado em: 27/07/2026
+Atualizado em: 04/08/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
+- Foi criada a tela `/rastreabilidade-insumos`, no menu Compras, para pesquisar insumos por código, descrição, sinônimo ou código auxiliar e reunir as solicitações, pedidos e notas fiscais em que cada insumo apareceu. A consulta usa as tabelas detalhadas do dump local, mostra vínculos SC → pedido e pedido → nota, quantidades, valores, fornecedor, obra e a data da importação usada como fonte.
 - Foi adicionada internacionalização das telas em Português (`pt-BR`, padrão) e Inglês (`en-US`). O seletor de idioma aparece no cabeçalho interno e nas experiências públicas, persiste a escolha no cookie `brasin_locale` e atualiza também o idioma do documento e os metadados.
 - O catálogo em inglês foi completado para textos longos e mensagens operacionais dinâmicas. A auditoria `scripts/audit-i18n.mjs` verifica textos marcados, mensagens de estado e conteúdo JSX direto para impedir português residual na interface em inglês.
 - O i18n passou a tratar frases parametrizadas com números, plurais, períodos e valores monetários compactos (`mil`, `mi`, `bi`). Cards, rankings, gráficos, relatórios e estados carregados por objetos internos agora traduzem a frase composta sem alterar nomes, situações ou dados vindos do Sienge.
@@ -74,6 +75,15 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - As observações trazidas pelo detalhe da solicitação e por cada insumo são indicadas por um ícone discreto com tooltip na lista e no detalhamento. Os dois campos permanecem separados da especificação do item e também seguem nas exportações CSV.
 - É possível cadastrar solicitações manuais com centro de custo e data de necessidade; solicitações criadas na tela ficam guardadas no navegador.
 - A lista de insumos pode ser exportada para orientar a cotação.
+
+## Rastreabilidade de insumos
+
+- A rota `/rastreabilidade-insumos` possui permissão própria (`screen.rastreabilidade-insumos`) e fica no submenu Compras.
+- A busca é tolerante a acentos e encontra por código do insumo, descrição, sinônimo ou código auxiliar; até 30 correspondências ficam disponíveis para alternância sem poluir a área operacional.
+- Quando o mesmo código existe em mais de uma tabela de insumos, cada resultado informa sua tabela e quantidade de registros, priorizando automaticamente o cadastro que possui movimentações de compra.
+- O histórico é montado pelo código e tabela do insumo nas tabelas `eadcitemsol`, `eadcitempedido` e `eadcitemnotafiscal` do `sienge-dump.sqlite`, com os cabeçalhos de solicitação, pedido e nota fiscal.
+- Quando existem relações explícitas, a tela mostra os pedidos que atenderam a solicitação e as notas fiscais vinculadas ao pedido. Não é feita associação apenas por semelhança de texto.
+- Como a API pública usada pelo espelho de Compras não traz os itens de todas as notas e pedidos na listagem, a tela informa o arquivo e a data do dump usado. Para incluir movimentações mais novas, é necessário importar um dump atualizado em Configurações.
 
 ## Cotações e portal do fornecedor
 

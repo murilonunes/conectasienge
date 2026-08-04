@@ -2,6 +2,7 @@ export const screenPermissionDefinitions = [
   { permission: "screen.dashboard", label: "Dashboard", description: "Indicadores e tela inicial", paths: ["/", "/dashboard"] },
   { permission: "screen.financeiro", label: "Central financeira", description: "Resumo operacional financeiro", paths: ["/financeiro"] },
   { permission: "screen.compras", label: "Portal de compras", description: "Pedidos e visão geral de compras", paths: ["/compras"] },
+  { permission: "screen.rastreabilidade-insumos", label: "Rastreabilidade de insumos", description: "Histórico de solicitações, pedidos e notas por insumo", paths: ["/rastreabilidade-insumos"] },
   { permission: "screen.solicitacoes", label: "Solicitações", description: "Solicitações de compra", paths: ["/solicitacoes-compra"] },
   { permission: "screen.cotacoes", label: "Cotações", description: "Lista, detalhe e aprovação de cotações", paths: ["/cotacoes"] },
   { permission: "screen.contas-pagar", label: "Contas a pagar", description: "Consulta de títulos a pagar", paths: ["/contas-pagar"] },

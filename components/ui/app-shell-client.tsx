@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Map,
   Receipt,
+  Search,
   Scale,
   Settings,
   Shield,
@@ -70,6 +71,7 @@ const navigationSections: NavigationSection[] = [
     icon: ShoppingCart,
     items: [
       { label: "Portal de compras", href: "/compras", icon: ShoppingBag, permission: "screen.compras" },
+      { label: "Rastreabilidade de insumos", href: "/rastreabilidade-insumos", icon: Search, permission: "screen.rastreabilidade-insumos" },
       { label: "Solicitacoes", href: "/solicitacoes-compra", icon: ClipboardList, permission: "screen.solicitacoes" },
       { label: "Cotacoes", href: "/cotacoes", icon: Scale, permission: "screen.cotacoes" }
     ]
