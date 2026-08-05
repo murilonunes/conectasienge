@@ -218,11 +218,7 @@ export async function loadQuotationPortalData(selectedRequestId?: number): Promi
   const quotations = purchases.quotations.map((quotation) => quotationSummary(
     quotation,
     requestOrigins.get(quotation.purchaseQuotationId) || []
-  )).sort((left, right) => {
-    const leftDate = left.date ? new Date(left.date).getTime() : 0;
-    const rightDate = right.date ? new Date(right.date).getTime() : 0;
-    return rightDate - leftDate;
-  });
+  )).sort((left, right) => right.id - left.id);
 
   return {
     quotations,
