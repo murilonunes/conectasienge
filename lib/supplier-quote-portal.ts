@@ -231,6 +231,7 @@ function safeCompare(left: string, right: string) {
 function database() {
   mkdirSync(dataDir, { recursive: true });
   const db = new DatabaseSync(databasePath);
+  db.exec("PRAGMA busy_timeout = 8000;");
   db.exec(`
     CREATE TABLE IF NOT EXISTS supplier_quote_responses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -297,6 +298,14 @@ function database() {
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_supplier_quote_events_quotation ON supplier_quote_events(quotation_id);
+
+    CREATE TABLE IF NOT EXISTS supplier_quote_request_origins (
+      quotation_id INTEGER NOT NULL,
+      purchase_request_id INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (quotation_id, purchase_request_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_supplier_quote_request_origins_request ON supplier_quote_request_origins(purchase_request_id);
   `);
   try {
     db.exec("ALTER TABLE supplier_quote_invitations ADD COLUMN revoked_at TEXT");
@@ -356,6 +365,92 @@ export function recordSupplierQuoteEvent(input: SupplierQuoteEventInput) {
   const db = database();
   try {
     return insertSupplierQuoteEvent(db, input);
+  } finally {
+    db.close();
+  }
+}
+
+function requestIdsFromIntegrationKey(value: unknown) {
+  const integrationKey = String(value || "");
+  const requestIds = new Set<number>();
+  const createMatch = integrationKey.match(/^create-from-request:(\d+):/);
+  if (createMatch) requestIds.add(Number(createMatch[1]));
+
+  const attachMatch = integrationKey.match(/^attach-items:\d+:(.+)$/);
+  if (attachMatch) {
+    attachMatch[1].split("|").forEach((itemKey) => {
+      const requestId = Number(itemKey.split(".")[0]);
+      if (Number.isInteger(requestId) && requestId > 0) requestIds.add(requestId);
+    });
+  }
+  return Array.from(requestIds).filter((requestId) => Number.isInteger(requestId) && requestId > 0);
+}
+
+export function saveSupplierQuoteRequestOrigins(quotationId: number, requestIds: number[]) {
+  if (!Number.isInteger(quotationId) || quotationId <= 0) return;
+  const normalizedRequestIds = Array.from(new Set(requestIds.filter((requestId) => Number.isInteger(requestId) && requestId > 0)));
+  if (!normalizedRequestIds.length) return;
+
+  const db = database();
+  try {
+    const insert = db.prepare(`
+      INSERT OR IGNORE INTO supplier_quote_request_origins (quotation_id, purchase_request_id, created_at)
+      VALUES (?, ?, ?)
+    `);
+    const createdAt = new Date().toISOString();
+    normalizedRequestIds.forEach((requestId) => insert.run(quotationId, requestId, createdAt));
+  } finally {
+    db.close();
+  }
+}
+
+export function loadSupplierQuoteRequestOrigins() {
+  if (!supplierQuoteDatabaseExists()) return new Map<number, number[]>();
+
+  const db = database();
+  try {
+    const origins = new Map<number, Set<number>>();
+    const addOrigin = (quotationIdValue: unknown, requestIdValue: unknown) => {
+      const quotationId = Number(quotationIdValue);
+      const requestId = Number(requestIdValue);
+      if (!Number.isInteger(quotationId) || quotationId <= 0 || !Number.isInteger(requestId) || requestId <= 0) return;
+      const requestIds = origins.get(quotationId) || new Set<number>();
+      requestIds.add(requestId);
+      origins.set(quotationId, requestIds);
+    };
+
+    const savedRows = db.prepare(`
+      SELECT quotation_id AS quotationId, purchase_request_id AS requestId
+      FROM supplier_quote_request_origins
+    `).all() as Array<{ quotationId: unknown; requestId: unknown }>;
+    savedRows.forEach((row) => addOrigin(row.quotationId, row.requestId));
+
+    // Migra também as relações das cotações criadas antes da tabela dedicada.
+    const eventRows = db.prepare(`
+      SELECT quotation_id AS quotationId, metadata_json AS metadataJson
+      FROM supplier_quote_events
+      WHERE type = 'sienge_created' AND metadata_json IS NOT NULL
+    `).all() as Array<{ quotationId: unknown; metadataJson: string }>;
+    const insert = db.prepare(`
+      INSERT OR IGNORE INTO supplier_quote_request_origins (quotation_id, purchase_request_id, created_at)
+      VALUES (?, ?, ?)
+    `);
+    const migratedAt = new Date().toISOString();
+    eventRows.forEach((row) => {
+      try {
+        const metadata = JSON.parse(row.metadataJson) as { integrationKey?: unknown };
+        requestIdsFromIntegrationKey(metadata.integrationKey).forEach((requestId) => {
+          addOrigin(row.quotationId, requestId);
+          insert.run(Number(row.quotationId), requestId, migratedAt);
+        });
+      } catch {
+        // Um evento antigo malformado não deve impedir a listagem das cotações.
+      }
+    });
+
+    return new Map(
+      Array.from(origins, ([quotationId, requestIds]) => [quotationId, Array.from(requestIds).sort((left, right) => left - right)])
+    );
   } finally {
     db.close();
   }

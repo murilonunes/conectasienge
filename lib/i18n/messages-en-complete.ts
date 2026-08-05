@@ -401,5 +401,7 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Valor total da proposta": "Total proposal amount",
   "Observações gerais": "General notes",
   "Esta solicitação não representa um pedido de compra. O fornecimento depende da emissão de pedido formal pela Brasin Empreendimentos.": "This request is not a purchase order. Supply is subject to an official purchase order issued by Brasin.",
-  "Responsável pela proposta": "Person responsible for the proposal"
+  "Responsável pela proposta": "Person responsible for the proposal",
+  "Solicitação não identificada": "Request not identified",
+  "Cotação, solicitação, fornecedor ou insumo": "Quotation, request, supplier, or item"
 };

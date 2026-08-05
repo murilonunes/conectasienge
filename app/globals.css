@@ -1526,6 +1526,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .quotation-result-main { grid-template-columns: minmax(125px, .95fr) minmax(145px, 1fr) 72px 72px 78px 122px 142px 64px; gap: 12px; min-height: 68px; padding: 13px 15px; cursor: default; }
 .quotation-result-main:hover { background: #fbfcfb; }
 .quotation-code-cell strong { color: var(--green); font-family: var(--font-display); font-size: 16px; font-weight: 700; letter-spacing: 0; }
+.quotation-code-cell .quotation-request-origin { color: #80591f; font-weight: 800; }
 .quotation-result-main .badge { justify-self: start; font-style: normal; white-space: nowrap; }
 .quotation-result-main .payable-review-button { text-align: center; text-decoration: none; white-space: nowrap; }
 .quotation-result-main strong { font-size: 11px; font-weight: 750; letter-spacing: 0; }

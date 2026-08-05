@@ -42,7 +42,7 @@ export function QuotationsFiltersBar({
         </label>
         <label className="quotation-search-field">
           <span><I18nText text={"Pesquisar"} /></span>
-          <input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="Cotação, fornecedor, insumo ou observação" data-i18n-placeholder={"Cotação, fornecedor, insumo ou observação"} />
+          <input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="Cotação, solicitação, fornecedor ou insumo" data-i18n-placeholder={"Cotação, solicitação, fornecedor ou insumo"} />
         </label>
         <label>
           <span><I18nText text={"Origem"} /></span>

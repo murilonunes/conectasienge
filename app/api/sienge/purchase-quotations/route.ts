@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { refreshQuotationsMirror } from "@/features/purchases/data";
 import { guardPermission } from "@/lib/app-users";
-import { findSupplierQuoteIntegration, findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent } from "@/lib/supplier-quote-portal";
+import { findSupplierQuoteIntegration, findSupplierQuoteIntegrationByKey, recordSupplierQuoteEvent, saveSupplierQuoteRequestOrigins } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 
@@ -520,6 +520,13 @@ function integrationKeyFor(action: QuotationAction, body: QuotationCreateRequest
   return undefined;
 }
 
+function localPurchaseRequestIds(body: QuotationCreateRequest) {
+  return Array.from(new Set([
+    Number(body.request?.purchaseRequestId) || 0,
+    ...(body.request?.items || []).map((item) => Number(item.purchaseRequestId) || 0)
+  ].filter((requestId) => requestId > 0)));
+}
+
 function duplicateIntegrationResponse(quotationId: number | undefined, integrationKey: string | undefined, force: boolean | undefined) {
   if (!integrationKey || force === true) return undefined;
   const existing = quotationId
@@ -707,6 +714,9 @@ export async function POST(request: NextRequest) {
     }
 
     const failed = results.find((result) => !result.ok);
+    if (eventQuotationId && results.some((itemResult) => itemResult.ok)) {
+      saveSupplierQuoteRequestOrigins(eventQuotationId, localPurchaseRequestIds(body));
+    }
     if (failed) {
       recordIntegrationEvent("integration_error", "Erro ao vincular item no Sienge", "Um ou mais itens não foram aceitos pelo Sienge.", { preflight, results });
     } else {
@@ -1040,6 +1050,9 @@ export async function POST(request: NextRequest) {
   const failedItem = itemResults.find((itemResult) => !itemResult.ok);
 
   const createdEventQuotationId = purchaseQuotationId || eventQuotationId;
+  if (createdEventQuotationId) {
+    saveSupplierQuoteRequestOrigins(createdEventQuotationId, localPurchaseRequestIds(body));
+  }
   if (createdEventQuotationId) {
     recordSupplierQuoteEvent({
       quotationId: createdEventQuotationId,

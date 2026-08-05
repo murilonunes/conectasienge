@@ -6,6 +6,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Atualização mais recente
 
+- A lista de `/cotacoes` agora mostra o número da solicitação local que originou cada cotação (`SC-N`). A relação é gravada em `supplier_quote_request_origins` no momento em que a tela cria a cotação ou vincula itens; cotações locais recentes foram migradas do histórico local de integração. O número também participa da pesquisa e da exportação CSV, sem consulta ao dump ou ao Sienge na abertura da tela.
 - A aba Insumos de `/cotacoes/[id]` ganhou o botão `PDF para fornecedor`, que abre uma solicitação de proposta em A4 horizontal com os itens da cotação, quantidades, especificações, observações e campos em branco para preços, prazos e condições comerciais. O documento não expõe propostas recebidas nem comparações internas e pode ser impresso ou salvo em PDF para envio manual.
 - Foi criada a tela `/rastreabilidade-insumos`, no menu Compras, para pesquisar insumos por código, descrição, sinônimo ou código auxiliar e reunir as solicitações, pedidos e notas fiscais em que cada insumo apareceu. A consulta usa as tabelas detalhadas do dump local, mostra vínculos SC → pedido e pedido → nota, quantidades, valores, fornecedor, obra e a data da importação usada como fonte.
 - Foi adicionada internacionalização das telas em Português (`pt-BR`, padrão) e Inglês (`en-US`). O seletor de idioma aparece no cabeçalho interno e nas experiências públicas, persiste a escolha no cookie `brasin_locale` e atualiza também o idioma do documento e os metadados.
@@ -89,6 +90,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 ## Cotações e portal do fornecedor
 
 - A tela `/cotacoes` lista as cotações do espelho local com filtros por status, comprador, pesquisa e origem, cards de resumo (abertas, em decisão, total), abas rápidas por status e exportação CSV.
+- Cada linha mostra a solicitação local de origem como `SC-N`. O vínculo fica persistido localmente ao criar a cotação ou anexar seus itens; quando uma cotação antiga não possui esse registro, a interface informa `Solicitação não identificada` em vez de fazer associação aproximada por insumo.
 - A implementação da tela `/cotacoes` fica separada em `components/purchases/quotations`: `filters-bar.tsx`, `request-bridge.tsx`, `summary-stats.tsx`, `status-tabs.tsx`, `quotations-list.tsx` e `helpers.ts`.
 - O detalhe `/cotacoes/[id]` organiza a operação em abas: Resumo, Sienge, Insumos, Fornecedores, Links, Respostas, Mapa, Aprovar, Cadastros e Histórico.
 - Na aba Insumos, `PDF para fornecedor` abre `/cotacoes/[id]/solicitacao-fornecedor`, uma versão protegida por sessão e sem o menu do sistema, própria para impressão ou salvamento em PDF. Ela contém somente a solicitação e campos comerciais em branco, sem preços, propostas recebidas ou decisões internas.

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { QuotationSummary } from "@/features/quotations/data";
 import { LocalDataList } from "@/components/ui/local-data-list";
 import { formatCurrency, formatOptionalDate } from "@/lib/formatters";
-import { quotationCsvColumns, statusClass } from "./helpers";
+import { quotationCsvColumns, quotationRequestLabel, statusClass } from "./helpers";
 
 type QuotationsListProps = {
   items: QuotationSummary[];
@@ -31,6 +31,14 @@ export function QuotationsList({ items, resetKey }: QuotationsListProps) {
               <div className="advanced-result-main quotation-result-main">
                 <span className="quotation-code-cell">
                   <strong><I18nText text={"#"} />{quotation.code}</strong>
+                  <small
+                    className="quotation-request-origin"
+                    title={quotation.purchaseRequestIds.length ? quotationRequestLabel(quotation.purchaseRequestIds) : undefined}
+                  >
+                    {quotation.purchaseRequestIds.length ? (
+                      <><I18nText text={quotation.purchaseRequestIds.length > 1 ? "Solicitações" : "Solicitação"} /> {quotationRequestLabel(quotation.purchaseRequestIds)}</>
+                    ) : <I18nText text="Solicitação não identificada" />}
+                  </small>
                   <small>{quotation.selectedSupplier || <I18nText text={"Aberta"} />}</small>
                 </span>
                 <span>

@@ -6,6 +6,7 @@ import type {
   PurchaseQuotationSupplier,
   PurchaseRequestItem
 } from "@/features/purchases/types";
+import { loadSupplierQuoteRequestOrigins } from "@/lib/supplier-quote-portal";
 
 export type QuotationStatus =
   | "Registrada"
@@ -49,6 +50,7 @@ export type QuotationSummary = {
   selectedSupplier?: string;
   totalValue: number;
   integratedAt?: string;
+  purchaseRequestIds: number[];
   items: QuotationItemSummary[];
   suppliers: QuotationSupplierSummary[];
   raw: PurchaseQuotation;
@@ -126,7 +128,7 @@ function quotationStatus(quotation: PurchaseQuotation, suppliers: QuotationSuppl
   return "Registrada";
 }
 
-export function quotationSummary(quotation: PurchaseQuotation): QuotationSummary {
+export function quotationSummary(quotation: PurchaseQuotation, purchaseRequestIds: number[] = []): QuotationSummary {
   const items = (quotation.purchaseQuotationItems || []).map(itemSummary);
   const suppliers = (quotation.purchaseQuotationSuppliers || []).map(supplierSummary);
   const selectedSupplier = suppliers.find((supplier) => supplier.selected);
@@ -153,6 +155,7 @@ export function quotationSummary(quotation: PurchaseQuotation): QuotationSummary
       }]
     }), 0),
     integratedAt: quotation.__siengeIntegratedAt,
+    purchaseRequestIds,
     items,
     suppliers,
     raw: quotation
@@ -210,8 +213,12 @@ export async function loadQuotationPortalData(selectedRequestId?: number): Promi
   }
 
   const requestGroups = groupRequestItems(purchases.requestItems);
+  const requestOrigins = loadSupplierQuoteRequestOrigins();
   const requestItems = selectedRequestId ? requestGroups.get(selectedRequestId) || [] : [];
-  const quotations = purchases.quotations.map(quotationSummary).sort((left, right) => {
+  const quotations = purchases.quotations.map((quotation) => quotationSummary(
+    quotation,
+    requestOrigins.get(quotation.purchaseQuotationId) || []
+  )).sort((left, right) => {
     const leftDate = left.date ? new Date(left.date).getTime() : 0;
     const rightDate = right.date ? new Date(right.date).getTime() : 0;
     return rightDate - leftDate;

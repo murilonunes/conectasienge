@@ -41,6 +41,7 @@ export function QuotationsPortal({ data }: { data: QuotationPortalData }) {
           quotation.buyerId,
           quotation.status,
           quotation.selectedSupplier,
+          ...quotation.purchaseRequestIds.map((requestId) => `SC-${requestId} ${requestId}`),
           ...quotation.suppliers.map((supplier) => supplier.supplierName),
           ...quotation.items.map((item) => `${item.name} ${item.detail}`)
         ].filter(Boolean).join(" ").toLowerCase().includes(normalizedSearch)

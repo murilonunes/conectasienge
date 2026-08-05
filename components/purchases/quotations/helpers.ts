@@ -34,8 +34,13 @@ export function requestPayload(request: PurchaseRequestForQuotation) {
   };
 }
 
+export function quotationRequestLabel(requestIds: number[]) {
+  return requestIds.length ? requestIds.map((requestId) => `SC-${requestId}`).join(", ") : "Não identificada";
+}
+
 export const quotationCsvColumns = [
   { header: "Cotação", value: (item: unknown) => (item as QuotationSummary).code },
+  { header: "Solicitação de origem", value: (item: unknown) => quotationRequestLabel((item as QuotationSummary).purchaseRequestIds) },
   { header: "Status", value: (item: unknown) => (item as QuotationSummary).status },
   { header: "Comprador", value: (item: unknown) => (item as QuotationSummary).buyerId },
   { header: "Data", value: (item: unknown) => (item as QuotationSummary).date },
