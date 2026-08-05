@@ -1,4 +1,4 @@
-import { FileDown } from "lucide-react";
+import { FileDown, List } from "lucide-react";
 import Link from "next/link";
 import { I18nText } from "@/components/i18n/i18n-text";
 import type { QuotationSummary } from "@/features/quotations/data";
@@ -29,15 +29,26 @@ export function InsumosTab({
             <h2 className="panel-title"><I18nText text={"Insumos da cotação"} /></h2>
             <span className="panel-note"><I18nText text={"Itens solicitados nesta cotação"} /></span>
           </div>
-          <Link
-            className="button secondary"
-            href={`/cotacoes/${quotation.id}/solicitacao-fornecedor`}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            <FileDown aria-hidden="true" size={15} />
-            <I18nText text="PDF para fornecedor" />
-          </Link>
+          <div className="quotation-item-pdf-actions">
+            <Link
+              className="button secondary"
+              href={`/cotacoes/${quotation.id}/solicitacao-fornecedor`}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <FileDown aria-hidden="true" size={15} />
+              <I18nText text="PDF para fornecedor" />
+            </Link>
+            <Link
+              className="button secondary"
+              href={`/cotacoes/${quotation.id}/solicitacao-fornecedor-resumida`}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <List aria-hidden="true" size={15} />
+              <I18nText text="PDF resumido" />
+            </Link>
+          </div>
         </div>
         <table>
           <thead>

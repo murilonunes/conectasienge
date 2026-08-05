@@ -25,7 +25,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     || path.startsWith("/login")
     || path.endsWith("/relatorio-decisao")
     || path.endsWith("/mapa-pdf")
-    || path.endsWith("/solicitacao-fornecedor");
+    || path.endsWith("/solicitacao-fornecedor")
+    || path.endsWith("/solicitacao-fornecedor-resumida");
 
   return (
     <html lang={localeLanguage(locale)}>
