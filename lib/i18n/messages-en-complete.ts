@@ -395,6 +395,8 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Nº": "No.",
   "Não identificada": "Not identified",
   "Observação:": "Note:",
+  "Observação do comprador": "Buyer note",
+  "Sua observação (opcional)": "Your note (optional)",
   "Solicitação de proposta comercial": "Request for commercial proposal",
   "- gerada em": "- generated on",
   "Itens solicitados": "Requested items",

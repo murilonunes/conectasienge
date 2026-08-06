@@ -93,7 +93,10 @@ export function ReviewStep({
               const original = items.find((current) => current.itemNumber === item.itemNumber);
               return (
                 <div className="supplier-review-items-row" key={item.itemNumber}>
-                  <span>{original?.name || `Item ${item.itemNumber}`}</span>
+                  <span className="supplier-review-item-description">
+                    {original?.name || `Item ${item.itemNumber}`}
+                    {original?.notes && <small><I18nText text="Observação do comprador" />: {original.notes}</small>}
+                  </span>
                   <span>{formatCurrency(Number(item.unitPrice || 0))}</span>
                   <span>{item.quantity} {original?.unit || <I18nText text={""} />}</span>
                   <span>{item.deadlineDays ? `${item.deadlineDays}d` : <I18nText text={"-"} />}</span>
