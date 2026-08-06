@@ -92,7 +92,7 @@ export default async function SupplierQuotationRequestPage({ params }: { params:
                   </td>
                   <td><strong>{item.quantity}</strong></td>
                   <td>{item.unit}</td>
-                  <td>{item.notes || <I18nText text="-" />}</td>
+                  <td>{item.notes ? <span className="supplier-request-item-note">{item.notes}</span> : <I18nText text="-" />}</td>
                   <td><span className="supplier-request-fill" /></td>
                   <td><span className="supplier-request-fill" /></td>
                   <td><span className="supplier-request-fill" /></td>

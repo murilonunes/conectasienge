@@ -120,6 +120,42 @@ function itemSummary(item: PurchaseQuotationItem, index: number): QuotationItemS
   };
 }
 
+function normalizedItemText(value?: string) {
+  return (value || "").trim().toLocaleLowerCase("pt-BR").replace(/\s+/g, " ");
+}
+
+function requestItemMatchScore(item: QuotationItemSummary, requestItem: PurchaseRequestItem) {
+  const sameProduct = Boolean(item.productId && requestItem.productId && item.productId === requestItem.productId);
+  const sameName = normalizedItemText(item.name) === normalizedItemText(requestItem.productDescription);
+  if (!sameProduct && !sameName) return -1;
+
+  let score = sameProduct ? 100 : 50;
+  if (normalizedItemText(item.detail) === normalizedItemText(requestItem.detailDescription)) score += 20;
+  if (item.quantity === (requestItem.quantity || 0)) score += 5;
+  if (normalizedItemText(item.unit) === normalizedItemText(requestItem.unitySymbol)) score += 3;
+  return score;
+}
+
+function mergeRequestItemNotes(items: QuotationItemSummary[], requestItems: PurchaseRequestItem[]) {
+  const available = requestItems.map((item, index) => ({ item, index }));
+  const used = new Set<number>();
+
+  return items.map((item) => {
+    const match = available
+      .filter((candidate) => !used.has(candidate.index))
+      .map((candidate) => ({ ...candidate, score: requestItemMatchScore(item, candidate.item) }))
+      .filter((candidate) => candidate.score >= 0)
+      .sort((left, right) => right.score - left.score)[0];
+
+    if (!match) return item;
+    used.add(match.index);
+    return {
+      ...item,
+      notes: item.notes.trim() || match.item.notes?.trim() || ""
+    };
+  });
+}
+
 function quotationStatus(quotation: PurchaseQuotation, suppliers: QuotationSupplierSummary[]): QuotationStatus {
   if (!suppliers.length) return "Sem fornecedores";
   if (suppliers.some((supplier) => supplier.selected)) return "Negociação fechada";
@@ -128,8 +164,12 @@ function quotationStatus(quotation: PurchaseQuotation, suppliers: QuotationSuppl
   return "Registrada";
 }
 
-export function quotationSummary(quotation: PurchaseQuotation, purchaseRequestIds: number[] = []): QuotationSummary {
-  const items = (quotation.purchaseQuotationItems || []).map(itemSummary);
+export function quotationSummary(
+  quotation: PurchaseQuotation,
+  purchaseRequestIds: number[] = [],
+  requestItems: PurchaseRequestItem[] = []
+): QuotationSummary {
+  const items = mergeRequestItemNotes((quotation.purchaseQuotationItems || []).map(itemSummary), requestItems);
   const suppliers = (quotation.purchaseQuotationSuppliers || []).map(supplierSummary);
   const selectedSupplier = suppliers.find((supplier) => supplier.selected);
   const status = quotationStatus(quotation, suppliers);
@@ -215,10 +255,11 @@ export async function loadQuotationPortalData(selectedRequestId?: number): Promi
   const requestGroups = groupRequestItems(purchases.requestItems);
   const requestOrigins = loadSupplierQuoteRequestOrigins();
   const requestItems = selectedRequestId ? requestGroups.get(selectedRequestId) || [] : [];
-  const quotations = purchases.quotations.map((quotation) => quotationSummary(
-    quotation,
-    requestOrigins.get(quotation.purchaseQuotationId) || []
-  )).sort((left, right) => right.id - left.id);
+  const quotations = purchases.quotations.map((quotation) => {
+    const purchaseRequestIds = requestOrigins.get(quotation.purchaseQuotationId) || [];
+    const sourceItems = purchaseRequestIds.flatMap((requestId) => requestGroups.get(requestId) || []);
+    return quotationSummary(quotation, purchaseRequestIds, sourceItems);
+  }).sort((left, right) => right.id - left.id);
 
   return {
     quotations,

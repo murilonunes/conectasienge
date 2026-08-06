@@ -71,7 +71,7 @@ export default async function CompactSupplierRequestPage({ params }: { params: {
                   <td>
                     <strong><span>#{item.productId || item.itemNumber}</span> {item.name}</strong>
                     {item.detail && <small>{item.detail}</small>}
-                    {item.notes && <small><I18nText text="Observação:" /> {item.notes}</small>}
+                    {item.notes && <small className="supplier-request-item-note"><strong><I18nText text="Observação:" /></strong> {item.notes}</small>}
                   </td>
                   <td><strong>{item.quantity}</strong> <small>{item.unit}</small></td>
                 </tr>
