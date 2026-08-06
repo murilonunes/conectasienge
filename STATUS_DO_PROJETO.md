@@ -73,7 +73,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Solicitações de compra
 
-- A tela `/solicitacoes-compra` mostra a fila de compras com as solicitações abertas, itens em cotação e insumos na carteira, lidas do espelho local de compras.
+- A tela `/solicitacoes-compra` mostra a fila de compras com as solicitações abertas, itens em cotação e insumos na carteira, lidas do espelho local de compras. Cada linha também informa se a cotação ainda não foi iniciada ou quantas cotações ativas já foram geradas para aquela solicitação, usando o vínculo local de origem e desconsiderando cotações que não existem mais na base atual.
 - As observações trazidas pelo detalhe da solicitação e por cada insumo são indicadas por um ícone discreto com tooltip na lista e no detalhamento. Os dois campos permanecem separados da especificação do item e também seguem nas exportações CSV.
 - É possível cadastrar solicitações manuais com centro de custo e data de necessidade; solicitações criadas na tela ficam guardadas no navegador.
 - A lista de insumos pode ser exportada para orientar a cotação.

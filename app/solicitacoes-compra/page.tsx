@@ -3,6 +3,7 @@ import { PageHeading } from "@/components/ui/page-heading";
 import { loadPurchases } from "@/features/purchases/data";
 import { readPurchaseRequestHeaders } from "@/features/purchases/request-headers";
 import type { PurchaseRequestItem } from "@/features/purchases/types";
+import { loadSupplierQuoteRequestOrigins } from "@/lib/supplier-quote-portal";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,31 @@ function mapPurchaseRequests(
     }));
 }
 
+function countQuotationsByRequest(
+  quotationIds: number[],
+  origins: ReturnType<typeof loadSupplierQuoteRequestOrigins>
+) {
+  const activeQuotationIds = new Set(quotationIds);
+  const counts: Record<number, number> = {};
+
+  origins.forEach((requestIds, quotationId) => {
+    if (!activeQuotationIds.has(quotationId)) return;
+    requestIds.forEach((requestId) => {
+      counts[requestId] = (counts[requestId] || 0) + 1;
+    });
+  });
+
+  return counts;
+}
+
 export default async function PurchaseRequestsPage() {
   const purchases = await loadPurchases();
   const requestHeaders = readPurchaseRequestHeaders();
   const initialRequests = mapPurchaseRequests(purchases.requestItems, requestHeaders);
+  const quotationCounts = countQuotationsByRequest(
+    purchases.quotations.map((quotation) => quotation.purchaseQuotationId),
+    loadSupplierQuoteRequestOrigins()
+  );
 
   return (
     <>
@@ -63,7 +85,7 @@ export default async function PurchaseRequestsPage() {
         subtitle="Cadastre solicitações, acompanhe o status e exporte a lista de insumos para cotação."
       />
 
-      <PurchaseRequestsPortal initialRequests={initialRequests} />
+      <PurchaseRequestsPortal initialRequests={initialRequests} quotationCounts={quotationCounts} />
     </>
   );
 }

@@ -1461,6 +1461,9 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-request-list strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .purchase-request-list small { color: var(--muted); font-size: 10px; }
 .purchase-request-list .badge { font-style: normal; white-space: nowrap; }
+.purchase-request-list-states { display: grid; justify-items: end; gap: 5px; }
+.purchase-request-quotation-state { display: inline-flex; align-items: center; min-height: 22px; padding: 3px 7px; border: 1px solid #d9dee2; border-radius: 6px; background: #f4f6f7; color: #667078; font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
+.purchase-request-quotation-state.started { border-color: #cbdce8; background: #f0f6fa; color: #315c78; }
 .purchase-request-title-line,
 .purchase-request-list .purchase-request-title-line,
 .purchase-item-name {
@@ -2091,6 +2094,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
   .purchase-request-meta,
   .purchase-item-grid { grid-template-columns: 1fr; }
   .purchase-request-list button { grid-template-columns: 1fr; }
+  .purchase-request-list-states { justify-items: start; }
   .quotation-filter-grid,
   .quotation-create-box,
   .quotation-detail-hero,

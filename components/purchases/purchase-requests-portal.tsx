@@ -115,7 +115,13 @@ function requestNumber(request: PurchaseRequest) {
   return match ? Number(match[1]) : undefined;
 }
 
-export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: PurchaseRequestInput[] }) {
+export function PurchaseRequestsPortal({
+  initialRequests,
+  quotationCounts
+}: {
+  initialRequests: PurchaseRequestInput[];
+  quotationCounts: Record<number, number>;
+}) {
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [manualRequests, setManualRequests] = useState<PurchaseRequest[]>([]);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, RequestStatus>>({});
@@ -165,10 +171,13 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
 
   const summary = useMemo(() => {
     const open = requests.filter((request) => !["Pedido gerado", "Cancelada"].includes(request.status)).length;
-    const quoting = requests.filter((request) => request.status === "Em cotação").length;
+    const quoting = requests.filter((request) => {
+      const number = requestNumber(request);
+      return number ? (quotationCounts[number] || 0) > 0 : false;
+    }).length;
     const items = requests.reduce((total, request) => total + request.items.length, 0);
     return { open, quoting, items };
-  }, [requests]);
+  }, [quotationCounts, requests]);
 
   function addDetailItem() {
     if (!selected || !detailItem.name.trim()) return;
@@ -341,23 +350,35 @@ export function PurchaseRequestsPortal({ initialRequests }: { initialRequests: P
             </div>
 
             <div className="purchase-request-list">
-              {requests.map((request) => (
-                <button
-                  className={request.id === selected?.id ? "active" : ""}
-                  key={request.id}
-                  type="button"
-                  onClick={() => setSelectedId(request.id)}
-                >
-                  <span>
-                    <span className="purchase-request-title-line">
-                      <strong>{request.source === "sienge" ? <I18nText text={request.title} /> : request.title}</strong>
-                      <NoteIndicator label="Observação da solicitação" note={request.notes} />
+              {requests.map((request) => {
+                const number = requestNumber(request);
+                const quotationCount = number ? quotationCounts[number] || 0 : 0;
+
+                return (
+                  <button
+                    className={request.id === selected?.id ? "active" : ""}
+                    key={request.id}
+                    type="button"
+                    onClick={() => setSelectedId(request.id)}
+                  >
+                    <span>
+                      <span className="purchase-request-title-line">
+                        <strong>{request.source === "sienge" ? <I18nText text={request.title} /> : request.title}</strong>
+                        <NoteIndicator label="Observação da solicitação" note={request.notes} />
+                      </span>
+                      <small>{request.code} <I18nText text={"-"} /> {request.items.length} <I18nText text={"insumos"} /></small>
                     </span>
-                    <small>{request.code} <I18nText text={"-"} /> {request.items.length} <I18nText text={"insumos"} /></small>
-                  </span>
-                  <i className={`badge ${statusClass(request.status)}`}><I18nText text={request.status} /></i>
-                </button>
-              ))}
+                    <div className="purchase-request-list-states">
+                      <i className={`badge ${statusClass(request.status)}`}><I18nText text={request.status} /></i>
+                      <small className={`purchase-request-quotation-state ${quotationCount > 0 ? "started" : ""}`}>
+                        {quotationCount > 0 ? (
+                          <>{quotationCount} <I18nText text={quotationCount === 1 ? "cotação iniciada" : "cotações iniciadas"} /></>
+                        ) : <I18nText text="Ainda não iniciou cotação" />}
+                      </small>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </section>
 
