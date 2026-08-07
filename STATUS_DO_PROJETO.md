@@ -243,6 +243,15 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - Graficos: entradas x saidas, compras feitas x pendentes, vendas por mes, pedidos de compra por mes, unidades por situacao comercial, recebiveis por cliente, compras por periodo e vendas por empreendimento.
 - Se alguma area falhar, o dashboard exibe visao parcial e continua mostrando os modulos que carregaram.
 
+## Títulos financeiros
+
+- Foi criada a rota `/titulos` para consultar, em uma única listagem, títulos a pagar e a receber agrupados pelo número do título, sem consultar ou gravar no Sienge durante a abertura.
+- A busca geral localiza por número do título (com busca exata no formato `#21354`), documento, empresa, credor/cliente, origem e pelo conteúdo da observação.
+- A tela oferece filtros server-side por tipo, situação, empresa, origem, presença de observação, data de emissão ou primeiro vencimento, período e ordenação, com paginação de 50 títulos para manter o HTML inicial controlado.
+- Cada linha mostra tipo, documento, empresa, credor/cliente, observação, emissão, faixa de vencimentos, quantidade de parcelas, valor original, saldo em aberto, saldo vencido e situação calculada pelas parcelas locais.
+- As observações reais de contas a pagar usam primeiro os cabeçalhos mais recentes salvos pelo endpoint `/v1/bills` e, quando o título ainda não está nesse espelho, usam `ecpgtitulo.deobservacao` do dump local. A atualização de Contas a pagar passou a paginar todo o endpoint `/v1/bills`, em vez de gravar somente os primeiros 200 títulos. A carga pública atual de contas a receber (`bulk_income_installments`) não fornece observação do título; nesses registros a tela informa essa limitação em vez de inventar ou ocultar o dado.
+- A rota ganhou a permissão própria `screen.titulos` e uma entrada no menu Financeiro. Atualizações dos dados continuam centralizadas em `/configuracoes`.
+
 ## Contas a pagar
 
 - Foi criado portal de contas a pagar com visao do que esta programado para hoje, semana, mes atual e proximos meses configurados.

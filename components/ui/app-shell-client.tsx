@@ -10,6 +10,7 @@ import {
   CircleCheckBig,
   ClipboardList,
   FileSignature,
+  Files,
   Gauge,
   HandCoins,
   Landmark,
@@ -81,6 +82,7 @@ const navigationSections: NavigationSection[] = [
     label: "Financeiro",
     icon: Wallet,
     items: [
+      { label: "Títulos", href: "/titulos", icon: Files, permission: "screen.titulos" },
       { label: "Contas a pagar", href: "/contas-pagar", icon: Receipt, permission: "screen.contas-pagar" },
       { label: "Contas a receber", href: "/contas-receber", icon: HandCoins, permission: "screen.contas-receber" },
       { label: "Baixa a pagar", href: "/lancamentos/baixa", icon: SquareCheckBig, permission: "screen.baixa-pagar" },

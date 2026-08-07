@@ -42,6 +42,8 @@ export type PayablesAnalytics = {
   valueRanges: ChartItem[];
 };
 
+const PAYABLES_PAGE_LIMIT = 200;
+
 const statusLabels: Record<NonNullable<SiengeBill["status"]>, EntryStatus> = {
   S: "Completo",
   N: "Incompleto",
@@ -59,10 +61,30 @@ function dateRange(range?: SiengeIntegrationRange) {
 
 export async function loadPayables(forceRefresh = false, forceReplaceFinalized = false, range?: SiengeIntegrationRange): Promise<PayablesResult> {
   try {
-    const response = await contasPagarApi.list<SiengeBill>({ ...dateRange(range), limit: 200, offset: 0 }, forceRefresh, forceReplaceFinalized);
+    const filters = dateRange(range);
+    const response = await contasPagarApi.list<SiengeBill>({ ...filters, limit: PAYABLES_PAGE_LIMIT, offset: 0 }, forceRefresh, forceReplaceFinalized);
+    const totalCount = response.resultSetMetadata?.count ?? response.results.length;
+    const bills = [...(response.results || [])];
+
+    // A atualizacao em Configuracoes precisa percorrer todas as paginas para
+    // que observacoes de titulos recentes nao fiquem limitadas aos 200
+    // registros da primeira resposta. As chamadas sequenciais respeitam
+    // melhor o limite REST do Sienge.
+    if (forceRefresh) {
+      const remainingPages = Math.max(0, Math.ceil(totalCount / PAYABLES_PAGE_LIMIT) - 1);
+      for (let page = 1; page <= remainingPages; page += 1) {
+        const nextPage = await contasPagarApi.list<SiengeBill>({
+          ...filters,
+          limit: PAYABLES_PAGE_LIMIT,
+          offset: page * PAYABLES_PAGE_LIMIT
+        }, true, forceReplaceFinalized);
+        bills.push(...(nextPage.results || []));
+      }
+    }
+
     return {
-      totalCount: response.resultSetMetadata?.count ?? response.results.length,
-      entries: response.results.map((bill) => ({
+      totalCount,
+      entries: bills.map((bill) => ({
         id: bill.id,
         document: [bill.documentIdentificationId, bill.documentNumber].filter(Boolean).join("-") || String(bill.id),
         description: bill.notes || `Título de origem ${bill.originId || "não informada"}`,
