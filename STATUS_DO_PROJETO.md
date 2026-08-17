@@ -1,11 +1,12 @@
 # Status do projeto Brasin
 
-Atualizado em: 04/08/2026
+Atualizado em: 17/08/2026
 
 Este arquivo resume o que foi feito neste chat e ainda está valendo no código. A ideia é manter este documento atualizado sempre que uma tela, consulta, banco local ou comportamento importante mudar.
 
 ## Atualização mais recente
 
+- Foi criada a tela `/titulos`, no menu Financeiro, para consultar títulos a pagar e a receber em uma única listagem local. A busca cobre número exato (`#N`), documento, empresa, credor/cliente, origem e observação, com filtros server-side, paginação de 50 registros e permissão própria `screen.titulos`. A atualização de Contas a pagar passou a paginar todos os cabeçalhos de `/v1/bills`, eliminando o limite anterior de 200 títulos; a abertura da tela não consulta nem grava no Sienge.
 - A lista de `/cotacoes` agora mostra o número da solicitação local que originou cada cotação (`SC-N`) e exibe as cotações pelo número, do maior para o menor. A relação é gravada em `supplier_quote_request_origins` no momento em que a tela cria a cotação ou vincula itens; cotações locais recentes foram migradas do histórico local de integração. O número também participa da pesquisa e da exportação CSV, sem consulta ao dump ou ao Sienge na abertura da tela.
 - A aba Insumos de `/cotacoes/[id]` oferece dois documentos para envio manual: `PDF para fornecedor` mantém a solicitação completa em A4 horizontal, com campos em branco para preços, prazos e condições comerciais; `PDF resumido` abre uma segunda versão em A4 vertical somente com o número da solicitação, comprador e lista compacta de itens. As observações individuais dos insumos são recuperadas da solicitação de origem quando o retorno da cotação não repete esse campo e aparecem na mesma linha do item nas duas impressões. Nenhuma das versões expõe propostas recebidas ou comparações internas.
 - Foi criada a tela `/rastreabilidade-insumos`, no menu Compras, para pesquisar insumos por código, descrição, sinônimo ou código auxiliar e reunir as solicitações, pedidos e notas fiscais em que cada insumo apareceu. A consulta usa as tabelas detalhadas do dump local, mostra vínculos SC → pedido e pedido → nota, quantidades, valores, fornecedor, obra e a data da importação usada como fonte.
@@ -52,7 +53,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - O acesso ao sistema é protegido por senha única definida em `APP_ACCESS_PASSWORD` (mínimo de 12 caracteres) no `.env`; `APP_AUTH_SECRET` pode definir um segredo de assinatura separado.
 - O `middleware.ts` valida um cookie de sessão HMAC (`brasin_session`) em toda requisição; sessão dura 12 horas, cookie `httpOnly`, `sameSite lax` e `secure` em produção.
 - A tela `/login` faz o acesso e preserva a rota de destino; o botão Sair fica no topo do sistema.
-- Rotas públicas são uma lista explícita no middleware: `/login`, `/api/auth/*`, `/portal-cotacao/*`, `/api/supplier-portal/responses`, `/api/supplier-portal/link-requests` e `/api/supplier-portal/suppliers`. Todo o resto exige sessão.
+- Rotas públicas são uma lista explícita no middleware: `/login`, `/api/auth/login`, `/api/auth/logout`, `/api/locale`, `/portal-cotacao/*`, `/api/supplier-portal/responses`, `/api/supplier-portal/link-requests`, `/api/supplier-portal/attachments` e `/api/supplier-portal/suppliers`. Todo o resto exige sessão. As rotas públicas do fornecedor validam token e aplicam limite de requisições quando recebem ou expõem dados.
 - Ao criar uma nova rota pública de fornecedor, é preciso lembrar de adicioná-la à lista `publicPath` do middleware.
 - O login bloqueia força bruta: 8 falhas por 15 minutos por IP e teto global de 40 falhas por 15 minutos independente do IP informado (o cabeçalho `x-forwarded-for` pode ser forjado quando não há proxy confiável na frente).
 - As verificações de assinatura (sessão no middleware e senha no login) usam comparação em tempo constante.
@@ -422,6 +423,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Validacoes recentes
 
+- Em 17/08/2026, o estado atual foi conferido contra os commits até a criação de `/titulos` e os ajustes recentes de solicitações, cotações, PDFs e observações de insumos. `npm run audit:i18n`, `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram; a build confirmou 32 páginas geradas e as rotas `/rastreabilidade-insumos`, `/titulos` e os dois documentos de solicitação do fornecedor.
 - Em 10/07/2026, foram revisados e commitados os ajustes recentes de cotações: mapa PDF horizontal/vertical, sincronização de respostas com o Sienge, seleção parcial de itens da solicitação, backoff contra 429/5xx, atualização do espelho local após escritas e limpeza controlada de cotações fantasmas. `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram nos commits funcionais.
 - Em 07/07/2026, a documentação foi revisada contra os commits reais (usuários/papéis/alçadas, grupos, permissões por tela, prazo de cotação, relatório de decisão, revisões/anexos de proposta e obrigatórios do portal); `tsc --noEmit --incremental false` passou limpo.
 - Em 07/07/2026, foram revisados os commits recentes de permissões/papéis e portal de cotação; `tsc --noEmit --incremental false`, `git diff --check` e `next build` passaram após o ajuste visual dos obrigatórios no portal.
@@ -434,6 +436,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Pontos de atencao
 
+- O projeto ainda não possui suíte automatizada de testes unitários ou de integração no `package.json`. A segurança atual contra regressões depende de TypeScript, build de produção, auditoria i18n e verificações manuais dos fluxos críticos; testes automatizados para autenticação, permissões, cotações e cálculos financeiros continuam sendo uma melhoria importante.
 - A API do Sienge ainda pode bloquear chamadas por limite de uso, principalmente em consultas bulk.
 - Atualizacoes amplas devem ser feitas com cuidado em Configuracoes, porque consultam o Sienge e podem atingir limites da API.
 - Algumas telas dependem dos campos que o Sienge realmente retorna para a empresa; quando o campo nao vem na resposta, a tela mostra vazio ou "nao informado".

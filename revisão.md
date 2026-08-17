@@ -298,64 +298,17 @@ Pendência mantida:
 
 - Mapa imobiliário e insumos por centro de custo dependem do preenchimento de centros de custo em Configurações e de permissão no Sienge para esses endpoints.
 
-## Plano por etapas
+## Estado do plano por etapas
 
-### Etapa 1 - Navegação e fluxo
+As etapas 1 a 8 e a etapa 10 foram concluídas no escopo descrito na tabela de revisão: navegação, listas grandes, Configurações, conciliação, financeiro operacional, análises, estoque, dump/CSV e cotações/portal do fornecedor. O histórico detalhado permanece nas seções anteriores e nos commits; estes itens não devem voltar a ser tratados como tarefas abertas sem um novo achado concreto.
 
-- Revisar `/`, menu lateral e `/financeiro`.
-- Decidir destino de `Novo lançamento`.
-- Garantir que os atalhos refletem o padrão atual do sistema.
+Evoluções e riscos ainda abertos:
 
-### Etapa 2 - Listas grandes
-
-- Corrigir `/compras` para consultar/paginar todos os registros locais.
-- Corrigir `/contas-receber` para buscar todos os registros locais sem enviar tudo no HTML inicial.
-- Revisar `/sales` em períodos longos.
-
-### Etapa 3 - Integração e Configurações
-
-- Validar atualização de `/contratos`.
-- Conferir status, histórico e força de atualização em `/configuracoes`.
-- Garantir que falhas de job aparecem com mensagem útil.
-
-### Etapa 4 - Conciliação
-
-- Renderizar primeira leitura local no servidor.
-- Manter seleção de contas e visão mensal.
-- Usar progresso apenas quando houver atualização ou recarga explícita.
-
-### Etapa 5 - Financeiro operacional
-
-- Revisar `/contas-pagar`, `/lancamentos/baixa` e `/lancamentos/baixa-receber`.
-- Separar consulta local de operação real no Sienge.
-- Padronizar avisos, datas de integração e filtros.
-
-### Etapa 6 - Análise gerencial concluída
-
-- Revisar `/dashboard` card a card.
-- Revisar `/dre-gerencial` com foco em POC.
-- Revisar `/relatorios` para virar central de relatórios geráveis.
-- Revisar `/sienge` como mapa de cobertura operacional.
-
-### Etapa 7 - Estoque e patrimônio concluída
-
-- Revisar `/estoque` como visão estratégica comercial.
-- Incluir novas fontes de estoque, mapa imobiliário e insumos quando configurados.
-- Separar carteira ativa, histórico e itens sem valor informado.
-
-### Etapa 8 - Baixa a receber, dump auxiliar e CSV concluída
-
-- Usar o dump convertido para complementar dados que a API pública não entrega.
-- Mostrar data/hora e usuário de cadastro da baixa a receber.
-- Filtrar recebimentos por data de registro da baixa.
-- Exportar a busca avançada de contas a receber em CSV pelo componente padrão de paginação.
-
-### Etapa 10 - Cotações e portal do fornecedor concluída
-
-- Revisar `/cotacoes`, `/cotacoes/[id]` e `/portal-cotacao/[token]`.
-- Confirmar que as abas do detalhe estão separadas por arquivo e documentadas.
-- Separar a tela principal de cotações em componentes por bloco.
-- Conferir o detalhe final/impressão do fornecedor para itens parciais e não cotados.
+- Criar testes automatizados para autenticação, permissões, cotações, deduplicação Sienge e cálculos financeiros. Hoje o projeto valida TypeScript, build, auditoria i18n e fluxos críticos manualmente.
+- Evoluir a DRE POC de estimativa gerencial para apuração contábil completa quando houver apropriação histórica por unidade vendida e medições mensais detalhadas.
+- Implementar exportação PDF/Excel adicional nos relatórios em que a exportação atual ainda não cobre a necessidade operacional.
+- Manter mapa imobiliário e insumos por centro de custo condicionados à configuração dos centros e à permissão dos endpoints no Sienge.
+- Para exposição fora da rede local ou execução em múltiplas instâncias, adotar TLS/proxy confiável e armazenamento compartilhado para limites de requisição.
 
 ## Como atualizar este arquivo
 
