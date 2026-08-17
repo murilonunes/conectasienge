@@ -10,11 +10,27 @@ export type PurchaseProjectKanbanRequest = {
   status: string;
   itemCount: number;
   quotationCount: number;
+  quotationIds: number[];
   date?: string;
   requester?: string;
   notes?: string;
 };
-export type PurchaseProjectKanbanData = { requests: PurchaseProjectKanbanRequest[]; totalItems: number; warning?: string; error?: string };
+export type PurchaseProjectKanbanQuotation = {
+  id: number;
+  code: string;
+  status: string;
+  requestIds: number[];
+  supplierCount: number;
+  responseCount: number;
+  date?: string;
+};
+export type PurchaseProjectKanbanData = {
+  requests: PurchaseProjectKanbanRequest[];
+  quotations: PurchaseProjectKanbanQuotation[];
+  totalItems: number;
+  warning?: string;
+  error?: string;
+};
 
 function groupRequestItems(items: PurchaseRequestItem[]) {
   const groups = new Map<number, PurchaseRequestItem[]>();
@@ -28,15 +44,23 @@ function statusFromItems(items: PurchaseRequestItem[]) {
   return "Pendente de autorização";
 }
 
+function quotationStatus(supplierCount: number, responseCount: number, selected: boolean, hasQuotedValue: boolean) {
+  if (supplierCount === 0) return "Sem fornecedores";
+  if (selected) return "Negociação fechada";
+  if (hasQuotedValue) return "Pronta para decisão";
+  if (responseCount > 0) return "Em negociação";
+  return "Registrada";
+}
+
 export async function loadPurchaseProjectKanbanData(): Promise<PurchaseProjectKanbanData> {
   const purchases = await loadPurchases();
   const headers = readPurchaseRequestHeaders();
   const origins = loadSupplierQuoteRequestOrigins();
   const activeQuotationIds = new Set(purchases.quotations.map((quotation) => quotation.purchaseQuotationId));
-  const quotationCounts = new Map<number, number>();
+  const quotationIdsByRequest = new Map<number, number[]>();
   origins.forEach((requestIds, quotationId) => {
     if (!activeQuotationIds.has(quotationId)) return;
-    requestIds.forEach((requestId) => quotationCounts.set(requestId, (quotationCounts.get(requestId) || 0) + 1));
+    requestIds.forEach((requestId) => quotationIdsByRequest.set(requestId, [...(quotationIdsByRequest.get(requestId) || []), quotationId]));
   });
   const groups = groupRequestItems(purchases.requestItems);
   const requests = Array.from(groups, ([requestId, items]) => {
@@ -46,11 +70,31 @@ export async function loadPurchaseProjectKanbanData(): Promise<PurchaseProjectKa
       code: `SC-${requestId}`,
       status: header?.status ? requestStatusLabels[header.status] || header.status : statusFromItems(items),
       itemCount: items.length,
-      quotationCount: quotationCounts.get(requestId) || 0,
+      quotationCount: quotationIdsByRequest.get(requestId)?.length || 0,
+      quotationIds: quotationIdsByRequest.get(requestId)?.sort((left, right) => right - left) || [],
       date: header?.requestDate || items[0]?.__siengeIntegratedAt?.slice(0, 10),
       requester: header?.requesterUser,
       notes: header?.notes?.trim() || undefined
     } satisfies PurchaseProjectKanbanRequest;
   }).sort((left, right) => right.id - left.id);
-  return { requests, totalItems: purchases.requestItems.length, warning: purchases.warning, error: purchases.error?.explanation || purchases.error?.title };
+  const quotations = purchases.quotations.map((quotation) => {
+    const suppliers = quotation.purchaseQuotationSuppliers || [];
+    const responseCount = suppliers.filter((supplier) => (supplier.negotiations || []).length > 0).length;
+    const selected = suppliers.some((supplier) => (supplier.negotiations || []).some((negotiation) =>
+      (negotiation.negotiationItems || []).some((item) => item.selectedOption)
+    ));
+    const hasQuotedValue = suppliers.some((supplier) => (supplier.negotiations || []).some((negotiation) =>
+      Number(negotiation.totalValue) > 0 || (negotiation.negotiationItems || []).some((item) => Number(item.unitPrice) > 0 || Number(item.totalValue) > 0)
+    ));
+    return {
+      id: quotation.purchaseQuotationId,
+      code: `COT-${quotation.purchaseQuotationId}`,
+      status: quotationStatus(suppliers.length, responseCount, selected, hasQuotedValue),
+      requestIds: [...(origins.get(quotation.purchaseQuotationId) || [])],
+      supplierCount: suppliers.length,
+      responseCount,
+      date: quotation.purchaseQuotationDate || quotation.registeredDate
+    } satisfies PurchaseProjectKanbanQuotation;
+  }).sort((left, right) => right.id - left.id);
+  return { requests, quotations, totalItems: purchases.requestItems.length, warning: purchases.warning, error: purchases.error?.explanation || purchases.error?.title };
 }

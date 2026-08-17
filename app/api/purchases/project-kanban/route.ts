@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { guardPermission } from "@/lib/app-users";
 import { loadPurchases } from "@/features/purchases/data";
 import { purchaseProjectKanbanActions as actions } from "@/lib/purchase-project-kanban-actions";
+import { loadSupplierQuoteRequestOrigins, saveSupplierQuoteRequestOrigins } from "@/lib/supplier-quote-portal";
 import {
   createPurchaseProjectKanbanColumn,
   createPurchaseProjectKanbanProject,
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
       projectId?: number;
       requestId?: number;
       description?: string;
+      closingDate?: string;
+      quotationId?: number;
     };
     const columnId = Number(input.columnId);
     let state;
@@ -68,10 +71,10 @@ export async function POST(request: Request) {
         state = movePurchaseProjectKanbanProject(Number(input.projectId), columnId);
         break;
       case actions.createProject:
-        state = createPurchaseProjectKanbanProject(String(input.name || ""), String(input.description || ""));
+        state = createPurchaseProjectKanbanProject(String(input.name || ""), String(input.description || ""), String(input.closingDate || ""));
         break;
       case actions.updateProject:
-        state = updatePurchaseProjectKanbanProject(Number(input.projectId), String(input.name || ""), String(input.description || ""));
+        state = updatePurchaseProjectKanbanProject(Number(input.projectId), String(input.name || ""), String(input.description || ""), String(input.closingDate || ""));
         break;
       case actions.deleteProject:
         state = deletePurchaseProjectKanbanProject(Number(input.projectId));
@@ -88,6 +91,17 @@ export async function POST(request: Request) {
       case actions.unlinkRequest:
         state = unlinkPurchaseRequestFromKanbanProject(Number(input.projectId), Number(input.requestId));
         break;
+      case actions.linkQuotationRequest: {
+        const requestId = Number(input.requestId);
+        const quotationId = Number(input.quotationId);
+        const purchases = await loadPurchases();
+        if (!purchases.requestItems.some((item) => item.purchaseRequestId === requestId)) throw new Error("A solicitação não existe no espelho local de compras.");
+        if (!purchases.quotations.some((quotation) => quotation.purchaseQuotationId === quotationId)) throw new Error("A cotação não existe no espelho local de compras.");
+        const currentOrigins = loadSupplierQuoteRequestOrigins().get(quotationId) || [];
+        saveSupplierQuoteRequestOrigins(quotationId, [...currentOrigins, requestId]);
+        state = loadPurchaseProjectKanban();
+        break;
+      }
       default:
         return NextResponse.json({ message: "Ação do Kanban não reconhecida." }, { status: 400 });
     }

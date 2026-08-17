@@ -10,6 +10,7 @@ export type PurchaseProjectKanbanProject = {
   key: string;
   name: string;
   description: string;
+  closingDate?: string;
   columnId: number;
   requestIds: number[];
   createdAt: string;
@@ -55,6 +56,7 @@ function openDatabase() {
       project_key TEXT NOT NULL UNIQUE,
       name TEXT NOT NULL,
       description TEXT NOT NULL DEFAULT '',
+      closing_date TEXT,
       column_id INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
@@ -79,6 +81,10 @@ function openDatabase() {
   const columnFields = database.prepare("PRAGMA table_info(purchase_project_kanban_columns)").all() as Array<{ name: string }>;
   if (!columnFields.some((field) => field.name === "system_key")) {
     database.exec("ALTER TABLE purchase_project_kanban_columns ADD COLUMN system_key TEXT");
+  }
+  const projectFields = database.prepare("PRAGMA table_info(purchase_project_kanban_projects)").all() as Array<{ name: string }>;
+  if (!projectFields.some((field) => field.name === "closing_date")) {
+    database.exec("ALTER TABLE purchase_project_kanban_projects ADD COLUMN closing_date TEXT");
   }
   const count = Number((database.prepare("SELECT COUNT(*) AS count FROM purchase_project_kanban_columns").get() as { count: number }).count);
   if (count === 0) {
@@ -112,11 +118,22 @@ function normalizeDescription(value: string) {
   return description;
 }
 
+function normalizeClosingDate(value: string) {
+  const closingDate = value.trim();
+  if (!closingDate) return undefined;
+  const parsed = new Date(`${closingDate}T00:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(closingDate) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== closingDate) {
+    throw new Error("Informe uma data de encerramento válida.");
+  }
+  return closingDate;
+}
+
 function readState(database: DatabaseSync): PurchaseProjectKanbanState {
   const columnRows = database.prepare("SELECT id, name, color, system_key AS systemKey, position FROM purchase_project_kanban_columns ORDER BY position, id").all() as Array<PurchaseProjectKanbanColumn & { systemKey: string | null }>;
   const columns = columnRows.map((column) => ({ ...column, systemKey: column.systemKey || undefined }));
   const projects = database.prepare(`
-    SELECT id, project_key AS key, name, description, column_id AS columnId, created_at AS createdAt, updated_at AS updatedAt
+    SELECT id, project_key AS key, name, description, closing_date AS closingDate,
+           column_id AS columnId, created_at AS createdAt, updated_at AS updatedAt
     FROM purchase_project_kanban_projects ORDER BY updated_at DESC, id DESC
   `).all() as Array<Omit<PurchaseProjectKanbanProject, "requestIds">>;
   const links = database.prepare(`
@@ -196,9 +213,10 @@ export function deletePurchaseProjectKanbanColumn(columnId: number) {
   } finally { database.close(); }
 }
 
-export function createPurchaseProjectKanbanProject(nameValue: string, descriptionValue: string) {
+export function createPurchaseProjectKanbanProject(nameValue: string, descriptionValue: string, closingDateValue: string) {
   const name = normalizeName(nameValue, "projeto");
   const description = normalizeDescription(descriptionValue);
+  const closingDate = normalizeClosingDate(closingDateValue);
   const database = openDatabase();
   try {
     if (database.prepare("SELECT id FROM purchase_project_kanban_projects WHERE lower(name) = lower(?)").get(name)) throw new Error("Já existe um projeto com esse nome.");
@@ -206,19 +224,21 @@ export function createPurchaseProjectKanbanProject(nameValue: string, descriptio
     if (!firstColumn) throw new Error("Crie uma etapa antes de cadastrar o projeto.");
     const stamp = nowIso();
     const key = `project:${randomUUID()}`;
-    database.prepare("INSERT INTO purchase_project_kanban_projects (project_key, name, description, column_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .run(key, name, description, firstColumn.id, stamp, stamp);
+    database.prepare("INSERT INTO purchase_project_kanban_projects (project_key, name, description, closing_date, column_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .run(key, name, description, closingDate || null, firstColumn.id, stamp, stamp);
     return readState(database);
   } finally { database.close(); }
 }
 
-export function updatePurchaseProjectKanbanProject(projectId: number, nameValue: string, descriptionValue: string) {
+export function updatePurchaseProjectKanbanProject(projectId: number, nameValue: string, descriptionValue: string, closingDateValue: string) {
   const name = normalizeName(nameValue, "projeto");
   const description = normalizeDescription(descriptionValue);
+  const closingDate = normalizeClosingDate(closingDateValue);
   const database = openDatabase();
   try {
     if (database.prepare("SELECT id FROM purchase_project_kanban_projects WHERE lower(name) = lower(?) AND id <> ?").get(name, projectId)) throw new Error("Já existe um projeto com esse nome.");
-    if (database.prepare("UPDATE purchase_project_kanban_projects SET name = ?, description = ?, updated_at = ? WHERE id = ?").run(name, description, nowIso(), projectId).changes === 0) throw new Error("Projeto não encontrado.");
+    if (database.prepare("UPDATE purchase_project_kanban_projects SET name = ?, description = ?, closing_date = ?, updated_at = ? WHERE id = ?")
+      .run(name, description, closingDate || null, nowIso(), projectId).changes === 0) throw new Error("Projeto não encontrado.");
     return readState(database);
   } finally { database.close(); }
 }

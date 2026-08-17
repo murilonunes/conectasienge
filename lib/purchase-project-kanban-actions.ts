@@ -8,5 +8,6 @@ export const purchaseProjectKanbanActions = {
   updateProject: "update-project",
   deleteProject: "delete-project",
   linkRequest: "link-request",
-  unlinkRequest: "unlink-request"
+  unlinkRequest: "unlink-request",
+  linkQuotationRequest: "link-quotation-request"
 } as const;
