@@ -66,6 +66,7 @@ const defaultRoles: Array<{ name: string; approvalLimit: number | null; permissi
       "screen.compras",
       "screen.rastreabilidade-insumos",
       "screen.solicitacoes",
+      "screen.kanban-compras",
       "screen.cotacoes",
       "screen.relatorios",
       "screen.sienge",

@@ -4,6 +4,7 @@ export const screenPermissionDefinitions = [
   { permission: "screen.compras", label: "Portal de compras", description: "Pedidos e visão geral de compras", paths: ["/compras"] },
   { permission: "screen.rastreabilidade-insumos", label: "Rastreabilidade de insumos", description: "Histórico de solicitações, pedidos e notas por insumo", paths: ["/rastreabilidade-insumos"] },
   { permission: "screen.solicitacoes", label: "Solicitações", description: "Solicitações de compra", paths: ["/solicitacoes-compra"] },
+  { permission: "screen.kanban-compras", label: "Kanban de projetos", description: "Etapas gerenciais das compras por projeto", paths: ["/kanban-compras"] },
   { permission: "screen.cotacoes", label: "Cotações", description: "Lista, detalhe e aprovação de cotações", paths: ["/cotacoes"] },
   { permission: "screen.titulos", label: "Títulos", description: "Consulta unificada de títulos a pagar e a receber", paths: ["/titulos"] },
   { permission: "screen.contas-pagar", label: "Contas a pagar", description: "Consulta de títulos a pagar", paths: ["/contas-pagar"] },

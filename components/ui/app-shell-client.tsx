@@ -9,6 +9,7 @@ import {
   ChartPie,
   CircleCheckBig,
   ClipboardList,
+  Columns3,
   FileSignature,
   Files,
   Gauge,
@@ -74,6 +75,7 @@ const navigationSections: NavigationSection[] = [
       { label: "Portal de compras", href: "/compras", icon: ShoppingBag, permission: "screen.compras" },
       { label: "Rastreabilidade de insumos", href: "/rastreabilidade-insumos", icon: Search, permission: "screen.rastreabilidade-insumos" },
       { label: "Solicitacoes", href: "/solicitacoes-compra", icon: ClipboardList, permission: "screen.solicitacoes" },
+      { label: "Kanban de projetos", href: "/kanban-compras", icon: Columns3, permission: "screen.kanban-compras" },
       { label: "Cotacoes", href: "/cotacoes", icon: Scale, permission: "screen.cotacoes" }
     ]
   },

@@ -6,6 +6,7 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 
 ## Atualização mais recente
 
+- Foi criada a tela `/kanban-compras`, no menu Compras, para cadastrar projetos/obras gerenciais fora do Sienge e reunir neles solicitações de compra já existentes no espelho local. Cada solicitação pode pertencer a somente um projeto por vez e pode ser vinculada ou desvinculada no detalhe do projeto sem alterar o registro de origem. O quadro permite criar, renomear, ordenar e excluir etapas, mover projetos por arrastar/soltar ou seletor, pesquisar por projeto/solicitação e acompanhar solicitações, itens e cobertura de cotações. Projetos, etapas e vínculos ficam no SQLite local `purchase-project-kanban.sqlite`, com permissão própria `screen.kanban-compras`; a tela e a API não gravam no Sienge.
 - Foi criada a tela `/titulos`, no menu Financeiro, para consultar títulos a pagar e a receber em uma única listagem local. A busca cobre número exato (`#N`), documento, empresa, credor/cliente, origem e observação, com filtros server-side, paginação de 50 registros e permissão própria `screen.titulos`. A atualização de Contas a pagar passou a paginar todos os cabeçalhos de `/v1/bills`, eliminando o limite anterior de 200 títulos; a abertura da tela não consulta nem grava no Sienge.
 - A lista de `/cotacoes` agora mostra o número da solicitação local que originou cada cotação (`SC-N`) e exibe as cotações pelo número, do maior para o menor. A relação é gravada em `supplier_quote_request_origins` no momento em que a tela cria a cotação ou vincula itens; cotações locais recentes foram migradas do histórico local de integração. O número também participa da pesquisa e da exportação CSV, sem consulta ao dump ou ao Sienge na abertura da tela.
 - A aba Insumos de `/cotacoes/[id]` oferece dois documentos para envio manual: `PDF para fornecedor` mantém a solicitação completa em A4 horizontal, com campos em branco para preços, prazos e condições comerciais; `PDF resumido` abre uma segunda versão em A4 vertical somente com o número da solicitação, comprador e lista compacta de itens. As observações individuais dos insumos são recuperadas da solicitação de origem quando o retorno da cotação não repete esse campo e aparecem na mesma linha do item nas duas impressões. Nenhuma das versões expõe propostas recebidas ou comparações internas.
@@ -78,6 +79,15 @@ Este arquivo resume o que foi feito neste chat e ainda está valendo no código.
 - As observações trazidas pelo detalhe da solicitação e por cada insumo são indicadas por um ícone discreto com tooltip na lista e no detalhamento. Os dois campos permanecem separados da especificação do item e também seguem nas exportações CSV.
 - É possível cadastrar solicitações manuais com centro de custo e data de necessidade; solicitações criadas na tela ficam guardadas no navegador.
 - A lista de insumos pode ser exportada para orientar a cotação.
+
+## Kanban de projetos de compras
+
+- A rota `/kanban-compras` possui permissão própria (`screen.kanban-compras`) e fica no submenu Compras.
+- Projeto/obra é um cadastro gerencial local e independente do Sienge, com nome e descrição. Criar, editar, excluir ou mover um projeto não executa nenhuma chamada de escrita no Sienge.
+- As solicitações disponíveis são lidas do espelho local de Compras e podem ser vinculadas ou desvinculadas no detalhe do projeto. A restrição única por número de solicitação impede que a mesma `SC-N` seja contada em dois projetos.
+- As colunas são dinâmicas: podem ser criadas, renomeadas, reordenadas e excluídas. Uma etapa com projetos não pode ser excluída até que seus cartões sejam movidos.
+- O cartão consolida quantidade de solicitações, itens, cotações relacionadas e percentual de solicitações com cotação. A troca de etapa funciona por arrastar e soltar e também por seletor, mantendo uso possível em telas sem drag-and-drop.
+- O arquivo `.sienge-data/purchase-project-kanban.sqlite` guarda somente projetos, etapas e vínculos. Os dados das solicitações e cotações continuam sendo lidos das bases locais já sincronizadas.
 
 ## Rastreabilidade de insumos
 
