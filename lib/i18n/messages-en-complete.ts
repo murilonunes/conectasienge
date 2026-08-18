@@ -433,7 +433,7 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Editar projeto": "Edit project",
   "Nenhum projeto encontrado nesta etapa.": "No project was found in this stage.",
   "Arraste um projeto para esta etapa.": "Drag a project into this stage.",
-  "Solte para mover para esta etapa": "Drop to move to this stage",
+  "Solte nesta posição": "Drop in this position",
   "Cadastre a obra ou iniciativa gerencialmente, sem criar registros no Sienge.": "Create the project or initiative for management purposes without creating records in Sienge.",
   "Nome do projeto": "Project name",
   "Objetivo, fase da obra ou referência interna": "Objective, construction phase, or internal reference",

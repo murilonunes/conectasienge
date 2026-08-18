@@ -12,6 +12,7 @@ export type PurchaseProjectKanbanProject = {
   description: string;
   closingDate?: string;
   columnId: number;
+  position: number;
   requestIds: number[];
   createdAt: string;
   updatedAt: string;
@@ -58,6 +59,7 @@ function openDatabase() {
       description TEXT NOT NULL DEFAULT '',
       closing_date TEXT,
       column_id INTEGER NOT NULL,
+      position INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY(column_id) REFERENCES purchase_project_kanban_columns(id) ON DELETE RESTRICT
@@ -86,6 +88,19 @@ function openDatabase() {
   if (!projectFields.some((field) => field.name === "closing_date")) {
     database.exec("ALTER TABLE purchase_project_kanban_projects ADD COLUMN closing_date TEXT");
   }
+  if (!projectFields.some((field) => field.name === "position")) {
+    database.exec("ALTER TABLE purchase_project_kanban_projects ADD COLUMN position INTEGER NOT NULL DEFAULT 0");
+    const rows = database.prepare("SELECT id, column_id AS columnId FROM purchase_project_kanban_projects ORDER BY column_id, updated_at DESC, id DESC")
+      .all() as Array<{ id: number; columnId: number }>;
+    const nextPosition = new Map<number, number>();
+    const updatePosition = database.prepare("UPDATE purchase_project_kanban_projects SET position = ? WHERE id = ?");
+    rows.forEach((row) => {
+      const position = nextPosition.get(row.columnId) || 0;
+      updatePosition.run(position, row.id);
+      nextPosition.set(row.columnId, position + 1);
+    });
+  }
+  database.exec("CREATE INDEX IF NOT EXISTS idx_purchase_project_kanban_projects_position ON purchase_project_kanban_projects(column_id, position)");
   const count = Number((database.prepare("SELECT COUNT(*) AS count FROM purchase_project_kanban_columns").get() as { count: number }).count);
   if (count === 0) {
     const insert = database.prepare("INSERT INTO purchase_project_kanban_columns (name, color, system_key, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
@@ -133,8 +148,8 @@ function readState(database: DatabaseSync): PurchaseProjectKanbanState {
   const columns = columnRows.map((column) => ({ ...column, systemKey: column.systemKey || undefined }));
   const projects = database.prepare(`
     SELECT id, project_key AS key, name, description, closing_date AS closingDate,
-           column_id AS columnId, created_at AS createdAt, updated_at AS updatedAt
-    FROM purchase_project_kanban_projects ORDER BY updated_at DESC, id DESC
+           column_id AS columnId, position, created_at AS createdAt, updated_at AS updatedAt
+    FROM purchase_project_kanban_projects ORDER BY column_id, position, id
   `).all() as Array<Omit<PurchaseProjectKanbanProject, "requestIds">>;
   const links = database.prepare(`
     SELECT project_id AS projectId, purchase_request_id AS requestId
@@ -222,10 +237,11 @@ export function createPurchaseProjectKanbanProject(nameValue: string, descriptio
     if (database.prepare("SELECT id FROM purchase_project_kanban_projects WHERE lower(name) = lower(?)").get(name)) throw new Error("Já existe um projeto com esse nome.");
     const firstColumn = database.prepare("SELECT id FROM purchase_project_kanban_columns ORDER BY position, id LIMIT 1").get() as { id: number } | undefined;
     if (!firstColumn) throw new Error("Crie uma etapa antes de cadastrar o projeto.");
+    const position = Number((database.prepare("SELECT COALESCE(MAX(position), -1) + 1 AS position FROM purchase_project_kanban_projects WHERE column_id = ?").get(firstColumn.id) as { position: number }).position);
     const stamp = nowIso();
     const key = `project:${randomUUID()}`;
-    database.prepare("INSERT INTO purchase_project_kanban_projects (project_key, name, description, closing_date, column_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
-      .run(key, name, description, closingDate || null, firstColumn.id, stamp, stamp);
+    database.prepare("INSERT INTO purchase_project_kanban_projects (project_key, name, description, closing_date, column_id, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .run(key, name, description, closingDate || null, firstColumn.id, position, stamp, stamp);
     return readState(database);
   } finally { database.close(); }
 }
@@ -251,11 +267,30 @@ export function deletePurchaseProjectKanbanProject(projectId: number) {
   } finally { database.close(); }
 }
 
-export function movePurchaseProjectKanbanProject(projectId: number, columnId: number) {
+export function movePurchaseProjectKanbanProject(projectId: number, columnId: number, positionValue?: number) {
   const database = openDatabase();
   try {
     if (!database.prepare("SELECT id FROM purchase_project_kanban_columns WHERE id = ?").get(columnId)) throw new Error("Etapa não encontrada.");
-    if (database.prepare("UPDATE purchase_project_kanban_projects SET column_id = ?, updated_at = ? WHERE id = ?").run(columnId, nowIso(), projectId).changes === 0) throw new Error("Projeto não encontrado.");
+    database.exec("BEGIN IMMEDIATE");
+    try {
+      const project = database.prepare("SELECT id, column_id AS columnId FROM purchase_project_kanban_projects WHERE id = ?").get(projectId) as { id: number; columnId: number } | undefined;
+      if (!project) throw new Error("Projeto não encontrado.");
+      const targetProjects = database.prepare("SELECT id FROM purchase_project_kanban_projects WHERE column_id = ? AND id <> ? ORDER BY position, id")
+        .all(columnId, projectId) as Array<{ id: number }>;
+      const requestedPosition = Number.isInteger(positionValue) ? Number(positionValue) : targetProjects.length;
+      const position = Math.max(0, Math.min(requestedPosition, targetProjects.length));
+      targetProjects.splice(position, 0, { id: projectId });
+
+      const updateOrder = database.prepare("UPDATE purchase_project_kanban_projects SET column_id = ?, position = ? WHERE id = ?");
+      if (project.columnId !== columnId) {
+        const sourceProjects = database.prepare("SELECT id FROM purchase_project_kanban_projects WHERE column_id = ? AND id <> ? ORDER BY position, id")
+          .all(project.columnId, projectId) as Array<{ id: number }>;
+        sourceProjects.forEach((item, index) => updateOrder.run(project.columnId, index, item.id));
+      }
+      targetProjects.forEach((item, index) => updateOrder.run(columnId, index, item.id));
+      database.prepare("UPDATE purchase_project_kanban_projects SET updated_at = ? WHERE id = ?").run(nowIso(), projectId);
+      database.exec("COMMIT");
+    } catch (error) { database.exec("ROLLBACK"); throw error; }
     return readState(database);
   } finally { database.close(); }
 }

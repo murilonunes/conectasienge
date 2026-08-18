@@ -30,6 +30,7 @@ import { useMemo, useState } from "react";
 
 type Modal = "columns" | "create-project" | "quotation-links" | { projectId: number } | null;
 type ApiInput = Record<string, string | number | undefined>;
+type DragTarget = { columnId: number; beforeProjectId?: number };
 
 function ProjectRequestRow({ request, action }: { request: PurchaseProjectKanbanRequest; action?: React.ReactNode }) {
   return (
@@ -59,7 +60,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [draggedProjectId, setDraggedProjectId] = useState<number>();
-  const [dragTargetColumnId, setDragTargetColumnId] = useState<number>();
+  const [dragTarget, setDragTarget] = useState<DragTarget>();
   const [newColumnName, setNewColumnName] = useState("");
   const [columnNames, setColumnNames] = useState<Record<number, string>>({});
   const [projectName, setProjectName] = useState("");
@@ -164,18 +165,24 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
     if (await updateBoard({ action: actions.deleteProject, projectId: selectedProject.id })) setModal(null);
   }
 
-  async function moveProject(projectId: number, columnId: number) {
+  async function moveProject(projectId: number, columnId: number, requestedPosition?: number) {
     const project = board.projects.find((item) => item.id === projectId);
-    if (!project || project.columnId === columnId) return;
+    if (!project) return;
+    const targetProjects = board.projects.filter((item) => item.columnId === columnId && item.id !== projectId);
+    const position = Math.max(0, Math.min(requestedPosition ?? targetProjects.length, targetProjects.length));
+    const currentProjects = board.projects.filter((item) => item.columnId === project.columnId);
+    if (project.columnId === columnId && currentProjects.findIndex((item) => item.id === projectId) === position) return;
     const previousBoard = board;
     setBoard((current) => ({
       ...current,
-      projects: [
-        { ...project, columnId, updatedAt: new Date().toISOString() },
-        ...current.projects.filter((item) => item.id !== projectId)
-      ]
+      projects: current.columns.flatMap((column) => {
+        const columnProjects = current.projects.filter((item) => item.columnId === column.id && item.id !== projectId);
+        if (column.id !== columnId) return columnProjects.map((item, index) => ({ ...item, position: index }));
+        columnProjects.splice(position, 0, { ...project, columnId, position, updatedAt: new Date().toISOString() });
+        return columnProjects.map((item, index) => ({ ...item, position: index }));
+      })
     }));
-    if (!await updateBoard({ action: actions.moveProject, projectId, columnId })) setBoard(previousBoard);
+    if (!await updateBoard({ action: actions.moveProject, projectId, columnId, position })) setBoard(previousBoard);
   }
 
   function startProjectDrag(event: React.DragEvent<HTMLElement>, projectId: number) {
@@ -192,27 +199,37 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
     window.requestAnimationFrame(() => dragImage.remove());
 
     setDraggedProjectId(projectId);
-    setDragTargetColumnId(undefined);
+    setDragTarget(undefined);
   }
 
   function finishProjectDrag() {
     setDraggedProjectId(undefined);
-    setDragTargetColumnId(undefined);
+    setDragTarget(undefined);
   }
 
   function dragProjectOverColumn(event: React.DragEvent<HTMLElement>, columnId: number) {
     if (!draggedProjectId) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
-    const sourceColumnId = board.projects.find((project) => project.id === draggedProjectId)?.columnId;
-    setDragTargetColumnId(sourceColumnId === columnId ? undefined : columnId);
+    const cards = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("[data-kanban-project-id]"))
+      .filter((card) => Number(card.dataset.kanbanProjectId) !== draggedProjectId);
+    const beforeCard = cards.find((card) => {
+      const bounds = card.getBoundingClientRect();
+      return event.clientY < bounds.top + bounds.height / 2;
+    });
+    const nextTarget = { columnId, beforeProjectId: beforeCard ? Number(beforeCard.dataset.kanbanProjectId) : undefined };
+    setDragTarget((current) => current?.columnId === nextTarget.columnId && current.beforeProjectId === nextTarget.beforeProjectId ? current : nextTarget);
   }
 
   function dropProject(event: React.DragEvent<HTMLElement>, columnId: number) {
     event.preventDefault();
     const projectId = Number(event.dataTransfer.getData("text/plain")) || draggedProjectId;
+    const targetProjects = board.projects.filter((project) => project.columnId === columnId && project.id !== projectId);
+    const beforeProjectId = dragTarget?.columnId === columnId ? dragTarget.beforeProjectId : undefined;
+    const beforeIndex = beforeProjectId ? targetProjects.findIndex((project) => project.id === beforeProjectId) : -1;
+    const position = beforeIndex >= 0 ? beforeIndex : targetProjects.length;
     finishProjectDrag();
-    if (projectId) void moveProject(projectId, columnId);
+    if (projectId) void moveProject(projectId, columnId, position);
   }
 
   async function addColumn() {
@@ -272,7 +289,13 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
         {board.columns.map((column) => {
           const projects = filteredProjects.filter((project) => project.columnId === column.id);
           const draggedProject = draggedProjectId ? board.projects.find((project) => project.id === draggedProjectId) : undefined;
-          const isDropTarget = dragTargetColumnId === column.id;
+          const isDropTarget = dragTarget?.columnId === column.id;
+          const dropPreview = isDropTarget && draggedProject ? (
+            <div className="purchase-kanban-drop-preview" aria-hidden="true">
+              <GripVertical size={15} />
+              <div><strong>{draggedProject.name}</strong><span><I18nText text="Solte nesta posição" /></span></div>
+            </div>
+          ) : null;
           return (
             <section
               className={`purchase-kanban-column color-${column.color}${isDropTarget ? " drop-target" : ""}`}
@@ -283,12 +306,6 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
             >
               <header><span className="kanban-column-mark" /><h2>{columnLabel(column)}</h2><strong>{projects.length}</strong></header>
               <div className="purchase-kanban-column-body">
-                {isDropTarget && draggedProject && (
-                  <div className="purchase-kanban-drop-preview" aria-hidden="true">
-                    <GripVertical size={15} />
-                    <div><strong>{draggedProject.name}</strong><span><I18nText text="Solte para mover para esta etapa" /></span></div>
-                  </div>
-                )}
                 {projects.map((project) => {
                   const requests = project.requestIds.map((id) => requestsById.get(id)).filter((item): item is PurchaseProjectKanbanRequest => Boolean(item));
                   const itemCount = requests.reduce((sum, request) => sum + request.itemCount, 0);
@@ -296,21 +313,25 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                   const quotedCount = requests.filter((request) => request.quotationCount > 0).length;
                   const coverage = requests.length ? Math.round((quotedCount / requests.length) * 100) : 0;
                   return (
-                    <article className={`purchase-kanban-card${draggedProjectId === project.id ? " dragging" : ""}${project.closingDate && project.closingDate < todayIso && !completedColumnIds.has(project.columnId) ? " overdue" : ""}`} key={project.id} draggable onDragStart={(event) => startProjectDrag(event, project.id)} onDragEnd={finishProjectDrag} onClick={() => openProject(project)}>
-                      <div className="purchase-kanban-card-head"><GripVertical size={15} /><div><h3>{project.name}</h3>{project.description && <p>{project.description}</p>}</div><button type="button" onClick={(event) => { event.stopPropagation(); openProject(project); }} title="Editar projeto" data-i18n-title="Editar projeto"><Pencil size={14} /></button></div>
-                      {project.closingDate && <div className="purchase-kanban-deadline"><CalendarClock size={13} /><span><I18nText text="Previsão de encerramento" /></span><strong>{displayDate(project.closingDate)}</strong>{project.closingDate < todayIso && !completedColumnIds.has(project.columnId) && <em><I18nText text="Em atraso" /></em>}</div>}
-                      <div className="purchase-kanban-card-metrics">
-                        <span><strong>{requests.length}</strong><I18nText text="Solicitações" /></span>
-                        <span><strong>{itemCount}</strong><I18nText text="Itens" /></span>
-                        <span><strong>{quotationCount}</strong><I18nText text="Cotações" /></span>
-                      </div>
-                      <div className="purchase-kanban-coverage"><span><I18nText text="Cobertura de cotação" /><strong>{coverage}%</strong></span><i><b style={{ width: `${coverage}%` }} /></i></div>
-                      <div className="purchase-kanban-request-summary">{requests.slice(0, 4).map((request) => <span key={request.id}><b>{request.code}</b><small>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></small></span>)}{requests.length > 4 && <span><b>+{requests.length - 4}</b><small><I18nText text="solicitações" /></small></span>}</div>
-                      <label onClick={(event) => event.stopPropagation()}><I18nText text="Etapa" /><select value={project.columnId} onChange={(event) => void moveProject(project.id, Number(event.target.value))} disabled={busy}>{board.columns.map((option) => <option key={option.id} value={option.id}>{columnLabel(option)}</option>)}</select></label>
-                    </article>
+                    <div className="purchase-kanban-card-slot" key={project.id}>
+                      {isDropTarget && dragTarget?.beforeProjectId === project.id && dropPreview}
+                      <article data-kanban-project-id={project.id} className={`purchase-kanban-card${draggedProjectId === project.id ? " dragging" : ""}${project.closingDate && project.closingDate < todayIso && !completedColumnIds.has(project.columnId) ? " overdue" : ""}`} draggable={!busy} onDragStart={(event) => startProjectDrag(event, project.id)} onDragEnd={finishProjectDrag} onClick={() => openProject(project)}>
+                        <div className="purchase-kanban-card-head"><GripVertical size={15} /><div><h3>{project.name}</h3>{project.description && <p>{project.description}</p>}</div><button type="button" onClick={(event) => { event.stopPropagation(); openProject(project); }} title="Editar projeto" data-i18n-title="Editar projeto"><Pencil size={14} /></button></div>
+                        {project.closingDate && <div className="purchase-kanban-deadline"><CalendarClock size={13} /><span><I18nText text="Previsão de encerramento" /></span><strong>{displayDate(project.closingDate)}</strong>{project.closingDate < todayIso && !completedColumnIds.has(project.columnId) && <em><I18nText text="Em atraso" /></em>}</div>}
+                        <div className="purchase-kanban-card-metrics">
+                          <span><strong>{requests.length}</strong><I18nText text="Solicitações" /></span>
+                          <span><strong>{itemCount}</strong><I18nText text="Itens" /></span>
+                          <span><strong>{quotationCount}</strong><I18nText text="Cotações" /></span>
+                        </div>
+                        <div className="purchase-kanban-coverage"><span><I18nText text="Cobertura de cotação" /><strong>{coverage}%</strong></span><i><b style={{ width: `${coverage}%` }} /></i></div>
+                        <div className="purchase-kanban-request-summary">{requests.slice(0, 4).map((request) => <span key={request.id}><b>{request.code}</b><small>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></small></span>)}{requests.length > 4 && <span><b>+{requests.length - 4}</b><small><I18nText text="solicitações" /></small></span>}</div>
+                        <label onClick={(event) => event.stopPropagation()}><I18nText text="Etapa" /><select value={project.columnId} onChange={(event) => void moveProject(project.id, Number(event.target.value))} disabled={busy}>{board.columns.map((option) => <option key={option.id} value={option.id}>{columnLabel(option)}</option>)}</select></label>
+                      </article>
+                    </div>
                   );
                 })}
-                {projects.length === 0 && <div className="purchase-kanban-empty"><BriefcaseBusiness size={22} /><span><I18nText text={normalizedQuery ? "Nenhum projeto encontrado nesta etapa." : "Arraste um projeto para esta etapa."} /></span></div>}
+                {isDropTarget && !dragTarget?.beforeProjectId && dropPreview}
+                {projects.length === 0 && !isDropTarget && <div className="purchase-kanban-empty"><BriefcaseBusiness size={22} /><span><I18nText text={normalizedQuery ? "Nenhum projeto encontrado nesta etapa." : "Arraste um projeto para esta etapa."} /></span></div>}
               </div>
             </section>
           );

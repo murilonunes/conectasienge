@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       name?: string;
       direction?: "left" | "right";
       projectId?: number;
+      position?: number;
       requestId?: number;
       description?: string;
       closingDate?: string;
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
         state = deletePurchaseProjectKanbanColumn(columnId);
         break;
       case actions.moveProject:
-        state = movePurchaseProjectKanbanProject(Number(input.projectId), columnId);
+        state = movePurchaseProjectKanbanProject(Number(input.projectId), columnId, input.position);
         break;
       case actions.createProject:
         state = createPurchaseProjectKanbanProject(String(input.name || ""), String(input.description || ""), String(input.closingDate || ""));
