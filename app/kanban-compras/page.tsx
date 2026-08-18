@@ -6,10 +6,8 @@ import { loadPurchaseProjectKanban } from "@/lib/purchase-project-kanban";
 export const dynamic = "force-dynamic";
 
 export default async function PurchaseProjectKanbanPage() {
-  const [catalog, board] = await Promise.all([
-    loadPurchaseProjectKanbanData(),
-    Promise.resolve(loadPurchaseProjectKanban())
-  ]);
+  const board = loadPurchaseProjectKanban();
+  const catalog = await loadPurchaseProjectKanbanData(board.projects.flatMap((project) => project.requestIds));
 
   return (
     <>

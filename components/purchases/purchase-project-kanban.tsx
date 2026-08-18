@@ -2,7 +2,7 @@
 
 import { I18nText } from "@/components/i18n/i18n-text";
 import { useI18n } from "@/components/i18n/i18n-provider";
-import type { PurchaseProjectKanbanData, PurchaseProjectKanbanRequest } from "@/features/purchases/project-kanban-data";
+import type { PurchaseProjectKanbanData, PurchaseProjectKanbanQuotation, PurchaseProjectKanbanRequest } from "@/features/purchases/project-kanban-data";
 import type { PurchaseProjectKanbanProject, PurchaseProjectKanbanState } from "@/lib/purchase-project-kanban";
 import { purchaseProjectKanbanActions as actions } from "@/lib/purchase-project-kanban-actions";
 import {
@@ -29,6 +29,7 @@ import {
 import { useMemo, useState } from "react";
 
 type Modal = "columns" | "create-project" | "quotation-links" | { projectId: number } | null;
+type ProjectDetailView = "overview" | "edit" | "links";
 type ApiInput = Record<string, string | number | undefined>;
 type DragTarget = { columnId: number; beforeProjectId?: number };
 
@@ -50,12 +51,84 @@ function ProjectRequestRow({ request, action }: { request: PurchaseProjectKanban
   );
 }
 
+function ProjectRequestOverview({ request, initiallyOpen = false }: { request: PurchaseProjectKanbanRequest; initiallyOpen?: boolean }) {
+  const { formatDate, formatNumber } = useI18n();
+  return (
+    <details className="kanban-manager-record" open={initiallyOpen || undefined}>
+      <summary>
+        <div><strong>{request.code}</strong><span><I18nText text={request.status} /></span></div>
+        <div className="kanban-manager-record-metrics"><span>{request.itemCount} <I18nText text={request.itemCount === 1 ? "item" : "itens"} /></span><span>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></span></div>
+      </summary>
+      <div className="kanban-manager-record-body">
+        <div className="kanban-manager-meta">
+          <span><small><I18nText text="Data da solicitação" /></small><strong>{request.date ? formatDate(`${request.date.slice(0, 10)}T12:00:00`) : <I18nText text="Não informada" />}</strong></span>
+          <span><small><I18nText text="Solicitante" /></small><strong>{request.requester || <I18nText text="Não informado" />}</strong></span>
+          <span><small><I18nText text="Cotações relacionadas" /></small><strong>{request.quotationIds.length ? request.quotationIds.map((id) => `#${id}`).join(", ") : <I18nText text="Nenhuma" />}</strong></span>
+        </div>
+        {request.notes && <div className="kanban-manager-note"><strong><I18nText text="Observações da solicitação" /></strong><p>{request.notes}</p></div>}
+        <div className="kanban-manager-items">
+          <header><strong><I18nText text="Itens solicitados" /></strong><span>{request.items.length}</span></header>
+          {request.items.map((item) => (
+            <div className="kanban-manager-item" key={`${request.id}:${item.number}`}>
+              <span><small>{item.productId ? `#${item.productId}` : `#${item.number}`}</small><strong>{item.description}{item.detail ? ` - ${item.detail}` : ""}</strong>{item.notes && <em>{item.notes}</em>}</span>
+              <span className="kanban-manager-item-values"><b>{formatNumber(item.quantity)} {item.unit || ""}</b>{item.deliveryDays !== undefined && <small><I18nText text="Prazo estimado" />: {item.deliveryDays} <I18nText text="dias" /></small>}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+function ProjectQuotationOverview({ quotation, initiallyOpen = false }: { quotation: PurchaseProjectKanbanQuotation; initiallyOpen?: boolean }) {
+  const { t, formatCurrency, formatDate, formatNumber } = useI18n();
+  const pricedSuppliers = quotation.suppliers.filter((supplier) => supplier.totalValue > 0);
+  const lowestValue = pricedSuppliers.length ? Math.min(...pricedSuppliers.map((supplier) => supplier.totalValue)) : 0;
+  return (
+    <details className="kanban-manager-record quotation" open={initiallyOpen || undefined}>
+      <summary>
+        <div><strong>#{quotation.id}</strong><span><I18nText text={quotation.status} /></span></div>
+        <div className="kanban-manager-record-metrics"><span>{quotation.supplierCount} <I18nText text={quotation.supplierCount === 1 ? "fornecedor" : "fornecedores"} /></span><span>{quotation.responseCount} <I18nText text={quotation.responseCount === 1 ? "resposta" : "respostas"} /></span></div>
+      </summary>
+      <div className="kanban-manager-record-body">
+        <div className="kanban-manager-meta two">
+          <span><small><I18nText text="Data da cotação" /></small><strong>{quotation.date ? formatDate(`${quotation.date.slice(0, 10)}T12:00:00`) : <I18nText text="Não informada" />}</strong></span>
+          <span><small><I18nText text="Menor proposta" /></small><strong>{lowestValue ? formatCurrency(lowestValue) : <I18nText text="Sem valor informado" />}</strong></span>
+        </div>
+        {quotation.notes && <div className="kanban-manager-note"><strong><I18nText text="Observações da cotação" /></strong><p>{quotation.notes}</p></div>}
+        <div className="kanban-manager-items compact">
+          <header><strong><I18nText text="Itens da cotação" /></strong><span>{quotation.items.length}</span></header>
+          {quotation.items.map((item) => (
+            <div className="kanban-manager-item" key={`${quotation.id}:${item.number}`}>
+              <span><small>{item.productId ? `#${item.productId}` : `#${item.number}`}</small><strong>{item.description}{item.detail ? ` - ${item.detail}` : ""}</strong>{item.notes && <em>{item.notes}</em>}</span>
+              <b>{formatNumber(item.quantity)} {item.unit || ""}</b>
+            </div>
+          ))}
+          {quotation.items.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhum item disponível nesta cotação." /></div>}
+        </div>
+        <div className="kanban-manager-suppliers">
+          <header><strong><I18nText text="Fornecedores e propostas" /></strong><span>{quotation.suppliers.length}</span></header>
+          {quotation.suppliers.map((supplier, index) => {
+            const supplierName = supplier.name || (supplier.id ? `${t("Fornecedor")} #${supplier.id}` : t("Fornecedor não informado"));
+            return <div className={`kanban-manager-supplier${supplier.selected ? " selected" : ""}`} key={`${supplier.id || supplierName}:${index}`}>
+              <span><strong>{supplierName}</strong><small>{supplier.responded ? <><I18nText text="Respondeu" /> · {supplier.quotedItems}/{quotation.items.length} <I18nText text="itens" /></> : <I18nText text="Aguardando resposta" />}</small></span>
+              <span><b>{supplier.totalValue ? formatCurrency(supplier.totalValue) : <I18nText text="Sem valor" />}</b>{supplier.selected && <em><I18nText text="Selecionado" /></em>}{!supplier.selected && lowestValue > 0 && supplier.totalValue === lowestValue && <em><I18nText text="Menor proposta" /></em>}</span>
+            </div>;
+          })}
+          {quotation.suppliers.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhum fornecedor vinculado à cotação." /></div>}
+        </div>
+      </div>
+    </details>
+  );
+}
+
 export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard: PurchaseProjectKanbanState; catalog: PurchaseProjectKanbanData }) {
   const { t, formatDate } = useI18n();
   const [board, setBoard] = useState(initialBoard);
   const [requests, setRequests] = useState(catalog.requests);
   const [quotations, setQuotations] = useState(catalog.quotations);
   const [modal, setModal] = useState<Modal>(null);
+  const [projectDetailView, setProjectDetailView] = useState<ProjectDetailView>("overview");
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -74,6 +147,13 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const assignedRequestIds = useMemo(() => new Set(board.projects.flatMap((project) => project.requestIds)), [board.projects]);
   const selectedProject = typeof modal === "object" && modal ? board.projects.find((project) => project.id === modal.projectId) : undefined;
   const selectedRequests = selectedProject?.requestIds.map((id) => requestsById.get(id)).filter((item): item is PurchaseProjectKanbanRequest => Boolean(item)) || [];
+  const selectedRequestIds = new Set(selectedProject?.requestIds || []);
+  const selectedQuotations = quotations.filter((quotation) => quotation.requestIds.some((requestId) => selectedRequestIds.has(requestId)));
+  const selectedItemCount = selectedRequests.reduce((sum, request) => sum + request.itemCount, 0);
+  const selectedSupplierCount = new Set(selectedQuotations.flatMap((quotation) => quotation.suppliers.map((supplier) => supplier.id ? `id:${supplier.id}` : `name:${supplier.name}`))).size;
+  const selectedResponseCount = selectedQuotations.reduce((sum, quotation) => sum + quotation.responseCount, 0);
+  const selectedCoverage = selectedRequests.length ? Math.round((selectedRequests.filter((request) => request.quotationCount > 0).length / selectedRequests.length) * 100) : 0;
+  const selectedProjectColumn = selectedProject ? board.columns.find((column) => column.id === selectedProject.columnId) : undefined;
   const availableRequests = requests.filter((request) => {
     if (assignedRequestIds.has(request.id)) return false;
     const normalized = requestQuery.trim().toLocaleLowerCase("pt-BR");
@@ -148,6 +228,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
     setProjectClosingDate(project.closingDate || "");
     setRequestQuery("");
     setMessage("");
+    setProjectDetailView("overview");
     setModal({ projectId: project.id });
   }
 
@@ -157,7 +238,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
 
   async function saveProject() {
     if (!selectedProject) return;
-    await updateBoard({ action: actions.updateProject, projectId: selectedProject.id, name: projectName, description: projectDescription, closingDate: projectClosingDate });
+    if (await updateBoard({ action: actions.updateProject, projectId: selectedProject.id, name: projectName, description: projectDescription, closingDate: projectClosingDate })) setProjectDetailView("overview");
   }
 
   async function deleteProject() {
@@ -413,14 +494,56 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
       {selectedProject && (
         <div className="settings-modal-backdrop" role="presentation" onMouseDown={() => !busy && setModal(null)}>
           <div className="settings-modal kanban-project-detail-modal" role="dialog" aria-modal="true" aria-label="Detalhes do projeto" data-i18n-aria-label="Detalhes do projeto" onMouseDown={(event) => event.stopPropagation()}>
-            <header className="settings-modal-head"><div><h2>{selectedProject.name}</h2><span><I18nText text="Gerencie o projeto e as solicitações de compra vinculadas." /></span></div><button className="kanban-icon-button" onClick={() => setModal(null)} title="Fechar" data-i18n-title="Fechar"><X size={17} /></button></header>
-            <div className="kanban-project-detail-grid">
-              <section><h3><I18nText text="Dados do projeto" /></h3><div className="kanban-project-form"><label><span><I18nText text="Nome do projeto" /> *</span><input value={projectName} onChange={(event) => setProjectName(event.target.value)} maxLength={80} /></label><label><span><I18nText text="Previsão de encerramento" /></span><input type="date" value={projectClosingDate} onChange={(event) => setProjectClosingDate(event.target.value)} /></label><label><span><I18nText text="Descrição" /></span><textarea value={projectDescription} onChange={(event) => setProjectDescription(event.target.value)} maxLength={300} rows={4} /></label><label><span><I18nText text="Etapa atual" /></span><select value={selectedProject.columnId} onChange={(event) => void moveProject(selectedProject.id, Number(event.target.value))}>{board.columns.map((column) => <option key={column.id} value={column.id}>{columnLabel(column)}</option>)}</select></label><button className="button secondary" onClick={saveProject} disabled={busy || !projectName.trim()}><Check size={15} /> <I18nText text="Salvar dados" /></button></div></section>
-              <section><div className="kanban-modal-section-head"><div><h3><I18nText text="Solicitações vinculadas" /></h3><small>{selectedRequests.length} <I18nText text={selectedRequests.length === 1 ? "solicitação" : "solicitações"} /></small></div></div><div className="kanban-request-list">{selectedRequests.map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.unlinkRequest, projectId: selectedProject.id, requestId: request.id })} disabled={busy} title="Desvincular solicitação" data-i18n-title="Desvincular solicitação"><Unlink size={14} /></button>} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div></section>
-              <section className="kanban-available-requests"><div className="kanban-modal-section-head"><div><h3><I18nText text="Adicionar solicitações" /></h3><small><I18nText text="Somente solicitações ainda não vinculadas a outro projeto." /></small></div><div className="purchase-kanban-search compact"><Search size={14} /><input value={requestQuery} onChange={(event) => setRequestQuery(event.target.value)} placeholder="Buscar solicitação" data-i18n-placeholder="Buscar solicitação" /></div></div><div className="kanban-request-list available">{availableRequests.slice(0, 100).map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.linkRequest, projectId: selectedProject.id, requestId: request.id })} disabled={busy} title="Vincular solicitação" data-i18n-title="Vincular solicitação"><Link2 size={14} /></button>} />)}{availableRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação disponível." /></div>}</div>{availableRequests.length > 100 && <small className="kanban-result-limit"><I18nText text="Refine a busca para ver outros resultados." /></small>}</section>
-            </div>
+            <header className="settings-modal-head kanban-project-detail-head">
+              <div><h2>{selectedProject.name}</h2><span><I18nText text={projectDetailView === "overview" ? "Visão gerencial consolidada do projeto." : projectDetailView === "edit" ? "Edite os dados e a etapa do projeto." : "Adicione ou remova solicitações vinculadas ao projeto."} /></span></div>
+              <div className="kanban-project-detail-actions">
+                {projectDetailView === "overview" ? <><button className="button secondary" onClick={() => setProjectDetailView("edit")}><Pencil size={14} /> <I18nText text="Editar dados" /></button><button className="button secondary" onClick={() => setProjectDetailView("links")}><Link2 size={14} /> <I18nText text="Gerenciar vínculos" /></button></> : <button className="button secondary" onClick={() => setProjectDetailView("overview")}><ArrowLeft size={14} /> <I18nText text="Voltar à visão gerencial" /></button>}
+                <button className="kanban-icon-button" onClick={() => setModal(null)} title="Fechar" data-i18n-title="Fechar"><X size={17} /></button>
+              </div>
+            </header>
+
+            {projectDetailView === "overview" && (
+              <div className="kanban-manager-overview">
+                <div className="kanban-manager-project-summary">
+                  <div><span className={`kanban-column-mark color-${selectedProjectColumn?.color || "neutral"}`} /><strong>{selectedProjectColumn ? columnLabel(selectedProjectColumn) : <I18nText text="Etapa não encontrada" />}</strong></div>
+                  <div><CalendarClock size={14} /><span><I18nText text="Previsão de encerramento" /></span><strong>{selectedProject.closingDate ? displayDate(selectedProject.closingDate) : <I18nText text="Não informada" />}</strong>{selectedProject.closingDate && selectedProject.closingDate < todayIso && !completedColumnIds.has(selectedProject.columnId) && <em><I18nText text="Em atraso" /></em>}</div>
+                  {selectedProject.description && <p>{selectedProject.description}</p>}
+                </div>
+                <div className="kanban-manager-kpis">
+                  <div><span><I18nText text="Solicitações" /></span><strong>{selectedRequests.length}</strong></div>
+                  <div><span><I18nText text="Itens solicitados" /></span><strong>{selectedItemCount}</strong></div>
+                  <div><span><I18nText text="Cotações relacionadas" /></span><strong>{selectedQuotations.length}</strong></div>
+                  <div><span><I18nText text="Fornecedores" /></span><strong>{selectedSupplierCount}</strong></div>
+                  <div><span><I18nText text="Respostas recebidas" /></span><strong>{selectedResponseCount}</strong></div>
+                  <div><span><I18nText text="Cobertura de cotação" /></span><strong>{selectedCoverage}%</strong></div>
+                </div>
+                <div className="kanban-manager-columns">
+                  <section>
+                    <header><div><h3><I18nText text="Solicitações do projeto" /></h3><span><I18nText text="Abra uma solicitação para consultar seus itens e observações." /></span></div><strong>{selectedRequests.length}</strong></header>
+                    <div className="kanban-manager-record-list">{selectedRequests.map((request, index) => <ProjectRequestOverview key={request.id} request={request} initiallyOpen={index === 0} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div>
+                  </section>
+                  <section>
+                    <header><div><h3><I18nText text="Cotações relacionadas" /></h3><span><I18nText text="Consulte itens, fornecedores, respostas e valores sem sair do projeto." /></span></div><strong>{selectedQuotations.length}</strong></header>
+                    <div className="kanban-manager-record-list">{selectedQuotations.map((quotation, index) => <ProjectQuotationOverview key={quotation.id} quotation={quotation} initiallyOpen={index === 0} />)}{selectedQuotations.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma cotação relacionada às solicitações deste projeto." /></div>}</div>
+                  </section>
+                </div>
+              </div>
+            )}
+
+            {projectDetailView === "edit" && (
+              <div className="kanban-project-edit-view">
+                <section><h3><I18nText text="Dados do projeto" /></h3><div className="kanban-project-form"><label><span><I18nText text="Nome do projeto" /> *</span><input value={projectName} onChange={(event) => setProjectName(event.target.value)} maxLength={80} /></label><label><span><I18nText text="Previsão de encerramento" /></span><input type="date" value={projectClosingDate} onChange={(event) => setProjectClosingDate(event.target.value)} /></label><label><span><I18nText text="Descrição" /></span><textarea value={projectDescription} onChange={(event) => setProjectDescription(event.target.value)} maxLength={300} rows={5} /></label><label><span><I18nText text="Etapa atual" /></span><select value={selectedProject.columnId} onChange={(event) => void moveProject(selectedProject.id, Number(event.target.value))}>{board.columns.map((column) => <option key={column.id} value={column.id}>{columnLabel(column)}</option>)}</select></label><button className="button" onClick={saveProject} disabled={busy || !projectName.trim()}>{busy ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />} <I18nText text="Salvar dados" /></button></div></section>
+              </div>
+            )}
+
+            {projectDetailView === "links" && (
+              <div className="kanban-project-links-view">
+                <section><div className="kanban-modal-section-head"><div><h3><I18nText text="Solicitações vinculadas" /></h3><small>{selectedRequests.length} <I18nText text={selectedRequests.length === 1 ? "solicitação" : "solicitações"} /></small></div></div><div className="kanban-request-list">{selectedRequests.map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.unlinkRequest, projectId: selectedProject.id, requestId: request.id })} disabled={busy} title="Desvincular solicitação" data-i18n-title="Desvincular solicitação"><Unlink size={14} /></button>} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div></section>
+                <section className="kanban-available-requests"><div className="kanban-modal-section-head"><div><h3><I18nText text="Adicionar solicitações" /></h3><small><I18nText text="Somente solicitações ainda não vinculadas a outro projeto." /></small></div><div className="purchase-kanban-search compact"><Search size={14} /><input value={requestQuery} onChange={(event) => setRequestQuery(event.target.value)} placeholder="Buscar solicitação" data-i18n-placeholder="Buscar solicitação" /></div></div><div className="kanban-request-list available">{availableRequests.slice(0, 100).map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.linkRequest, projectId: selectedProject.id, requestId: request.id })} disabled={busy} title="Vincular solicitação" data-i18n-title="Vincular solicitação"><Link2 size={14} /></button>} />)}{availableRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação disponível." /></div>}</div>{availableRequests.length > 100 && <small className="kanban-result-limit"><I18nText text="Refine a busca para ver outros resultados." /></small>}</section>
+              </div>
+            )}
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
-            <footer className="settings-modal-actions split"><button className="button danger" onClick={deleteProject} disabled={busy}><Trash2 size={15} /> <I18nText text="Excluir projeto" /></button><button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>
+            <footer className={`settings-modal-actions${projectDetailView === "edit" ? " split" : ""}`}>{projectDetailView === "edit" && <button className="button danger" onClick={deleteProject} disabled={busy}><Trash2 size={15} /> <I18nText text="Excluir projeto" /></button>}<button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>
           </div>
         </div>
       )}
