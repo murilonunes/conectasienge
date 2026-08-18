@@ -55,13 +55,13 @@ function ProjectRequestRow({ request, stageControl, action }: { request: Purchas
   );
 }
 
-function ProjectRequestOverview({ request, stage, initiallyOpen = false }: { request: PurchaseProjectKanbanRequest; stage?: PurchaseProjectKanbanColumn; initiallyOpen?: boolean }) {
+function ProjectRequestOverview({ request, stage, stageControl, initiallyOpen = false }: { request: PurchaseProjectKanbanRequest; stage?: PurchaseProjectKanbanColumn; stageControl?: React.ReactNode; initiallyOpen?: boolean }) {
   const { formatDate, formatNumber } = useI18n();
   return (
     <details className="kanban-manager-record" open={initiallyOpen || undefined}>
       <summary>
         <div><strong>{request.code}</strong><span><I18nText text={request.status} /></span>{stage && <em className="kanban-request-stage-badge"><i className={`kanban-column-mark color-${stage.color}`} />{stage.systemKey ? <I18nText text={stage.name} /> : stage.name}</em>}</div>
-        <div className="kanban-manager-record-metrics"><span>{request.itemCount} <I18nText text={request.itemCount === 1 ? "item" : "itens"} /></span><span>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></span></div>
+        <div className="kanban-manager-record-metrics"><span>{request.itemCount} <I18nText text={request.itemCount === 1 ? "item" : "itens"} /></span><span>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></span>{stageControl && <div className="kanban-manager-record-stage-control" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>{stageControl}</div>}</div>
       </summary>
       <div className="kanban-manager-record-body">
         <div className="kanban-manager-meta">
@@ -575,7 +575,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                 <div className="kanban-manager-columns">
                   <section>
                     <header><div><h3><I18nText text="Solicitações do projeto" /></h3><span><I18nText text="Abra uma solicitação para consultar seus itens e observações." /></span></div><strong>{selectedRequests.length}</strong></header>
-                    <div className="kanban-manager-record-list">{selectedRequestEntries.map((entry, index) => <ProjectRequestOverview key={entry.request.id} request={entry.request} stage={entry.column} initiallyOpen={index === 0} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div>
+                    <div className="kanban-manager-record-list">{selectedRequestEntries.map((entry, index) => <ProjectRequestOverview key={entry.request.id} request={entry.request} stage={entry.column} stageControl={<label><span><I18nText text="Etapa da solicitação" /></span><select aria-label={`${t("Etapa da solicitação")}: ${entry.request.code}`} value={entry.link.columnId} onChange={(event) => void updateBoard({ action: actions.moveRequest, projectId: selectedProject.id, requestId: entry.request.id, columnId: Number(event.target.value) })} disabled={busy}>{board.columns.map((column) => <option key={column.id} value={column.id}>{columnLabel(column)}</option>)}</select></label>} initiallyOpen={index === 0} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div>
                   </section>
                   <section>
                     <header><div><h3><I18nText text="Cotações relacionadas" /></h3><span><I18nText text="Consulte itens, fornecedores, respostas e valores sem sair do projeto." /></span></div><strong>{selectedQuotations.length}</strong></header>

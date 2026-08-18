@@ -2683,6 +2683,10 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-record > summary > div:first-child .kanban-request-stage-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px solid var(--line); border-radius: 4px; color: #53645b; font-size: 8px; font-style: normal; font-weight: 800; white-space: nowrap; }
 .kanban-manager-record-metrics { grid-column: 2; grid-row: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-right: 28px; }
 .kanban-manager-record-metrics span { color: var(--muted); font-size: 9px; white-space: nowrap; }
+.kanban-manager-record-stage-control { min-width: 150px; padding-left: 8px; border-left: 1px solid var(--line); }
+.kanban-manager-record-stage-control label { display: grid; grid-template-columns: auto minmax(95px, 1fr); align-items: center; gap: 5px; }
+.kanban-manager-record-stage-control label > span { padding: 0; background: transparent; font-size: 7px; }
+.kanban-manager-record-stage-control select { width: 100%; min-width: 0; padding: 5px 6px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: var(--ink); font-size: 8px; }
 .kanban-manager-record-body { display: grid; gap: 10px; padding: 0 11px 11px; border-top: 1px solid #edf1ef; }
 .kanban-manager-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid #e5ebe8; border-radius: 6px; margin-top: 10px; }
 .kanban-manager-meta.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
