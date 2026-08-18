@@ -59,6 +59,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [draggedProjectId, setDraggedProjectId] = useState<number>();
+  const [dragTargetColumnId, setDragTargetColumnId] = useState<number>();
   const [newColumnName, setNewColumnName] = useState("");
   const [columnNames, setColumnNames] = useState<Record<number, string>>({});
   const [projectName, setProjectName] = useState("");
@@ -166,7 +167,52 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   async function moveProject(projectId: number, columnId: number) {
     const project = board.projects.find((item) => item.id === projectId);
     if (!project || project.columnId === columnId) return;
-    await updateBoard({ action: actions.moveProject, projectId, columnId });
+    const previousBoard = board;
+    setBoard((current) => ({
+      ...current,
+      projects: [
+        { ...project, columnId, updatedAt: new Date().toISOString() },
+        ...current.projects.filter((item) => item.id !== projectId)
+      ]
+    }));
+    if (!await updateBoard({ action: actions.moveProject, projectId, columnId })) setBoard(previousBoard);
+  }
+
+  function startProjectDrag(event: React.DragEvent<HTMLElement>, projectId: number) {
+    const project = board.projects.find((item) => item.id === projectId);
+    if (!project) return;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(projectId));
+
+    const dragImage = event.currentTarget.cloneNode(true) as HTMLElement;
+    dragImage.classList.add("purchase-kanban-drag-image");
+    dragImage.style.width = `${event.currentTarget.getBoundingClientRect().width}px`;
+    document.body.appendChild(dragImage);
+    event.dataTransfer.setDragImage(dragImage, 24, 24);
+    window.requestAnimationFrame(() => dragImage.remove());
+
+    setDraggedProjectId(projectId);
+    setDragTargetColumnId(undefined);
+  }
+
+  function finishProjectDrag() {
+    setDraggedProjectId(undefined);
+    setDragTargetColumnId(undefined);
+  }
+
+  function dragProjectOverColumn(event: React.DragEvent<HTMLElement>, columnId: number) {
+    if (!draggedProjectId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    const sourceColumnId = board.projects.find((project) => project.id === draggedProjectId)?.columnId;
+    setDragTargetColumnId(sourceColumnId === columnId ? undefined : columnId);
+  }
+
+  function dropProject(event: React.DragEvent<HTMLElement>, columnId: number) {
+    event.preventDefault();
+    const projectId = Number(event.dataTransfer.getData("text/plain")) || draggedProjectId;
+    finishProjectDrag();
+    if (projectId) void moveProject(projectId, columnId);
   }
 
   async function addColumn() {
@@ -225,15 +271,24 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
       <div className="purchase-kanban-board" style={{ gridTemplateColumns: `repeat(${Math.max(board.columns.length, 1)}, minmax(285px, 1fr))` }}>
         {board.columns.map((column) => {
           const projects = filteredProjects.filter((project) => project.columnId === column.id);
+          const draggedProject = draggedProjectId ? board.projects.find((project) => project.id === draggedProjectId) : undefined;
+          const isDropTarget = dragTargetColumnId === column.id;
           return (
             <section
-              className={`purchase-kanban-column color-${column.color}`}
+              className={`purchase-kanban-column color-${column.color}${isDropTarget ? " drop-target" : ""}`}
               key={column.id}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={() => { if (draggedProjectId) void moveProject(draggedProjectId, column.id); setDraggedProjectId(undefined); }}
+              onDragEnter={(event) => dragProjectOverColumn(event, column.id)}
+              onDragOver={(event) => dragProjectOverColumn(event, column.id)}
+              onDrop={(event) => dropProject(event, column.id)}
             >
               <header><span className="kanban-column-mark" /><h2>{columnLabel(column)}</h2><strong>{projects.length}</strong></header>
               <div className="purchase-kanban-column-body">
+                {isDropTarget && draggedProject && (
+                  <div className="purchase-kanban-drop-preview" aria-hidden="true">
+                    <GripVertical size={15} />
+                    <div><strong>{draggedProject.name}</strong><span><I18nText text="Solte para mover para esta etapa" /></span></div>
+                  </div>
+                )}
                 {projects.map((project) => {
                   const requests = project.requestIds.map((id) => requestsById.get(id)).filter((item): item is PurchaseProjectKanbanRequest => Boolean(item));
                   const itemCount = requests.reduce((sum, request) => sum + request.itemCount, 0);
@@ -241,7 +296,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                   const quotedCount = requests.filter((request) => request.quotationCount > 0).length;
                   const coverage = requests.length ? Math.round((quotedCount / requests.length) * 100) : 0;
                   return (
-                    <article className={`purchase-kanban-card ${project.closingDate && project.closingDate < todayIso && !completedColumnIds.has(project.columnId) ? "overdue" : ""}`} key={project.id} draggable onDragStart={() => setDraggedProjectId(project.id)} onDragEnd={() => setDraggedProjectId(undefined)} onClick={() => openProject(project)}>
+                    <article className={`purchase-kanban-card${draggedProjectId === project.id ? " dragging" : ""}${project.closingDate && project.closingDate < todayIso && !completedColumnIds.has(project.columnId) ? " overdue" : ""}`} key={project.id} draggable onDragStart={(event) => startProjectDrag(event, project.id)} onDragEnd={finishProjectDrag} onClick={() => openProject(project)}>
                       <div className="purchase-kanban-card-head"><GripVertical size={15} /><div><h3>{project.name}</h3>{project.description && <p>{project.description}</p>}</div><button type="button" onClick={(event) => { event.stopPropagation(); openProject(project); }} title="Editar projeto" data-i18n-title="Editar projeto"><Pencil size={14} /></button></div>
                       {project.closingDate && <div className="purchase-kanban-deadline"><CalendarClock size={13} /><span><I18nText text="Previsão de encerramento" /></span><strong>{displayDate(project.closingDate)}</strong>{project.closingDate < todayIso && !completedColumnIds.has(project.columnId) && <em><I18nText text="Em atraso" /></em>}</div>}
                       <div className="purchase-kanban-card-metrics">
