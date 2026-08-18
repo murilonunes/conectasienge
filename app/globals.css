@@ -2641,6 +2641,8 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-project-detail-head { align-items: center; }
 .kanban-project-detail-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .kanban-project-detail-actions .button { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; border-radius: 7px; padding: 8px 11px; }
+.settings-modal-actions .kanban-close-button { border-color: #d9b36f; background: #fff8eb; color: #825819; }
+.settings-modal-actions .kanban-close-button:hover { border-color: #c4933c; background: #fff1d5; color: #6f480f; }
 .kanban-manager-overview { min-height: 0; display: grid; grid-template-rows: repeat(4, auto); gap: 10px; overflow: visible; }
 .kanban-manager-project-summary { min-height: 44px; display: flex; align-items: center; gap: 14px 22px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: #f8faf9; }
 .kanban-manager-project-summary > div { display: flex; align-items: center; gap: 7px; }

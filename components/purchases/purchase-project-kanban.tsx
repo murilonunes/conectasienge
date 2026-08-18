@@ -503,7 +503,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
             </div>
             <div className="kanban-add-column"><input value={newColumnName} onChange={(event) => setNewColumnName(event.target.value)} placeholder="Nome da nova etapa" data-i18n-placeholder="Nome da nova etapa" maxLength={80} onKeyDown={(event) => { if (event.key === "Enter") void addColumn(); }} /><button className="button" onClick={addColumn} disabled={busy || !newColumnName.trim()}><Plus size={15} /> <I18nText text="Adicionar etapa" /></button></div>
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
-            <footer className="settings-modal-actions"><button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>
+            <footer className="settings-modal-actions"><button className="button secondary kanban-close-button" onClick={() => setModal(null)}><X size={15} /> <I18nText text="Fechar" /></button></footer>
           </div>
         </div>
       )}
@@ -552,7 +552,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
               {pendingQuotations.length === 0 && <div className="kanban-links-complete"><Check size={26} /><strong><I18nText text="Todos os vínculos estão organizados" /></strong><span><I18nText text="Todas as cotações possuem solicitação de origem e projeto definido." /></span></div>}
             </div>
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
-            <footer className="settings-modal-actions"><button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>
+            <footer className="settings-modal-actions"><button className="button secondary kanban-close-button" onClick={() => setModal(null)}><X size={15} /> <I18nText text="Fechar" /></button></footer>
           </div>
         </div>
       )}
@@ -615,7 +615,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
               </div>
             )}
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
-            <footer className={`settings-modal-actions${projectDetailView === "edit" ? " split" : ""}`}>{projectDetailView === "edit" && <button className="button danger" onClick={deleteProject} disabled={busy}><Trash2 size={15} /> <I18nText text="Excluir projeto" /></button>}<button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>
+            <footer className={`settings-modal-actions${projectDetailView === "edit" ? " split" : ""}`}>{projectDetailView === "edit" && <button className="button danger" onClick={deleteProject} disabled={busy}><Trash2 size={15} /> <I18nText text="Excluir projeto" /></button>}<button className="button secondary kanban-close-button" onClick={() => setModal(null)}><X size={15} /> <I18nText text="Fechar" /></button></footer>
           </div>
         </div>
       )}
