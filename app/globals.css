@@ -2594,11 +2594,11 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-kanban-deadline span { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .purchase-kanban-deadline strong { font-size: 11px; white-space: nowrap; }
 .purchase-kanban-deadline em { padding: 2px 5px; border-radius: 4px; background: #f8e8c8; color: #8c5b1d; font-size: 10px; font-style: normal; font-weight: 850; text-transform: uppercase; }
-.purchase-kanban-card-metrics { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.purchase-kanban-card-metrics span { min-width: 0; display: grid; gap: 2px; padding: 7px 5px; border-right: 1px solid var(--line); text-align: center; }
-.purchase-kanban-card-metrics span:last-child { border-right: 0; }
-.purchase-kanban-card-metrics strong { font-size: 13px; }
-.purchase-kanban-card-metrics span > span { padding: 0; border: 0; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.purchase-kanban-card-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.purchase-kanban-card-metrics > span { min-width: 0; min-height: 54px; display: grid; align-content: center; gap: 3px; padding: 7px 4px; border-right: 1px solid var(--line); text-align: center; }
+.purchase-kanban-card-metrics > span:last-child { border-right: 0; }
+.purchase-kanban-card-metrics > span > strong { font-size: 13px; }
+.purchase-kanban-card-metrics > span > small { min-width: 0; color: var(--muted); font-size: 10px; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; text-transform: uppercase; }
 .purchase-kanban-coverage { display: grid; gap: 5px; }
 .purchase-kanban-coverage > span { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 11px; }
 .purchase-kanban-coverage strong { color: var(--ink); }

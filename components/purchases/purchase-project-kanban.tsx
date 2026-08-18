@@ -437,9 +437,9 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                         <div className="purchase-kanban-card-head"><GripVertical size={15} /><div><h3>{project.name}</h3>{project.description && <p>{project.description}</p>}</div><button type="button" onClick={(event) => { event.stopPropagation(); openProject(project); }} title="Editar projeto" data-i18n-title="Editar projeto"><Pencil size={14} /></button></div>
                         {project.closingDate && <div className="purchase-kanban-deadline"><CalendarClock size={13} /><span><I18nText text="Previsão de encerramento" /></span><strong>{displayDate(project.closingDate)}</strong>{project.closingDate < todayIso && !completedColumnIds.has(project.columnId) && <em><I18nText text="Em atraso" /></em>}</div>}
                         <div className="purchase-kanban-card-metrics">
-                          <span><strong>{requests.length}</strong><I18nText text="Solicitações" /></span>
-                          <span><strong>{itemCount}</strong><I18nText text="Itens" /></span>
-                          <span><strong>{quotationCount}</strong><I18nText text="Cotações" /></span>
+                          <span><strong>{requests.length}</strong><small><I18nText text="Solicitações" /></small></span>
+                          <span><strong>{itemCount}</strong><small><I18nText text="Itens" /></small></span>
+                          <span><strong>{quotationCount}</strong><small><I18nText text="Cotações" /></small></span>
                         </div>
                         <div className="purchase-kanban-coverage"><span><I18nText text="Cobertura de cotação" /><strong>{coverage}%</strong></span><i><b style={{ width: `${coverage}%` }} /></i></div>
                         <div className="purchase-kanban-request-summary">{requests.slice(0, 4).map((request) => { const requestStage = requestStages.get(request.id); return <span key={request.id}><b>{requestStage && <i className={`kanban-column-mark color-${requestStage.color}`} />}{request.code}</b><small>{requestStage ? <>{requestStage.systemKey ? <I18nText text={requestStage.name} /> : requestStage.name} · </> : null}{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></small></span>; })}{requests.length > 4 && <span><b>+{requests.length - 4}</b><small><I18nText text="solicitações" /></small></span>}</div>
