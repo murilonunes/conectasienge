@@ -2618,7 +2618,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-kanban-empty span { font-size: 11px; }
 .kanban-project-modal { width: min(600px, 100%); }
 .kanban-columns-modal { width: min(1040px, 100%); }
-.kanban-project-detail-modal { width: min(1280px, 100%); height: min(880px, 92vh); max-height: 92vh; overflow: hidden; grid-template-rows: auto minmax(0, 1fr) auto auto; }
+.kanban-project-detail-modal { width: min(1280px, 100%); height: auto; max-height: 92vh; overflow-x: hidden; overflow-y: auto; grid-template-rows: none; align-content: start; scrollbar-gutter: stable; }
 .kanban-quotation-links-modal { width: min(900px, 100%); }
 .kanban-project-form { display: grid; gap: 10px; }
 .kanban-project-form label { display: grid; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
@@ -2641,7 +2641,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-project-detail-head { align-items: center; }
 .kanban-project-detail-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .kanban-project-detail-actions .button { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; border-radius: 7px; padding: 8px 11px; }
-.kanban-manager-overview { min-height: 0; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: 10px; overflow: hidden; }
+.kanban-manager-overview { min-height: 0; display: grid; grid-template-rows: repeat(4, auto); gap: 10px; overflow: visible; }
 .kanban-manager-project-summary { min-height: 44px; display: flex; align-items: center; gap: 14px 22px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: #f8faf9; }
 .kanban-manager-project-summary > div { display: flex; align-items: center; gap: 7px; }
 .kanban-manager-project-summary > div:nth-child(2) { padding-left: 20px; border-left: 1px solid var(--line); }
@@ -2663,9 +2663,10 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-request-stages i.completed { background: #4f7897; }
 .kanban-manager-request-stages small { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
 .kanban-manager-request-stages b { font-size: 12px; }
-.kanban-manager-columns { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 14px; }
+.kanban-manager-columns { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); align-items: start; gap: 14px; }
 .kanban-manager-columns.single { grid-template-columns: minmax(0, 1fr); }
 .kanban-manager-columns > section { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #f8faf9; }
+.kanban-manager-overview .kanban-manager-columns > section { grid-template-rows: auto auto; }
 .kanban-manager-columns > section > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .kanban-manager-columns > section > header > div { display: grid; gap: 3px; }
 .kanban-manager-columns h3,
@@ -2674,6 +2675,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-columns > section > header span { color: var(--muted); font-size: 11px; }
 .kanban-manager-columns > section > header > strong { min-width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: #e8eeeb; font-size: 11px; }
 .kanban-manager-record-list { min-height: 0; display: grid; align-content: start; gap: 8px; overflow-y: auto; padding-right: 3px; }
+.kanban-manager-overview .kanban-manager-record-list { overflow: visible; padding-right: 0; }
 .kanban-manager-record { overflow: hidden; border: 1px solid #d9e1dd; border-radius: 7px; background: #fff; }
 .kanban-manager-record[open] { border-color: #b9c8c0; box-shadow: 0 4px 14px rgba(28, 48, 39, .05); }
 .kanban-manager-record > summary { min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; list-style: none; }
@@ -2711,7 +2713,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-item { min-height: 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 9px; border-top: 1px solid #edf1ef; }
 .kanban-manager-item > span { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 6px; align-items: baseline; }
 .kanban-manager-item small { color: #59758a; font-size: 10px; font-weight: 850; }
-.kanban-manager-item strong { min-width: 0; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.kanban-manager-item strong { min-width: 0; font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
 .kanban-manager-item em { grid-column: 2; color: var(--muted); font-size: 10px; font-style: normal; }
 .kanban-manager-item > b { font-size: 11px; white-space: nowrap; }
 .kanban-manager-item-values { display: grid; justify-items: end; gap: 2px; }
