@@ -2662,6 +2662,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-request-stages small { color: var(--muted); font-size: 8px; font-weight: 800; text-transform: uppercase; }
 .kanban-manager-request-stages b { font-size: 11px; }
 .kanban-manager-columns { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 14px; }
+.kanban-manager-columns.single { grid-template-columns: minmax(0, 1fr); }
 .kanban-manager-columns > section { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #f8faf9; }
 .kanban-manager-columns > section > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .kanban-manager-columns > section > header > div { display: grid; gap: 3px; }
