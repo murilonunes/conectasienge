@@ -2537,7 +2537,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-icon-button:disabled { cursor: wait; opacity: .55; }
 .kanban-feedback { padding: 10px 12px; border: 1px solid #ead29f; border-radius: 7px; background: #fffaf0; color: #76551d; font-size: 12px; }
 .kanban-feedback.error { border-color: #e8beb9; background: #fff7f6; color: #9e3d36; }
-.purchase-kanban-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.purchase-kanban-stats { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
 .purchase-kanban-stats > div { min-height: 62px; display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 7px; padding: 11px 14px; border-right: 1px solid var(--line); }
 .purchase-kanban-stats > div:last-child { border-right: 0; }
 .purchase-kanban-stats svg { color: #527062; }
@@ -2555,7 +2555,8 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-kanban-column.color-rose { border-top-color: #a8616d; }
 .purchase-kanban-column.drop-target { border-color: #7394aa; border-top-color: #4f7897; background: #e8f0f5; box-shadow: 0 0 0 2px rgba(79, 120, 151, .16); }
 .purchase-kanban-column > header { min-height: 48px; display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #dce3df; background: #f8faf9; border-radius: 5px 5px 0 0; }
-.purchase-kanban-column > header h2 { margin: 0; font-size: 12px; font-weight: 850; text-transform: uppercase; }
+.purchase-kanban-column > header h2 { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; font-size: 12px; font-weight: 850; text-transform: uppercase; }
+.purchase-kanban-column > header h2 em { display: inline-flex; align-items: center; gap: 3px; padding: 2px 5px; border: 1px solid #ccd7d2; border-radius: 4px; background: #fff; color: #527062; font-size: 7px; font-style: normal; }
 .purchase-kanban-column > header > strong { min-width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #e7ece9; font-size: 10px; }
 .kanban-column-mark { width: 8px; height: 8px; display: block; border-radius: 50%; background: #8b9690; }
 .purchase-kanban-column.color-blue .kanban-column-mark,
@@ -2607,14 +2608,14 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-kanban-codes span { padding: 3px 5px; border: 1px solid var(--line); border-radius: 4px; background: #f8faf9; color: #4e5d55; font-size: 8px; font-weight: 800; }
 .purchase-kanban-request-summary { display: grid; gap: 4px; }
 .purchase-kanban-request-summary > span { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; background: #f8faf9; }
-.purchase-kanban-request-summary b { font-size: 9px; }
+.purchase-kanban-request-summary b { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; }
 .purchase-kanban-request-summary small { color: var(--muted); font-size: 8px; font-weight: 750; }
 .purchase-kanban-card > label { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; color: var(--muted); font-size: 9px; font-weight: 800; text-transform: uppercase; }
 .purchase-kanban-card select { width: 100%; min-width: 0; padding: 7px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fbfcfb; color: var(--ink); font-size: 10px; text-transform: none; }
 .purchase-kanban-empty { min-height: 110px; display: grid; place-items: center; align-content: center; gap: 7px; padding: 14px; border: 1px dashed #cad4cf; border-radius: 7px; color: #89958f; text-align: center; }
 .purchase-kanban-empty span { font-size: 10px; }
 .kanban-project-modal { width: min(600px, 100%); }
-.kanban-columns-modal { width: min(720px, 100%); }
+.kanban-columns-modal { width: min(1040px, 100%); }
 .kanban-project-detail-modal { width: min(1280px, 100%); height: min(880px, 92vh); max-height: 92vh; overflow: hidden; grid-template-rows: auto minmax(0, 1fr) auto auto; }
 .kanban-quotation-links-modal { width: min(900px, 100%); }
 .kanban-project-form { display: grid; gap: 10px; }
@@ -2625,16 +2626,20 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-add-column input,
 .kanban-column-editor input { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfb; padding: 9px 10px; color: var(--ink); font: inherit; font-size: 12px; text-transform: none; resize: vertical; }
 .kanban-column-editor { display: grid; gap: 7px; }
-.kanban-column-editor > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto repeat(3, 34px); align-items: center; gap: 6px; }
+.kanban-column-editor > div { display: grid; grid-template-columns: 10px minmax(150px, 1fr) auto minmax(210px, auto) repeat(3, 34px); align-items: center; gap: 6px; }
 .kanban-column-editor button { width: 34px; height: 34px; }
 .kanban-column-editor button.kanban-column-save { width: auto; min-width: 104px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: #3f647c; font-size: 9px; font-weight: 850; }
+.kanban-stage-markers { display: grid; grid-template-columns: repeat(2, minmax(98px, 1fr)); gap: 5px; }
+.kanban-column-editor button.kanban-stage-flag { width: auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; color: #687770; font-size: 8px; font-weight: 850; }
+.kanban-column-editor button.kanban-stage-flag.active { border-color: #8eaaa0; background: #edf5f1; color: #315f4d; opacity: 1; }
+.kanban-column-editor button.kanban-stage-flag.completed.active { border-color: #829aaa; background: #eef4f7; color: #365d76; }
 .kanban-column-editor button.danger { color: #a4302a; }
 .kanban-column-editor button:disabled { cursor: not-allowed; opacity: .35; }
 .kanban-add-column { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
 .kanban-project-detail-head { align-items: center; }
 .kanban-project-detail-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .kanban-project-detail-actions .button { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; border-radius: 7px; padding: 8px 11px; }
-.kanban-manager-overview { min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 12px; overflow: hidden; }
+.kanban-manager-overview { min-height: 0; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: 10px; overflow: hidden; }
 .kanban-manager-project-summary { min-height: 44px; display: flex; align-items: center; gap: 14px 22px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: #f8faf9; }
 .kanban-manager-project-summary > div { display: flex; align-items: center; gap: 7px; }
 .kanban-manager-project-summary > div:nth-child(2) { padding-left: 20px; border-left: 1px solid var(--line); }
@@ -2648,6 +2653,14 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-kpis > div:last-child { border-right: 0; }
 .kanban-manager-kpis span { color: var(--muted); font-size: 8px; font-weight: 850; text-transform: uppercase; }
 .kanban-manager-kpis strong { font-family: var(--font-display); font-size: 19px; }
+.kanban-manager-request-stages { min-height: 34px; display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 7px; background: #f8faf9; }
+.kanban-manager-request-stages > strong { margin-right: auto; color: var(--muted); font-size: 8px; text-transform: uppercase; }
+.kanban-manager-request-stages > span { min-width: 92px; display: grid; grid-template-columns: 7px 1fr auto; align-items: center; gap: 5px; padding: 4px 7px; border-left: 1px solid var(--line); }
+.kanban-manager-request-stages i { width: 7px; height: 7px; border-radius: 50%; background: #9aa6a0; }
+.kanban-manager-request-stages i.started { background: #c58b32; }
+.kanban-manager-request-stages i.completed { background: #4f7897; }
+.kanban-manager-request-stages small { color: var(--muted); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.kanban-manager-request-stages b { font-size: 11px; }
 .kanban-manager-columns { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 14px; }
 .kanban-manager-columns > section { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #f8faf9; }
 .kanban-manager-columns > section > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -2667,6 +2680,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-manager-record > summary > div:first-child { min-width: 0; display: flex; align-items: center; gap: 7px; }
 .kanban-manager-record > summary > div:first-child strong { font-size: 12px; }
 .kanban-manager-record > summary > div:first-child span { padding: 3px 5px; border-radius: 4px; background: #edf1ef; color: #53645b; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.kanban-manager-record > summary > div:first-child .kanban-request-stage-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px solid var(--line); border-radius: 4px; color: #53645b; font-size: 8px; font-style: normal; font-weight: 800; white-space: nowrap; }
 .kanban-manager-record-metrics { grid-column: 2; grid-row: 1; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-right: 28px; }
 .kanban-manager-record-metrics span { color: var(--muted); font-size: 9px; white-space: nowrap; }
 .kanban-manager-record-body { display: grid; gap: 10px; padding: 0 11px 11px; border-top: 1px solid #edf1ef; }
@@ -2713,15 +2727,20 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-modal-section-head > div { display: grid; gap: 3px; }
 .kanban-modal-section-head small { color: var(--muted); font-size: 9px; line-height: 1.35; }
 .kanban-request-list { max-height: 390px; display: grid; align-content: start; gap: 6px; overflow-y: auto; padding-right: 3px; }
-.kanban-request-row { min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(82px, auto) 30px; align-items: center; gap: 8px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfb; }
-.kanban-request-row > div { min-width: 0; display: grid; gap: 2px; }
+.kanban-request-row { min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(82px, auto) minmax(150px, .7fr) 30px; align-items: center; gap: 8px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfb; }
+.kanban-request-row > div { min-width: 0; }
+.kanban-request-main { display: grid; gap: 2px; }
 .kanban-request-row strong { font-size: 11px; }
 .kanban-request-row span { color: var(--muted); font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kanban-request-row p { display: -webkit-box; margin: 3px 0 0; overflow: hidden; color: #655c48; font-size: 9px; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.kanban-request-row > small { color: var(--muted); font-size: 9px; white-space: nowrap; }
+.kanban-request-item-count { color: var(--muted); font-size: 9px; white-space: nowrap; }
 .kanban-request-quotations { min-width: 82px; display: grid; gap: 2px; padding-left: 8px; border-left: 1px solid var(--line); text-align: right; }
 .kanban-request-quotations strong { font-size: 9px; }
 .kanban-request-quotations span { max-width: 120px; color: #4f7897; font-size: 8px; font-weight: 750; white-space: normal; }
+.kanban-request-stage-control label { display: grid; gap: 3px; }
+.kanban-request-stage-control label > span { font-size: 7px; font-weight: 850; text-transform: uppercase; }
+.kanban-request-stage-control select { width: 100%; min-width: 0; padding: 6px 7px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); font-size: 9px; }
+.kanban-request-action { display: grid; place-items: center; }
 .kanban-request-row button { width: 30px; height: 30px; color: #4f7897; }
 .kanban-request-row button:hover { border-color: #9cb0bd; }
 .kanban-request-row button:disabled { cursor: wait; opacity: .5; }
@@ -2760,10 +2779,12 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .spin { animation: kanban-spin .8s linear infinite; }
 @keyframes kanban-spin { to { transform: rotate(360deg); } }
 @keyframes kanban-drop-preview-in { from { min-height: 0; opacity: 0; transform: translateY(-6px); } }
+@media (max-width: 1300px) {
+  .purchase-kanban-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .purchase-kanban-stats > div:nth-child(4n) { border-right: 0; }
+  .purchase-kanban-stats > div:nth-child(-n+4) { border-bottom: 1px solid var(--line); }
+}
 @media (max-width: 1050px) {
-  .purchase-kanban-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .purchase-kanban-stats > div:nth-child(3n) { border-right: 0; }
-  .purchase-kanban-stats > div:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
   .kanban-manager-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .kanban-manager-kpis > div:nth-child(3n) { border-right: 0; }
   .kanban-manager-kpis > div:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
@@ -2792,6 +2813,8 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
   .kanban-manager-project-summary { align-items: flex-start; flex-direction: column; }
   .kanban-manager-project-summary > div:nth-child(2) { padding: 0; border-left: 0; }
   .kanban-manager-project-summary p { margin: 0; text-align: left; white-space: normal; }
+  .kanban-manager-request-stages { flex-wrap: wrap; }
+  .kanban-manager-request-stages > strong { flex: 1 1 100%; }
   .kanban-manager-columns,
   .kanban-project-links-view { grid-template-columns: 1fr; overflow: visible; }
   .kanban-manager-record-list { max-height: 460px; }
@@ -2819,17 +2842,20 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
   .kanban-column-editor > div { grid-template-columns: 10px minmax(0, 1fr) repeat(3, 34px); }
   .kanban-column-editor input { grid-column: 2 / -1; }
   .kanban-column-editor button.kanban-column-save { grid-column: 2; grid-row: 2; justify-self: start; }
-  .kanban-column-editor button:nth-of-type(2) { grid-column: 3; grid-row: 2; }
-  .kanban-column-editor button:nth-of-type(3) { grid-column: 4; grid-row: 2; }
-  .kanban-column-editor button:nth-of-type(4) { grid-column: 5; grid-row: 2; }
+  .kanban-column-editor .kanban-stage-markers { grid-column: 2 / -1; grid-row: 3; }
+  .kanban-column-editor button.kanban-column-left { grid-column: 3; grid-row: 2; }
+  .kanban-column-editor button.kanban-column-right { grid-column: 4; grid-row: 2; }
+  .kanban-column-editor button.kanban-column-delete { grid-column: 5; grid-row: 2; }
   .purchase-kanban-stats { grid-template-columns: 1fr; }
   .purchase-kanban-stats > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .purchase-kanban-stats > div:last-child { border-bottom: 0; }
   .kanban-add-column { grid-template-columns: 1fr; }
   .kanban-request-row { grid-template-columns: 1fr 30px; }
-  .kanban-request-row > small { grid-column: 1; grid-row: 2; }
+  .kanban-request-main { grid-column: 1; grid-row: 1; }
+  .kanban-request-item-count { grid-column: 1; grid-row: 2; }
   .kanban-request-quotations { grid-column: 1; grid-row: 3; padding: 5px 0 0; border-left: 0; border-top: 1px solid var(--line); text-align: left; }
-  .kanban-request-row > button { grid-column: 2; grid-row: 1 / span 3; }
+  .kanban-request-stage-control { grid-column: 1; grid-row: 4; }
+  .kanban-request-action { grid-column: 2; grid-row: 1 / span 4; }
   .kanban-link-summary { grid-template-columns: 1fr; }
   .kanban-link-summary span { border-right: 0; border-bottom: 1px solid var(--line); }
   .kanban-link-summary span:last-child { border-bottom: 0; }

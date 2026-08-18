@@ -3,7 +3,7 @@
 import { I18nText } from "@/components/i18n/i18n-text";
 import { useI18n } from "@/components/i18n/i18n-provider";
 import type { PurchaseProjectKanbanData, PurchaseProjectKanbanQuotation, PurchaseProjectKanbanRequest } from "@/features/purchases/project-kanban-data";
-import type { PurchaseProjectKanbanProject, PurchaseProjectKanbanState } from "@/lib/purchase-project-kanban";
+import type { PurchaseProjectKanbanColumn, PurchaseProjectKanbanProject, PurchaseProjectKanbanState } from "@/lib/purchase-project-kanban";
 import { purchaseProjectKanbanActions as actions } from "@/lib/purchase-project-kanban-actions";
 import {
   ArrowLeft,
@@ -12,9 +12,11 @@ import {
   BriefcaseBusiness,
   CalendarClock,
   Check,
+  CheckCircle2,
   ClipboardList,
   Columns3,
   GripVertical,
+  Flag,
   Link2,
   LoaderCircle,
   Pencil,
@@ -34,30 +36,31 @@ type ProjectDetailView = "overview" | "edit" | "links";
 type ApiInput = Record<string, string | number | undefined>;
 type DragTarget = { columnId: number; beforeProjectId?: number };
 
-function ProjectRequestRow({ request, action }: { request: PurchaseProjectKanbanRequest; action?: React.ReactNode }) {
+function ProjectRequestRow({ request, stageControl, action }: { request: PurchaseProjectKanbanRequest; stageControl?: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="kanban-request-row">
-      <div>
+      <div className="kanban-request-main">
         <strong>{request.code}</strong>
         <span><I18nText text={request.status} /></span>
         {request.notes && <p>{request.notes}</p>}
       </div>
-      <small>{request.itemCount} <I18nText text={request.itemCount === 1 ? "item" : "itens"} /></small>
+      <small className="kanban-request-item-count">{request.itemCount} <I18nText text={request.itemCount === 1 ? "item" : "itens"} /></small>
       <div className="kanban-request-quotations">
         <strong>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></strong>
         {request.quotationIds.length > 0 && <span>{request.quotationIds.map((id) => `#${id}`).join(", ")}</span>}
       </div>
-      {action}
+      {stageControl && <div className="kanban-request-stage-control">{stageControl}</div>}
+      {action && <div className="kanban-request-action">{action}</div>}
     </div>
   );
 }
 
-function ProjectRequestOverview({ request, initiallyOpen = false }: { request: PurchaseProjectKanbanRequest; initiallyOpen?: boolean }) {
+function ProjectRequestOverview({ request, stage, initiallyOpen = false }: { request: PurchaseProjectKanbanRequest; stage?: PurchaseProjectKanbanColumn; initiallyOpen?: boolean }) {
   const { formatDate, formatNumber } = useI18n();
   return (
     <details className="kanban-manager-record" open={initiallyOpen || undefined}>
       <summary>
-        <div><strong>{request.code}</strong><span><I18nText text={request.status} /></span></div>
+        <div><strong>{request.code}</strong><span><I18nText text={request.status} /></span>{stage && <em className="kanban-request-stage-badge"><i className={`kanban-column-mark color-${stage.color}`} />{stage.systemKey ? <I18nText text={stage.name} /> : stage.name}</em>}</div>
         <div className="kanban-manager-record-metrics"><span>{request.itemCount} <I18nText text={request.itemCount === 1 ? "item" : "itens"} /></span><span>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></span></div>
       </summary>
       <div className="kanban-manager-record-body">
@@ -145,9 +148,15 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const [requestProjectSelections, setRequestProjectSelections] = useState<Record<number, string>>({});
 
   const requestsById = useMemo(() => new Map(requests.map((request) => [request.id, request])), [requests]);
+  const columnsById = useMemo(() => new Map(board.columns.map((column) => [column.id, column])), [board.columns]);
+  const initialColumn = board.columns.find((column) => column.isInitial) || board.columns[0];
+  const completedColumn = board.columns.find((column) => column.isCompleted) || board.columns[board.columns.length - 1];
   const assignedRequestIds = useMemo(() => new Set(board.projects.flatMap((project) => project.requestIds)), [board.projects]);
   const selectedProject = typeof modal === "object" && modal ? board.projects.find((project) => project.id === modal.projectId) : undefined;
-  const selectedRequests = selectedProject?.requestIds.map((id) => requestsById.get(id)).filter((item): item is PurchaseProjectKanbanRequest => Boolean(item)) || [];
+  const selectedRequestEntries = (selectedProject?.requestLinks || []).map((link) => ({ link, request: requestsById.get(link.requestId), column: columnsById.get(link.columnId) }))
+    .filter((entry): entry is { link: { requestId: number; columnId: number }; request: PurchaseProjectKanbanRequest; column: PurchaseProjectKanbanColumn | undefined } => Boolean(entry.request))
+    .sort((left, right) => (left.column?.position ?? 0) - (right.column?.position ?? 0) || right.request.id - left.request.id);
+  const selectedRequests = selectedRequestEntries.map((entry) => entry.request);
   const selectedRequestIds = new Set(selectedProject?.requestIds || []);
   const selectedQuotations = quotations.filter((quotation) => quotation.requestIds.some((requestId) => selectedRequestIds.has(requestId)));
   const selectedItemCount = selectedRequests.reduce((sum, request) => sum + request.itemCount, 0);
@@ -155,6 +164,9 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const selectedResponseCount = selectedQuotations.reduce((sum, quotation) => sum + quotation.responseCount, 0);
   const selectedCoverage = selectedRequests.length ? Math.round((selectedRequests.filter((request) => request.quotationCount > 0).length / selectedRequests.length) * 100) : 0;
   const selectedProjectColumn = selectedProject ? board.columns.find((column) => column.id === selectedProject.columnId) : undefined;
+  const selectedBacklogRequests = selectedRequestEntries.filter((entry) => (entry.column?.position ?? 0) < (initialColumn?.position ?? 0)).length;
+  const selectedCompletedRequests = selectedRequestEntries.filter((entry) => (entry.column?.position ?? 0) >= (completedColumn?.position ?? Number.MAX_SAFE_INTEGER)).length;
+  const selectedStartedRequests = Math.max(0, selectedRequestEntries.length - selectedBacklogRequests - selectedCompletedRequests);
   const availableRequests = requests.filter((request) => {
     if (assignedRequestIds.has(request.id)) return false;
     const normalized = requestQuery.trim().toLocaleLowerCase("pt-BR");
@@ -168,7 +180,13 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const linkedRequests = board.projects.reduce((sum, project) => sum + project.requestIds.length, 0);
   const today = new Date();
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const completedColumnIds = new Set(board.columns.filter((column) => column.systemKey === "completed").map((column) => column.id));
+  const completedColumnIds = new Set(board.columns.filter((column) => column.position >= (completedColumn?.position ?? Number.MAX_SAFE_INTEGER)).map((column) => column.id));
+  const backlogProjects = board.projects.filter((project) => (columnsById.get(project.columnId)?.position ?? 0) < (initialColumn?.position ?? 0));
+  const completedProjects = board.projects.filter((project) => completedColumnIds.has(project.columnId));
+  const startedProjects = board.projects.filter((project) => {
+    const position = columnsById.get(project.columnId)?.position ?? 0;
+    return position >= (initialColumn?.position ?? 0) && position < (completedColumn?.position ?? Number.MAX_SAFE_INTEGER);
+  });
   const overdueProjects = board.projects.filter((project) => project.closingDate && project.closingDate < todayIso && !completedColumnIds.has(project.columnId));
   const pendingQuotations = quotations.filter((quotation) => quotation.requestIds.length === 0 || quotation.requestIds.some((requestId) => !assignedRequestIds.has(requestId)));
   const quotationsInProjects = quotations.filter((quotation) => quotation.requestIds.length > 0 && quotation.requestIds.every((requestId) => assignedRequestIds.has(requestId))).length;
@@ -369,10 +387,12 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
 
       <div className="purchase-kanban-stats" aria-label="Resumo gerencial" data-i18n-aria-label="Resumo gerencial">
         <div><BriefcaseBusiness size={17} /><span><I18nText text="Projetos" /></span><strong>{board.projects.length}</strong></div>
-        <div><ClipboardList size={17} /><span><I18nText text="Solicitações vinculadas" /></span><strong>{linkedRequests}</strong></div>
+        <div><ClipboardList size={17} /><span><I18nText text="Backlog" /></span><strong>{backlogProjects.length}</strong></div>
+        <div><Flag size={17} /><span><I18nText text="Projetos iniciados" /></span><strong>{startedProjects.length}</strong></div>
+        <div><CheckCircle2 size={17} /><span><I18nText text="Projetos concluídos" /></span><strong>{completedProjects.length}</strong></div>
+        <div><Link2 size={17} /><span><I18nText text="Solicitações vinculadas" /></span><strong>{linkedRequests}</strong></div>
         <div><Scale size={17} /><span><I18nText text="Cotações nos projetos" /></span><strong>{quotationsInProjects}</strong></div>
         <div className={pendingQuotations.length ? "warn" : ""}><AlertTriangle size={17} /><span><I18nText text="Cotações com vínculo pendente" /></span><strong>{pendingQuotations.length}</strong></div>
-        <div><Link2 size={17} /><span><I18nText text="Solicitações disponíveis" /></span><strong>{Math.max(0, requests.length - linkedRequests)}</strong></div>
         <div className={overdueProjects.length ? "warn" : ""}><CalendarClock size={17} /><span><I18nText text="Encerramentos em atraso" /></span><strong>{overdueProjects.length}</strong></div>
       </div>
 
@@ -395,7 +415,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
               onDragOver={(event) => dragProjectOverColumn(event, column.id)}
               onDrop={(event) => dropProject(event, column.id)}
             >
-              <header><span className="kanban-column-mark" /><h2>{columnLabel(column)}</h2><strong>{projects.length}</strong></header>
+              <header><span className="kanban-column-mark" /><h2>{columnLabel(column)}{column.isInitial && <em><Flag size={10} /><I18nText text="Inicial" /></em>}{column.isCompleted && <em><CheckCircle2 size={10} /><I18nText text="Finalizada" /></em>}</h2><strong>{projects.length}</strong></header>
               <div className="purchase-kanban-column-body">
                 {projects.map((project) => {
                   const requests = project.requestIds.map((id) => requestsById.get(id)).filter((item): item is PurchaseProjectKanbanRequest => Boolean(item));
@@ -403,6 +423,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                   const quotationCount = new Set(requests.flatMap((request) => request.quotationIds)).size;
                   const quotedCount = requests.filter((request) => request.quotationCount > 0).length;
                   const coverage = requests.length ? Math.round((quotedCount / requests.length) * 100) : 0;
+                  const requestStages = new Map(project.requestLinks.map((link) => [link.requestId, columnsById.get(link.columnId)]));
                   return (
                     <div className="purchase-kanban-card-slot" key={project.id}>
                       {isDropTarget && dragTarget?.beforeProjectId === project.id && dropPreview}
@@ -415,7 +436,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                           <span><strong>{quotationCount}</strong><I18nText text="Cotações" /></span>
                         </div>
                         <div className="purchase-kanban-coverage"><span><I18nText text="Cobertura de cotação" /><strong>{coverage}%</strong></span><i><b style={{ width: `${coverage}%` }} /></i></div>
-                        <div className="purchase-kanban-request-summary">{requests.slice(0, 4).map((request) => <span key={request.id}><b>{request.code}</b><small>{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></small></span>)}{requests.length > 4 && <span><b>+{requests.length - 4}</b><small><I18nText text="solicitações" /></small></span>}</div>
+                        <div className="purchase-kanban-request-summary">{requests.slice(0, 4).map((request) => { const requestStage = requestStages.get(request.id); return <span key={request.id}><b>{requestStage && <i className={`kanban-column-mark color-${requestStage.color}`} />}{request.code}</b><small>{requestStage ? <>{requestStage.systemKey ? <I18nText text={requestStage.name} /> : requestStage.name} · </> : null}{request.quotationCount} <I18nText text={request.quotationCount === 1 ? "cotação" : "cotações"} /></small></span>; })}{requests.length > 4 && <span><b>+{requests.length - 4}</b><small><I18nText text="solicitações" /></small></span>}</div>
                         <label onClick={(event) => event.stopPropagation()}><I18nText text="Etapa" /><select value={project.columnId} onChange={(event) => void moveProject(project.id, Number(event.target.value))} disabled={busy}>{board.columns.map((option) => <option key={option.id} value={option.id}>{columnLabel(option)}</option>)}</select></label>
                       </article>
                     </div>
@@ -443,8 +464,26 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
       {modal === "columns" && (
         <div className="settings-modal-backdrop" role="presentation" onMouseDown={() => !busy && setModal(null)}>
           <div className="settings-modal kanban-columns-modal" role="dialog" aria-modal="true" aria-label="Gerenciar etapas" data-i18n-aria-label="Gerenciar etapas" onMouseDown={(event) => event.stopPropagation()}>
-            <header className="settings-modal-head"><div><h2><I18nText text="Etapas do Kanban" /></h2><span><I18nText text="Crie, renomeie e ordene as colunas conforme o processo dos projetos." /></span></div><button className="kanban-icon-button" onClick={() => setModal(null)} title="Fechar" data-i18n-title="Fechar"><X size={17} /></button></header>
-            <div className="kanban-column-editor">{board.columns.map((column, index) => { const draftName = columnNames[column.id] ?? column.name; return <div key={column.id}><span className={`kanban-column-mark color-${column.color}`} /><input aria-label={`${t("Nome da etapa")}: ${columnLabel(column)}`} value={draftName} onChange={(event) => setColumnNames((current) => ({ ...current, [column.id]: event.target.value }))} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void renameColumn(column.id); } }} maxLength={80} /><button className="kanban-column-save" type="button" onClick={() => void renameColumn(column.id)} disabled={busy || !draftName.trim() || draftName.trim() === column.name} title="Salvar nome" data-i18n-title="Salvar nome"><Save size={14} /><I18nText text="Salvar nome" /></button><button type="button" onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "left" })} disabled={busy || index === 0} title="Mover para a esquerda" data-i18n-title="Mover para a esquerda"><ArrowLeft size={15} /></button><button type="button" onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "right" })} disabled={busy || index === board.columns.length - 1} title="Mover para a direita" data-i18n-title="Mover para a direita"><ArrowRight size={15} /></button><button className="danger" type="button" onClick={() => window.confirm(t("Excluir esta etapa?")) && void updateBoard({ action: actions.deleteColumn, columnId: column.id })} disabled={busy} title="Excluir etapa" data-i18n-title="Excluir etapa"><Trash2 size={15} /></button></div>; })}</div>
+            <header className="settings-modal-head"><div><h2><I18nText text="Etapas do Kanban" /></h2><span><I18nText text="Crie, renomeie e ordene as colunas e defina onde o trabalho começa e termina." /></span></div><button className="kanban-icon-button" onClick={() => setModal(null)} title="Fechar" data-i18n-title="Fechar"><X size={17} /></button></header>
+            <div className="kanban-column-editor">
+              {board.columns.map((column, index) => {
+                const draftName = columnNames[column.id] ?? column.name;
+                return (
+                  <div key={column.id}>
+                    <span className={`kanban-column-mark color-${column.color}`} />
+                    <input aria-label={`${t("Nome da etapa")}: ${columnLabel(column)}`} value={draftName} onChange={(event) => setColumnNames((current) => ({ ...current, [column.id]: event.target.value }))} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void renameColumn(column.id); } }} maxLength={80} />
+                    <button className="kanban-column-save" type="button" onClick={() => void renameColumn(column.id)} disabled={busy || !draftName.trim() || draftName.trim() === column.name} title="Salvar nome" data-i18n-title="Salvar nome"><Save size={14} /><I18nText text="Salvar nome" /></button>
+                    <div className="kanban-stage-markers">
+                      <button className={`kanban-stage-flag initial${column.isInitial ? " active" : ""}`} type="button" onClick={() => void updateBoard({ action: actions.setColumnMarker, columnId: column.id, marker: "initial" })} disabled={busy || column.isInitial} title="Definir como etapa inicial" data-i18n-title="Definir como etapa inicial"><Flag size={13} /><I18nText text="Inicial" /></button>
+                      <button className={`kanban-stage-flag completed${column.isCompleted ? " active" : ""}`} type="button" onClick={() => void updateBoard({ action: actions.setColumnMarker, columnId: column.id, marker: "completed" })} disabled={busy || column.isCompleted} title="Definir como etapa finalizada" data-i18n-title="Definir como etapa finalizada"><CheckCircle2 size={13} /><I18nText text="Finalizada" /></button>
+                    </div>
+                    <button className="kanban-column-left" type="button" onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "left" })} disabled={busy || index === 0} title="Mover para a esquerda" data-i18n-title="Mover para a esquerda"><ArrowLeft size={15} /></button>
+                    <button className="kanban-column-right" type="button" onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "right" })} disabled={busy || index === board.columns.length - 1} title="Mover para a direita" data-i18n-title="Mover para a direita"><ArrowRight size={15} /></button>
+                    <button className="kanban-column-delete danger" type="button" onClick={() => window.confirm(t("Excluir esta etapa?")) && void updateBoard({ action: actions.deleteColumn, columnId: column.id })} disabled={busy} title="Excluir etapa" data-i18n-title="Excluir etapa"><Trash2 size={15} /></button>
+                  </div>
+                );
+              })}
+            </div>
             <div className="kanban-add-column"><input value={newColumnName} onChange={(event) => setNewColumnName(event.target.value)} placeholder="Nome da nova etapa" data-i18n-placeholder="Nome da nova etapa" maxLength={80} onKeyDown={(event) => { if (event.key === "Enter") void addColumn(); }} /><button className="button" onClick={addColumn} disabled={busy || !newColumnName.trim()}><Plus size={15} /> <I18nText text="Adicionar etapa" /></button></div>
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
             <footer className="settings-modal-actions"><button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>
@@ -527,10 +566,16 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                   <div><span><I18nText text="Respostas recebidas" /></span><strong>{selectedResponseCount}</strong></div>
                   <div><span><I18nText text="Cobertura de cotação" /></span><strong>{selectedCoverage}%</strong></div>
                 </div>
+                <div className="kanban-manager-request-stages">
+                  <strong><I18nText text="Etapas das solicitações" /></strong>
+                  <span><i className="backlog" /><small><I18nText text="Backlog" /></small><b>{selectedBacklogRequests}</b></span>
+                  <span><i className="started" /><small><I18nText text="Iniciadas" /></small><b>{selectedStartedRequests}</b></span>
+                  <span><i className="completed" /><small><I18nText text="Concluídas" /></small><b>{selectedCompletedRequests}</b></span>
+                </div>
                 <div className="kanban-manager-columns">
                   <section>
                     <header><div><h3><I18nText text="Solicitações do projeto" /></h3><span><I18nText text="Abra uma solicitação para consultar seus itens e observações." /></span></div><strong>{selectedRequests.length}</strong></header>
-                    <div className="kanban-manager-record-list">{selectedRequests.map((request, index) => <ProjectRequestOverview key={request.id} request={request} initiallyOpen={index === 0} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div>
+                    <div className="kanban-manager-record-list">{selectedRequestEntries.map((entry, index) => <ProjectRequestOverview key={entry.request.id} request={entry.request} stage={entry.column} initiallyOpen={index === 0} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div>
                   </section>
                   <section>
                     <header><div><h3><I18nText text="Cotações relacionadas" /></h3><span><I18nText text="Consulte itens, fornecedores, respostas e valores sem sair do projeto." /></span></div><strong>{selectedQuotations.length}</strong></header>
@@ -548,8 +593,8 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
 
             {projectDetailView === "links" && (
               <div className="kanban-project-links-view">
-                <section><div className="kanban-modal-section-head"><div><h3><I18nText text="Solicitações vinculadas" /></h3><small>{selectedRequests.length} <I18nText text={selectedRequests.length === 1 ? "solicitação" : "solicitações"} /></small></div></div><div className="kanban-request-list">{selectedRequests.map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.unlinkRequest, projectId: selectedProject.id, requestId: request.id })} disabled={busy} title="Desvincular solicitação" data-i18n-title="Desvincular solicitação"><Unlink size={14} /></button>} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div></section>
-                <section className="kanban-available-requests"><div className="kanban-modal-section-head"><div><h3><I18nText text="Adicionar solicitações" /></h3><small><I18nText text="Somente solicitações ainda não vinculadas a outro projeto." /></small></div><div className="purchase-kanban-search compact"><Search size={14} /><input value={requestQuery} onChange={(event) => setRequestQuery(event.target.value)} placeholder="Buscar solicitação" data-i18n-placeholder="Buscar solicitação" /></div></div><div className="kanban-request-list available">{availableRequests.slice(0, 100).map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.linkRequest, projectId: selectedProject.id, requestId: request.id })} disabled={busy} title="Vincular solicitação" data-i18n-title="Vincular solicitação"><Link2 size={14} /></button>} />)}{availableRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação disponível." /></div>}</div>{availableRequests.length > 100 && <small className="kanban-result-limit"><I18nText text="Refine a busca para ver outros resultados." /></small>}</section>
+                <section><div className="kanban-modal-section-head"><div><h3><I18nText text="Solicitações vinculadas" /></h3><small>{selectedRequests.length} <I18nText text={selectedRequests.length === 1 ? "solicitação" : "solicitações"} /></small></div></div><div className="kanban-request-list">{selectedRequestEntries.map((entry) => <ProjectRequestRow key={entry.request.id} request={entry.request} stageControl={<label><span><I18nText text="Etapa da solicitação" /></span><select value={entry.link.columnId} onChange={(event) => void updateBoard({ action: actions.moveRequest, projectId: selectedProject.id, requestId: entry.request.id, columnId: Number(event.target.value) })} disabled={busy}>{board.columns.map((column) => <option key={column.id} value={column.id}>{columnLabel(column)}</option>)}</select></label>} action={<button onClick={() => void updateBoard({ action: actions.unlinkRequest, projectId: selectedProject.id, requestId: entry.request.id })} disabled={busy} title="Desvincular solicitação" data-i18n-title="Desvincular solicitação"><Unlink size={14} /></button>} />)}{selectedRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação vinculada a este projeto." /></div>}</div></section>
+                <section className="kanban-available-requests"><div className="kanban-modal-section-head"><div><h3><I18nText text="Adicionar solicitações" /></h3><small><I18nText text="Somente solicitações ainda não vinculadas a outro projeto." /></small></div><div className="purchase-kanban-search compact"><Search size={14} /><input value={requestQuery} onChange={(event) => setRequestQuery(event.target.value)} placeholder="Buscar solicitação" data-i18n-placeholder="Buscar solicitação" /></div></div><div className="kanban-request-list available">{availableRequests.slice(0, 100).map((request) => <ProjectRequestRow key={request.id} request={request} action={<button onClick={() => void updateBoard({ action: actions.linkRequest, projectId: selectedProject.id, requestId: request.id, columnId: board.columns[0]?.id })} disabled={busy} title="Vincular solicitação" data-i18n-title="Vincular solicitação"><Link2 size={14} /></button>} />)}{availableRequests.length === 0 && <div className="kanban-list-empty"><I18nText text="Nenhuma solicitação disponível." /></div>}</div>{availableRequests.length > 100 && <small className="kanban-result-limit"><I18nText text="Refine a busca para ver outros resultados." /></small>}</section>
               </div>
             )}
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}

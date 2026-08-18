@@ -4,7 +4,8 @@ import { mkdirSync } from "fs";
 import { DatabaseSync } from "node:sqlite";
 import path from "path";
 
-export type PurchaseProjectKanbanColumn = { id: number; name: string; color: string; position: number; systemKey?: string };
+export type PurchaseProjectKanbanColumn = { id: number; name: string; color: string; position: number; isInitial: boolean; isCompleted: boolean; systemKey?: string };
+export type PurchaseProjectKanbanRequestLink = { requestId: number; columnId: number };
 export type PurchaseProjectKanbanProject = {
   id: number;
   key: string;
@@ -14,6 +15,7 @@ export type PurchaseProjectKanbanProject = {
   columnId: number;
   position: number;
   requestIds: number[];
+  requestLinks: PurchaseProjectKanbanRequestLink[];
   createdAt: string;
   updatedAt: string;
 };
@@ -25,11 +27,11 @@ export type PurchaseProjectKanbanState = {
 const dataDir = path.join(process.cwd(), ".sienge-data");
 const databasePath = path.join(dataDir, "purchase-project-kanban.sqlite");
 const defaultColumns = [
-  { key: "unclassified", name: "Não classificado", color: "neutral" },
-  { key: "planning", name: "Planejamento", color: "blue" },
-  { key: "quotation", name: "Em cotação", color: "amber" },
-  { key: "contracting", name: "Contratação", color: "violet" },
-  { key: "completed", name: "Concluído", color: "teal" }
+  { key: "unclassified", name: "Não classificado", color: "neutral", isInitial: false, isCompleted: false },
+  { key: "planning", name: "Planejamento", color: "blue", isInitial: true, isCompleted: false },
+  { key: "quotation", name: "Em cotação", color: "amber", isInitial: false, isCompleted: false },
+  { key: "contracting", name: "Contratação", color: "violet", isInitial: false, isCompleted: false },
+  { key: "completed", name: "Concluído", color: "teal", isInitial: false, isCompleted: true }
 ];
 const columnColors = ["neutral", "blue", "amber", "violet", "teal", "rose"];
 
@@ -47,6 +49,8 @@ function openDatabase() {
       color TEXT NOT NULL,
       system_key TEXT,
       position INTEGER NOT NULL,
+      is_initial INTEGER NOT NULL DEFAULT 0,
+      is_completed INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -67,9 +71,11 @@ function openDatabase() {
     CREATE TABLE IF NOT EXISTS purchase_project_kanban_requests (
       project_id INTEGER NOT NULL,
       purchase_request_id INTEGER NOT NULL UNIQUE,
+      column_id INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       PRIMARY KEY(project_id, purchase_request_id),
-      FOREIGN KEY(project_id) REFERENCES purchase_project_kanban_projects(id) ON DELETE CASCADE
+      FOREIGN KEY(project_id) REFERENCES purchase_project_kanban_projects(id) ON DELETE CASCADE,
+      FOREIGN KEY(column_id) REFERENCES purchase_project_kanban_columns(id) ON DELETE RESTRICT
     );
     CREATE INDEX IF NOT EXISTS idx_purchase_project_kanban_projects_column
       ON purchase_project_kanban_projects(column_id);
@@ -83,6 +89,12 @@ function openDatabase() {
   const columnFields = database.prepare("PRAGMA table_info(purchase_project_kanban_columns)").all() as Array<{ name: string }>;
   if (!columnFields.some((field) => field.name === "system_key")) {
     database.exec("ALTER TABLE purchase_project_kanban_columns ADD COLUMN system_key TEXT");
+  }
+  if (!columnFields.some((field) => field.name === "is_initial")) {
+    database.exec("ALTER TABLE purchase_project_kanban_columns ADD COLUMN is_initial INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!columnFields.some((field) => field.name === "is_completed")) {
+    database.exec("ALTER TABLE purchase_project_kanban_columns ADD COLUMN is_completed INTEGER NOT NULL DEFAULT 0");
   }
   const projectFields = database.prepare("PRAGMA table_info(purchase_project_kanban_projects)").all() as Array<{ name: string }>;
   if (!projectFields.some((field) => field.name === "closing_date")) {
@@ -103,9 +115,9 @@ function openDatabase() {
   database.exec("CREATE INDEX IF NOT EXISTS idx_purchase_project_kanban_projects_position ON purchase_project_kanban_projects(column_id, position)");
   const count = Number((database.prepare("SELECT COUNT(*) AS count FROM purchase_project_kanban_columns").get() as { count: number }).count);
   if (count === 0) {
-    const insert = database.prepare("INSERT INTO purchase_project_kanban_columns (name, color, system_key, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
+    const insert = database.prepare("INSERT INTO purchase_project_kanban_columns (name, color, system_key, position, is_initial, is_completed, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     const stamp = nowIso();
-    defaultColumns.forEach((column, index) => insert.run(column.name, column.color, column.key, index, stamp, stamp));
+    defaultColumns.forEach((column, index) => insert.run(column.name, column.color, column.key, index, Number(column.isInitial), Number(column.isCompleted), stamp, stamp));
   }
   const systemKeyMigration = database.prepare("SELECT value FROM purchase_project_kanban_metadata WHERE key = 'system-key-migration'").get();
   if (!systemKeyMigration) {
@@ -117,6 +129,30 @@ function openDatabase() {
     defaultColumns.forEach((column, index) => restoreSystemKey.run(column.key, column.name, column.color, index));
     database.prepare("INSERT INTO purchase_project_kanban_metadata (key, value) VALUES ('system-key-migration', '1')").run();
   }
+  const initialCount = Number((database.prepare("SELECT COUNT(*) AS count FROM purchase_project_kanban_columns WHERE is_initial = 1").get() as { count: number }).count);
+  if (initialCount === 0) {
+    database.prepare(`UPDATE purchase_project_kanban_columns SET is_initial = 1 WHERE id = COALESCE(
+      (SELECT id FROM purchase_project_kanban_columns WHERE system_key = 'planning' LIMIT 1),
+      (SELECT id FROM purchase_project_kanban_columns ORDER BY position, id LIMIT 1)
+    )`).run();
+  }
+  const completedCount = Number((database.prepare("SELECT COUNT(*) AS count FROM purchase_project_kanban_columns WHERE is_completed = 1").get() as { count: number }).count);
+  if (completedCount === 0) {
+    database.prepare(`UPDATE purchase_project_kanban_columns SET is_completed = 1 WHERE id = COALESCE(
+      (SELECT id FROM purchase_project_kanban_columns WHERE system_key = 'completed' LIMIT 1),
+      (SELECT id FROM purchase_project_kanban_columns ORDER BY position DESC, id DESC LIMIT 1)
+    )`).run();
+  }
+  const requestFields = database.prepare("PRAGMA table_info(purchase_project_kanban_requests)").all() as Array<{ name: string }>;
+  if (!requestFields.some((field) => field.name === "column_id")) {
+    database.exec("ALTER TABLE purchase_project_kanban_requests ADD COLUMN column_id INTEGER");
+    database.exec(`UPDATE purchase_project_kanban_requests
+      SET column_id = (SELECT projects.column_id FROM purchase_project_kanban_projects projects WHERE projects.id = purchase_project_kanban_requests.project_id)`);
+  }
+  database.exec(`UPDATE purchase_project_kanban_requests SET column_id = (
+    SELECT id FROM purchase_project_kanban_columns ORDER BY position, id LIMIT 1
+  ) WHERE column_id IS NULL OR column_id NOT IN (SELECT id FROM purchase_project_kanban_columns)`);
+  database.exec("CREATE INDEX IF NOT EXISTS idx_purchase_project_kanban_requests_column ON purchase_project_kanban_requests(column_id)");
   return database;
 }
 
@@ -144,20 +180,23 @@ function normalizeClosingDate(value: string) {
 }
 
 function readState(database: DatabaseSync): PurchaseProjectKanbanState {
-  const columnRows = database.prepare("SELECT id, name, color, system_key AS systemKey, position FROM purchase_project_kanban_columns ORDER BY position, id").all() as Array<PurchaseProjectKanbanColumn & { systemKey: string | null }>;
-  const columns = columnRows.map((column) => ({ ...column, systemKey: column.systemKey || undefined }));
+  const columnRows = database.prepare("SELECT id, name, color, system_key AS systemKey, position, is_initial AS isInitial, is_completed AS isCompleted FROM purchase_project_kanban_columns ORDER BY position, id").all() as Array<Omit<PurchaseProjectKanbanColumn, "isInitial" | "isCompleted" | "systemKey"> & { systemKey: string | null; isInitial: number; isCompleted: number }>;
+  const columns = columnRows.map((column) => ({ ...column, isInitial: Boolean(column.isInitial), isCompleted: Boolean(column.isCompleted), systemKey: column.systemKey || undefined }));
   const projects = database.prepare(`
     SELECT id, project_key AS key, name, description, closing_date AS closingDate,
            column_id AS columnId, position, created_at AS createdAt, updated_at AS updatedAt
     FROM purchase_project_kanban_projects ORDER BY column_id, position, id
   `).all() as Array<Omit<PurchaseProjectKanbanProject, "requestIds">>;
   const links = database.prepare(`
-    SELECT project_id AS projectId, purchase_request_id AS requestId
+    SELECT project_id AS projectId, purchase_request_id AS requestId, column_id AS columnId
     FROM purchase_project_kanban_requests ORDER BY purchase_request_id DESC
-  `).all() as Array<{ projectId: number; requestId: number }>;
-  const requestsByProject = new Map<number, number[]>();
-  links.forEach((link) => requestsByProject.set(link.projectId, [...(requestsByProject.get(link.projectId) || []), link.requestId]));
-  return { columns, projects: projects.map((project) => ({ ...project, requestIds: requestsByProject.get(project.id) || [] })) };
+  `).all() as Array<{ projectId: number; requestId: number; columnId: number }>;
+  const requestsByProject = new Map<number, PurchaseProjectKanbanRequestLink[]>();
+  links.forEach((link) => requestsByProject.set(link.projectId, [...(requestsByProject.get(link.projectId) || []), { requestId: link.requestId, columnId: link.columnId }]));
+  return { columns, projects: projects.map((project) => {
+    const requestLinks = requestsByProject.get(project.id) || [];
+    return { ...project, requestIds: requestLinks.map((link) => link.requestId), requestLinks };
+  }) };
 }
 
 export function loadPurchaseProjectKanban() {
@@ -188,6 +227,29 @@ export function renamePurchaseProjectKanbanColumn(columnId: number, nameValue: s
   } finally { database.close(); }
 }
 
+export function setPurchaseProjectKanbanColumnMarker(columnId: number, marker: "initial" | "completed") {
+  const database = openDatabase();
+  try {
+    const columns = readState(database).columns;
+    const column = columns.find((item) => item.id === columnId);
+    if (!column) throw new Error("Etapa não encontrada.");
+    const otherMarker = marker === "initial"
+      ? columns.find((item) => item.isCompleted)
+      : columns.find((item) => item.isInitial);
+    if (otherMarker && (marker === "initial" ? column.position >= otherMarker.position : column.position <= otherMarker.position)) {
+      throw new Error(marker === "initial" ? "A etapa inicial deve ficar antes da etapa finalizada." : "A etapa finalizada deve ficar depois da etapa inicial.");
+    }
+    const field = marker === "initial" ? "is_initial" : "is_completed";
+    database.exec("BEGIN IMMEDIATE");
+    try {
+      database.prepare(`UPDATE purchase_project_kanban_columns SET ${field} = 0`).run();
+      database.prepare(`UPDATE purchase_project_kanban_columns SET ${field} = 1, updated_at = ? WHERE id = ?`).run(nowIso(), columnId);
+      database.exec("COMMIT");
+    } catch (error) { database.exec("ROLLBACK"); throw error; }
+    return readState(database);
+  } finally { database.close(); }
+}
+
 export function reorderPurchaseProjectKanbanColumn(columnId: number, direction: "left" | "right") {
   const database = openDatabase();
   try {
@@ -198,6 +260,11 @@ export function reorderPurchaseProjectKanbanColumn(columnId: number, direction: 
     if (targetIndex < 0 || targetIndex >= columns.length) return readState(database);
     const current = columns[index];
     const target = columns[targetIndex];
+    const reorderedColumns = [...columns];
+    [reorderedColumns[index], reorderedColumns[targetIndex]] = [reorderedColumns[targetIndex], reorderedColumns[index]];
+    if (reorderedColumns.findIndex((column) => column.isInitial) >= reorderedColumns.findIndex((column) => column.isCompleted)) {
+      throw new Error("A etapa inicial deve permanecer antes da etapa finalizada.");
+    }
     database.exec("BEGIN IMMEDIATE");
     try {
       database.prepare("UPDATE purchase_project_kanban_columns SET position = -1 WHERE id = ?").run(current.id);
@@ -218,6 +285,9 @@ export function deletePurchaseProjectKanbanColumn(columnId: number) {
     if (assigned > 0) throw new Error("Mova os projetos desta etapa antes de excluí-la.");
     const column = state.columns.find((item) => item.id === columnId);
     if (!column) throw new Error("Etapa não encontrada.");
+    if (column.isInitial || column.isCompleted) throw new Error("Defina outra etapa como inicial ou finalizada antes de excluir esta etapa.");
+    const linkedRequests = Number((database.prepare("SELECT COUNT(*) AS count FROM purchase_project_kanban_requests WHERE column_id = ?").get(columnId) as { count: number }).count);
+    if (linkedRequests > 0) throw new Error("Mova as solicitações desta etapa antes de excluí-la.");
     database.exec("BEGIN IMMEDIATE");
     try {
       database.prepare("DELETE FROM purchase_project_kanban_columns WHERE id = ?").run(columnId);
@@ -295,18 +365,35 @@ export function movePurchaseProjectKanbanProject(projectId: number, columnId: nu
   } finally { database.close(); }
 }
 
-export function linkPurchaseRequestToKanbanProject(projectId: number, requestId: number) {
+export function linkPurchaseRequestToKanbanProject(projectId: number, requestId: number, columnIdValue?: number) {
   if (!Number.isInteger(requestId) || requestId <= 0) throw new Error("Solicitação inválida.");
   const database = openDatabase();
   try {
     if (!database.prepare("SELECT id FROM purchase_project_kanban_projects WHERE id = ?").get(projectId)) throw new Error("Projeto não encontrado.");
+    const firstColumn = database.prepare("SELECT id FROM purchase_project_kanban_columns ORDER BY position, id LIMIT 1").get() as { id: number } | undefined;
+    const columnId = Number.isInteger(columnIdValue) && database.prepare("SELECT id FROM purchase_project_kanban_columns WHERE id = ?").get(columnIdValue)
+      ? Number(columnIdValue)
+      : firstColumn?.id;
+    if (!columnId) throw new Error("Etapa não encontrada.");
     const existing = database.prepare(`SELECT projects.name FROM purchase_project_kanban_requests links JOIN purchase_project_kanban_projects projects ON projects.id = links.project_id WHERE links.purchase_request_id = ?`)
       .get(requestId) as { name: string } | undefined;
     if (existing) throw new Error("Esta solicitação já está vinculada a outro projeto.");
-    const inserted = database.prepare("INSERT OR IGNORE INTO purchase_project_kanban_requests (project_id, purchase_request_id, created_at) VALUES (?, ?, ?)").run(projectId, requestId, nowIso());
+    const inserted = database.prepare("INSERT OR IGNORE INTO purchase_project_kanban_requests (project_id, purchase_request_id, column_id, created_at) VALUES (?, ?, ?, ?)").run(projectId, requestId, columnId, nowIso());
     if (inserted.changes === 0) {
       throw new Error("Esta solicitação já está vinculada a outro projeto.");
     }
+    database.prepare("UPDATE purchase_project_kanban_projects SET updated_at = ? WHERE id = ?").run(nowIso(), projectId);
+    return readState(database);
+  } finally { database.close(); }
+}
+
+export function movePurchaseRequestInKanbanProject(projectId: number, requestId: number, columnId: number) {
+  const database = openDatabase();
+  try {
+    if (!database.prepare("SELECT id FROM purchase_project_kanban_columns WHERE id = ?").get(columnId)) throw new Error("Etapa não encontrada.");
+    const changed = database.prepare("UPDATE purchase_project_kanban_requests SET column_id = ? WHERE project_id = ? AND purchase_request_id = ?")
+      .run(columnId, projectId, requestId).changes;
+    if (changed === 0) throw new Error("Vínculo da solicitação não encontrado.");
     database.prepare("UPDATE purchase_project_kanban_projects SET updated_at = ? WHERE id = ?").run(nowIso(), projectId);
     return readState(database);
   } finally { database.close(); }

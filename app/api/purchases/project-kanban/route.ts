@@ -10,9 +10,11 @@ import {
   deletePurchaseProjectKanbanProject,
   linkPurchaseRequestToKanbanProject,
   loadPurchaseProjectKanban,
+  movePurchaseRequestInKanbanProject,
   movePurchaseProjectKanbanProject,
   renamePurchaseProjectKanbanColumn,
   reorderPurchaseProjectKanbanColumn,
+  setPurchaseProjectKanbanColumnMarker,
   unlinkPurchaseRequestFromKanbanProject,
   updatePurchaseProjectKanbanProject
 } from "@/lib/purchase-project-kanban";
@@ -44,6 +46,7 @@ export async function POST(request: Request) {
       columnId?: number;
       name?: string;
       direction?: "left" | "right";
+      marker?: "initial" | "completed";
       projectId?: number;
       position?: number;
       requestId?: number;
@@ -60,6 +63,10 @@ export async function POST(request: Request) {
         break;
       case actions.renameColumn:
         state = renamePurchaseProjectKanbanColumn(columnId, String(input.name || ""));
+        break;
+      case actions.setColumnMarker:
+        if (input.marker !== "initial" && input.marker !== "completed") throw new Error("Marcador de etapa inválido.");
+        state = setPurchaseProjectKanbanColumnMarker(columnId, input.marker);
         break;
       case actions.reorderColumn:
         if (input.direction !== "left" && input.direction !== "right") throw new Error("Direção inválida.");
@@ -86,9 +93,12 @@ export async function POST(request: Request) {
         if (!purchases.requestItems.some((item) => item.purchaseRequestId === requestId)) {
           throw new Error("A solicitação não existe no espelho local de compras.");
         }
-        state = linkPurchaseRequestToKanbanProject(Number(input.projectId), requestId);
+        state = linkPurchaseRequestToKanbanProject(Number(input.projectId), requestId, Number.isFinite(columnId) ? columnId : undefined);
         break;
       }
+      case actions.moveRequest:
+        state = movePurchaseRequestInKanbanProject(Number(input.projectId), Number(input.requestId), columnId);
+        break;
       case actions.unlinkRequest:
         state = unlinkPurchaseRequestFromKanbanProject(Number(input.projectId), Number(input.requestId));
         break;
