@@ -437,7 +437,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
                         <div className="purchase-kanban-card-head"><GripVertical size={15} /><div><h3>{project.name}</h3>{project.description && <p>{project.description}</p>}</div><button type="button" onClick={(event) => { event.stopPropagation(); openProject(project); }} title="Editar projeto" data-i18n-title="Editar projeto"><Pencil size={14} /></button></div>
                         {project.closingDate && <div className="purchase-kanban-deadline"><CalendarClock size={13} /><span><I18nText text="Previsão de encerramento" /></span><strong>{displayDate(project.closingDate)}</strong>{project.closingDate < todayIso && !completedColumnIds.has(project.columnId) && <em><I18nText text="Em atraso" /></em>}</div>}
                         <div className="purchase-kanban-card-metrics">
-                          <span><strong>{requests.length}</strong><small><I18nText text="Solicitações" /></small></span>
+                          <span><strong>{requests.length}</strong><small>S.C.</small></span>
                           <span><strong>{itemCount}</strong><small><I18nText text="Itens" /></small></span>
                           <span><strong>{quotationCount}</strong><small><I18nText text="Cotações" /></small></span>
                         </div>
