@@ -1,9 +1,11 @@
 import "server-only";
 import type { PurchaseRequestItem } from "@/features/purchases/types";
 import { loadPurchases } from "@/features/purchases/data";
+import { filterPurchaseQuotationsByCutoff, filterPurchaseRequestItemsByCutoff } from "@/features/purchases/purchase-cutoff";
 import { readPurchaseRequestHeaders, requestStatusLabels } from "@/features/purchases/request-headers";
 import { searchLocalSuppliers } from "@/features/suppliers/data";
 import { loadSupplierQuoteRequestOrigins, loadSupplierQuoteResponses } from "@/lib/supplier-quote-portal";
+import { getAppSettings } from "@/lib/settings";
 
 export type PurchaseProjectKanbanItem = {
   number: number;
@@ -81,6 +83,11 @@ function quotationStatus(supplierCount: number, responseCount: number, selected:
 export async function loadPurchaseProjectKanbanData(projectRequestIds: number[] = []): Promise<PurchaseProjectKanbanData> {
   const purchases = await loadPurchases();
   const headers = readPurchaseRequestHeaders();
+  const cutoffDate = getAppSettings().purchaseCutoffDate;
+  const visibleRequestItems = filterPurchaseRequestItemsByCutoff(purchases.requestItems, headers, cutoffDate);
+  const visibleQuotations = filterPurchaseQuotationsByCutoff(purchases.quotations, cutoffDate);
+  const groups = groupRequestItems(visibleRequestItems);
+  const visibleRequestIds = new Set(groups.keys());
   const origins = loadSupplierQuoteRequestOrigins();
   const projectRequestIdSet = new Set(projectRequestIds);
   const supplierNames = new Map<number, string>();
@@ -89,13 +96,12 @@ export async function loadPurchaseProjectKanbanData(projectRequestIds: number[] 
   } catch {
     // O diretório local pode ainda não ter sido sincronizado.
   }
-  const activeQuotationIds = new Set(purchases.quotations.map((quotation) => quotation.purchaseQuotationId));
+  const activeQuotationIds = new Set(visibleQuotations.map((quotation) => quotation.purchaseQuotationId));
   const quotationIdsByRequest = new Map<number, number[]>();
   origins.forEach((requestIds, quotationId) => {
     if (!activeQuotationIds.has(quotationId)) return;
-    requestIds.forEach((requestId) => quotationIdsByRequest.set(requestId, [...(quotationIdsByRequest.get(requestId) || []), quotationId]));
+    requestIds.filter((requestId) => visibleRequestIds.has(requestId)).forEach((requestId) => quotationIdsByRequest.set(requestId, [...(quotationIdsByRequest.get(requestId) || []), quotationId]));
   });
-  const groups = groupRequestItems(purchases.requestItems);
   const requests = Array.from(groups, ([requestId, items]) => {
     const header = headers.get(requestId);
     return {
@@ -120,9 +126,9 @@ export async function loadPurchaseProjectKanbanData(projectRequestIds: number[] 
       }))
     } satisfies PurchaseProjectKanbanRequest;
   }).sort((left, right) => right.id - left.id);
-  const quotations = purchases.quotations.map((quotation) => {
+  const quotations = visibleQuotations.map((quotation) => {
     const suppliers = quotation.purchaseQuotationSuppliers || [];
-    const requestIds = [...(origins.get(quotation.purchaseQuotationId) || [])];
+    const requestIds = [...(origins.get(quotation.purchaseQuotationId) || [])].filter((requestId) => visibleRequestIds.has(requestId));
     const portalResponses = requestIds.some((requestId) => projectRequestIdSet.has(requestId))
       ? loadSupplierQuoteResponses(quotation.purchaseQuotationId).filter((response) => !response.supersededByResponseId)
       : [];
@@ -191,5 +197,5 @@ export async function loadPurchaseProjectKanbanData(projectRequestIds: number[] 
       suppliers: supplierRows
     } satisfies PurchaseProjectKanbanQuotation;
   }).sort((left, right) => right.id - left.id);
-  return { requests, quotations, totalItems: purchases.requestItems.length, warning: purchases.warning, error: purchases.error?.explanation || purchases.error?.title };
+  return { requests, quotations, totalItems: visibleRequestItems.length, warning: purchases.warning, error: purchases.error?.explanation || purchases.error?.title };
 }

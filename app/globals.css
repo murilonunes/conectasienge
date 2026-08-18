@@ -541,6 +541,8 @@ td { padding: 15px 18px; border-top: 1px solid var(--line); }
 .settings-form-note strong { font-size: 12px; }
 .settings-form-note span { color: var(--muted); font-size: 10px; }
 .settings-form label { display: grid; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.settings-cutoff-field { grid-column: 1 / -1; }
+.settings-cutoff-field small { font-size: 10px; font-weight: 500; line-height: 1.45; }
 .settings-form input, .settings-form select { width: 100%; border: 1px solid var(--line); border-radius: 9px; background: #fbfcfb; padding: 10px 11px; color: var(--ink); outline: none; }
 .settings-form input:focus, .settings-form select:focus { border-color: #72a58d; box-shadow: 0 0 0 3px rgba(31,107,79,.08); }
 .settings-account-picker-field { display: grid; grid-column: 1 / -1; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 700; }

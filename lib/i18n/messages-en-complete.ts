@@ -560,5 +560,12 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Todos os vínculos estão organizados": "All links are organized",
   "Todas as cotações possuem solicitação de origem e projeto definido.": "All quotations have a source request and an assigned project.",
   "Informe uma data de encerramento válida.": "Enter a valid closing date.",
-  "A cotação não existe no espelho local de compras.": "The quotation does not exist in the local purchasing mirror."
+  "A cotação não existe no espelho local de compras.": "The quotation does not exist in the local purchasing mirror.",
+  "Data de corte de compras ativa": "Purchasing cutoff date is active",
+  "Solicitações e cotações anteriores a": "Requests and quotations before",
+  "não aparecem nas telas de solicitações, cotações e Kanban.": "are hidden from the Requests, Quotations, and Kanban screens.",
+  "Visibilidade de solicitações e cotações": "Request and quotation visibility",
+  "O corte afeta somente a exibição. Os dados locais não são apagados.": "The cutoff only affects what is displayed. Local data is not deleted.",
+  "Data de corte de compras": "Purchasing cutoff date",
+  "Registros anteriores à data ficam ocultos em Solicitações, Cotações e Kanban. Deixe em branco para mostrar todo o histórico.": "Records before this date are hidden from Requests, Quotations, and Kanban. Leave it blank to show the full history."
 };

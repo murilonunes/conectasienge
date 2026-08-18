@@ -117,10 +117,12 @@ function requestNumber(request: PurchaseRequest) {
 
 export function PurchaseRequestsPortal({
   initialRequests,
-  quotationCounts
+  quotationCounts,
+  cutoffDate
 }: {
   initialRequests: PurchaseRequestInput[];
   quotationCounts: Record<number, number>;
+  cutoffDate: string;
 }) {
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
   const [manualRequests, setManualRequests] = useState<PurchaseRequest[]>([]);
@@ -148,11 +150,11 @@ export function PurchaseRequestsPortal({
         ...request,
         status: statusOverrides[request.id] || request.status
       })),
-      ...manualRequests
+      ...manualRequests.filter((request) => !cutoffDate || !request.createdAt || request.createdAt >= cutoffDate)
     ];
     setRequests(loaded);
     setSelectedId((current) => current || loaded[0]?.id || "");
-  }, [initialRequests, manualRequests, statusOverrides]);
+  }, [cutoffDate, initialRequests, manualRequests, statusOverrides]);
 
   useEffect(() => {
     if (!hydrated) return;

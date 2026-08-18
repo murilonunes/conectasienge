@@ -196,6 +196,17 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const pendingQuotations = quotations.filter((quotation) => quotation.requestIds.length === 0 || quotation.requestIds.some((requestId) => !assignedRequestIds.has(requestId)));
   const quotationsInProjects = quotations.filter((quotation) => quotation.requestIds.length > 0 && quotation.requestIds.every((requestId) => assignedRequestIds.has(requestId))).length;
 
+  function withVisibleRequests(nextBoard: PurchaseProjectKanbanState): PurchaseProjectKanbanState {
+    return {
+      ...nextBoard,
+      projects: nextBoard.projects.map((project) => ({
+        ...project,
+        requestIds: project.requestIds.filter((requestId) => requestsById.has(requestId)),
+        requestLinks: project.requestLinks.filter((link) => requestsById.has(link.requestId))
+      }))
+    };
+  }
+
   async function updateBoard(input: ApiInput) {
     setBusy(true);
     setMessage("");
@@ -207,7 +218,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
       });
       const body = await response.json() as PurchaseProjectKanbanState & { message?: string };
       if (!response.ok) throw new Error(body.message || t("Não foi possível atualizar o Kanban."));
-      const nextBoard = { columns: body.columns, projects: body.projects };
+      const nextBoard = withVisibleRequests({ columns: body.columns, projects: body.projects });
       setBoard(nextBoard);
       return nextBoard;
     } catch (error) {
@@ -225,7 +236,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
       const response = await fetch("/api/purchases/project-kanban", { cache: "no-store" });
       const body = await response.json() as PurchaseProjectKanbanState & { message?: string };
       if (!response.ok) throw new Error(body.message || t("Não foi possível recarregar o Kanban."));
-      setBoard(body);
+      setBoard(withVisibleRequests(body));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : t("Não foi possível recarregar o Kanban."));
     } finally { setBusy(false); }

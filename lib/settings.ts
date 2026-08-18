@@ -8,6 +8,7 @@ export type AppSettings = {
   responsibleRole: string;
   responsibleInitials: string;
   dashboardDays: number;
+  purchaseCutoffDate: string;
   siengeStartDate: string;
   siengeEndDate: string;
   payablesFutureMonths: number;
@@ -36,6 +37,7 @@ function defaults(): AppSettings {
     responsibleRole: "Administradora",
     responsibleInitials: "MC",
     dashboardDays: 7,
+    purchaseCutoffDate: "",
     siengeStartDate: "2000-01-01",
     siengeEndDate: defaultSiengeEndDate(),
     payablesFutureMonths: 2,
@@ -104,6 +106,10 @@ function toDateText(value: string | undefined, fallback: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value || "") ? value! : fallback;
 }
 
+function toOptionalDateText(value: string | undefined) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value || "") ? value! : "";
+}
+
 function integrationRangeFromSettings(values: Map<string, string>): SiengeIntegrationRange {
   const currentDefaults = defaults();
   let startDate = toDateText(values.get("siengeStartDate"), currentDefaults.siengeStartDate);
@@ -126,6 +132,7 @@ export function getAppSettings(): AppSettings {
     responsibleRole: values.get("responsibleRole") || currentDefaults.responsibleRole,
     responsibleInitials: responsibleInitials.slice(0, 3).toUpperCase(),
     dashboardDays: dashboardDaysFromSettings(values),
+    purchaseCutoffDate: toOptionalDateText(values.get("purchaseCutoffDate")),
     siengeStartDate: integrationRange.startDate,
     siengeEndDate: integrationRange.endDate,
     payablesFutureMonths: toNumber(values.get("payablesFutureMonths"), currentDefaults.payablesFutureMonths, 1, 6),
@@ -141,6 +148,12 @@ export function getSiengeIntegrationRange(): SiengeIntegrationRange {
     startDate: settings.siengeStartDate,
     endDate: settings.siengeEndDate
   };
+}
+
+export function isPurchaseDateVisible(value: string | undefined, cutoffDate = getAppSettings().purchaseCutoffDate) {
+  if (!cutoffDate) return true;
+  const date = String(value || "").match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+  return !date || date >= cutoffDate;
 }
 
 export function saveAppSettings(settings: Partial<AppSettings>) {

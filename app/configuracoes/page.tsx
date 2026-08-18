@@ -40,6 +40,7 @@ async function saveSettingsAction(formData: FormData) {
     responsibleRole: asText(formData.get("responsibleRole"), current.responsibleRole),
     responsibleInitials: asText(formData.get("responsibleInitials"), current.responsibleInitials).toUpperCase(),
     dashboardDays: asNumber(formData.get("dashboardDays"), current.dashboardDays),
+    purchaseCutoffDate: String(formData.get("purchaseCutoffDate") || "").trim(),
     siengeStartDate: asText(formData.get("siengeStartDate"), current.siengeStartDate),
     siengeEndDate: asText(formData.get("siengeEndDate"), current.siengeEndDate),
     payablesFutureMonths: asNumber(formData.get("payablesFutureMonths"), current.payablesFutureMonths),
@@ -53,6 +54,9 @@ async function saveSettingsAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/contas-pagar");
   revalidatePath("/conciliacao");
+  revalidatePath("/cotacoes");
+  revalidatePath("/solicitacoes-compra");
+  revalidatePath("/kanban-compras");
   revalidatePath("/configuracoes");
   redirect("/configuracoes?salvo=1");
 }
@@ -137,6 +141,11 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
         <span><I18nText text={"As consultas com data buscam de"} /> {settings.siengeStartDate} <I18nText text={"até"} /> {settings.siengeEndDate}<I18nText text={". Ajuste abaixo em Preferências e salve antes de atualizar."} /></span>
       </section>
 
+      {settings.purchaseCutoffDate && <section className="card data-notice">
+        <strong><I18nText text={"Data de corte de compras ativa"} /></strong>
+        <span><I18nText text={"Solicitações e cotações anteriores a"} /> {settings.purchaseCutoffDate} <I18nText text={"não aparecem nas telas de solicitações, cotações e Kanban."} /></span>
+      </section>}
+
       <div className="settings-command-layout">
         <section className="card panel">
           <div className="panel-head">
@@ -167,6 +176,15 @@ export default function ConfiguracoesPage({ searchParams }: { searchParams?: { s
             <label>
               <I18nText text={"Data final da integração"} />
               <input name="siengeEndDate" type="date" defaultValue={settings.siengeEndDate} />
+            </label>
+            <div className="settings-form-note">
+              <strong><I18nText text={"Visibilidade de solicitações e cotações"} /></strong>
+              <span><I18nText text={"O corte afeta somente a exibição. Os dados locais não são apagados."} /></span>
+            </div>
+            <label className="settings-cutoff-field">
+              <I18nText text={"Data de corte de compras"} />
+              <input name="purchaseCutoffDate" type="date" defaultValue={settings.purchaseCutoffDate} />
+              <small><I18nText text={"Registros anteriores à data ficam ocultos em Solicitações, Cotações e Kanban. Deixe em branco para mostrar todo o histórico."} /></small>
             </label>
             <label>
               <I18nText text={"Nome exibido no topo"} />

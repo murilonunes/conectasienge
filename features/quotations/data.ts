@@ -1,5 +1,7 @@
 import "server-only";
 import { loadPurchases } from "@/features/purchases/data";
+import { filterPurchaseQuotationsByCutoff, filterPurchaseRequestItemsByCutoff } from "@/features/purchases/purchase-cutoff";
+import { readPurchaseRequestHeaders } from "@/features/purchases/request-headers";
 import type {
   PurchaseQuotation,
   PurchaseQuotationItem,
@@ -7,6 +9,7 @@ import type {
   PurchaseRequestItem
 } from "@/features/purchases/types";
 import { loadSupplierQuoteRequestOrigins } from "@/lib/supplier-quote-portal";
+import { getAppSettings } from "@/lib/settings";
 
 export type QuotationStatus =
   | "Registrada"
@@ -252,11 +255,15 @@ export async function loadQuotationPortalData(selectedRequestId?: number): Promi
     };
   }
 
-  const requestGroups = groupRequestItems(purchases.requestItems);
+  const cutoffDate = getAppSettings().purchaseCutoffDate;
+  const headers = readPurchaseRequestHeaders();
+  const visibleRequestItems = filterPurchaseRequestItemsByCutoff(purchases.requestItems, headers, cutoffDate);
+  const visibleQuotations = filterPurchaseQuotationsByCutoff(purchases.quotations, cutoffDate);
+  const requestGroups = groupRequestItems(visibleRequestItems);
   const requestOrigins = loadSupplierQuoteRequestOrigins();
   const requestItems = selectedRequestId ? requestGroups.get(selectedRequestId) || [] : [];
-  const quotations = purchases.quotations.map((quotation) => {
-    const purchaseRequestIds = requestOrigins.get(quotation.purchaseQuotationId) || [];
+  const quotations = visibleQuotations.map((quotation) => {
+    const purchaseRequestIds = (requestOrigins.get(quotation.purchaseQuotationId) || []).filter((requestId) => requestGroups.has(requestId));
     const sourceItems = purchaseRequestIds.flatMap((requestId) => requestGroups.get(requestId) || []);
     return quotationSummary(quotation, purchaseRequestIds, sourceItems);
   }).sort((left, right) => right.id - left.id);

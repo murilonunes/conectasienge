@@ -1,9 +1,11 @@
 import { PurchaseRequestsPortal, type PurchaseRequestInput } from "@/components/purchases/purchase-requests-portal";
 import { PageHeading } from "@/components/ui/page-heading";
 import { loadPurchases } from "@/features/purchases/data";
+import { filterPurchaseQuotationsByCutoff, filterPurchaseRequestItemsByCutoff } from "@/features/purchases/purchase-cutoff";
 import { readPurchaseRequestHeaders } from "@/features/purchases/request-headers";
 import type { PurchaseRequestItem } from "@/features/purchases/types";
 import { loadSupplierQuoteRequestOrigins } from "@/lib/supplier-quote-portal";
+import { getAppSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +39,7 @@ function mapPurchaseRequests(
       neededAt: "",
       status: statusFromItems(requestItems) as PurchaseRequestInput["status"],
       notes: requestHeaders.get(purchaseRequestId)?.notes?.trim() || "",
-      createdAt: requestItems[0]?.__siengeIntegratedAt?.slice(0, 10) || "",
+      createdAt: requestHeaders.get(purchaseRequestId)?.requestDate || requestItems[0]?.__siengeIntegratedAt?.slice(0, 10) || "",
       source: "sienge" as const,
       items: requestItems.map((item) => ({
         id: `sienge-${purchaseRequestId}-${item.itemNumber}`,
@@ -71,9 +73,12 @@ function countQuotationsByRequest(
 export default async function PurchaseRequestsPage() {
   const purchases = await loadPurchases();
   const requestHeaders = readPurchaseRequestHeaders();
-  const initialRequests = mapPurchaseRequests(purchases.requestItems, requestHeaders);
+  const cutoffDate = getAppSettings().purchaseCutoffDate;
+  const visibleRequestItems = filterPurchaseRequestItemsByCutoff(purchases.requestItems, requestHeaders, cutoffDate);
+  const visibleQuotations = filterPurchaseQuotationsByCutoff(purchases.quotations, cutoffDate);
+  const initialRequests = mapPurchaseRequests(visibleRequestItems, requestHeaders);
   const quotationCounts = countQuotationsByRequest(
-    purchases.quotations.map((quotation) => quotation.purchaseQuotationId),
+    visibleQuotations.map((quotation) => quotation.purchaseQuotationId),
     loadSupplierQuoteRequestOrigins()
   );
 
@@ -85,7 +90,7 @@ export default async function PurchaseRequestsPage() {
         subtitle="Cadastre solicitações, acompanhe o status e exporte a lista de insumos para cotação."
       />
 
-      <PurchaseRequestsPortal initialRequests={initialRequests} quotationCounts={quotationCounts} />
+      <PurchaseRequestsPortal initialRequests={initialRequests} quotationCounts={quotationCounts} cutoffDate={cutoffDate} />
     </>
   );
 }
