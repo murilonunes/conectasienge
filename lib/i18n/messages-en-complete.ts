@@ -441,6 +441,7 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Etapas do Kanban": "Kanban stages",
   "Crie, renomeie e ordene as colunas conforme o processo dos projetos.": "Create, rename, and order columns according to the project workflow.",
   "Salvar nome": "Save name",
+  "Nome da etapa": "Stage name",
   "Mover para a esquerda": "Move left",
   "Mover para a direita": "Move right",
   "Excluir etapa": "Delete stage",

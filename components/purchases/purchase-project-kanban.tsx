@@ -20,6 +20,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Save,
   Search,
   Scale,
   Trash2,
@@ -321,6 +322,15 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
     }
   }
 
+  async function renameColumn(columnId: number) {
+    const name = (columnNames[columnId] || "").trim();
+    const column = board.columns.find((item) => item.id === columnId);
+    if (!column || !name || name === column.name) return;
+    const nextBoard = await updateBoard({ action: actions.renameColumn, columnId, name });
+    const savedColumn = nextBoard?.columns.find((item) => item.id === columnId);
+    if (savedColumn) setColumnNames((current) => ({ ...current, [columnId]: savedColumn.name }));
+  }
+
   function columnLabel(column: PurchaseProjectKanbanState["columns"][number]) {
     return column.systemKey ? t(column.name) : column.name;
   }
@@ -434,7 +444,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
         <div className="settings-modal-backdrop" role="presentation" onMouseDown={() => !busy && setModal(null)}>
           <div className="settings-modal kanban-columns-modal" role="dialog" aria-modal="true" aria-label="Gerenciar etapas" data-i18n-aria-label="Gerenciar etapas" onMouseDown={(event) => event.stopPropagation()}>
             <header className="settings-modal-head"><div><h2><I18nText text="Etapas do Kanban" /></h2><span><I18nText text="Crie, renomeie e ordene as colunas conforme o processo dos projetos." /></span></div><button className="kanban-icon-button" onClick={() => setModal(null)} title="Fechar" data-i18n-title="Fechar"><X size={17} /></button></header>
-            <div className="kanban-column-editor">{board.columns.map((column, index) => <div key={column.id}><span className={`kanban-column-mark color-${column.color}`} /><input value={columnNames[column.id] ?? column.name} onChange={(event) => setColumnNames((current) => ({ ...current, [column.id]: event.target.value }))} maxLength={80} /><button onClick={() => void updateBoard({ action: actions.renameColumn, columnId: column.id, name: columnNames[column.id] ?? column.name })} disabled={busy || (columnNames[column.id] ?? column.name).trim() === column.name} title="Salvar nome" data-i18n-title="Salvar nome"><Check size={15} /></button><button onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "left" })} disabled={busy || index === 0} title="Mover para a esquerda" data-i18n-title="Mover para a esquerda"><ArrowLeft size={15} /></button><button onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "right" })} disabled={busy || index === board.columns.length - 1} title="Mover para a direita" data-i18n-title="Mover para a direita"><ArrowRight size={15} /></button><button className="danger" onClick={() => window.confirm(t("Excluir esta etapa?")) && void updateBoard({ action: actions.deleteColumn, columnId: column.id })} disabled={busy} title="Excluir etapa" data-i18n-title="Excluir etapa"><Trash2 size={15} /></button></div>)}</div>
+            <div className="kanban-column-editor">{board.columns.map((column, index) => { const draftName = columnNames[column.id] ?? column.name; return <div key={column.id}><span className={`kanban-column-mark color-${column.color}`} /><input aria-label={`${t("Nome da etapa")}: ${columnLabel(column)}`} value={draftName} onChange={(event) => setColumnNames((current) => ({ ...current, [column.id]: event.target.value }))} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void renameColumn(column.id); } }} maxLength={80} /><button className="kanban-column-save" type="button" onClick={() => void renameColumn(column.id)} disabled={busy || !draftName.trim() || draftName.trim() === column.name} title="Salvar nome" data-i18n-title="Salvar nome"><Save size={14} /><I18nText text="Salvar nome" /></button><button type="button" onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "left" })} disabled={busy || index === 0} title="Mover para a esquerda" data-i18n-title="Mover para a esquerda"><ArrowLeft size={15} /></button><button type="button" onClick={() => void updateBoard({ action: actions.reorderColumn, columnId: column.id, direction: "right" })} disabled={busy || index === board.columns.length - 1} title="Mover para a direita" data-i18n-title="Mover para a direita"><ArrowRight size={15} /></button><button className="danger" type="button" onClick={() => window.confirm(t("Excluir esta etapa?")) && void updateBoard({ action: actions.deleteColumn, columnId: column.id })} disabled={busy} title="Excluir etapa" data-i18n-title="Excluir etapa"><Trash2 size={15} /></button></div>; })}</div>
             <div className="kanban-add-column"><input value={newColumnName} onChange={(event) => setNewColumnName(event.target.value)} placeholder="Nome da nova etapa" data-i18n-placeholder="Nome da nova etapa" maxLength={80} onKeyDown={(event) => { if (event.key === "Enter") void addColumn(); }} /><button className="button" onClick={addColumn} disabled={busy || !newColumnName.trim()}><Plus size={15} /> <I18nText text="Adicionar etapa" /></button></div>
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
             <footer className="settings-modal-actions"><button className="button secondary" onClick={() => setModal(null)}><I18nText text="Concluir" /></button></footer>

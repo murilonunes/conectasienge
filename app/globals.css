@@ -2625,8 +2625,9 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-add-column input,
 .kanban-column-editor input { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfb; padding: 9px 10px; color: var(--ink); font: inherit; font-size: 12px; text-transform: none; resize: vertical; }
 .kanban-column-editor { display: grid; gap: 7px; }
-.kanban-column-editor > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) repeat(4, 34px); align-items: center; gap: 6px; }
+.kanban-column-editor > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto repeat(3, 34px); align-items: center; gap: 6px; }
 .kanban-column-editor button { width: 34px; height: 34px; }
+.kanban-column-editor button.kanban-column-save { width: auto; min-width: 104px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: #3f647c; font-size: 9px; font-weight: 850; }
 .kanban-column-editor button.danger { color: #a4302a; }
 .kanban-column-editor button:disabled { cursor: not-allowed; opacity: .35; }
 .kanban-add-column { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
@@ -2815,6 +2816,12 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
   .kanban-manager-record > summary { grid-template-columns: 1fr; }
   .kanban-manager-record > summary::before { grid-column: 1; justify-self: end; }
   .kanban-manager-record-metrics { grid-column: 1; grid-row: 2; justify-content: flex-start; padding-right: 0; }
+  .kanban-column-editor > div { grid-template-columns: 10px minmax(0, 1fr) repeat(3, 34px); }
+  .kanban-column-editor input { grid-column: 2 / -1; }
+  .kanban-column-editor button.kanban-column-save { grid-column: 2; grid-row: 2; justify-self: start; }
+  .kanban-column-editor button:nth-of-type(2) { grid-column: 3; grid-row: 2; }
+  .kanban-column-editor button:nth-of-type(3) { grid-column: 4; grid-row: 2; }
+  .kanban-column-editor button:nth-of-type(4) { grid-column: 5; grid-row: 2; }
   .purchase-kanban-stats { grid-template-columns: 1fr; }
   .purchase-kanban-stats > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .purchase-kanban-stats > div:last-child { border-bottom: 0; }
