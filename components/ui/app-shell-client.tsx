@@ -286,7 +286,7 @@ export function AppShellClient({ children, settings, allowedPermissions }: { chi
             </form>
           </div>
         </header>
-        <div className="content">{children}</div>
+        <div className={`content${pathname.startsWith("/kanban-compras") ? " content-kanban" : ""}`}>{children}</div>
       </main>
     </div>
   );
