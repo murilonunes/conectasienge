@@ -2618,6 +2618,7 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .purchase-kanban-empty span { font-size: 11px; }
 .kanban-project-modal { width: min(600px, 100%); }
 .kanban-columns-modal { width: min(1040px, 100%); }
+.kanban-print-modal { width: min(680px, 100%); }
 .kanban-project-detail-modal { width: min(1280px, 100%); height: auto; max-height: 92vh; overflow-x: hidden; overflow-y: auto; grid-template-rows: none; align-content: start; scrollbar-gutter: stable; }
 .kanban-quotation-links-modal { width: min(900px, 100%); }
 .kanban-project-form { display: grid; gap: 10px; }
@@ -2643,6 +2644,16 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
 .kanban-project-detail-actions .button { min-height: 36px; display: inline-flex; align-items: center; gap: 7px; border-radius: 7px; padding: 8px 11px; }
 .settings-modal-actions .kanban-close-button { border-color: #d9b36f; background: #fff8eb; color: #825819; }
 .settings-modal-actions .kanban-close-button:hover { border-color: #c4933c; background: #fff1d5; color: #6f480f; }
+.kanban-print-select-actions { display: flex; justify-content: flex-end; gap: 7px; }
+.kanban-print-select-actions .button { min-height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; }
+.kanban-print-stage-options { display: grid; gap: 7px; }
+.kanban-print-stage-options > label { min-height: 52px; display: grid; grid-template-columns: 18px 8px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 7px; background: #fbfcfb; cursor: pointer; }
+.kanban-print-stage-options > label.selected { border-color: #9fb5c4; background: #f2f7fa; }
+.kanban-print-stage-options input { width: 16px; height: 16px; margin: 0; accent-color: #4f7897; }
+.kanban-print-stage-options span { min-width: 0; display: grid; gap: 2px; }
+.kanban-print-stage-options strong { overflow-wrap: anywhere; font-size: 12px; }
+.kanban-print-stage-options small { color: var(--muted); font-size: 10px; }
+.kanban-print-stage-options em { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; border: 1px solid #cbd6d1; border-radius: 4px; color: #52675d; font-size: 9px; font-style: normal; font-weight: 850; text-transform: uppercase; }
 .kanban-manager-overview { min-height: 0; display: grid; grid-template-rows: repeat(4, auto); gap: 10px; overflow: visible; }
 .kanban-manager-project-summary { min-height: 44px; display: flex; align-items: center; gap: 14px 22px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: #f8faf9; }
 .kanban-manager-project-summary > div { display: flex; align-items: center; gap: 7px; }
@@ -2872,4 +2883,97 @@ a.supply-funnel-card:hover { border-color: #cfe1d7; background: #f4f9f6; }
   .kanban-link-summary span:last-child { border-bottom: 0; }
   .kanban-quotation-pending > header { align-items: flex-start; flex-direction: column; }
   .settings-modal-actions.split { flex-direction: column-reverse; }
+}
+
+/* Relatório gerencial impresso do Kanban de compras */
+.kanban-print-page { width: min(1120px, 100%); margin: 0 auto; padding: 24px 22px 40px; color: var(--ink); }
+.kanban-print-actions { display: flex; justify-content: flex-end; gap: 9px; margin-bottom: 16px; }
+.kanban-print-actions .button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; }
+.kanban-print-document { display: grid; gap: 18px; }
+.kanban-print-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 20px; padding-bottom: 14px; border-bottom: 2px solid #4f7897; }
+.kanban-print-header > div:first-child > span { color: #496d85; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+.kanban-print-header h1 { margin: 4px 0; font-family: var(--font-display); font-size: 25px; letter-spacing: 0; }
+.kanban-print-header p { margin: 0; color: var(--muted); font-size: 10px; }
+.kanban-print-summary { display: grid; grid-template-columns: repeat(4, minmax(88px, 1fr)); overflow: hidden; border: 1px solid var(--line); border-radius: 7px; }
+.kanban-print-summary span { display: grid; gap: 2px; padding: 8px 9px; border-right: 1px solid var(--line); text-align: center; }
+.kanban-print-summary span:last-child { border-right: 0; }
+.kanban-print-summary strong { font-family: var(--font-display); font-size: 17px; }
+.kanban-print-summary small { color: var(--muted); font-size: 9px; font-weight: 850; line-height: 1.2; text-transform: uppercase; }
+.kanban-print-stage-index { display: flex; flex-wrap: wrap; gap: 6px; }
+.kanban-print-stage-index span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 4px; color: #53645b; font-size: 10px; font-weight: 800; }
+.kanban-print-stage { display: grid; gap: 9px; padding-top: 10px; border-top: 3px solid #8b9690; }
+.kanban-print-stage.color-blue { border-top-color: #4f7897; }
+.kanban-print-stage.color-amber { border-top-color: #c58b32; }
+.kanban-print-stage.color-violet { border-top-color: #7a668d; }
+.kanban-print-stage.color-teal { border-top-color: #387e78; }
+.kanban-print-stage.color-rose { border-top-color: #a8616d; }
+.kanban-print-stage > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kanban-print-stage > header > div { display: flex; align-items: center; gap: 7px; }
+.kanban-print-stage h2 { margin: 0; font-size: 15px; text-transform: uppercase; }
+.kanban-print-stage > header em { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font-size: 9px; font-style: normal; font-weight: 850; text-transform: uppercase; }
+.kanban-print-stage > header > strong { color: var(--muted); font-size: 11px; }
+.kanban-print-projects { display: grid; gap: 12px; }
+.kanban-print-project { display: grid; gap: 0; overflow: hidden; border: 1px solid #ced8d3; border-radius: 7px; }
+.kanban-print-project > header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 10px 12px; border-bottom: 1px solid #dce3df; background: #f4f7f5; }
+.kanban-print-project h3 { margin: 0; font-size: 14px; }
+.kanban-print-project header p { margin: 3px 0 0; color: var(--muted); font-size: 10px; line-height: 1.35; }
+.kanban-print-project > header > span { display: grid; align-content: center; gap: 2px; min-width: 120px; padding-left: 12px; border-left: 1px solid #d5ddd9; text-align: right; }
+.kanban-print-project > header small { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; }
+.kanban-print-project > header strong { font-size: 11px; }
+.kanban-print-request-list { display: grid; }
+.kanban-print-request { display: grid; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #dce3df; }
+.kanban-print-request:last-child { border-bottom: 0; }
+.kanban-print-request > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kanban-print-request > header > div:first-child { display: flex; align-items: center; gap: 7px; }
+.kanban-print-request > header > div:first-child > strong { font-size: 12px; }
+.kanban-print-request > header > div:first-child > span { padding: 3px 6px; border-radius: 4px; background: #edf1ef; color: #53645b; font-size: 9px; font-weight: 850; text-transform: uppercase; }
+.kanban-print-request-stage { display: flex; align-items: center; gap: 7px; }
+.kanban-print-request-stage small { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; }
+.kanban-print-request-stage strong { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+.kanban-print-request-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid #e0e6e3; border-radius: 5px; }
+.kanban-print-request-meta span { min-width: 0; display: grid; gap: 2px; padding: 6px 8px; border-right: 1px solid #e0e6e3; }
+.kanban-print-request-meta span:last-child { border-right: 0; }
+.kanban-print-request-meta small { color: var(--muted); font-size: 9px; font-weight: 850; text-transform: uppercase; }
+.kanban-print-request-meta strong { overflow-wrap: anywhere; font-size: 10px; }
+.kanban-print-quotation-statuses { display: flex; flex-wrap: wrap; gap: 5px; }
+.kanban-print-quotation-statuses span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 6px; border: 1px solid #d9e2e6; border-radius: 4px; color: #496577; font-size: 9px; }
+.kanban-print-quotation-statuses b { font-size: 10px; }
+.kanban-print-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.kanban-print-notes > div { min-width: 0; padding: 7px 9px; border-left: 3px solid #c58b32; background: #fffaf0; }
+.kanban-print-notes > div > strong { color: #76551d; font-size: 9px; text-transform: uppercase; }
+.kanban-print-notes p { margin: 3px 0 0; color: #4f5b55; font-size: 10px; line-height: 1.4; white-space: pre-wrap; }
+.kanban-print-notes ul { display: grid; gap: 5px; margin: 5px 0 0; padding: 0; list-style: none; }
+.kanban-print-notes li { display: grid; gap: 2px; font-size: 10px; line-height: 1.35; }
+.kanban-print-notes li b { overflow-wrap: anywhere; }
+.kanban-print-notes li span { color: #4f5b55; white-space: pre-wrap; }
+.kanban-print-empty { margin: 0; padding: 14px; color: var(--muted); font-size: 10px; text-align: center; }
+@media (max-width: 760px) {
+  .kanban-print-page { padding: 18px 12px 30px; }
+  .kanban-print-header { grid-template-columns: 1fr; }
+  .kanban-print-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kanban-print-summary span:nth-child(2) { border-right: 0; }
+  .kanban-print-summary span:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .kanban-print-project > header { grid-template-columns: 1fr; }
+  .kanban-print-project > header > span { padding: 0; border-left: 0; text-align: left; }
+  .kanban-print-request > header { align-items: flex-start; flex-direction: column; }
+  .kanban-print-request-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kanban-print-request-meta span:nth-child(2) { border-right: 0; }
+  .kanban-print-request-meta span:nth-child(-n+2) { border-bottom: 1px solid #e0e6e3; }
+  .kanban-print-notes { grid-template-columns: 1fr; }
+}
+@media print {
+  .public-language-switcher,
+  .kanban-print-actions { display: none !important; }
+  .kanban-print-page { width: 100%; padding: 0; }
+  .kanban-print-document { gap: 12px; }
+  .kanban-print-header { padding-bottom: 9px; }
+  .kanban-print-header h1 { font-size: 21px; }
+  .kanban-print-stage { break-before: auto; }
+  .kanban-print-project,
+  .kanban-print-request,
+  .kanban-print-notes > div { break-inside: avoid; page-break-inside: avoid; }
+  .kanban-print-project > header,
+  .kanban-print-request > header,
+  .kanban-print-request-meta,
+  .kanban-print-notes > div { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }

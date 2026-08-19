@@ -21,6 +21,7 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
+  Printer,
   RefreshCw,
   Save,
   Search,
@@ -31,7 +32,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-type Modal = "columns" | "create-project" | "quotation-links" | { projectId: number } | null;
+type Modal = "columns" | "create-project" | "quotation-links" | "print" | { projectId: number } | null;
 type ProjectDetailView = "overview" | "edit" | "links";
 type ApiInput = Record<string, string | number | undefined>;
 type DragTarget = { columnId: number; beforeProjectId?: number };
@@ -147,6 +148,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
   const [expandedRequestId, setExpandedRequestId] = useState<number>();
   const [quotationRequestSelections, setQuotationRequestSelections] = useState<Record<number, string>>({});
   const [requestProjectSelections, setRequestProjectSelections] = useState<Record<number, string>>({});
+  const [printColumnIds, setPrintColumnIds] = useState<number[]>([]);
 
   const requestsById = useMemo(() => new Map(requests.map((request) => [request.id, request])), [requests]);
   const columnsById = useMemo(() => new Map(board.columns.map((column) => [column.id, column])), [board.columns]);
@@ -255,6 +257,18 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
     setProjectClosingDate("");
     setMessage("");
     setModal("create-project");
+  }
+
+  function openPrint() {
+    setPrintColumnIds(board.columns.map((column) => column.id));
+    setMessage("");
+    setModal("print");
+  }
+
+  function openPrintReport() {
+    if (printColumnIds.length === 0) return;
+    const params = new URLSearchParams({ etapas: printColumnIds.join(",") });
+    window.open(`/kanban-compras/impressao?${params.toString()}`, "_blank", "noopener,noreferrer");
   }
 
   function openProject(project: PurchaseProjectKanbanProject) {
@@ -396,6 +410,7 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
         </div>
         <button className="kanban-icon-button" type="button" onClick={reloadBoard} disabled={busy} title="Recarregar quadro" data-i18n-title="Recarregar quadro"><RefreshCw size={16} /></button>
         <button className={`button secondary kanban-link-pending-button ${pendingQuotations.length ? "warn" : ""}`} type="button" onClick={() => { setMessage(""); setModal("quotation-links"); }}><AlertTriangle size={16} /> <I18nText text="Pendências de vínculo" /> <strong>{pendingQuotations.length}</strong></button>
+        <button className="button secondary" type="button" onClick={openPrint}><Printer size={16} /> <I18nText text="Imprimir visão gerencial" /></button>
         <button className="button secondary" type="button" onClick={openColumns}><Columns3 size={16} /> <I18nText text="Gerenciar etapas" /></button>
         <button className="button" type="button" onClick={openCreateProject}><Plus size={16} /> <I18nText text="Novo projeto" /></button>
       </div>
@@ -504,6 +519,35 @@ export function PurchaseProjectKanban({ initialBoard, catalog }: { initialBoard:
             <div className="kanban-add-column"><input value={newColumnName} onChange={(event) => setNewColumnName(event.target.value)} placeholder="Nome da nova etapa" data-i18n-placeholder="Nome da nova etapa" maxLength={80} onKeyDown={(event) => { if (event.key === "Enter") void addColumn(); }} /><button className="button" onClick={addColumn} disabled={busy || !newColumnName.trim()}><Plus size={15} /> <I18nText text="Adicionar etapa" /></button></div>
             {message && <div className="kanban-feedback error"><I18nText text={message} /></div>}
             <footer className="settings-modal-actions"><button className="button secondary kanban-close-button" onClick={() => setModal(null)}><X size={15} /> <I18nText text="Fechar" /></button></footer>
+          </div>
+        </div>
+      )}
+
+      {modal === "print" && (
+        <div className="settings-modal-backdrop" role="presentation" onMouseDown={() => setModal(null)}>
+          <div className="settings-modal kanban-print-modal" role="dialog" aria-modal="true" aria-label="Imprimir visão gerencial" data-i18n-aria-label="Imprimir visão gerencial" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="settings-modal-head"><div><h2><I18nText text="Imprimir visão gerencial" /></h2><span><I18nText text="Selecione as etapas que devem entrar no relatório impresso." /></span></div><button className="kanban-icon-button" onClick={() => setModal(null)} title="Fechar" data-i18n-title="Fechar"><X size={17} /></button></header>
+            <div className="kanban-print-select-actions">
+              <button className="button secondary" type="button" onClick={() => setPrintColumnIds(board.columns.map((column) => column.id))}><Check size={15} /> <I18nText text="Selecionar todas" /></button>
+              <button className="button secondary" type="button" onClick={() => setPrintColumnIds([])}><X size={15} /> <I18nText text="Limpar seleção" /></button>
+            </div>
+            <div className="kanban-print-stage-options">
+              {board.columns.map((column) => {
+                const checked = printColumnIds.includes(column.id);
+                const projectCount = board.projects.filter((project) => project.columnId === column.id).length;
+                return (
+                  <label className={checked ? "selected" : ""} key={column.id}>
+                    <input type="checkbox" checked={checked} onChange={(event) => setPrintColumnIds((current) => event.target.checked ? [...current, column.id] : current.filter((id) => id !== column.id))} />
+                    <i className={`kanban-column-mark color-${column.color}`} />
+                    <span><strong>{columnLabel(column)}</strong><small>{projectCount} <I18nText text={projectCount === 1 ? "projeto" : "projetos"} /></small></span>
+                    {column.isInitial && <em><Flag size={11} /><I18nText text="Inicial" /></em>}
+                    {column.isCompleted && <em><CheckCircle2 size={11} /><I18nText text="Finalizada" /></em>}
+                  </label>
+                );
+              })}
+            </div>
+            {printColumnIds.length === 0 && <div className="kanban-feedback error"><I18nText text="Selecione pelo menos uma etapa." /></div>}
+            <footer className="settings-modal-actions"><button className="button secondary kanban-close-button" onClick={() => setModal(null)}><X size={15} /> <I18nText text="Fechar" /></button><button className="button" onClick={openPrintReport} disabled={printColumnIds.length === 0}><Printer size={15} /> <I18nText text="Abrir impressão" /></button></footer>
           </div>
         </div>
       )}

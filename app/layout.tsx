@@ -25,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     || path.startsWith("/login")
     || path.endsWith("/relatorio-decisao")
     || path.endsWith("/mapa-pdf")
+    || path === "/kanban-compras/impressao"
     || path.endsWith("/solicitacao-fornecedor")
     || path.endsWith("/solicitacao-fornecedor-resumida");
 

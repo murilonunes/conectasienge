@@ -567,5 +567,18 @@ export const completeEnglishUiMessages: Record<string, string> = {
   "Visibilidade de solicitações e cotações": "Request and quotation visibility",
   "O corte afeta somente a exibição. Os dados locais não são apagados.": "The cutoff only affects what is displayed. Local data is not deleted.",
   "Data de corte de compras": "Purchasing cutoff date",
-  "Registros anteriores à data ficam ocultos em Solicitações, Cotações e Kanban. Deixe em branco para mostrar todo o histórico.": "Records before this date are hidden from Requests, Quotations, and Kanban. Leave it blank to show the full history."
+  "Registros anteriores à data ficam ocultos em Solicitações, Cotações e Kanban. Deixe em branco para mostrar todo o histórico.": "Records before this date are hidden from Requests, Quotations, and Kanban. Leave it blank to show the full history.",
+  "Imprimir visão gerencial": "Print management view",
+  "Selecione as etapas que devem entrar no relatório impresso.": "Select the stages to include in the printed report.",
+  "Selecionar todas": "Select all",
+  "Limpar seleção": "Clear selection",
+  "Selecione pelo menos uma etapa.": "Select at least one stage.",
+  "Abrir impressão": "Open print view",
+  "Voltar ao Kanban": "Back to Kanban",
+  "Brasin Empreendimentos - Suprimentos": "Brasin Empreendimentos - Procurement",
+  "Relatório gerencial de compras por projeto": "Project purchasing management report",
+  "Etapas selecionadas": "Selected stages",
+  "Projetos no relatório": "Projects in report",
+  "Observações dos itens": "Item notes",
+  "Sem observações registradas.": "No notes recorded."
 };

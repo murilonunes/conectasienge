@@ -279,6 +279,7 @@ Revisado nesta etapa:
 - `/dre-financeiro`: criada como nova tela, sem alterar `/dre-gerencial`, para analisar DRE financeira somente por contas a pagar/receber e futuro agrupado.
 - `/dre-gerencial`: removida a carga de compras que não era usada no cálculo, adicionada margem POC estimada, ajustados os cards de saldos para deixar claro que são acumulados até o fim do exercício e criada a alternância Histórico/Futuro para analisar backlog POC e caixa futuro aberto.
 - `/sienge`: confirmado como mapa operacional local, com contagens por fonte e detalhamento técnico mantido apenas porque a tela serve para auditoria de cobertura.
+- `/kanban-compras`: adicionada impressão gerencial por etapas selecionadas. O relatório protegido em `/kanban-compras/impressao` respeita a data de corte, agrupa projetos pela etapa do quadro e lista o status, a etapa interna, os vínculos de cotação e as observações de cada solicitação e de seus itens.
 
 Pendências mantidas:
 
